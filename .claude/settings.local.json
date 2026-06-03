@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(cp \"C:\\\\Users\\\\main\\\\pharmatch\\\\next.config.ts\" \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\\" && cp \"C:\\\\Users\\\\main\\\\pharmatch\\\\postcss.config.mjs\" \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\\")",
+      "Bash(cp \"C:\\\\Users\\\\main\\\\pharmatch\\\\tsconfig.json\" \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\\" && cp \"C:\\\\Users\\\\main\\\\pharmatch\\\\eslint.config.mjs\" \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\\")",
+      "Bash(cp \"C:\\\\Users\\\\main\\\\pharmatch\\\\components.json\" \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\\" && echo \"Config files copied\")",
+      "Bash(cp /c/Users/main/pharmatch/next.config.ts /c/Users/main/yaksaro-care/)",
+      "Bash(cp /c/Users/main/pharmatch/postcss.config.mjs /c/Users/main/yaksaro-care/)",
+      "Bash(cp /c/Users/main/pharmatch/tsconfig.json /c/Users/main/yaksaro-care/)",
+      "Bash(cp /c/Users/main/pharmatch/eslint.config.mjs /c/Users/main/yaksaro-care/)",
+      "Bash(cp /c/Users/main/pharmatch/components.json /c/Users/main/yaksaro-care/)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\main\\\\pharmatch\\\\src\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(cp /c/Users/main/pharmatch/src/lib/supabase/client.ts /c/Users/main/yaksaro-care/src/lib/supabase/)",
+      "Bash(cp /c/Users/main/pharmatch/src/lib/supabase/server.ts /c/Users/main/yaksaro-care/src/lib/supabase/)",
+      "Bash(cp /c/Users/main/pharmatch/src/lib/supabase/admin.ts /c/Users/main/yaksaro-care/src/lib/supabase/)",
+      "Bash(cp /c/Users/main/pharmatch/src/lib/utils.ts /c/Users/main/yaksaro-care/src/lib/)",
+      "Bash(cp /c/Users/main/pharmatch/src/components/ui/button.tsx /c/Users/main/yaksaro-care/src/components/ui/)",
+      "Bash(cp /c/Users/main/pharmatch/src/components/ui/input.tsx /c/Users/main/yaksaro-care/src/components/ui/)",
+      "Bash(cp /c/Users/main/pharmatch/src/components/ui/label.tsx /c/Users/main/yaksaro-care/src/components/ui/)",
+      "Bash(cp /c/Users/main/pharmatch/src/components/ui/card.tsx /c/Users/main/yaksaro-care/src/components/ui/)",
+      "Bash(cp /c/Users/main/pharmatch/src/components/ui/badge.tsx /c/Users/main/yaksaro-care/src/components/ui/)",
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3000/medications/ocr\" -TimeoutSec 30 -UseBasicParsing -MaximumRedirection 0; \"ocr 페이지: $\\($r.StatusCode\\)\" } catch { $c=$_.Exception.Response.StatusCode.value__; if\\($c -eq 307\\){\"ocr: 307 \\(인증 리다이렉트=정상, 서버 살아있음\\)\"} else {\"ocr: $c / $\\($_.Exception.Message\\)\"} })",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/wallet)"
+    ]
+  }
+}

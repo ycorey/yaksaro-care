@@ -1,0 +1,390 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { logDurShadow } from '@/lib/dur-shadow'
+
+// OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
+// ── 파싱 프롬프트: 한국 약사 페르소나 + PII 무시 + 약품 용법 추출 ─────
+const PARSE_PROMPT = `너는 대한민국의 전문 약사야. 주어진 처방전 텍스트에서 주민등록번호와 실명 정보는 무조건 무시하고, 약품 이름, 복용량(mg 등 단위 포함), 일일 복용 횟수, 총 처방 일수, 조제 약국 이름을 찾아내어 JSON 구조로 정제해줘.
+
+Return ONLY a JSON object with exactly these fields:
+{
+  "medicines": [{ "name": "약품명", "ingredient": "주성분명" 또는 null, "edi_code": "9자리코드" 또는 null, "dose_amount": 숫자 또는 null, "doses_per_day": 숫자 또는 null, "days": 숫자 또는 null }],
+  "pharmacy_name": "약국명" 또는 null,
+  "hospital_name": "발급 병원명" 또는 null,
+  "institution_code": "요양기관기호 8자리" 또는 null
+}
+- hospital_name: 처방전을 발급한 병원/의원명 (예: 세브란스병원).
+- institution_code: "요양기관기호" 뒤 8자리 숫자.
+- name: drug brand/generic name (제형 정/캡슐 등 포함, 괄호 안 성분명은 제외).
+- ingredient: 괄호 안 주성분명 (예: 록소프로펜나트륨). null if not found.
+- edi_code: 약품명 앞 대괄호 안 9자리 보험코드 (예: [671701890] → "671701890"). null if not found.
+- dose_amount: 1회 투약량 (정/포/캡슐 등 개수, 처방전 '1회투약량' 칸의 값). 상품명 옆 mg/g 함량(예: 50mg, 2g)은 함량이지 투약량이 아니므로 dose_amount로 쓰지 말 것. null if not found.
+- doses_per_day: 1일 투여 횟수 (1일투여횟수 칸). null if not found.
+- days: 총 투약 일수 (총투약일수 칸). null if not found.
+- 약품마다 보통 [1회투약량, 1일투여횟수, 총투약일수] 3개 숫자가 따라온다.
+- "사용기간 교부일부터 (N)" 의 N은 무시할 것 (days 아님).
+- pharmacy_name: 조제 약국명. null if not found.
+- Return exactly this JSON shape, no extra fields.`
+
+type ParsedMedicine = {
+  name:          string
+  ingredient:    string | null   // 주성분명 (괄호 안)
+  edi_code:      string | null   // 보험 EDI 코드 (9자리) — 약물 정확 식별용
+  dose_amount:   number | null   // 1회 투약량
+  doses_per_day: number | null   // 1일 투여횟수
+  days:          number | null   // 총 투약일수
+}
+
+type ParsedPrescription = {
+  medicines:        ParsedMedicine[]
+  pharmacy_name:    string | null
+  hospital_name:    string | null   // 발급 병원명
+  institution_code: string | null   // 요양기관기호 (8자리)
+}
+
+// CLOVA OCR 필드 타입
+type ClovaField = { inferText: string; inferConfidence: number }
+
+async function runClovaOcr(imageBytes: ArrayBuffer, mime: string, ext: string): Promise<string> {
+  const url    = process.env.CLOVA_OCR_API_URL
+  const secret = process.env.CLOVA_OCR_SECRET
+  if (!url || !secret) throw new Error('CLOVA_OCR_API_URL / CLOVA_OCR_SECRET 미설정')
+
+  const fd = new FormData()
+  fd.append('message', JSON.stringify({
+    version:           'V2',
+    requestId:         crypto.randomUUID(),
+    timestamp:         Date.now(),
+    lang:              'ko',
+    images: [{ format: ext.replace(/^jpe?g$/i, 'jpg'), name: 'prescription' }],
+    enableTableDetect: false,
+  }))
+  fd.append('file', new Blob([imageBytes], { type: mime }), `prescription.${ext}`)
+
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { 'X-OCR-SECRET': secret },
+    body:    fd,
+    signal:  AbortSignal.timeout(30_000),  // 30초 — 무한 대기 방지
+  })
+  if (!res.ok) throw new Error(`CLOVA OCR HTTP ${res.status}`)
+
+  const json   = await res.json()
+  const fields: ClovaField[] = json.images?.[0]?.fields ?? []
+  return fields.map(f => f.inferText).join(' ')
+}
+
+function isValidOpenAiKey(key: string | undefined): boolean {
+  return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
+}
+
+// ── 정규식 파서 (GPT 미사용 폴백) ─────────────────────────────────────
+const DRUG_FORMS = '정|캡슐|캅셀|액|시럽|연고|크림|산|과립|주사|패치|흡입제|겔|로션|좌제|점안제|점이제|점비액|에멀젼|틴크|환'
+
+// CLOVA 약품명 토큰 정리: 괄호/성분/규격 제거 후 제형으로 끝나도록 자름
+function cleanDrugName(raw: string): string | null {
+  // 첫 괄호 "(" 또는 "_(" 이전까지가 제품명
+  let name = raw.split(/[(_]/)[0].trim()
+  // 제형 suffix가 있으면 그 지점까지만 사용 (뒤 잡음 제거)
+  const m = name.match(new RegExp(`^(.*?(?:${DRUG_FORMS}))`))
+  if (m) name = m[1]
+  name = name.replace(/\s+/g, '').trim()
+  if (name.length < 3 || !/[가-힣]/.test(name)) return null
+  return name
+}
+
+// 괄호 안 성분명 추출: "...정(록소프로펜나트륨" → "록소프로펜나트륨"
+function extractIngredient(raw: string): string | null {
+  const m = raw.match(/\(([^)_]+)/)
+  if (!m) return null
+  const ing = m[1].replace(/\s+/g, '').trim()
+  return ing.length >= 2 && /[가-힣]/.test(ing) ? ing : null
+}
+
+function parseWithRegex(rawText: string): ParsedPrescription {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean)
+
+  // ── 약국명 ──
+  let pharmacy_name: string | null = null
+  for (const line of lines) {
+    const m = line.match(/([가-힣A-Za-z0-9]{2,}약국)/)
+    if (m) { pharmacy_name = m[1]; break }
+  }
+
+  // ── 약품명 + 용법 ──
+  const medicines: ParsedMedicine[] = []
+  const seen   = new Set<string>()
+  const codeRe = /^\[?\d{8,9}\]?$/
+  const numRe  = /^\d+$/
+
+  // 1순위: [보험코드] → 다음 줄 약품명 → 이어지는 숫자 [1회량, 1일횟수, 총일수]
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!codeRe.test(lines[i])) continue
+    const name = cleanDrugName(lines[i + 1])
+    if (!name || seen.has(name)) continue
+    const ingredient = extractIngredient(lines[i + 1])
+    const edi_code   = lines[i].replace(/\D/g, '') || null  // [671701890] → 671701890
+
+    const nums: number[] = []
+    for (let j = i + 2; j < lines.length && nums.length < 3 && numRe.test(lines[j]); j++) {
+      nums.push(parseInt(lines[j], 10))
+    }
+    seen.add(name)
+    medicines.push({
+      name,
+      ingredient,
+      edi_code,
+      dose_amount:   nums[0] ?? null,  // 1회 투약량
+      doses_per_day: nums[1] ?? null,  // 1일 투여횟수
+      days:          nums[2] ?? null,  // 총 투약일수
+    })
+  }
+
+  // 2순위(코드 없는 처방전): 제형으로 끝나는 토큰만 (용법 미상)
+  if (medicines.length === 0) {
+    const inlineRe = new RegExp(`([가-힣A-Za-z0-9][가-힣A-Za-z0-9·]*(?:${DRUG_FORMS}))`)
+    const SKIP = ['투약', '처방', '일수', '횟수', '급여', '환자', '의료', '질병', '주사제', '조제', '사용기간']
+    for (const line of lines) {
+      if (SKIP.some(w => line.includes(w))) continue
+      const m    = line.match(inlineRe)
+      const name = m ? cleanDrugName(m[1]) : null
+      if (name && !seen.has(name)) {
+        seen.add(name)
+        medicines.push({ name, ingredient: null, edi_code: null, dose_amount: null, doses_per_day: null, days: null })
+      }
+    }
+  }
+
+  return { medicines, pharmacy_name, ...extractHospital(rawText) }
+}
+
+async function parseWithGpt(rawText: string): Promise<ParsedPrescription> {
+  const key = process.env.OPENAI_API_KEY
+  if (!isValidOpenAiKey(key)) return parseWithRegex(rawText)
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model:           'gpt-4o-mini',
+      messages: [
+        { role: 'developer', content: PARSE_PROMPT },
+        { role: 'user',      content: rawText },
+      ],
+      max_tokens:      600,
+      temperature:     0,
+      response_format: { type: 'json_object' },
+    }),
+    signal: AbortSignal.timeout(25_000),  // 25초 — 응답 지연 시 정규식 폴백
+  })
+  if (!res.ok) return parseWithRegex(rawText)
+
+  const json    = await res.json()
+  const content = json.choices?.[0]?.message?.content ?? '{}'
+  const parsed  = JSON.parse(content)
+  const raw     = Array.isArray(parsed.medicines) ? parsed.medicines : []
+
+  return {
+    medicines: raw
+      .filter((m: { name?: unknown }) => m && typeof m.name === 'string')
+      .map((m: { name: string; ingredient?: unknown; edi_code?: unknown; dose_amount?: unknown; doses_per_day?: unknown; days?: unknown }) => ({
+        name:          m.name,
+        ingredient:    typeof m.ingredient === 'string' ? m.ingredient : null,
+        edi_code:      typeof m.edi_code === 'string' ? m.edi_code.replace(/\D/g, '') || null : null,
+        dose_amount:   typeof m.dose_amount === 'number' ? m.dose_amount : null,
+        doses_per_day: typeof m.doses_per_day === 'number' ? m.doses_per_day : null,
+        days:          typeof m.days === 'number' ? m.days : null,
+      })),
+    pharmacy_name:    typeof parsed.pharmacy_name === 'string' ? parsed.pharmacy_name : null,
+    hospital_name:    typeof parsed.hospital_name === 'string' && parsed.hospital_name ? parsed.hospital_name : extractHospital(rawText).hospital_name,
+    institution_code: typeof parsed.institution_code === 'string' && /^\d{8}$/.test(parsed.institution_code) ? parsed.institution_code : extractHospital(rawText).institution_code,
+  }
+}
+
+// ── 코드 전용 인식: 9자리 EDI 코드만 찍은 경우 허가정보로 약품명 역조회 ──
+async function fetchLicenseNameByEdi(edi: string): Promise<{ ITEM_NAME?: string } | null> {
+  const key = process.env.MFDS_DRUG_LICENSE_KEY
+  if (!key) return null
+  const url = 'https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnInq07'
+    + `?serviceKey=${encodeURIComponent(key)}&edi_code=${encodeURIComponent(edi)}&numOfRows=1&pageNo=1&type=json`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    if (!res.ok) return null
+    const json  = await res.json()
+    const items = json?.body?.items
+    return Array.isArray(items) ? (items[0] ?? null) : (items ?? null)
+  } catch {
+    return null
+  }
+}
+
+// GPT가 뽑은 약품의 신원을 EDI 코드로 교정 — GPT는 용법(표 구조)에 강하고,
+// 약품명은 EDI→허가정보가 권위있다. 둘을 결합해 정확도를 최대화한다.
+async function correctIdentityByEdi(meds: ParsedMedicine[]): Promise<ParsedMedicine[]> {
+  return Promise.all(meds.map(async (m) => {
+    if (!m.edi_code) return m
+    const lic = await fetchLicenseNameByEdi(m.edi_code)
+    const itemName = lic?.ITEM_NAME
+    if (!itemName) return m
+    const name = cleanDrugName(itemName)
+    if (!name) return m
+    return { ...m, name, ingredient: extractIngredient(itemName) ?? m.ingredient }
+  }))
+}
+
+function extractPharmacyName(rawText: string): string | null {
+  for (const line of rawText.split('\n')) {
+    const m = line.match(/([가-힣A-Za-z0-9]{2,}약국)/)
+    if (m) return m[1]
+  }
+  return null
+}
+
+// 발급 병원명 + 요양기관기호 추출 (정규식 경로/폴백용)
+function extractHospital(rawText: string): { hospital_name: string | null; institution_code: string | null } {
+  let hospital_name: string | null = null
+  for (const line of rawText.split('\n').map(l => l.trim())) {
+    const m = line.match(/([가-힣A-Za-z0-9·]+(?:병원|의원|한의원|보건소|의료원|클리닉))/)
+    if (m && m[1].length >= 3) { hospital_name = m[1]; break }
+  }
+  const joined = rawText.replace(/\s+/g, ' ')
+  const codeM  = joined.match(/요양기관기호[^\d]{0,5}(\d{8})/)
+  return { hospital_name, institution_code: codeM ? codeM[1] : null }
+}
+
+// 숫자 기반 추출(주 경로): 9자리 EDI 코드로 약품을 식별하고, 코드 뒤에 오는 숫자
+// [1회투약량, 1일투여횟수, 총투약일수]를 용법으로 읽는다. 약품명은 허가정보에서 권위 조회.
+// 한글 OCR에 의존하지 않아 인식 정확도가 높다.
+async function parseByCodes(rawText: string): Promise<ParsedMedicine[]> {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean)
+
+  // 코드 위치 수집 (줄 내부 공백은 제거하고 9자리 판정 — "652 500251"도 인식)
+  const positions: { code: string; idx: number }[] = []
+  lines.forEach((l, i) => {
+    const digits = l.replace(/\D/g, '')
+    if (/^\d{9}$/.test(digits)) positions.push({ code: digits, idx: i })
+  })
+  if (positions.length === 0) return []
+
+  const resolved = await Promise.all(positions.map(async (pos, k) => {
+    const end = k + 1 < positions.length ? positions[k + 1].idx : lines.length
+    // 코드와 다음 코드 사이에서 "단위 없는 순수 숫자(1~3자리)"만 용법 후보로 수집.
+    // 단위 붙은 함량(2g/50mg/2Pack)·목록표시(1./2.)는 제외 — 병원마다 레이아웃이 달라 오인 방지.
+    const nums: number[] = []
+    for (let j = pos.idx + 1; j < end && nums.length < 3; j++) {
+      if (/^\d{1,3}$/.test(lines[j])) nums.push(parseInt(lines[j], 10))
+    }
+    // 상식 범위 밖이면 신뢰 불가 → null (사용자가 수정). 잘못된 용법 노출 방지.
+    const inRange = (v: number | undefined, lo: number, hi: number) =>
+      (v != null && v >= lo && v <= hi) ? v : null
+
+    const lic = await fetchLicenseNameByEdi(pos.code)
+    const itemName = lic?.ITEM_NAME
+    if (!itemName) return null
+    const name = cleanDrugName(itemName)
+    if (!name) return null
+
+    return {
+      name,
+      ingredient:    extractIngredient(itemName),
+      edi_code:      pos.code,
+      dose_amount:   inRange(nums[0], 1, 20),    // 1회 투약량
+      doses_per_day: inRange(nums[1], 1, 6),     // 1일 투여횟수
+      days:          inRange(nums[2], 1, 365),   // 총 투약일수
+    } as ParsedMedicine
+  }))
+
+  const seen = new Set<string>()
+  return resolved.filter((m): m is ParsedMedicine => !!m && !seen.has(m.edi_code!) && !!seen.add(m.edi_code!))
+}
+
+// ── 라우트 핸들러 ─────────────────────────────────────────────────────
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  const formData = await request.formData()
+  const file     = formData.get('image') as File | null
+  if (!file) return NextResponse.json({ error: '이미지 없음' }, { status: 400 })
+
+  // Payload 4MB 초과 시 413 — 프론트가 Canvas 압축 후 재시도하도록 표준 응답
+  const MAX_BYTES = 4 * 1024 * 1024
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: 'image_too_large', max_mb: 4 }, { status: 413 })
+  }
+
+  const bytes = await file.arrayBuffer()
+  const mime  = file.type || 'image/jpeg'
+  const ext   = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
+
+  const admin = createAdminClient()
+
+  // 1. Storage 임시 업로드 (OCR 처리 후 즉시 삭제)
+  const storagePath = `${user.id}/${Date.now()}.${ext}`
+  const { error: upErr } = await admin.storage.from('prescriptions')
+    .upload(storagePath, Buffer.from(bytes), { contentType: mime })
+  if (upErr) console.warn('[ocr] storage upload 실패:', upErr.message)
+
+  // 2. CLOVA OCR → 원문 텍스트
+  let rawText = ''
+  let parsed: ParsedPrescription = { medicines: [], pharmacy_name: null, hospital_name: null, institution_code: null }
+
+  try {
+    rawText = await runClovaOcr(bytes, mime, ext)
+    const hasGpt = isValidOpenAiKey(process.env.OPENAI_API_KEY)
+
+    // 1순위(키 있을 때): GPT로 용법·구조 파싱 → 약품 신원은 EDI 코드로 교정 (하이브리드)
+    if (hasGpt) {
+      const g = await parseWithGpt(rawText)
+      if (g.medicines.length > 0) {
+        parsed = { ...g, medicines: await correctIdentityByEdi(g.medicines) }
+      }
+    }
+
+    // 2순위(키 없거나 GPT 0건): 코드 기반 식별 (숫자만, 한글 의존 없음)
+    if (parsed.medicines.length === 0) {
+      const byCode = await parseByCodes(rawText)
+      if (byCode.length > 0) {
+        parsed = { medicines: byCode, pharmacy_name: extractPharmacyName(rawText), ...extractHospital(rawText) }
+      } else if (!hasGpt) {
+        // 3순위: 코드도 없으면 정규식 텍스트 파싱
+        parsed = await parseWithGpt(rawText)
+      }
+    }
+  } catch (e) {
+    console.error('OCR 오류:', e)
+  } finally {
+    // 3. 이미지 원본 즉시 파기 (개인정보보호법 준수) — 예외 시에도 반드시 실행
+    await admin.storage.from('prescriptions').remove([storagePath])
+      .catch(e => console.error('[ocr] 이미지 파기 실패:', e))
+  }
+
+  const names   = parsed.medicines.map(m => m.name)
+  const maxDays = parsed.medicines.reduce((mx, m) => (m.days && m.days > mx ? m.days : mx), 0) || null
+
+  // 4. user_prescriptions에 저장
+  const { data: prescription } = await admin
+    .from('user_prescriptions')
+    .insert({
+      user_id:           user.id,
+      raw_medicine_list: names,
+      duration_days:     maxDays,
+      pharmacy_name:     parsed.pharmacy_name,
+      hospital_name:     parsed.hospital_name,
+      institution_code:  parsed.institution_code,
+      prescribed_at:     new Date().toISOString().split('T')[0],
+    })
+    .select('id')
+    .single()
+
+  return NextResponse.json({
+    prescription_id: prescription?.id ?? null,
+    medicines:       parsed.medicines,
+    pharmacy_name:   parsed.pharmacy_name,
+  })
+}
