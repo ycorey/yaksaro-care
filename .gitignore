@@ -46,4 +46,5 @@ _workspace/
 
 # runtime/local files
 .etl-dur-checkpoint.json
+.etl-dur-ingr-checkpoint.json
 .claude/scheduled_tasks.lock
