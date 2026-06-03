@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import {
-  isNotificationSupported,
-  notificationPermission,
   requestNotificationPermission,
   showLocalNotification,
 } from '@/lib/notifications'
+import { subscribeToPush, unsubscribeFromPush, pushSupported } from '@/lib/push-client'
 
 type FontSize = 'normal' | 'large' | 'xlarge'
 
@@ -111,21 +110,33 @@ export default function SettingsClient({
   async function toggleAlarm() {
     const next = !alarmEnabled
 
-    // 켤 때: 알림 권한을 실제로 요청하고, 허용되면 확인 알림을 띄운다.
     if (next) {
+      // 1) 알림 권한 요청
       const perm = await requestNotificationPermission()
-      if (perm === 'unsupported') {
-        toast.error('이 브라우저는 알림을 지원하지 않아요')
-        return
+      if (perm === 'unsupported') { toast.error('이 브라우저는 알림을 지원하지 않아요'); return }
+      if (perm === 'denied') { toast.error('알림이 차단되어 있어요. 브라우저 설정에서 허용해주세요'); return }
+
+      // 2) 웹 푸시 구독(서버 등록) → 앱이 꺼져 있어도 예약 알림 수신
+      let pushed = false
+      if (pushSupported()) {
+        const ok = await subscribeToPush()
+        if (ok) {
+          // 실제 푸시 경로로 확인 알림 (서버→푸시서비스→기기)
+          const res = await fetch('/api/push/test', { method: 'POST' }).then(r => r.json()).catch(() => null)
+          pushed = !!res?.sent
+        }
       }
-      if (perm === 'denied') {
-        toast.error('알림이 차단되어 있어요. 브라우저 설정에서 허용해주세요')
-        return
+      // 3) 푸시가 안 되면 로컬 알림으로라도 확인
+      if (!pushed) {
+        await showLocalNotification('약사로케어 알림이 켜졌어요', {
+          body: '약 드실 시간에 알려드릴게요.',
+          url: '/today',
+        })
       }
-      await showLocalNotification('약사로케어 알림이 켜졌어요', {
-        body: '약 드실 시간에 여기로 알려드릴게요.',
-        url: '/today',
-      })
+      toast.success(pushed ? '복약 알림이 켜졌어요' : '알림이 켜졌어요 (이 기기)')
+    } else {
+      // 끌 때: 푸시 구독 해제
+      await unsubscribeFromPush().catch(() => {})
     }
 
     setAlarmEnabled(next)

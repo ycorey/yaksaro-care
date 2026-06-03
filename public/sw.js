@@ -72,6 +72,25 @@ self.addEventListener('fetch', (event) => {
   // 3) 그 외(API 등): 그냥 네트워크 (약 정보는 항상 최신 유지)
 })
 
+// ── 웹 푸시 수신 → 알림 표시 ──
+self.addEventListener('push', (event) => {
+  let data = {}
+  try { data = event.data?.json() ?? {} } catch {}
+  const title = data.title || '약사로케어'
+  const body = data.body || '약 드실 시간이에요.'
+  const url = data.url || '/today'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/favicon-32.png',
+      lang: 'ko',
+      vibrate: [80, 40, 80],
+      data: { url },
+    })
+  )
+})
+
 // ── 알림 클릭 → 해당 화면으로 포커스/이동 ──
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()

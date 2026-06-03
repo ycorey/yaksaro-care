@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner'
 import BackGuard from '@/components/back-guard'
 import PWARegister from '@/components/pwa-register'
 import SplashScreen from '@/components/splash-screen'
+import InstallBanner from '@/components/pwa/install-banner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BackGuard />
         {children}
         <Toaster position="top-center" richColors />
+        <InstallBanner />
         <PWARegister />
       </body>
     </html>
