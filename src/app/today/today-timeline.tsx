@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import AppHeader from '@/components/app-header'
+import { getDailyTip } from './health-tips'
 
 export type Meal = 'morning' | 'afternoon' | 'evening'
 
@@ -82,6 +84,12 @@ export default function TodayTimeline({
 
   const doneCount = slots.filter(s => s.checked).length
 
+  // 오늘의 건강 한 줄 (날짜 기준 고정 — 분 단위 갱신에 영향받지 않음)
+  const tip = useMemo(
+    () => getDailyTip(now),
+    [now.getFullYear(), now.getMonth(), now.getDate()] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   function persist(meal: Meal, isChecked: boolean) {
     fetch('/api/meal-checks', {
       method: 'POST',
@@ -108,10 +116,7 @@ export default function TodayTimeline({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between pt-2">
-        <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase">약사로 케어</span>
-      </div>
-
+      <AppHeader />
       <h1 className="text-2xl font-bold text-gray-950">오늘 복약 ☀️</h1>
 
       {/* 지연 알림 배너 */}
@@ -214,6 +219,18 @@ export default function TodayTimeline({
           <p className="text-base font-bold text-green-800">오늘 복약 완료 ✅</p>
         </div>
       )}
+
+      {/* ── 오늘의 건강 한 줄 ── */}
+      <div className="rounded-2xl border border-[#D9E8DD] bg-[#F2F8F3] px-5 py-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-base">🌿</span>
+          <p className="text-xs font-bold tracking-wide text-[#15604E]">오늘의 건강 한 줄</p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="text-2xl leading-none mt-0.5">{tip.emoji}</span>
+          <p className="text-[17px] font-medium text-gray-800 leading-relaxed">{tip.text}</p>
+        </div>
+      </div>
 
       <p className="text-xs text-gray-400 text-center pb-36 leading-relaxed">
         이 앱은 복약 정보 기록·참고 서비스입니다.<br />의학적 진단·처방을 대체하지 않습니다.

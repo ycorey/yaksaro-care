@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import DoctorView, { type DoctorData } from '@/app/wallet/doctor-view'
+import AppHeader from '@/components/app-header'
 
 interface Med {
   id: string
@@ -23,7 +24,8 @@ export default function ShareClient({ meds, doctorData }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="pt-2">
+      <AppHeader />
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">의사·약사님께 보여주기 📢</h1>
         <p className="text-sm text-gray-500 mt-1">현재 복용 중인 약 목록을 보여주세요</p>
       </div>

@@ -94,11 +94,14 @@ export default function DashboardNav({ user, profile }: Props) {
       {/* ── 데스크탑 사이드바 ── */}
       <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-100 flex-col">
         <div className="p-5 border-b border-gray-100">
-          <Link href="/home" className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-[#15604E] flex items-center justify-center text-white font-black text-sm">약</span>
-            <span className="font-bold text-[#15604E]">약사로케어</span>
+          <Link href="/home">
+            <img
+              src="/brand-assets/logo-wordmark.svg"
+              alt="약사로"
+              style={{ height: '28px', width: 'auto' }}
+            />
           </Link>
-          <p className="text-xs text-gray-400 mt-1 truncate">{profile?.full_name ?? user.email}</p>
+          <p className="text-xs text-gray-400 mt-2 truncate">{profile?.full_name ?? user.email}</p>
         </div>
         <nav className="flex-1 p-3">
           {sideItems.map((item) => {

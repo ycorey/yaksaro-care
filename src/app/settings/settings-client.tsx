@@ -13,17 +13,17 @@ const FONT_SIZES: { key: FontSize; label: string; px: number }[] = [
 ]
 
 const ALARM_TIMES = [
-  { key: 'morning',   time: '08:00', label: '아침 알림' },
-  { key: 'afternoon', time: '12:30', label: '점심 알림' },
-  { key: 'evening',   time: '18:30', label: '저녁 알림' },
-  { key: 'night',     time: '22:00', label: '취침 알림' },
+  { key: 'morning',   label: '아침 알림' },
+  { key: 'afternoon', label: '점심 알림' },
+  { key: 'evening',   label: '저녁 알림' },
+  { key: 'night',     label: '취침 알림' },
 ]
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button type="button" role="switch" aria-checked={on} onClick={onToggle}
       className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-teal-700' : 'bg-gray-300'}`}>
-      <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-1'}`} />
     </button>
   )
 }
@@ -148,12 +148,9 @@ export default function SettingsClient({
       <section>
         <p className="text-sm font-semibold text-gray-600 mb-3">시간대별 알림</p>
         <div className="bg-white rounded-2xl px-5 shadow-sm">
-          {ALARM_TIMES.map(({ key, time, label }) => (
+          {ALARM_TIMES.map(({ key, label }) => (
             <Row key={key}>
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-mono font-semibold text-gray-700 w-12">{time}</span>
-                <span className="text-sm font-medium text-gray-900">{label}</span>
-              </div>
+              <span className="text-sm font-medium text-gray-900">{label}</span>
               <Toggle on={alarmEnabled && !!alarmTimes[key]} onToggle={() => toggleAlarmTime(key)} />
             </Row>
           ))}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import AppHeader from '@/components/app-header'
 
 type DayStatus = 'full' | 'partial' | 'miss'
 type DaySummary = { done: number; status: DayStatus }
@@ -74,12 +75,31 @@ export default function CalendarPage() {
   const fullDays    = Object.values(days).filter(d => d.status === 'full').length
   const partialDays = Object.values(days).filter(d => d.status === 'partial').length
   const missDays    = Object.values(days).filter(d => d.status === 'miss').length
+  const recordedDays = fullDays + partialDays + missDays
+
+  // 연속 챙김 일수 — 이번 달 한정, 오늘(또는 어제)부터 거꾸로 세기
+  let streak = 0
+  if (isCurrentMonth) {
+    for (let d = now.getDate(); d >= 1; d--) {
+      const s = days[dateKey(year, month, d)]?.status
+      if (s === 'full' || s === 'partial') streak++
+      else if (d === now.getDate()) continue // 오늘은 아직 안 챙겼을 수 있으니 건너뜀
+      else break
+    }
+  }
+
+  // 격려 메시지 (완벽 복용 비율 기준)
+  const fullRatio = recordedDays > 0 ? fullDays / recordedDays : 0
+  const cheer =
+    fullRatio >= 0.9 ? { emoji: '👏', text: '정말 훌륭해요! 거의 매일 완벽하게 챙기셨어요.' } :
+    fullRatio >= 0.6 ? { emoji: '💪', text: '잘하고 계세요. 꾸준함이 가장 큰 힘이에요.' } :
+    fullRatio >= 0.3 ? { emoji: '🌱', text: '조금씩 챙기고 계시네요. 오늘 한 번 더 챙겨볼까요?' } :
+                       { emoji: '🤗', text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between pt-2">
-        <h1 className="text-2xl font-bold text-gray-950">복약 캘린더 📅</h1>
-      </div>
+      <AppHeader />
+      <h1 className="text-2xl font-bold text-gray-950">복약 캘린더 📅</h1>
 
       {/* 월 네비게이션 */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -208,6 +228,26 @@ export default function CalendarPage() {
           <p className="text-sm text-gray-400 mt-1">오늘 탭에서 복약을 체크해보세요</p>
         </div>
       )}
+
+      {/* ── 복약 습관 응원 ── */}
+      {!loading && recordedDays > 0 && (
+        <div className="rounded-2xl border border-[#D9E8DD] bg-[#F2F8F3] px-5 py-4">
+          {streak >= 2 && (
+            <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#D9E8DD]">
+              <span className="text-2xl">🔥</span>
+              <p className="text-[17px] font-bold text-[#15604E]">
+                {streak}일 연속으로 약을 챙기고 계세요!
+              </p>
+            </div>
+          )}
+          <div className="flex items-start gap-3">
+            <span className="text-2xl leading-none mt-0.5">{cheer.emoji}</span>
+            <p className="text-[17px] font-medium text-gray-800 leading-relaxed">{cheer.text}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="pb-36" />
     </div>
   )
 }

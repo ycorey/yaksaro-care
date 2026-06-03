@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import AppHeader from '@/components/app-header'
 
 // 아침 08:00 / 점심 12:30 / 저녁 19:00
 const SLOTS = [
@@ -122,13 +123,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots }: Props) {
 
   return (
     <div className="space-y-5 pb-4">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-[#15604E] flex items-center justify-center text-white font-black text-xs">약</span>
-          <span className="font-bold text-[#15604E] text-base">약사로케어</span>
-        </div>
-      </div>
+      <AppHeader />
 
       {/* 날짜 + 인사말 */}
       <div>
