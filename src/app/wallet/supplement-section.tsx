@@ -51,8 +51,8 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
   }, [])
 
   return (
-    <div className={`rounded-2xl border shadow-sm overflow-hidden transition-all duration-200 ${
-      anyChecked ? 'bg-green-100 border-green-300' : 'bg-green-50 border-green-100'
+    <div className={`rounded-yc-lg border shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${
+      anyChecked ? 'bg-yc-green100 border-yc-green600/40' : 'bg-yc-green50 border-[#89CCB3]'
     }`}>
       {/* 카드 헤더 */}
       <div className="px-4 pt-4 pb-3 flex items-center justify-between">
@@ -60,7 +60,7 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
           <div className="flex -space-x-2">
             {meds.slice(0, 3).map((med, i) => (
               <div key={med.id}
-                className="w-10 h-10 rounded-full border-2 border-white bg-green-100 overflow-hidden flex items-center justify-center text-base flex-shrink-0"
+                className="w-10 h-10 rounded-full border-2 border-white bg-yc-green100 overflow-hidden flex items-center justify-center text-base flex-shrink-0"
                 style={{ zIndex: 3 - i }}>
                 {med.imageUrl
                   // eslint-disable-next-line @next/next/no-img-element
@@ -70,14 +70,14 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
             ))}
           </div>
           <div className="ml-1">
-            <p className="text-base font-bold text-green-900">내가 챙기는 영양제</p>
-            <p className="text-xs text-green-600 mt-0.5">
+            <p className="font-display text-base text-yc-green700">내가 챙기는 영양제</p>
+            <p className="text-xs text-yc-green600 mt-0.5">
               {meds.length > 0 ? `약 ${meds.length}종` : '등록된 영양제가 없어요'}
             </p>
           </div>
         </div>
         <Link href="/medications/add?tab=supplement"
-          className="text-xs font-semibold text-green-700 bg-green-100 active:bg-green-200 px-3 py-1.5 rounded-xl flex-shrink-0">
+          className="text-xs font-semibold text-yc-green700 bg-yc-green100 active:opacity-90 px-3 py-1.5 rounded-yc-md flex-shrink-0">
           직접 등록
         </Link>
       </div>
@@ -85,7 +85,7 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
       <div className="px-4 pb-4">
         {meds.length === 0 ? (
           <Link href="/medications/add?tab=supplement"
-            className="flex items-center justify-center gap-2 py-5 text-sm text-green-600 font-medium border-2 border-dashed border-green-200 rounded-xl active:bg-green-50">
+            className="flex items-center justify-center gap-2 py-5 text-sm text-yc-green600 font-medium border-2 border-dashed border-yc-green100 rounded-yc-md active:bg-yc-green50">
             🌿 영양제 등록하기
           </Link>
         ) : (
@@ -110,10 +110,10 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
               ))}
             </ul>
             {/* 영양제 일괄 복약 버튼 */}
-            <div className="space-y-2 pt-4 border-t border-green-200 mt-4">
+            <div className="space-y-2 pt-4 border-t border-yc-green600/20 mt-4">
               {!loaded ? (
                 MEALS.map(m => (
-                  <div key={m.key} className="h-[58px] rounded-2xl bg-green-200 animate-pulse" />
+                  <div key={m.key} className="h-[58px] rounded-yc-lg bg-yc-green100 animate-pulse" />
                 ))
               ) : (
                 MEALS.map(({ key, label, done, icon }) => (
@@ -121,10 +121,10 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
                     key={key}
                     onClick={() => toggle(key)}
                     aria-pressed={checks[key]}
-                    className={`w-full flex items-center justify-center gap-2 py-[18px] rounded-2xl text-base font-bold transition-colors ${
+                    className={`w-full flex items-center justify-center gap-2 py-[18px] rounded-yc-lg text-base font-display transition-colors ${
                       checks[key]
-                        ? 'bg-green-600 text-white'
-                        : 'bg-green-100 text-green-800 active:bg-green-200'
+                        ? 'bg-yc-green600 text-white'
+                        : 'bg-yc-green100 text-yc-green700 active:opacity-90'
                     }`}
                   >
                     <span>{icon}</span>
@@ -134,7 +134,7 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
               )}
             </div>
             <Link href="/medications/add?tab=supplement"
-              className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-green-600 font-medium border border-dashed border-green-200 rounded-2xl active:bg-green-50">
+              className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-green600 font-medium border border-dashed border-yc-green100 rounded-yc-lg active:bg-yc-green50">
               + 영양제 추가
             </Link>
           </>

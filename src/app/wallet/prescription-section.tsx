@@ -62,17 +62,17 @@ function fmtDate(dateStr: string | null): string {
 
 // 카드 배경색 결정
 function cardBg(expired: boolean, daysLeft: number | null, isChecked: boolean): string {
-  if (isChecked) return 'bg-blue-50 border-blue-200'
-  if (expired) return 'bg-gray-50 border-gray-200 opacity-60'
-  if (daysLeft != null && daysLeft <= 3) return 'bg-amber-50 border-amber-200'
-  return 'bg-white border-gray-100'
+  if (isChecked) return 'bg-yc-infoBg border-yc-blue500/30'
+  if (expired) return 'bg-yc-neutral50 border-yc-neutral200 opacity-60'
+  if (daysLeft != null && daysLeft <= 3) return 'bg-yc-warningBg border-yc-warning/30'
+  return 'bg-white border-yc-neutral100'
 }
 
 // 프로그레스바 색
 function barColor(expired: boolean, daysLeft: number | null): string {
-  if (expired) return 'bg-gray-300'
-  if (daysLeft != null && daysLeft <= 3) return 'bg-amber-400'
-  return 'bg-blue-500'
+  if (expired) return 'bg-yc-neutral300'
+  if (daysLeft != null && daysLeft <= 3) return 'bg-yc-warning'
+  return 'bg-yc-blue500'
 }
 
 function GroupMealButtons({ groupKey, onAnyChecked }: { groupKey: string; onAnyChecked: (k: string, v: boolean) => void }) {
@@ -106,17 +106,17 @@ function GroupMealButtons({ groupKey, onAnyChecked }: { groupKey: string; onAnyC
   }
 
   if (!loaded) return (
-    <div className="space-y-2 pt-4 border-t border-blue-100 mt-4">
-      {MEALS.map(m => <div key={m.key} className="h-[52px] rounded-2xl bg-blue-100 animate-pulse" />)}
+    <div className="space-y-2 pt-4 border-t border-yc-blue500/15 mt-4">
+      {MEALS.map(m => <div key={m.key} className="h-[52px] rounded-yc-lg bg-yc-infoBg animate-pulse" />)}
     </div>
   )
 
   return (
-    <div className="space-y-2 pt-4 border-t border-blue-100 mt-4">
+    <div className="space-y-2 pt-4 border-t border-yc-blue500/15 mt-4">
       {MEALS.map(({ key, label, done, icon }) => (
         <button key={key} onClick={() => toggle(key)} aria-pressed={checks[key]}
-          className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-2xl text-base font-bold transition-colors ${
-            checks[key] ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-800 active:bg-blue-100'
+          className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-yc-lg text-base font-display transition-colors ${
+            checks[key] ? 'bg-yc-blue500 text-white' : 'bg-yc-infoBg text-yc-infoText active:opacity-90'
           }`}>
           <span>{icon}</span><span>{checks[key] ? done : label}</span>
         </button>
@@ -179,7 +179,7 @@ function PrescriptionCard({
   const thumbs = g.meds.slice(0, 4)
 
   return (
-    <div className={`rounded-2xl border shadow-sm overflow-hidden transition-all duration-200 ${cardBg(g.expired, daysLeft, isChecked)}`}>
+    <div className={`rounded-yc-lg border shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${cardBg(g.expired, daysLeft, isChecked)}`}>
 
       {/* ── 컴팩트 헤더 (항상 표시) ── */}
       <button type="button" onClick={() => setOpen(o => !o)}
@@ -187,8 +187,8 @@ function PrescriptionCard({
 
         {/* 병원명 + 처방일 */}
         <div className="flex items-start justify-between gap-2 mb-3">
-          <p className="text-base font-bold text-gray-900 leading-snug">{g.hospitalName}</p>
-          <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5">{fmtDate(g.prescribedAt)}</span>
+          <p className="font-display text-base text-yc-neutral900 leading-snug">{g.hospitalName}</p>
+          <span className="text-xs text-yc-neutral400 flex-shrink-0 mt-0.5">{fmtDate(g.prescribedAt)}</span>
         </div>
 
         {/* 약 썸네일 + 종수 */}
@@ -196,7 +196,7 @@ function PrescriptionCard({
           <div className="flex -space-x-2">
             {thumbs.map((med, i) => (
               <div key={med.id}
-                className="w-10 h-10 rounded-full border-2 border-white bg-blue-50 overflow-hidden flex items-center justify-center text-base flex-shrink-0"
+                className="w-10 h-10 rounded-full border-2 border-white bg-yc-infoBg overflow-hidden flex items-center justify-center text-base flex-shrink-0"
                 style={{ zIndex: thumbs.length - i }}>
                 {med.imageUrl
                   // eslint-disable-next-line @next/next/no-img-element
@@ -205,17 +205,17 @@ function PrescriptionCard({
               </div>
             ))}
           </div>
-          <span className="text-sm text-gray-500 font-medium ml-1">약 {g.meds.length}종</span>
+          <span className="text-sm text-yc-neutral500 font-medium ml-1">약 {g.meds.length}종</span>
           {g.meds.some(m => m.hasInteractionWarning) && (
-            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⚠️ 상호작용</span>
+            <span className="text-xs bg-yc-warningBg text-yc-warningText px-2 py-0.5 rounded-full">⚠️ 상호작용</span>
           )}
         </div>
 
         {/* 프로그레스바 */}
         {progress != null && (
           <div className="mb-2">
-            <p className="text-xs text-gray-500 mb-1.5">⏰ {progressLabel}</p>
-            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <p className="text-xs text-yc-neutral500 mb-1.5">⏰ {progressLabel}</p>
+            <div className="w-full h-1.5 bg-yc-neutral200 rounded-full overflow-hidden">
               <div className={`h-full rounded-full ${barColor(g.expired, daysLeft)}`}
                 style={{ width: `${progress}%` }} />
             </div>
@@ -223,25 +223,25 @@ function PrescriptionCard({
         )}
 
         {/* 펼치기 링크 */}
-        <p className="text-xs text-blue-500 font-medium mt-1">
+        <p className="text-xs text-yc-blue500 font-medium mt-1">
           {open ? '접기 ▲' : '눌러서 자세히 보기 ›'}
         </p>
       </button>
 
       {/* ── 펼쳐진 상세 뷰 ── */}
       {open && (
-        <div className="px-4 pb-4 border-t border-gray-100">
+        <div className="px-4 pb-4 border-t border-yc-neutral100">
           {/* 약국 연락처 */}
           {(g.pharmacyPhone || g.pharmacyAddress) && (
             <div className="py-3 space-y-0.5">
               {g.pharmacyPhone && (
                 <a href={`tel:${g.pharmacyPhone.replace(/[^0-9]/g, '')}`}
                   onClick={e => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 text-sm text-blue-600 font-medium">
+                  className="inline-flex items-center gap-1 text-sm text-yc-blue500 font-medium">
                   📞 {g.pharmacyPhone}
                 </a>
               )}
-              {g.pharmacyAddress && <p className="text-xs text-gray-400 truncate">📍 {g.pharmacyAddress}</p>}
+              {g.pharmacyAddress && <p className="text-xs text-yc-neutral400 truncate">📍 {g.pharmacyAddress}</p>}
             </div>
           )}
 
@@ -267,17 +267,17 @@ function PrescriptionCard({
             <div className="pt-3">
               {confirmDel ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">{g.meds.length}개 모두 삭제?</span>
+                  <span className="text-sm text-yc-neutral500">{g.meds.length}개 모두 삭제?</span>
                   <button onClick={deleteAll} disabled={busyDel}
-                    className="text-sm font-semibold text-red-600 px-3 py-1.5 rounded-lg bg-red-50 active:bg-red-100 disabled:opacity-50">
+                    className="text-sm font-semibold text-yc-error px-3 py-1.5 rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
                     {busyDel ? '삭제 중…' : '예, 삭제'}
                   </button>
                   <button onClick={() => setConfirmDel(false)} disabled={busyDel}
-                    className="text-sm text-gray-500 px-3 py-1.5 rounded-lg active:bg-gray-100">아니오</button>
+                    className="text-sm text-yc-neutral500 px-3 py-1.5 rounded-yc-md active:bg-yc-neutral100">아니오</button>
                 </div>
               ) : (
                 <button onClick={() => setConfirmDel(true)}
-                  className="w-full h-10 rounded-xl border border-red-100 text-red-400 text-sm font-medium active:bg-red-50">
+                  className="w-full h-10 rounded-yc-md border border-yc-error/20 text-yc-error/70 text-sm font-medium active:bg-yc-errorBg">
                   🗑 이 처방전 약 {g.meds.length}개 모두 삭제
                 </button>
               )}
@@ -296,11 +296,11 @@ export default function PrescriptionSection({ groups }: { groups: HospitalGroup[
   if (groups.length === 0) return (
     <div className="flex gap-2">
       <Link href="/medications/ocr"
-        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-2xl border-2 border-dashed border-blue-200 text-blue-500 text-sm font-semibold active:bg-blue-50">
+        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
         📸 처방전 촬영
       </Link>
       <Link href="/medications/add?tab=prescription"
-        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-2xl border-2 border-dashed border-blue-200 text-blue-500 text-sm font-semibold active:bg-blue-50">
+        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
         ✏️ 직접 등록
       </Link>
     </div>
@@ -315,11 +315,11 @@ export default function PrescriptionSection({ groups }: { groups: HospitalGroup[
       {/* 처방전 추가 CTA */}
       <div className="flex gap-2">
         <Link href="/medications/ocr"
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-2xl border-2 border-dashed border-blue-200 text-blue-500 text-sm font-semibold active:bg-blue-50">
+          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
           📸 처방전 촬영
         </Link>
         <Link href="/medications/add?tab=prescription"
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-2xl border-2 border-dashed border-blue-200 text-blue-500 text-sm font-semibold active:bg-blue-50">
+          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
           ✏️ 직접 등록
         </Link>
       </div>

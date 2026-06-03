@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
+import { Settings, Plus } from 'lucide-react'
 import AppHeader from '@/components/app-header'
+import { SectionHeader } from '@/components/yc/section-header'
 import PharmacyToast from './pharmacy-toast'
 import PrescriptionSection, { type MedCard, type HospitalGroup } from './prescription-section'
 import SupplementSection from './supplement-section'
@@ -143,54 +145,42 @@ export default async function WalletPage() {
       <AppHeader actions={
         <div className="flex items-center gap-2">
           <Link href="/settings"
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 text-lg active:bg-gray-200">
-            ⚙️
+            className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
+            <Settings size={20} />
           </Link>
           <Link href="/medications/add"
-            className="flex items-center gap-1 px-4 h-10 rounded-xl bg-blue-600 text-white text-sm font-bold active:bg-blue-800">
-            + 추가
+            className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:bg-yc-green700">
+            <Plus size={18} /> 추가
           </Link>
         </div>
       } />
       <div className="flex items-center justify-between pt-1">
         <div>
-          <h1 className="text-2xl font-bold text-gray-950">내 약지갑</h1>
-          <p className="text-sm text-gray-400 mt-0.5">종류별로 나눠서 한눈에</p>
+          <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>
+          <p className="text-sm text-yc-neutral400 mt-0.5">종류별로 나눠서 한눈에</p>
         </div>
         <div className="hidden md:flex items-center gap-2">
           <Link href="/settings"
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 text-lg active:bg-gray-200">
-            ⚙️
+            className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
+            <Settings size={20} />
           </Link>
           <Link href="/medications/add"
-            className="flex items-center gap-1 px-4 h-10 rounded-xl bg-blue-600 text-white text-sm font-bold active:bg-blue-800">
-            + 추가
+            className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:bg-yc-green700">
+            <Plus size={18} /> 추가
           </Link>
         </div>
       </div>
 
       {/* ── 카테고리 1: 처방약 · 일반약 ── */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
-          <span className="text-sm font-bold text-gray-600">
-            처방약 · 일반약
-            {rxOtcCount > 0 && <span className="text-gray-400 font-normal ml-1">({rxOtcCount}종)</span>}
-          </span>
-        </div>
+        <SectionHeader label="처방약 · 일반약" count={rxOtcCount} dotClassName="bg-yc-blue500" />
         <PrescriptionSection groups={prescriptionGroups} />
         <OtcSection meds={otcCards} regularPharmacyPhone={regularPharmacyPhone} />
       </div>
 
       {/* ── 카테고리 2: 영양제 · 보조제 ── */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
-          <span className="text-sm font-bold text-gray-600">
-            영양제 · 보조제
-            {suppCount > 0 && <span className="text-gray-400 font-normal ml-1">({suppCount}종)</span>}
-          </span>
-        </div>
+        <SectionHeader label="영양제 · 보조제" count={suppCount} dotClassName="bg-yc-green600" />
         <SupplementSection meds={supplementCards} />
       </div>
     </div>

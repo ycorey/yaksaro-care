@@ -163,7 +163,7 @@ export default function MedCardItem(p: MedCardItemProps) {
   return (
     <div className="flex items-start gap-4">
       {/* 약 사진 */}
-      <div className="w-14 h-14 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">
+      <div className="w-14 h-14 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={p.name} className="w-full h-full object-cover" />
@@ -181,17 +181,17 @@ export default function MedCardItem(p: MedCardItemProps) {
                   onChange={e => { setName(e.target.value); setPicked(null) }}
                   onBlur={() => setTimeout(() => setDropOpen(false), 150)}
                   onFocus={() => { if (hits) setDropOpen(true) }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base font-bold"
+                  className="w-full border border-yc-neutral300 rounded-yc-md px-3 py-2 text-base font-bold"
                   placeholder="약 이름 검색"
                   autoComplete="off"
                 />
                 {picked && (
-                  <p className="text-xs text-green-600 mt-1">
+                  <p className="text-xs text-yc-green600 mt-1">
                     ✓ {picked.type === 'supplement' ? '건강기능식품' : '의약품'} 연결됨 — 사진·정보 자동 표시
                   </p>
                 )}
                 {dropOpen && hits && (
-                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-yc-neutral200 rounded-yc-md shadow-[var(--yc-shadow-lg)] overflow-hidden max-h-56 overflow-y-auto">
                     {hits.drugs.map(d => (
                       <button
                         key={d.id} type="button"
@@ -200,15 +200,15 @@ export default function MedCardItem(p: MedCardItemProps) {
                           setName(d.item_name)
                           setDropOpen(false)
                         }}
-                        className="w-full text-left px-3 py-2.5 active:bg-gray-50 flex items-center gap-2.5 border-b border-gray-50 last:border-0"
+                        className="w-full text-left px-3 py-2.5 active:bg-yc-neutral50 flex items-center gap-2.5 border-b border-yc-neutral100 last:border-0"
                       >
                         <span>💊</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-gray-900 truncate">{d.item_name}</span>
-                          {d.entp_name && <span className="block text-xs text-gray-400 truncate">{d.entp_name}</span>}
+                          <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
+                          {d.entp_name && <span className="block text-xs text-yc-neutral400 truncate">{d.entp_name}</span>}
                         </span>
                         {d.source === 'api' && (
-                          <span className="text-[10px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
+                          <span className="text-[10px] text-yc-blue500 bg-yc-infoBg px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
                         )}
                       </button>
                     ))}
@@ -216,12 +216,12 @@ export default function MedCardItem(p: MedCardItemProps) {
                       <button
                         key={s.id} type="button"
                         onClick={() => { setPicked({ type: 'supplement', id: s.id, name: s.product_name }); setName(s.product_name); setDropOpen(false) }}
-                        className="w-full text-left px-3 py-2.5 active:bg-gray-50 flex items-center gap-2.5 border-b border-gray-50 last:border-0"
+                        className="w-full text-left px-3 py-2.5 active:bg-yc-neutral50 flex items-center gap-2.5 border-b border-yc-neutral100 last:border-0"
                       >
                         <span>🌿</span>
                         <span className="min-w-0">
-                          <span className="block text-sm font-medium text-gray-900 truncate">{s.product_name}</span>
-                          {s.company_name && <span className="block text-xs text-gray-400 truncate">{s.company_name}</span>}
+                          <span className="block text-sm font-medium text-yc-neutral900 truncate">{s.product_name}</span>
+                          {s.company_name && <span className="block text-xs text-yc-neutral400 truncate">{s.company_name}</span>}
                         </span>
                       </button>
                     ))}
@@ -229,58 +229,58 @@ export default function MedCardItem(p: MedCardItemProps) {
                 )}
               </div>
             ) : (
-              <p className="text-lg font-bold text-gray-900">{p.name}</p>
+              <p className="text-lg font-bold text-yc-neutral900">{p.name}</p>
             )}
             <div className="flex gap-2">
-              <label className="flex-1 text-xs text-gray-500">1회량
+              <label className="flex-1 text-xs text-yc-neutral500">1회량
                 <input value={amount} onChange={e => setAmount(e.target.value)} inputMode="numeric"
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm mt-0.5" />
+                  className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
               </label>
-              <label className="flex-1 text-xs text-gray-500">1일 횟수
+              <label className="flex-1 text-xs text-yc-neutral500">1일 횟수
                 <input value={perDay} onChange={e => setPerDay(e.target.value)} inputMode="numeric"
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm mt-0.5" />
+                  className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
               </label>
-              <label className="flex-1 text-xs text-gray-500">총 일수
+              <label className="flex-1 text-xs text-yc-neutral500">총 일수
                 <input value={days} onChange={e => setDays(e.target.value)} inputMode="numeric"
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm mt-0.5" />
+                  className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
               </label>
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={save} disabled={busy}
-                className="flex-1 h-10 rounded-lg bg-blue-600 text-white text-sm font-semibold active:bg-blue-800 disabled:opacity-50">
+                className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-display active:opacity-90 disabled:opacity-50">
                 {busy ? '저장 중…' : '저장'}
               </button>
               <button onClick={() => setMode('view')} disabled={busy}
-                className="flex-1 h-10 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold active:bg-gray-100">
+                className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-display active:bg-yc-neutral100">
                 취소
               </button>
             </div>
           </div>
         ) : (
           <>
-            <p className="text-2xl font-bold text-gray-950 leading-snug">
+            <p className="text-2xl font-bold text-yc-neutral900 leading-snug">
               {p.name}
-              {p.ingredient && <span className="text-base font-normal text-gray-400 ml-1">({p.ingredient})</span>}
+              {p.ingredient && <span className="text-base font-normal text-yc-neutral400 ml-1">({p.ingredient})</span>}
             </p>
-            {p.sub && <p className="text-sm text-gray-400 mt-0.5">{p.sub}</p>}
-            {dosage && <p className="text-sm text-blue-600 mt-0.5">{dosage}</p>}
+            {p.sub && <p className="text-sm text-yc-neutral400 mt-0.5">{p.sub}</p>}
+            {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
 
             {/* 분류 배지 */}
             {info?.found && (info.category || info.classType) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {info.category && <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5">{info.category}</span>}
-                {info.classType && <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2.5 py-0.5">{info.classType}</span>}
+                {info.category && <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{info.category}</span>}
+                {info.classType && <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{info.classType}</span>}
               </div>
             )}
 
             {/* 효능 토글 */}
             {hasDetail && (
               <div className="mt-2">
-                <button onClick={() => setOpen(o => !o)} className="text-sm text-blue-600 font-medium">
+                <button onClick={() => setOpen(o => !o)} className="text-sm text-yc-blue500 font-medium">
                   {open ? '닫기 ▲' : 'ⓘ 이 약은 어떤 약인가요? ▼'}
                 </button>
                 {open && (
-                  <div className="bg-blue-50 rounded-lg px-3 py-2.5 mt-1.5 space-y-2 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-yc-infoBg rounded-yc-md px-3 py-2.5 mt-1.5 space-y-2 text-sm text-yc-neutral700 leading-relaxed">
                     {info?.efcy      && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
                     {info?.useMethod && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
                     {info?.atpn      && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
@@ -292,18 +292,18 @@ export default function MedCardItem(p: MedCardItemProps) {
             {/* 수정·삭제 */}
             {mode === 'confirmDelete' ? (
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-gray-500">삭제할까요?</span>
+                <span className="text-sm text-yc-neutral500">삭제할까요?</span>
                 <button onClick={remove} disabled={busy}
-                  className="text-sm font-semibold text-red-600 px-3 py-1 rounded-lg bg-red-50 active:bg-red-100 disabled:opacity-50">
+                  className="text-sm font-semibold text-yc-error px-3 py-1 rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
                   {busy ? '삭제 중…' : '예, 삭제'}
                 </button>
                 <button onClick={() => setMode('view')} disabled={busy}
-                  className="text-sm text-gray-500 px-3 py-1 rounded-lg active:bg-gray-100">아니오</button>
+                  className="text-sm text-yc-neutral500 px-3 py-1 rounded-yc-md active:bg-yc-neutral100">아니오</button>
               </div>
             ) : (
               <div className="flex gap-3 mt-2">
-                <button onClick={() => setMode('edit')} className="text-sm text-gray-500 active:text-blue-600">수정</button>
-                <button onClick={() => setMode('confirmDelete')} className="text-sm text-gray-500 active:text-red-600">삭제</button>
+                <button onClick={() => setMode('edit')} className="text-sm text-yc-neutral500 active:text-yc-blue500">수정</button>
+                <button onClick={() => setMode('confirmDelete')} className="text-sm text-yc-neutral500 active:text-yc-error">삭제</button>
               </div>
             )}
           </>
