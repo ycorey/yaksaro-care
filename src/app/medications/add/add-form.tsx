@@ -25,10 +25,11 @@ const FREQUENCIES = ['하루 1회', '하루 2회', '하루 3회', '하루 4회',
 // ── 버튼 스타일 상수 ──────────────────────────────────────────────────
 // 모든 선택·스테퍼·프리셋 버튼이 동일한 높이(h-12 = 48px)를 공유한다.
 const BTN_H = 'h-12'
-const BTN_BASE = `${BTN_H} flex items-center justify-center rounded-xl font-semibold text-sm transition-colors`
-const BTN_ACTIVE   = `${BTN_BASE} bg-blue-600 text-white`
-const BTN_INACTIVE = `${BTN_BASE} bg-gray-100 text-gray-700 active:bg-gray-200`
-const BTN_STEPPER  = `${BTN_H} w-12 flex items-center justify-center rounded-xl bg-gray-100 text-gray-700 text-xl font-bold active:bg-gray-200 flex-shrink-0`
+const BTN_BASE = `${BTN_H} flex items-center justify-center rounded-yc-md font-display text-sm transition-colors`
+const BTN_ACTIVE   = `${BTN_BASE} bg-yc-green600 text-white`
+const BTN_INACTIVE = `${BTN_BASE} bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200`
+const BTN_STEPPER  = `${BTN_H} w-12 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-xl font-bold active:bg-yc-neutral200 flex-shrink-0`
+const INPUT = `w-full border border-yc-neutral200 rounded-yc-md px-4 ${BTN_H} text-sm text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:border-yc-green600`
 
 // ── 스테퍼 컴포넌트 ───────────────────────────────────────────────────
 function Stepper({
@@ -50,8 +51,8 @@ function Stepper({
   return (
     <div className="flex items-center gap-3">
       <button type="button" onClick={dec} className={BTN_STEPPER}>−</button>
-      <span className={`flex-1 ${BTN_H} flex items-center justify-center text-lg font-bold text-gray-900 bg-gray-50 rounded-xl`}>
-        {value != null ? `${value}${unit}` : <span className="text-gray-400 text-base font-normal">미입력</span>}
+      <span className={`flex-1 ${BTN_H} flex items-center justify-center text-lg font-bold text-yc-neutral900 bg-yc-neutral50 rounded-yc-md`}>
+        {value != null ? `${value}${unit}` : <span className="text-yc-neutral400 text-base font-normal">미입력</span>}
       </span>
       <button type="button" onClick={inc} className={BTN_STEPPER}>+</button>
     </div>
@@ -87,15 +88,15 @@ function DrugSearch({
 
   if (selected) {
     return (
-      <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+      <div className="flex items-center gap-3 bg-yc-infoBg border border-yc-blue500/30 rounded-yc-md px-4 py-3">
         <span className="text-xl">{selected.type === 'supplement' ? '🌿' : '💊'}</span>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900 text-base truncate">{selected.name}</p>
-          {'sub' in selected && selected.sub && <p className="text-xs text-gray-400 truncate mt-0.5">{selected.sub}</p>}
-          {selected.type === 'custom' && <p className="text-xs text-amber-600 mt-0.5">직접 입력</p>}
+          <p className="font-bold text-yc-neutral900 text-base truncate">{selected.name}</p>
+          {'sub' in selected && selected.sub && <p className="text-xs text-yc-neutral400 truncate mt-0.5">{selected.sub}</p>}
+          {selected.type === 'custom' && <p className="text-xs text-yc-warning mt-0.5">직접 입력</p>}
         </div>
         <button type="button" onClick={onClear}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 text-lg flex-shrink-0">
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-yc-infoBg text-yc-blue500 text-lg flex-shrink-0">
           ×
         </button>
       </div>
@@ -113,44 +114,44 @@ function DrugSearch({
         onChange={e => setQuery(e.target.value)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder={mode === 'supplement' ? '예: 종합비타민, 오메가3, 유산균' : '예: 타이레놀, 아목시실린, 록시틴'}
-        className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400`}
+        className={INPUT}
         autoComplete="off"
       />
       {open && (
-        <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+        <div className="absolute z-20 top-full mt-1 w-full bg-white border border-yc-neutral200 rounded-yc-md shadow-[var(--yc-shadow-lg)] overflow-hidden max-h-60 overflow-y-auto">
           {hasAny ? (
             <>
               {drugs.map(d => (
                 <button key={d.id} type="button"
                   onClick={() => { onSelect(d, 'drug'); setQuery(''); setOpen(false) }}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
+                  className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
                   <span>💊</span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium text-gray-900 truncate">{d.item_name}</span>
-                    {d.entp_name && <span className="block text-xs text-gray-400 truncate">{d.entp_name}</span>}
+                    <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
+                    {d.entp_name && <span className="block text-xs text-yc-neutral400 truncate">{d.entp_name}</span>}
                   </span>
                   {d.source === 'api' && (
-                    <span className="text-[10px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
+                    <span className="text-[10px] bg-yc-infoBg text-yc-blue500 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
                   )}
                 </button>
               ))}
               {supps.map(s => (
                 <button key={s.id} type="button"
                   onClick={() => { onSelect(s, 'supplement'); setQuery(''); setOpen(false) }}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
+                  className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
                   <span>🌿</span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-gray-900 truncate">{s.product_name}</span>
-                    {s.company_name && <span className="block text-xs text-gray-400 truncate">{s.company_name}</span>}
+                    <span className="block text-sm font-medium text-yc-neutral900 truncate">{s.product_name}</span>
+                    {s.company_name && <span className="block text-xs text-yc-neutral400 truncate">{s.company_name}</span>}
                   </span>
                 </button>
               ))}
               {onCustom && query && (
-                <div className="border-t border-gray-100 px-4 py-3">
+                <div className="border-t border-yc-neutral100 px-4 py-3">
                   <button type="button" onClick={() => { onCustom(query); setQuery(''); setOpen(false) }}
-                    className="text-xs text-gray-400 hover:text-blue-600">
+                    className="text-xs text-yc-neutral400 hover:text-yc-green600">
                     목록에 없음 — &quot;{query}&quot; 직접 추가
                   </button>
                 </div>
@@ -158,10 +159,10 @@ function DrugSearch({
             </>
           ) : (
             <div className="px-4 py-3">
-              <p className="text-sm text-gray-500 mb-2">검색 결과가 없습니다.</p>
+              <p className="text-sm text-yc-neutral500 mb-2">검색 결과가 없습니다.</p>
               {onCustom && (
                 <button type="button" onClick={() => { onCustom(query); setQuery(''); setOpen(false) }}
-                  className="text-sm text-blue-600 font-medium">
+                  className="text-sm text-yc-green600 font-medium">
                   &quot;{query}&quot; 직접 추가
                 </button>
               )}
@@ -220,11 +221,11 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
     <form action={handleSubmit} className="space-y-5">
 
       {/* ── 탭 (flex-1로 동일 너비 유지) ── */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+      <div className="flex gap-1 p-1 bg-yc-neutral100 rounded-yc-md">
         {TABS.map(t => (
           <button key={t.key} type="button" onClick={() => switchTab(t.key)}
-            className={`flex-1 ${BTN_H} rounded-lg text-sm font-semibold transition-colors ${
-              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+            className={`flex-1 ${BTN_H} rounded-yc-sm text-sm font-display transition-colors ${
+              tab === t.key ? 'bg-white text-yc-neutral900 shadow-[var(--yc-shadow-sm)]' : 'text-yc-neutral500'
             }`}
           >
             {t.icon} {t.label}
@@ -258,27 +259,27 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
       ═══════════════════════════════════════════════════════════════ */}
       {tab === 'prescription' && (
         <div className="space-y-5">
-          <div className="bg-blue-50 rounded-xl px-4 py-3 text-sm text-blue-700">
+          <div className="bg-yc-infoBg rounded-yc-md px-4 py-3 text-sm text-yc-infoText">
             처방전 사진이 있으면{' '}
             <a href="/medications/ocr" className="font-bold underline">OCR 자동 입력</a>이 더 정확합니다.
           </div>
 
           {/* 약 이름 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">약 이름 *</p>
+            <p className="text-sm font-semibold text-yc-neutral700">약 이름 *</p>
             <DrugSearch mode="drug" selected={selected}
               onSelect={handleDrugSelect} onClear={clearSelected} onCustom={n => setSelected({ type: 'custom', name: n })} />
           </div>
 
           {/* 1회 투약량 — 스테퍼 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">1회 투약량 <span className="font-normal text-gray-400">(정·캡슐·포 수)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">1회 투약량 <span className="font-normal text-yc-neutral400">(정·캡슐·포 수)</span></p>
             <Stepper value={doseAmount} onChange={setDoseAmount} min={0.5} step={0.5} max={10} />
           </div>
 
           {/* 1일 횟수 — 버튼 그룹 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">1일 투여횟수</p>
+            <p className="text-sm font-semibold text-yc-neutral700">1일 투여횟수</p>
             <div className="grid grid-cols-3 gap-2">
               {[1, 2, 3].map(n => (
                 <button key={n} type="button"
@@ -293,7 +294,7 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
 
           {/* 총 투약일수 — 스테퍼 + 프리셋 버튼 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">총 투약일수</p>
+            <p className="text-sm font-semibold text-yc-neutral700">총 투약일수</p>
             <Stepper value={totalDays} onChange={setTotalDays} min={1} step={1} max={365} unit="일" />
             {/* 자주 쓰는 일수 프리셋 — 동일 높이 버튼 */}
             <div className="grid grid-cols-5 gap-2">
@@ -310,9 +311,8 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
 
           {/* 병원명 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">발급 병원 <span className="font-normal text-gray-400">(선택)</span></p>
-            <input name="hospital_name" type="text" placeholder="예: 서울내과의원"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400`} />
+            <p className="text-sm font-semibold text-yc-neutral700">발급 병원 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <input name="hospital_name" type="text" placeholder="예: 서울내과의원" className={INPUT} />
           </div>
         </div>
       )}
@@ -323,21 +323,19 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
       {tab === 'otc' && (
         <div className="space-y-5">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">약 이름 *</p>
+            <p className="text-sm font-semibold text-yc-neutral700">약 이름 *</p>
             <DrugSearch mode="drug" selected={selected}
               onSelect={handleDrugSelect} onClear={clearSelected} onCustom={n => setSelected({ type: 'custom', name: n })} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">용량 <span className="font-normal text-gray-400">(선택)</span></p>
-            <input name="dose" type="text" placeholder="예: 500mg, 1정, 2캡슐"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400`} />
+            <p className="text-sm font-semibold text-yc-neutral700">용량 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <input name="dose" type="text" placeholder="예: 500mg, 1정, 2캡슐" className={INPUT} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">복용 횟수 <span className="font-normal text-gray-400">(선택)</span></p>
-            <select name="frequency"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm bg-white text-gray-900 focus:outline-none focus:border-blue-400`}>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 횟수 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <select name="frequency" className={`${INPUT} bg-white`}>
               <option value="">선택 안 함</option>
               {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
@@ -351,37 +349,34 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
       {tab === 'supplement' && (
         <div className="space-y-5">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">영양제 이름 *</p>
+            <p className="text-sm font-semibold text-yc-neutral700">영양제 이름 *</p>
             <DrugSearch mode="supplement" selected={selected}
               onSelect={handleDrugSelect} onClear={clearSelected} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">용량/복용량 <span className="font-normal text-gray-400">(선택)</span></p>
-            <input name="dose" type="text" placeholder="예: 1정, 2캡슐, 1포"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400`} />
+            <p className="text-sm font-semibold text-yc-neutral700">용량/복용량 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <input name="dose" type="text" placeholder="예: 1정, 2캡슐, 1포" className={INPUT} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">복용 빈도 <span className="font-normal text-gray-400">(선택)</span></p>
-            <select name="frequency"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm bg-white text-gray-900 focus:outline-none focus:border-blue-400`}>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 빈도 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <select name="frequency" className={`${INPUT} bg-white`}>
               <option value="">선택 안 함</option>
               {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-700">복용 시작일 <span className="font-normal text-gray-400">(선택)</span></p>
-            <input name="started_at" type="date"
-              className={`w-full border border-gray-200 rounded-xl px-4 ${BTN_H} text-sm text-gray-900 focus:outline-none focus:border-blue-400`} />
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시작일 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <input name="started_at" type="date" className={INPUT} />
           </div>
         </div>
       )}
 
       {/* ── 저장 버튼 ── */}
       <button type="submit" disabled={saving || !canSubmit}
-        className={`w-full ${BTN_H} rounded-2xl bg-blue-600 text-white text-base font-bold active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors`}>
+        className={`w-full ${BTN_H} rounded-yc-lg bg-yc-green600 text-white text-base font-display active:bg-yc-green700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors`}>
         {saving ? '저장 중...' : '복약 목록에 추가'}
       </button>
     </form>

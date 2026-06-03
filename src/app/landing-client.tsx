@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Provider } from '@supabase/supabase-js'
 import InAppBrowserGuard from './login/inapp-browser-guard'
+import { LogoMark, LogoWordmark } from '@/components/yc/logo'
 
 // ── 소셜 아이콘 ─────────────────────────────────────────────────────────
 function KakaoIcon() {
@@ -58,35 +59,35 @@ export default function LandingClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center">
+    <div className="min-h-screen bg-yc-pageBg flex justify-center">
       <InAppBrowserGuard />
 
-      <div className="w-full max-w-[430px] bg-gray-50 px-5 pb-12">
+      <div className="w-full max-w-[430px] px-5 pb-12 anim-fade">
 
         {/* 로고 헤더 */}
         <header className="flex items-center gap-2 pt-7 pb-2">
-          <span className="text-2xl">💊</span>
-          <span className="text-base font-bold text-gray-950">약사로 케어</span>
+          <LogoMark size={26} />
+          <LogoWordmark className="text-lg" />
         </header>
 
         {/* ① 히어로 */}
         <section className="pt-10 pb-8">
-          <p className="text-gray-500 text-lg mb-2">병원 갈 때 무슨 약 먹는지 기억나시나요?</p>
-          <h1 className="text-3xl font-black text-gray-950 tracking-tight leading-tight mb-4">
+          <p className="text-yc-neutral500 text-lg mb-2">병원 갈 때 무슨 약 먹는지 기억나시나요?</p>
+          <h1 className="font-display text-[34px] text-yc-neutral900 tracking-tight leading-[1.15] mb-4">
             이제 드시는 약,<br />3초 만에 보여주세요.
           </h1>
-          <p className="text-base text-gray-500 leading-relaxed mb-7">
+          <p className="text-base text-yc-neutral500 leading-relaxed mb-7">
             내 모든 약을 한 곳에 담아두는<br />
             세상에서 가장 심플한 디지털 약 지갑,{' '}
-            <span className="font-bold text-gray-700">약사로 케어</span>
+            <span className="font-display text-yc-neutral900">약사<span className="text-yc-green600">로</span>케어</span>
           </p>
 
-          {/* CTA — 카카오 우선 */}
+          {/* CTA — 카카오 우선 (카카오/구글 공식 브랜드 색은 유지) */}
           <div className="space-y-3">
             <button
               onClick={() => handleOAuthSignIn('kakao')}
               disabled={!!loading}
-              className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-2xl text-xl font-bold shadow-sm active:opacity-75 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-yc-lg text-xl font-display shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
               style={{ backgroundColor: '#FEE500', color: '#191919' }}
             >
               {loading === 'kakao'
@@ -97,7 +98,7 @@ export default function LandingClient() {
             <button
               onClick={() => handleOAuthSignIn('google')}
               disabled={!!loading}
-              className="w-full flex items-center justify-center gap-2.5 py-[16px] rounded-2xl text-base font-bold text-gray-950 bg-white border border-gray-200 shadow-sm active:opacity-75 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2.5 py-[16px] rounded-yc-lg text-base font-display text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
             >
               {loading === 'google'
                 ? <span className="animate-pulse">연결 중...</span>
@@ -106,35 +107,35 @@ export default function LandingClient() {
           </div>
         </section>
 
-        {/* ② 핵심 가치 — 3카테고리 미리보기 */}
+        {/* ② 핵심 가치 — 3카테고리 미리보기 (랜딩 예시 콘텐츠) */}
         <section className="space-y-4 pt-6">
-          <p className="text-sm font-bold text-gray-400 tracking-wide px-1">
+          <p className="text-sm font-bold text-yc-neutral400 tracking-wide px-1">
             내 약 지갑은 이렇게 정리됩니다
           </p>
 
           {/* 🏥 병원 처방약 — 아코디언 미리보기 */}
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
             <button
               onClick={() => setRxOpen(v => !v)}
-              className="w-full flex items-center justify-between px-6 py-5 text-left active:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-6 py-5 text-left active:bg-yc-neutral50 transition-colors"
             >
               <div>
-                <p className="text-xl font-bold text-gray-950">🏥 서울내과 처방약</p>
-                <p className="text-sm text-gray-400 mt-0.5">5종 · 눌러서 펼치기</p>
+                <p className="font-display text-xl text-yc-neutral900">🏥 서울내과 처방약</p>
+                <p className="text-sm text-yc-neutral400 mt-0.5">5종 · 눌러서 펼치기</p>
               </div>
-              <span className={`text-gray-400 transition-transform duration-200 ${rxOpen ? 'rotate-180' : ''}`}>▾</span>
+              <span className={`text-yc-neutral400 transition-transform duration-200 ${rxOpen ? 'rotate-180' : ''}`}>▾</span>
             </button>
             {rxOpen && (
-              <div className="px-6 pb-5 border-t border-gray-50">
+              <div className="px-6 pb-5 border-t border-yc-neutral100">
                 <ul className="pt-4 space-y-3">
                   {['아모잘탄정 5/50mg', '리피토정 10mg', '트라젠타정', '아스피린프로텍트', '란스톤엘에프디티정'].map(n => (
                     <li key={n} className="flex items-center gap-2.5">
                       <span className="text-lg">💊</span>
-                      <span className="text-base font-medium text-gray-700">{n}</span>
+                      <span className="text-base font-medium text-yc-neutral700">{n}</span>
                     </li>
                   ))}
                 </ul>
-                <button className="mt-4 w-full py-[14px] rounded-2xl bg-blue-50 text-blue-700 text-base font-bold">
+                <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-infoBg text-yc-infoText text-base font-display">
                   🌅 아침 약 한번에 먹기
                 </button>
               </div>
@@ -142,35 +143,35 @@ export default function LandingClient() {
           </div>
 
           {/* 🌿 상시 영양제 */}
-          <div className="bg-green-50 rounded-3xl border border-green-100 shadow-sm overflow-hidden">
+          <div className="bg-yc-green50 rounded-yc-xl border border-[#89CCB3] shadow-[var(--yc-shadow-sm)] overflow-hidden">
             <div className="px-6 pt-5 pb-2">
-              <p className="text-xl font-bold text-green-900">🌿 상시 영양제</p>
-              <p className="text-sm text-green-600 mt-0.5">4종 매일 복용 중</p>
+              <p className="font-display text-xl text-yc-green700">🌿 상시 영양제</p>
+              <p className="text-sm text-yc-green600 mt-0.5">4종 매일 복용 중</p>
             </div>
             <div className="px-6 pb-5">
               <ul className="pt-3 space-y-3">
                 {['종합비타민', '오메가3', '유산균', '홍삼정'].map(n => (
                   <li key={n} className="flex items-center gap-2.5">
                     <span className="text-lg">🌿</span>
-                    <span className="text-base font-medium text-green-800">{n}</span>
+                    <span className="text-base font-medium text-yc-green700">{n}</span>
                   </li>
                 ))}
               </ul>
-              <button className="mt-4 w-full py-[14px] rounded-2xl bg-green-100 text-green-800 text-base font-bold">
+              <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-green100 text-yc-green700 text-base font-display">
                 🌅 아침 영양제 한번에 먹기
               </button>
             </div>
           </div>
 
           {/* 💊 약국 일반약 — 칩 */}
-          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-yc-xl border border-yc-neutral100 overflow-hidden">
             <div className="px-6 pt-5 pb-1">
-              <p className="text-base font-bold text-gray-500">💊 약국 일반약</p>
-              <p className="text-xs text-gray-400 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
+              <p className="font-display text-base text-yc-neutral500">💊 약국 일반약</p>
+              <p className="text-xs text-yc-neutral400 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
             </div>
             <div className="px-6 py-4 flex flex-wrap gap-2">
               {['타이레놀', '훼스탈', '판콜에이'].map(n => (
-                <span key={n} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-gray-600">
+                <span key={n} className="flex items-center gap-1.5 bg-yc-neutral50 border border-yc-neutral200 rounded-full px-4 py-2 text-sm font-medium text-yc-neutral600">
                   💊 {n}
                 </span>
               ))}
@@ -180,15 +181,15 @@ export default function LandingClient() {
 
         {/* ③ 신뢰 및 규제 안심 */}
         <section className="pt-10 space-y-3">
-          <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 flex items-start gap-2.5">
+          <div className="bg-white rounded-yc-lg border border-yc-neutral100 px-5 py-4 flex items-start gap-2.5">
             <span className="text-base flex-shrink-0 mt-0.5">🔒</span>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-yc-neutral500 leading-relaxed">
               주민등록번호 등 민감한 개인정보는 OCR 추출 즉시 완벽히 비식별화(X 처리) 후
               즉시 파기되므로 안심하고 촬영하세요.
             </p>
           </div>
-          <p className="text-xs text-gray-400 text-center leading-relaxed px-2 pt-2">
-            약사로 케어는 복약 기록·참고 서비스입니다.<br />
+          <p className="text-xs text-yc-neutral400 text-center leading-relaxed px-2 pt-2">
+            약사로케어는 복약 기록·참고 서비스입니다.<br />
             의학적 진단이나 처방을 대체하지 않습니다.
           </p>
         </section>

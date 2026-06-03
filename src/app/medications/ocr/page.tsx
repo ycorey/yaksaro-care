@@ -23,8 +23,8 @@ export default async function OcrPage() {
   return (
     <div className="space-y-6">
       <div className="pt-2">
-        <h1 className="text-xl font-bold text-gray-900">처방전 촬영</h1>
-        <p className="text-sm text-gray-500 mt-0.5">처방전을 찍으면 약 목록이 자동으로 추출됩니다.</p>
+        <h1 className="font-display text-xl text-yc-neutral900">처방전 촬영</h1>
+        <p className="text-sm text-yc-neutral500 mt-0.5">처방전을 찍으면 약 목록이 자동으로 추출됩니다.</p>
       </div>
       <OcrUploader regularPharmacy={regularPharmacy} />
     </div>

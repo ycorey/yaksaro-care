@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 type Medicine = {
@@ -227,14 +226,14 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       {(state === 'idle') && (
         <div className="space-y-3">
           {preview ? (
-            <div className="border-2 border-dashed border-blue-200 rounded-2xl p-4 text-center bg-blue-50/20">
+            <div className="border-2 border-dashed border-yc-blue500/30 rounded-yc-lg p-4 text-center bg-yc-infoBg/30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="처방전 미리보기" className="max-h-60 mx-auto rounded-lg object-contain" />
+              <img src={preview} alt="처방전 미리보기" className="max-h-60 mx-auto rounded-yc-md object-contain" />
             </div>
           ) : (
-            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+            <div className="border-2 border-dashed border-yc-neutral200 rounded-yc-lg p-8 text-center">
               <div className="text-4xl mb-3">📸</div>
-              <p className="font-medium text-gray-700">처방전 사진을 올려주세요</p>
+              <p className="font-medium text-yc-neutral700">처방전 사진을 올려주세요</p>
             </div>
           )}
 
@@ -258,7 +257,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <button
             type="button"
             onClick={() => cameraRef.current?.click()}
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-blue-600 text-white font-medium active:bg-blue-800 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700 transition-colors"
           >
             📷 카메라 촬영
           </button>
@@ -266,7 +265,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium active:bg-gray-100 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md border border-yc-neutral300 bg-white text-yc-neutral700 font-display active:bg-yc-neutral100 transition-colors"
           >
             🖼 사진 선택
           </button>
@@ -274,13 +273,13 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3.5 text-sm text-red-700">
+        <div className="bg-yc-errorBg border border-yc-error/30 rounded-yc-md px-4 py-3.5 text-sm text-yc-error">
           <p>{error}</p>
           {file && state === 'idle' && (
             <button
               type="button"
               onClick={() => runOcr(file, file)}
-              className="mt-3 w-full h-12 rounded-xl bg-blue-600 text-white text-base font-bold active:bg-blue-800 transition-colors"
+              className="mt-3 w-full h-12 rounded-yc-md bg-yc-green600 text-white text-base font-display active:bg-yc-green700 transition-colors"
             >
               🔄 같은 사진으로 다시 분석하기
             </button>
@@ -290,29 +289,29 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
       {state === 'uploading' && (
         <div className="space-y-4">
-          {/* 신뢰 메시지 */}
+          {/* 신뢰 메시지 — 스캔 빔 느낌의 펄스 */}
           <div className="text-center pt-4 pb-2">
-            <div className="text-4xl mb-4 animate-pulse">🔍</div>
-            <p className="text-xl font-bold text-gray-900 animate-pulse leading-snug px-2">
+            <div className="text-4xl mb-4 anim-spin inline-block">🔍</div>
+            <p className="font-display text-xl text-yc-neutral900 leading-snug px-2">
               처방전에서 안전하게<br />약 이름을 읽어오고 있습니다...
             </p>
-            <p className="text-sm text-gray-400 mt-2">CLOVA OCR → GPT 정제 처리 중</p>
+            <p className="text-sm text-yc-neutral400 mt-2">CLOVA OCR → GPT 정제 처리 중</p>
           </div>
 
           {/* 스켈레톤 카드 × 4 */}
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-xl px-4 py-3.5 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+            <div key={i} className="bg-white border border-yc-neutral100 rounded-yc-md px-4 py-3.5 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-yc-neutral100 animate-pulse flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className={`h-4 bg-gray-100 animate-pulse rounded-full ${i % 2 === 0 ? 'w-3/4' : 'w-1/2'}`} />
-                <div className="h-3 bg-gray-100 animate-pulse rounded-full w-2/5" />
+                <div className={`h-4 bg-yc-neutral100 animate-pulse rounded-full ${i % 2 === 0 ? 'w-3/4' : 'w-1/2'}`} />
+                <div className="h-3 bg-yc-neutral100 animate-pulse rounded-full w-2/5" />
               </div>
             </div>
           ))}
 
           {/* 개인정보 보안 안심 문구 */}
-          <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-center">
-            <p className="text-xs text-gray-400 leading-relaxed">
+          <div className="bg-yc-neutral50 border border-yc-neutral100 rounded-yc-md px-4 py-3 text-center">
+            <p className="text-xs text-yc-neutral400 leading-relaxed">
               🔒 주민등록번호 등 민감한 개인정보는<br />
               읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.
             </p>
@@ -322,12 +321,12 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
       {/* 추출 실패 (0건) */}
       {state === 'done' && result && result.medicines.length === 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-4 text-center">
-          <p className="text-sm font-medium text-amber-800">약품을 인식하지 못했습니다.</p>
-          <p className="text-sm text-amber-600 mt-1">처방전이 잘 보이는 사진으로 다시 시도해보세요.</p>
+        <div className="bg-yc-warningBg border border-yc-warning/30 rounded-yc-md px-4 py-4 text-center">
+          <p className="text-sm font-medium text-yc-warningText">약품을 인식하지 못했습니다.</p>
+          <p className="text-sm text-yc-warning mt-1">처방전이 잘 보이는 사진으로 다시 시도해보세요.</p>
           <button
             onClick={() => { setState('idle'); setPreview(null); setFile(null) }}
-            className="mt-3 text-sm text-blue-600 font-medium"
+            className="mt-3 text-sm text-yc-blue500 font-medium"
           >
             다시 촬영
           </button>
@@ -339,14 +338,14 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         <div className="fixed inset-0 z-[100] bg-white overflow-y-auto" role="dialog" aria-modal="true">
 
           {/* 스티키 헤더 */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-white border-b border-yc-neutral100 px-5 py-4 flex items-center justify-between z-10">
             <div>
-              <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase">약사로 케어</p>
-              <p className="text-lg font-bold text-gray-950">방금 읽어온 처방전이 맞으신가요?</p>
+              <p className="text-[10px] font-bold text-yc-neutral400 tracking-[0.2em] uppercase">약사로케어</p>
+              <p className="font-display text-lg text-yc-neutral900">방금 읽어온 처방전이 맞으신가요?</p>
             </div>
             <button
               onClick={() => { setState('idle'); setPreview(null); setFile(null); setResult(null) }}
-              className="text-sm font-bold text-gray-400 px-3 py-2 rounded-xl active:bg-gray-100"
+              className="text-sm font-bold text-yc-neutral400 px-3 py-2 rounded-yc-md active:bg-yc-neutral100"
             >
               재촬영
             </button>
@@ -356,16 +355,16 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
             {/* 병원·약국 정보 */}
             {result.pharmacy_name && (
-              <div className="bg-gray-50 rounded-2xl px-5 py-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">🏥 발행 병원 / 조제 약국</p>
-                <p className="text-xl font-bold text-gray-900">{result.pharmacy_name}</p>
+              <div className="bg-yc-neutral50 rounded-yc-lg px-5 py-4">
+                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-2">🏥 발행 병원 / 조제 약국</p>
+                <p className="font-display text-xl text-yc-neutral900">{result.pharmacy_name}</p>
               </div>
             )}
 
             {/* 추출된 약품 목록 */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest">
                   💊 추출된 약품 목록 ({result.medicines.length - excluded.size}/{result.medicines.length}종 선택)
                 </p>
               </div>
@@ -382,10 +381,10 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   return (
                     <div
                       key={i}
-                      className={`bg-white border rounded-2xl px-5 py-4 transition-opacity ${excl ? 'opacity-35 border-gray-100' : 'border-gray-200'}`}
+                      className={`bg-white border rounded-yc-lg px-5 py-4 transition-opacity ${excl ? 'opacity-35 border-yc-neutral100' : 'border-yc-neutral200'}`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
+                        <div className="w-12 h-12 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
                           {di?.found && di.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
@@ -393,35 +392,35 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                         </div>
                         <div className="flex-1 min-w-0">
                           {med.edi_code && (
-                            <p className="text-xs font-mono text-gray-400 mb-0.5">[{med.edi_code}]</p>
+                            <p className="text-xs font-mono text-yc-neutral400 mb-0.5">[{med.edi_code}]</p>
                           )}
-                          <p className="text-2xl font-bold text-black leading-tight break-keep">
+                          <p className="text-2xl font-bold text-yc-neutral900 leading-tight break-keep">
                             {med.name}
                           </p>
                           {med.ingredient && (
-                            <p className="text-sm text-gray-400 mt-0.5">({med.ingredient})</p>
+                            <p className="text-sm text-yc-neutral400 mt-0.5">({med.ingredient})</p>
                           )}
                           {dosage && (
-                            <p className="text-sm font-medium text-blue-600 mt-2">{dosage}</p>
+                            <p className="text-sm font-medium text-yc-blue500 mt-2">{dosage}</p>
                           )}
                           {di === undefined && (
-                            <p className="text-xs text-gray-300 mt-2">약품 정보 조회 중…</p>
+                            <p className="text-xs text-yc-neutral300 mt-2">약품 정보 조회 중…</p>
                           )}
                           {di?.found && (
                             <div className="mt-2 space-y-1.5">
                               {(di.category || di.classType) && (
                                 <div className="flex flex-wrap gap-1.5">
                                   {di.category && (
-                                    <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5">{di.category}</span>
+                                    <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{di.category}</span>
                                   )}
                                   {di.classType && (
-                                    <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2.5 py-0.5">{di.classType}</span>
+                                    <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{di.classType}</span>
                                   )}
                                 </div>
                               )}
                               {di.efcy && (
-                                <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                                  <span className="font-semibold text-gray-600">효능 </span>{di.efcy}
+                                <p className="text-xs text-yc-neutral500 leading-relaxed line-clamp-2">
+                                  <span className="font-semibold text-yc-neutral600">효능 </span>{di.efcy}
                                 </p>
                               )}
                             </div>
@@ -429,7 +428,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                         </div>
                         <button
                           onClick={() => toggleExclude(i)}
-                          className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 mt-1 ${excl ? 'bg-gray-100 text-gray-400' : 'bg-red-50 text-red-500'}`}
+                          className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 mt-1 ${excl ? 'bg-yc-neutral100 text-yc-neutral400' : 'bg-yc-errorBg text-yc-error'}`}
                         >
                           {excl ? '제외됨' : '제외'}
                         </button>
@@ -441,8 +440,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             </div>
 
             {/* 조제 약국 검색 */}
-            <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 space-y-3">
-              <p className="text-sm font-semibold text-gray-700">🏪 조제 약국 <span className="font-normal text-gray-400">(선택)</span></p>
+            <div className="bg-white border border-yc-neutral200 rounded-yc-lg px-5 py-4 space-y-3">
+              <p className="text-sm font-semibold text-yc-neutral700">🏪 조제 약국 <span className="font-normal text-yc-neutral400">(선택)</span></p>
 
               {regularPharmacy && (
                 <button
@@ -451,14 +450,14 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                     ? setPharmacy(emptyPharmacy())
                     : setPharmacy(emptyPharmacy(regularPharmacy.name))
                   }
-                  className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${
+                  className={`w-full py-3 rounded-yc-md text-sm font-display transition-colors ${
                     pharmacy.name === regularPharmacy.name
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-50 text-gray-700 border border-gray-200 active:bg-gray-100'
+                      ? 'bg-yc-green600 text-white'
+                      : 'bg-yc-neutral50 text-yc-neutral700 border border-yc-neutral200 active:bg-yc-neutral100'
                   }`}
                 >
                   {pharmacy.name === regularPharmacy.name ? '✓ ' : ''}{regularPharmacy.name}
-                  {pharmacy.name !== regularPharmacy.name && <span className="ml-1.5 text-gray-400 font-normal">단골약국</span>}
+                  {pharmacy.name !== regularPharmacy.name && <span className="ml-1.5 text-yc-neutral400 font-normal">단골약국</span>}
                 </button>
               )}
 
@@ -473,23 +472,23 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   }}
                   onBlur={() => setTimeout(() => setPharmDropOpen(false), 150)}
                   placeholder="약국 이름 직접 입력 또는 검색…"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400"
+                  className="w-full border border-yc-neutral200 rounded-yc-md px-3 py-2.5 text-sm text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:border-yc-green600"
                 />
                 {pharmSearching && (
-                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-yc-neutral400">검색 중…</span>
                 )}
                 {pharmDropOpen && pharmResults.length > 0 && (
-                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-yc-neutral200 rounded-yc-md shadow-[var(--yc-shadow-lg)] overflow-hidden max-h-56 overflow-y-auto">
                     {pharmResults.map((p, pi) => (
                       <button
                         key={pi}
                         type="button"
                         onClick={() => selectPharmacy(p)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 last:border-0"
+                        className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 active:bg-yc-neutral100 border-b border-yc-neutral100 last:border-0"
                       >
-                        <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{p.address}</p>
-                        {p.phone && <p className="text-xs text-blue-500 mt-0.5">📞 {p.phone}</p>}
+                        <p className="text-sm font-semibold text-yc-neutral900">{p.name}</p>
+                        <p className="text-xs text-yc-neutral400 mt-0.5">{p.address}</p>
+                        {p.phone && <p className="text-xs text-yc-blue500 mt-0.5">📞 {p.phone}</p>}
                       </button>
                     ))}
                   </div>
@@ -497,20 +496,20 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
               </div>
 
               {(pharmacy.address || pharmacy.phone) && (
-                <div className="bg-blue-50 rounded-xl px-3 py-2.5 space-y-0.5">
-                  {pharmacy.address && <p className="text-xs text-blue-700">📍 {pharmacy.address}</p>}
-                  {pharmacy.phone   && <p className="text-xs text-blue-700">📞 {pharmacy.phone}</p>}
+                <div className="bg-yc-infoBg rounded-yc-md px-3 py-2.5 space-y-0.5">
+                  {pharmacy.address && <p className="text-xs text-yc-infoText">📍 {pharmacy.address}</p>}
+                  {pharmacy.phone   && <p className="text-xs text-yc-infoText">📞 {pharmacy.phone}</p>}
                 </div>
               )}
             </div>
           </div>
 
           {/* 하단 고정 확인 버튼 */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4 z-10">
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-yc-neutral100 px-5 py-4 z-10">
             <button
               onClick={confirm}
               disabled={saving || result.medicines.every((_, i) => excluded.has(i))}
-              className="w-full py-5 rounded-2xl bg-blue-600 text-white text-lg font-bold active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20"
+              className="w-full py-5 rounded-yc-lg bg-yc-green600 text-white text-lg font-display active:bg-yc-green700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[var(--yc-shadow-lg)]"
             >
               {saving
                 ? '저장 중...'
