@@ -128,3 +128,4 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-01 | OCR 하이브리드 파싱 | api/ocr | 키 있으면 GPT(용법·구조)+EDI코드 신원교정, 없으면 코드기반→정규식. 코드 용법은 순수숫자+범위검증으로 오인 차단 |
 | 2026-06-03 | 앱 평가 하네스 추가 | agents 3개·skills 4개 | ux-auditor·tech-auditor·product-auditor + app-evaluation-orchestrator 신규 구성 |
 | 2026-06-03 | UI/UX 디자인 구현 하네스 추가 | agents 3개·skills 4개 | design_handoff_yaksaro_care 핸드오프 → 코드 재구현. design-system-engineer·screen-implementer·design-qa-reviewer + ui-ux-implementation-orchestrator. 결정: green600 #0E6E54·Paperlogy ExtraBold·confetti=canvas-confetti·색은 토큰만 |
+| 2026-06-03 | 그린 디자인 시스템 + 9개 화면 전체 재구현 | globals.css·components/yc·9개 화면 | 블루→그린 토큰 마이그레이션·Paperlogy ExtraBold·키프레임·YC 컴포넌트 7종. Home·Today(confetti)·Wallet·Calendar·Settings·Share·Landing·AddMed·OCR 전부 토큰화(데이터/API 보존). tsc 통과·규제 0·하드코딩 hex 0 |
