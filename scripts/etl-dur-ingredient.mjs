@@ -30,15 +30,32 @@ const supabase = createClient(env['NEXT_PUBLIC_SUPABASE_URL'], env['SUPABASE_SER
 const KEY  = encodeURIComponent(env['MFDS_EASY_DRUG_KEY'])
 const BASE = 'https://apis.data.go.kr'
 const ROWS = 100
-const DELAY = Number(env['DUR_DELAY'] ?? 90)
+const DELAY = Number(env['DUR_DELAY'] ?? 170)   // 속도제한(429) 회피 위해 상향
 const MAX_PAGES = process.env.MAX_PAGES ? Number(process.env.MAX_PAGES) : Infinity
 const CP = resolve(process.cwd(), '.etl-dur-ingr-checkpoint.json')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const toArr = v => (Array.isArray(v) ? v : v ? [v] : [])
 
-async function fetchJson(url) {
-  const res = await fetch(url)
+async function fetchJson(url, attempt = 0) {
+  let res
+  try {
+    res = await fetch(url)
+  } catch (e) {
+    // 네트워크 일시 오류 → 재시도
+    if (attempt < 6) { await sleep(2000 * (attempt + 1)); return fetchJson(url, attempt + 1) }
+    throw e
+  }
+  // 속도제한(429)/서버오류(5xx) → 백오프 후 같은 페이지 재시도
+  if (res.status === 429 || res.status >= 500) {
+    if (attempt < 7) {
+      const wait = 2500 * (attempt + 1)
+      process.stdout.write(`\r  ⏳ HTTP ${res.status} — ${wait / 1000}s 대기 후 재시도(${attempt + 1})        `)
+      await sleep(wait)
+      return fetchJson(url, attempt + 1)
+    }
+    throw new Error(`HTTP ${res.status} (재시도 초과)`)
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const text = await res.text()
   if (text.includes('LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR')) throw new Error('LIMIT')
@@ -116,7 +133,7 @@ async function main() {
 
     process.stdout.write(`\r  순회 ${page}/${maxPage === Infinity ? '?' : maxPage} | 성분쌍 ${pairs.size} | 제품성분 ${prodIngr.size}`)
 
-    if (page % 500 === 0 || page === maxPage) {
+    if (page % 200 === 0 || page === maxPage) {
       writeFileSync(CP, JSON.stringify({ page, prodIngr: [...prodIngr], pairs: [...pairs] }))
     }
     page++
