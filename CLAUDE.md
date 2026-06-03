@@ -129,3 +129,5 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-03 | 앱 평가 하네스 추가 | agents 3개·skills 4개 | ux-auditor·tech-auditor·product-auditor + app-evaluation-orchestrator 신규 구성 |
 | 2026-06-03 | UI/UX 디자인 구현 하네스 추가 | agents 3개·skills 4개 | design_handoff_yaksaro_care 핸드오프 → 코드 재구현. design-system-engineer·screen-implementer·design-qa-reviewer + ui-ux-implementation-orchestrator. 결정: green600 #0E6E54·Paperlogy ExtraBold·confetti=canvas-confetti·색은 토큰만 |
 | 2026-06-03 | 그린 디자인 시스템 + 9개 화면 전체 재구현 | globals.css·components/yc·9개 화면 | 블루→그린 토큰 마이그레이션·Paperlogy ExtraBold·키프레임·YC 컴포넌트 7종. Home·Today(confetti)·Wallet·Calendar·Settings·Share·Landing·AddMed·OCR 전부 토큰화(데이터/API 보존). tsc 통과·규제 0·하드코딩 hex 0 |
+| 2026-06-03 | PWA 풀세트 | manifest·sw·splash·install·push·cron | 설치가능(manifest+아이콘)·오프라인 SW·런치 스플래시 애니메이션·설치배너(Chrome/iOS/카카오)·웹푸시(VAPID, 013 push_subscriptions)·예약 복약 리마인더(cron+vercel.json). 사용 전 013 마이그레이션 실행 + Vercel VAPID/CRON_SECRET env 필요 |
+| 2026-06-03 | DUR 성분기반 ETL | scripts/etl-dur-ingredient.mjs | 기존 item_seq 제품매칭(수율~0) → 성분(INGR_CODE)쌍 매칭으로 재작성. 풀 페이징이 우리 약 성분코드 역적재+교차곱. 실행 중 |
