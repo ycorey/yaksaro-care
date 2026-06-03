@@ -19,10 +19,10 @@ export default async function SettingsPage() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 pt-1">
         <Link href="/wallet"
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 active:bg-gray-50">
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 active:bg-yc-neutral50">
           ←
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">설정</h1>
+        <h1 className="font-display text-xl text-yc-neutral900">설정</h1>
       </div>
 
       <SettingsClient

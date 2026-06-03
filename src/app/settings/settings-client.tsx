@@ -30,7 +30,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       style={{
         width: 48,
         height: 28,
-        backgroundColor: on ? '#0f766e' : '#d1d5db',
+        backgroundColor: on ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral300)',
         transition: 'background-color 0.2s',
       }}
     >
@@ -50,7 +50,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 
 function Row({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
+    <div className="flex items-center justify-between py-4 border-b border-yc-neutral100 last:border-0">
       {children}
     </div>
   )
@@ -128,20 +128,20 @@ export default function SettingsClient({
 
       {/* ── 글자 크기 ── */}
       <section>
-        <p className="text-sm font-semibold text-gray-600 mb-3">글자 크기</p>
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">글자 크기</p>
         <div className="flex gap-2">
           {FONT_SIZES.map(f => (
             <button key={f.key} type="button" onClick={() => changeFontSize(f.key)}
-              className={`flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-colors shadow-sm ${
+              className={`flex-1 py-3.5 rounded-yc-lg text-sm transition-colors shadow-[var(--yc-shadow-sm)] ${
                 fontSize === f.key
-                  ? 'bg-teal-800 text-white shadow-md'
-                  : 'bg-white text-gray-700 active:bg-gray-50'
+                  ? 'bg-yc-green600 text-white font-display'
+                  : 'bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral50'
               }`}>
               {f.label}
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           눈이 편한 크기로 골라보세요. 앱 전체 글자가 함께 커져요.
         </p>
@@ -149,14 +149,14 @@ export default function SettingsClient({
 
       {/* ── 복약 알림 ── */}
       <section>
-        <p className="text-sm font-semibold text-gray-600 mb-3">복약 알림</p>
-        <div className="bg-white rounded-2xl px-5 shadow-sm">
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">복약 알림</p>
+        <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
           <Row>
             <div className="flex items-center gap-3">
               <span className="text-xl">🕐</span>
               <div>
-                <p className="text-sm font-semibold text-gray-900">복약 시간 알림</p>
-                <p className="text-xs text-gray-400 mt-0.5">약 드실 시간에 알려드려요</p>
+                <p className="text-sm font-semibold text-yc-neutral900">복약 시간 알림</p>
+                <p className="text-xs text-yc-neutral400 mt-0.5">약 드실 시간에 알려드려요</p>
               </div>
             </div>
             <Toggle on={alarmEnabled} onToggle={toggleAlarm} />
@@ -166,20 +166,20 @@ export default function SettingsClient({
 
       {/* ── 시간대별 알림 ── */}
       <section>
-        <p className="text-sm font-semibold text-gray-600 mb-3">시간대별 알림</p>
-        <div className="bg-white rounded-2xl px-5 shadow-sm">
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">시간대별 알림</p>
+        <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
           {ALARM_TIMES.map(({ key, label }) => (
             <Row key={key}>
-              <span className="text-sm font-medium text-gray-900">{label}</span>
+              <span className="text-sm font-medium text-yc-neutral900">{label}</span>
               <Toggle on={alarmEnabled && !!alarmTimes[key]} onToggle={() => toggleAlarmTime(key)} />
             </Row>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           꺼진 시간대는 알림이 오지 않아요.
         </p>
-        <p className="text-xs text-gray-400 mt-1.5 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral400 mt-1.5 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">🔒</span>
           알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
         </p>
@@ -187,28 +187,28 @@ export default function SettingsClient({
 
       {/* ── 내 정보 ── */}
       <section>
-        <p className="text-sm font-semibold text-gray-600 mb-3">내 정보</p>
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs text-gray-400 mb-0.5">이름</p>
-            <p className="text-sm font-semibold text-gray-900">{userName ?? '—'}</p>
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">내 정보</p>
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-yc-neutral100">
+            <p className="text-xs text-yc-neutral400 mb-0.5">이름</p>
+            <p className="text-sm font-semibold text-yc-neutral900">{userName ?? '—'}</p>
           </div>
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs text-gray-400 mb-0.5">이메일</p>
-            <p className="text-sm font-semibold text-gray-900">{userEmail ?? '—'}</p>
+          <div className="px-5 py-4 border-b border-yc-neutral100">
+            <p className="text-xs text-yc-neutral400 mb-0.5">이메일</p>
+            <p className="text-sm font-semibold text-yc-neutral900">{userEmail ?? '—'}</p>
           </div>
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs text-gray-400 mb-0.5">역할</p>
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="px-5 py-4 border-b border-yc-neutral100">
+            <p className="text-xs text-yc-neutral400 mb-0.5">역할</p>
+            <p className="text-sm font-semibold text-yc-neutral900">
               {userRole === 'pharmacist' ? '약사' : '환자·보호자'}
             </p>
           </div>
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 text-sm">
-              <span className={consentHealth ? 'text-green-600' : 'text-red-500'}>
+              <span className={consentHealth ? 'text-yc-green600' : 'text-yc-error'}>
                 {consentHealth ? '✓' : '✗'}
               </span>
-              <span className="text-gray-700">건강정보 수집·이용 동의</span>
+              <span className="text-yc-neutral700">건강정보 수집·이용 동의</span>
             </div>
           </div>
         </div>
@@ -216,14 +216,14 @@ export default function SettingsClient({
 
       {/* ── 계정 ── */}
       <section>
-        <p className="text-sm font-semibold text-gray-600 mb-3">계정</p>
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">계정</p>
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
           <button onClick={handleLogout}
-            className="w-full px-5 py-4 text-left text-sm font-medium text-red-600 active:bg-red-50 transition-colors">
+            className="w-full px-5 py-4 text-left text-sm font-medium text-yc-error active:bg-yc-errorBg transition-colors">
             로그아웃
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-3 text-center leading-relaxed">
+        <p className="text-xs text-yc-neutral400 mt-3 text-center leading-relaxed">
           계정 삭제·개인정보 열람 요청은 ycorey@gmail.com 으로 문의하세요.
         </p>
       </section>

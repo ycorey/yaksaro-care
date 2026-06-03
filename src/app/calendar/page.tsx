@@ -20,10 +20,10 @@ function dateKey(year: number, month: number, day: number) {
 function StatusDot({ status }: { status: DayStatus | undefined }) {
   if (!status) return <span className="block w-1.5 h-1.5" />
   if (status === 'full')
-    return <span className="block w-1.5 h-1.5 rounded-full bg-green-500" />
+    return <span className="block w-1.5 h-1.5 rounded-full bg-yc-green600" />
   if (status === 'partial')
-    return <span className="block w-1.5 h-1.5 rounded-full bg-amber-400" />
-  return <span className="block w-1.5 h-1.5 rounded-full border border-gray-300" />
+    return <span className="block w-1.5 h-1.5 rounded-full bg-yc-warning" />
+  return <span className="block w-1.5 h-1.5 rounded-full border border-yc-neutral300" />
 }
 
 export default function CalendarPage() {
@@ -97,26 +97,26 @@ export default function CalendarPage() {
                        { emoji: '🤗', text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 anim-fade">
       <AppHeader />
-      <h1 className="text-2xl font-bold text-gray-950">복약 캘린더 📅</h1>
+      <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더 📅</h1>
 
       {/* 월 네비게이션 */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-4">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prev}
-            className="w-9 h-9 flex items-center justify-center rounded-xl active:bg-gray-100 text-gray-500"
+            className="w-9 h-9 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
           >
             ‹
           </button>
-          <span className="text-base font-bold text-gray-900">
+          <span className="font-display text-base text-yc-neutral900">
             {year}년 {month}월
           </span>
           <button
             onClick={next}
             disabled={isCurrentMonth}
-            className="w-9 h-9 flex items-center justify-center rounded-xl active:bg-gray-100 text-gray-500 disabled:opacity-30"
+            className="w-9 h-9 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
           >
             ›
           </button>
@@ -128,7 +128,7 @@ export default function CalendarPage() {
             <div
               key={d}
               className={`text-center text-[11px] font-medium pb-1 ${
-                i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'
+                i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-blue500' : 'text-yc-neutral400'
               }`}
             >
               {d}
@@ -141,7 +141,7 @@ export default function CalendarPage() {
           <div className="grid grid-cols-7 gap-y-1">
             {Array.from({ length: 35 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center py-1.5">
-                <div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" />
+                <div className="w-7 h-7 rounded-full bg-yc-neutral100 animate-pulse" />
               </div>
             ))}
           </div>
@@ -160,14 +160,14 @@ export default function CalendarPage() {
                   <span
                     className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium ${
                       isToday
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-yc-green600 text-white'
                         : isFuture
-                        ? 'text-gray-300'
+                        ? 'text-yc-neutral300'
                         : dow === 0
-                        ? 'text-red-400'
+                        ? 'text-yc-error'
                         : dow === 6
-                        ? 'text-blue-400'
-                        : 'text-gray-800'
+                        ? 'text-yc-blue500'
+                        : 'text-yc-neutral800'
                     }`}
                   >
                     {day}
@@ -184,65 +184,65 @@ export default function CalendarPage() {
 
       {/* 범례 */}
       <div className="flex items-center gap-4 px-1">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
+        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+          <span className="w-2 h-2 rounded-full bg-yc-green600" />
           완전 복용
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+          <span className="w-2 h-2 rounded-full bg-yc-warning" />
           부분 복용
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-2 h-2 rounded-full border border-gray-300" />
+        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+          <span className="w-2 h-2 rounded-full border border-yc-neutral300" />
           거름
         </div>
       </div>
 
       {/* 이번 달 요약 */}
       {!loading && Object.keys(days).length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4">
+          <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-3">
             {month}월 복약 요약
           </p>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-2xl font-black text-green-600">{fullDays}</p>
-              <p className="text-xs text-gray-500 mt-0.5">완전 복용</p>
+              <p className="font-display text-2xl text-yc-green600">{fullDays}</p>
+              <p className="text-xs text-yc-neutral500 mt-0.5">완전 복용</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-amber-500">{partialDays}</p>
-              <p className="text-xs text-gray-500 mt-0.5">부분 복용</p>
+              <p className="font-display text-2xl text-yc-warning">{partialDays}</p>
+              <p className="text-xs text-yc-neutral500 mt-0.5">부분 복용</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-gray-400">{missDays}</p>
-              <p className="text-xs text-gray-500 mt-0.5">거름</p>
+              <p className="font-display text-2xl text-yc-neutral400">{missDays}</p>
+              <p className="text-xs text-yc-neutral500 mt-0.5">거름</p>
             </div>
           </div>
         </div>
       )}
 
       {!loading && Object.keys(days).length === 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-10 text-center">
+        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-10 text-center">
           <p className="text-4xl mb-3">📅</p>
-          <p className="text-base font-semibold text-gray-700">복약 기록이 없어요</p>
-          <p className="text-sm text-gray-400 mt-1">오늘 탭에서 복약을 체크해보세요</p>
+          <p className="text-base font-semibold text-yc-neutral700">복약 기록이 없어요</p>
+          <p className="text-sm text-yc-neutral400 mt-1">오늘 탭에서 복약을 체크해보세요</p>
         </div>
       )}
 
       {/* ── 복약 습관 응원 ── */}
       {!loading && recordedDays > 0 && (
-        <div className="rounded-2xl border border-[#D9E8DD] bg-[#F2F8F3] px-5 py-4">
+        <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
           {streak >= 2 && (
-            <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#D9E8DD]">
+            <div className="flex items-center gap-2 pb-3 mb-3 border-b border-yc-green100">
               <span className="text-2xl">🔥</span>
-              <p className="text-[17px] font-bold text-[#15604E]">
+              <p className="text-[17px] font-bold text-yc-green600">
                 {streak}일 연속으로 약을 챙기고 계세요!
               </p>
             </div>
           )}
           <div className="flex items-start gap-3">
             <span className="text-2xl leading-none mt-0.5">{cheer.emoji}</span>
-            <p className="text-[17px] font-medium text-gray-800 leading-relaxed">{cheer.text}</p>
+            <p className="text-[17px] font-medium text-yc-neutral800 leading-relaxed">{cheer.text}</p>
           </div>
         </div>
       )}
