@@ -21,9 +21,29 @@ const ALARM_TIMES = [
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <button type="button" role="switch" aria-checked={on} onClick={onToggle}
-      className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-teal-700' : 'bg-gray-300'}`}>
-      <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-1'}`} />
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onToggle}
+      className="relative rounded-full flex-shrink-0"
+      style={{
+        width: 48,
+        height: 28,
+        backgroundColor: on ? '#0f766e' : '#d1d5db',
+        transition: 'background-color 0.2s',
+      }}
+    >
+      <span
+        className="absolute rounded-full bg-white shadow"
+        style={{
+          width: 24,
+          height: 24,
+          top: 2,
+          left: on ? 22 : 2,
+          transition: 'left 0.2s',
+        }}
+      />
     </button>
   )
 }
