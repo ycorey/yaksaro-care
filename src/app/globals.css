@@ -3,6 +3,22 @@
 .font-pretendard { font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
 /*
+ * ── Paperlogy ExtraBold (디스플레이/헤딩 폰트) ──
+ * public/fonts/Paperlogy-ExtraBold.woff2 에 폰트 파일을 배치하면 적용됩니다.
+ * 파일이 없으면 자동으로 Pretendard(본문 폰트)로 폴백되어 레이아웃은 정상 동작합니다.
+ */
+@font-face {
+  font-family: 'Paperlogy';
+  src: url('/fonts/Paperlogy-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 디스플레이 폰트 유틸 — 헤딩·타이틀·버튼·배지·탭 라벨에 사용 */
+.font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+
+/*
  * ── 210달팽이체 폰트 설정 ──
  * 1. https://www.design210.com 에서 '달팽이체' 다운로드
  * 2. 폰트 파일을 public/fonts/210Snail.woff2 (또는 .woff) 에 배치
@@ -26,7 +42,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -136,42 +152,60 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* ── 약사로 케어 Design Tokens ─────────────────────────────────────── */
+/* ── 약사로케어 Design Tokens (핸드오프 그린 팔레트) ─────────────────────
+ * 단일 진실 공급원: design_handoff_yaksaro_care/README.md
+ * 화면 코드는 hex를 직접 쓰지 말고 토큰 유틸(bg-yc-green600 등)/변수를 참조한다.
+ * @theme 매핑(아래)이 bg-/text-/border- 유틸을 생성한다. */
+@theme {
+  /* Primary (브랜드 그린) */
+  --color-yc-green600: #0E6E54;   /* 주 브랜드 — 버튼·강조·활성 탭 */
+  --color-yc-green700: #084B3A;   /* 그라데이션 어두운 끝·강조 텍스트 */
+  --color-yc-green50:  #E3F2EB;   /* 브랜드/영양제 카드 배경 */
+  --color-yc-green100: #C8E6D5;   /* 보더·스피너 트랙 */
+  /* Accent */
+  --color-yc-lime300:  #D9F25C;   /* 배지·색종이 */
+  /* Secondary */
+  --color-yc-blue500:  #4A8FCC;   /* 처방약 아이콘/텍스트 */
+  --color-yc-warning:  #E8A817;   /* 주의·지연 (앰버) */
+  --color-yc-error:    #C9423F;   /* 삭제·오류 */
+  /* Neutrals (웜 그린틴트) */
+  --color-yc-neutral900: #13261F; /* 주 텍스트 (다크 잉크) */
+  --color-yc-neutral800: #1E3A2F;
+  --color-yc-neutral700: #2D4A3E;
+  --color-yc-neutral600: #3D4A44;
+  --color-yc-neutral500: #5A6B62; /* 보조 텍스트 */
+  --color-yc-neutral400: #8A9890; /* 캡션·플레이스홀더 */
+  --color-yc-neutral300: #C8CBC3; /* 보더(진한) */
+  --color-yc-neutral200: #E2E4DE; /* 보더(기본) */
+  --color-yc-neutral100: #F0F1EC; /* 구분선·스켈레톤 */
+  --color-yc-neutral50:  #FAFAF5; /* 카드 옅은 배경 */
+  /* Page bg (웜 베이지) */
+  --color-yc-pageBg:   #EFEBE2;
+  /* Semantic backgrounds */
+  --color-yc-warningBg: #FEF9E7;
+  --color-yc-errorBg:   #FEF2F2;
+  --color-yc-infoBg:    #EFF6FF;
+  --color-yc-successBg: #E3F2EB;
+  /* Semantic text (배경 대비 전경색) */
+  --color-yc-warningText:     #92600A;
+  --color-yc-warningTextSoft: #7A5A00;
+  --color-yc-infoText:        #1E5BA8;
+
+  /* Radius (핸드오프 스케일) */
+  --radius-yc-sm: 8px;
+  --radius-yc-md: 12px;
+  --radius-yc-lg: 16px;
+  --radius-yc-xl: 22px;
+
+  /* Display font */
+  --font-display: 'Paperlogy', var(--font-sans);
+}
+
+/* 그린틴트 섀도우 (유틸: shadow-[var(--yc-shadow-sm)] 또는 직접 참조) */
 :root {
-  /* Primary — 약사로 케어 Blue */
-  --yc-primary:        #2563eb;
-  --yc-primary-dark:   #1e40af;
-  --yc-primary-light:  #dbeafe;
-  --yc-primary-soft:   #eff6ff;
-
-  /* Severity (DUR 상호작용) */
-  --yc-danger:         #dc2626;
-  --yc-danger-bg:      #fef2f2;
-  --yc-danger-border:  #fecaca;
-
-  --yc-warning:        #d97706;
-  --yc-warning-bg:     #fffbeb;
-  --yc-warning-border: #fde68a;
-
-  --yc-monitor:        #ea580c;
-  --yc-monitor-bg:     #fff7ed;
-  --yc-monitor-border: #fed7aa;
-
-  --yc-ok:             #16a34a;
-  --yc-ok-bg:          #f0fdf4;
-  --yc-ok-border:      #bbf7d0;
-
-  /* Text scale */
-  --yc-heading:        #111827;
-  --yc-body:           #374151;
-  --yc-secondary:      #6b7280;
-  --yc-tertiary:       #9ca3af;
-
-  /* Surfaces */
-  --yc-page-bg:        #f9fafb;
-  --yc-card-bg:        #ffffff;
-  --yc-border:         #e5e7eb;
-  --yc-border-subtle:  #f3f4f6;
+  --yc-shadow-sm: 0 1px 2px rgba(19,38,31,0.06), 0 1px 3px rgba(19,38,31,0.10);
+  --yc-shadow-md: 0 4px 6px rgba(19,38,31,0.07), 0 2px 4px rgba(19,38,31,0.06);
+  --yc-shadow-lg: 0 10px 15px rgba(19,38,31,0.10), 0 4px 6px rgba(19,38,31,0.05);
 }
 
 /* ── PM Keyframe animations ──────────────────────────────────────── */
@@ -195,6 +229,57 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* ── 핸드오프 전환·이벤트 애니메이션 ──────────────────────────────────
+ * 스펙: design_handoff_yaksaro_care/README.md "Animations".
+ * confetti(전체 복약 완료)는 CSS가 아니라 canvas-confetti 라이브러리로 처리한다.
+ * prefers-reduced-motion 가드는 핸드오프 지침대로 의도적으로 적용하지 않는다. */
+@keyframes ycSlideFwd {
+  from { transform: translateX(28px);  opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes ycSlideBack {
+  from { transform: translateX(-28px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes ycFadeScreen {
+  from { transform: translateY(6px);   opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes ycPop {
+  0%   { transform: scale(0.3);  opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes ycSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ycScan {
+  0%, 100% { top: 8%; }
+  50%      { top: 88%; }
+}
+@keyframes ycCheckPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.9); }
+  100% { transform: scale(1); }
+}
+@keyframes ycCheckedFlash {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.anim-fwd           { animation: ycSlideFwd     320ms cubic-bezier(0.32,0.72,0,1) both; }
+.anim-back          { animation: ycSlideBack    320ms cubic-bezier(0.32,0.72,0,1) both; }
+.anim-fade          { animation: ycFadeScreen   260ms ease both; }
+.anim-pop           { animation: ycPop          480ms cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-spin          { animation: ycSpin         0.7s  linear infinite; }
+.anim-scan          { animation: ycScan         1.6s  ease-in-out infinite; }
+.anim-check-pop     { animation: ycCheckPop     600ms ease; }
+.anim-checked-flash { animation: ycCheckedFlash 360ms ease both; }
+
+/* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
+.bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
+.bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
 
 @layer base {
   * {

@@ -98,6 +98,12 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 **트리거:** "V1 구현", "약 지갑 만들어줘", "DUR 모듈화", "QR 매핑", "OCR 간소화", "shadow testing", "wallet UI", "코어 기능 개발", "다시 구현", "V1 업데이트" 등 → `v1-dev-orchestrator` 스킬 사용.
 
+## 하네스: UI/UX 디자인 구현 시스템
+
+**목표:** `design_handoff_yaksaro_care` 핸드오프(hi-fi 프로토타입)를 실제 코드베이스에 그린 디자인으로 재구현한다.
+
+**트리거:** "디자인 핸드오프 구현", "디자인 적용", "프로토타입 반영", "그린 토큰 적용", "화면 재구현", "디자인 시스템 구축", "UI 개선 구현" 요청 시 `ui-ux-implementation-orchestrator` 스킬 사용. (기존 앱 *평가*는 `app-evaluation-orchestrator`/ux-audit — 이쪽은 *구현*.) 모든 개발 에이전트는 `design_handoff_yaksaro_care/README.md`를 단일 진실 공급원으로 읽는다.
+
 ---
 
 ## 변경 이력
@@ -121,3 +127,4 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-01 | 복약 만료일 표기 | wallet/page·medication-groups | 처방전 헤더에 만료일(처방일+총투약일수) + D-day 배지. 만료 지난 처방은 회색 처리 |
 | 2026-06-01 | OCR 하이브리드 파싱 | api/ocr | 키 있으면 GPT(용법·구조)+EDI코드 신원교정, 없으면 코드기반→정규식. 코드 용법은 순수숫자+범위검증으로 오인 차단 |
 | 2026-06-03 | 앱 평가 하네스 추가 | agents 3개·skills 4개 | ux-auditor·tech-auditor·product-auditor + app-evaluation-orchestrator 신규 구성 |
+| 2026-06-03 | UI/UX 디자인 구현 하네스 추가 | agents 3개·skills 4개 | design_handoff_yaksaro_care 핸드오프 → 코드 재구현. design-system-engineer·screen-implementer·design-qa-reviewer + ui-ux-implementation-orchestrator. 결정: green600 #0E6E54·Paperlogy ExtraBold·confetti=canvas-confetti·색은 토큰만 |
