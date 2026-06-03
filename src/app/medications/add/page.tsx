@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
+import ComingSoonCard from './coming-soon-card'
 
 // 공통: 뒤로가기 + 제목 헤더
 function StepHeader({ backHref, title }: { backHref: string; title: string }) {
@@ -47,9 +48,9 @@ function TypeSelectScreen() {
       </p>
       <div className="space-y-3">
         <MethodCard href="/medications/add?type=prescription" iconBg="bg-yc-infoBg" icon="💊"
-          title="처방약 · 일반약" desc="약봉투·QR·건강기록에서 불러오기" />
+          title="처방약 · 일반약" desc="약봉투 촬영·QR·직접 입력" />
         <MethodCard href="/medications/add?type=supplement" iconBg="bg-yc-green100" icon="🌿"
-          title="영양제 · 보조제" desc="바코드·설명서 촬영 또는 직접 입력" />
+          title="영양제 · 보조제" desc="이름 검색·라벨 촬영·직접 입력" />
       </div>
     </div>
   )
@@ -61,12 +62,14 @@ function PrescriptionMethodScreen() {
     <div className="space-y-6">
       <StepHeader backHref="/medications/add" title="처방약 · 일반약" />
       <div className="space-y-3">
-        <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green600" icon="📋"
-          title="건강기록에서 불러오기" desc="최근 1년 투약내역을 한 번에" badge="추천" />
         <MethodCard href="/medications/ocr" iconBg="bg-yc-blue500" icon="📷"
-          title="약봉투 촬영" desc="봉투 글씨를 사진으로 읽어요" />
+          title="약봉투 촬영" desc="봉투 글씨를 사진으로 읽어요" badge="추천" />
         <MethodCard href="/medications/ocr" iconBg="bg-yc-warning" icon="📱"
           title="처방전 QR 스캔" desc="QR이 있으면 가장 정확해요" />
+        <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green100" icon="✏️"
+          title="직접 입력" desc="약 이름·용법을 직접 적어요" />
+        <ComingSoonCard iconBg="bg-yc-green600" icon="📋"
+          title="건강기록에서 불러오기" desc="최근 1년 투약내역 연동을 준비 중이에요" />
       </div>
       <p className="text-xs text-yc-neutral400 flex items-start gap-1.5">
         <span className="flex-shrink-0 mt-0.5">🔒</span>
@@ -83,11 +86,13 @@ function SupplementMethodScreen() {
       <StepHeader backHref="/medications/add" title="영양제 · 보조제" />
       <div className="space-y-3">
         <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green100" icon="🔍"
-          title="바코드 스캔" desc="제품 바코드로 정확히 찾기" />
+          title="이름으로 검색" desc="제품명으로 찾아 추가해요" badge="추천" />
         <MethodCard href="/medications/ocr" iconBg="bg-yc-warningBg" icon="📄"
           title="설명서 · 라벨 촬영" desc="성분·섭취방법을 읽어와요" />
         <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-infoBg" icon="✏️"
           title="직접 입력" desc="브랜드·복용 시간 적기" />
+        <ComingSoonCard iconBg="bg-yc-green600" icon="📷"
+          title="바코드 스캔" desc="제품 바코드 인식을 준비 중이에요" />
       </div>
     </div>
   )
