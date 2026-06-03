@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import {
+  isNotificationSupported,
+  notificationPermission,
+  requestNotificationPermission,
+  showLocalNotification,
+} from '@/lib/notifications'
 
 type FontSize = 'normal' | 'large' | 'xlarge'
 
@@ -101,8 +108,26 @@ export default function SettingsClient({
     try { localStorage.setItem('yaksaro_font_size', fs) } catch {}
   }
 
-  function toggleAlarm() {
+  async function toggleAlarm() {
     const next = !alarmEnabled
+
+    // 켤 때: 알림 권한을 실제로 요청하고, 허용되면 확인 알림을 띄운다.
+    if (next) {
+      const perm = await requestNotificationPermission()
+      if (perm === 'unsupported') {
+        toast.error('이 브라우저는 알림을 지원하지 않아요')
+        return
+      }
+      if (perm === 'denied') {
+        toast.error('알림이 차단되어 있어요. 브라우저 설정에서 허용해주세요')
+        return
+      }
+      await showLocalNotification('약사로케어 알림이 켜졌어요', {
+        body: '약 드실 시간에 여기로 알려드릴게요.',
+        url: '/today',
+      })
+    }
+
     setAlarmEnabled(next)
     try { localStorage.setItem('yaksaro_alarm_enabled', next ? '1' : '0') } catch {}
   }
@@ -162,6 +187,10 @@ export default function SettingsClient({
             <Toggle on={alarmEnabled} onToggle={toggleAlarm} />
           </Row>
         </div>
+        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+          <span className="flex-shrink-0 mt-0.5">ⓘ</span>
+          처음 켜면 알림 허용을 물어봐요. 홈 화면에 앱을 추가하면 알림이 더 잘 도착해요.
+        </p>
       </section>
 
       {/* ── 시간대별 알림 ── */}
