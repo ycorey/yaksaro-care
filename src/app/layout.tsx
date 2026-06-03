@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Toaster } from '@/components/ui/sonner'
 import BackGuard from '@/components/back-guard'
 import PWARegister from '@/components/pwa-register'
+import SplashScreen from '@/components/splash-screen'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-pretendard antialiased text-yc-neutral900" style={{ backgroundColor: '#EFEBE2' }}>
+        <SplashScreen />
         <BackGuard />
         {children}
         <Toaster position="top-center" richColors />

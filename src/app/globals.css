@@ -281,6 +281,21 @@
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
 
+/* ── PWA 런치 스플래시 ─────────────────────────────────────────────
+ * 그린 화면 → ㄹ 마크가 선을 그리며 등장 → 워드마크 상승 → 전체 페이드아웃.
+ * 네이티브 스플래시(manifest background/theme)에서 자연스럽게 이어진다. */
+@keyframes ycSplashMark   { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ycSplashDot    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ycSplashRise   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ycSplashBadge  { 0% { transform: scale(0.78); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes ycSplashOut    { to { opacity: 0; visibility: hidden; } }
+
+.yc-splash         { animation: ycSplashOut 0.4s ease 1.15s forwards; }
+.yc-splash-badge   { animation: ycSplashBadge 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+.yc-splash-mark    { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ycSplashMark 0.85s ease 0.2s forwards; }
+.yc-splash-dot     { opacity: 0; animation: ycSplashDot 0.4s ease 0.95s forwards; }
+.yc-splash-word    { opacity: 0; animation: ycSplashRise 0.5s ease 0.7s both; }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
