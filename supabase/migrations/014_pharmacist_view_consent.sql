@@ -37,13 +37,17 @@ grant execute on function public.pharmacist_can_view(uuid) to authenticated;
 drop policy if exists "medications_pharmacist" on public.user_medications;
 
 -- 4) 약사 SELECT 정책 (관계 AND 동의 — 함수 게이트)
+--    create policy는 IF NOT EXISTS가 없어 재실행 시 42710 에러 → 각 정책을 drop 후 생성(idempotent).
+drop policy if exists "medications_pharmacist_view" on public.user_medications;
 create policy "medications_pharmacist_view" on public.user_medications
   for select using (public.pharmacist_can_view(user_id));
 
+drop policy if exists "prescriptions_pharmacist_view" on public.user_prescriptions;
 create policy "prescriptions_pharmacist_view" on public.user_prescriptions
   for select using (public.pharmacist_can_view(user_id));
 
 -- 환자 이름·연락 등 식별 — 약사가 동의 환자 profile만 읽도록 (profiles_self와 OR로 병존)
+drop policy if exists "profiles_pharmacist_view" on public.profiles;
 create policy "profiles_pharmacist_view" on public.profiles
   for select using (public.pharmacist_can_view(id));
 
