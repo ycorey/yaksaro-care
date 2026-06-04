@@ -49,3 +49,7 @@ _workspace/
 .etl-dur-ingr-checkpoint.json
 dur-etl-cron.log
 .claude/scheduled_tasks.lock
+
+# DUR CSV 원본(대용량, 로컬 전용 — 커밋 금지)
+_dur_csv_tmp/
+.etl-dur-csv-checkpoint.json
