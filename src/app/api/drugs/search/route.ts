@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       .from('drugs')
       .select('id, item_seq, item_name, entp_name')
       .ilike('item_name', `%${q}%`)
+      .eq('is_canceled', false)   // 허가취하 품목 제외(016 partial 인덱스 활용)
       .limit(8),
     supabase
       .from('supplements')
