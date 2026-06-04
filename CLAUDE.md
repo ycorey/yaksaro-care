@@ -112,6 +112,26 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 ---
 
+## 웹앱 성능 기준 (개발 시 기본 적용)
+
+코드 작성/리뷰 시 항상 적용한다 (영향도순: 이미지30·API25·렌더20·DB15·JS10):
+- **Supabase `select('*')` 금지** → 소비 컬럼만 명시. 목록은 limit/페이지네이션.
+- **이미지**: 최소 `loading="lazy" decoding="async"` (+가능하면 `next/image`).
+- **인덱스**: 자주 where/join 되는 FK에 `CREATE INDEX IF NOT EXISTS` (nullable은 partial).
+- **번들**: 미사용 패키지 제거(빌드로 확정), 무겁고 조건부인 클라 컴포넌트는 `next/dynamic`.
+- **폰트**: head preload + `font-display: swap` (+한글 subset). **애니메이션**: `transform`/`opacity`만.
+- 체감 속도는 dev가 아니라 `next build && next start`로 판단(dev는 prefetch 꺼짐).
+
+상세·트리거형 자동 최적화는 `web-performance-optimization` 스킬 / `web-performance-orchestrator` 하네스.
+
+## 하네스: 웹앱 성능 최적화
+
+**목표:** 웹앱 실행 속도를 측정→영향도순 적용→회귀 검증한다(리포트가 아니라 코드를 직접 고침).
+
+**트리거:** "속도 개선", "느려요", "버벅임", "성능 튜닝", "번들 줄여줘", "이미지 최적화 적용", "인덱스 추가", "Lighthouse 개선" 요청 시 `web-performance-orchestrator` 스킬 사용. (품질 *리포트*는 `app-evaluation`/`tech-audit` — 이쪽은 측정+수정.) 작업자 web-performance-engineer + 검증자 design-qa-reviewer.
+
+---
+
 ## 변경 이력
 
 | 날짜 | 변경 내용 | 대상 | 사유 |
@@ -139,3 +159,5 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-03 | DUR 성분기반 ETL | scripts/etl-dur-ingredient.mjs | 기존 item_seq 제품매칭(수율~0) → 성분(INGR_CODE)쌍 매칭으로 재작성. 풀 페이징이 우리 약 성분코드 역적재+교차곱. 실행 중 |
 | 2026-06-04 | 약사 모드 개발 하네스 추가 | agents 1개·skills 3개 | pharmacy-security-engineer 신규 + pharmacy-rls-security·pharmacy-dashboard-build·pharmacist-mode-orchestrator. tech-architect·regulatory-analyst·design-system·design-qa 재사용, backend/frontend-engineer 도메인무관 보강. 규제·RLS 보안 선행게이트. (Layer1 하네스만 — 실제 약사 코드는 오케스트레이터 실행 시) |
 | 2026-06-04 | 약사 모드 MVP 구현 | migrations/014·api/profile·proxy·app/pharmacy/* | 약사 read-only 대시보드. consent_pharmacist_view opt-in + pharmacist_can_view() SECURITY DEFINER 게이트(관계 AND 동의) + 약사 SELECT RLS. /pharmacy 단골환자 목록·복약 read-only·검색. role 가드. 사용자토큰+RLS(admin 우회 0)·쓰기경로 0·지시문구 0. tsc·빌드 통과. ⚠️ 배포 전 014 실행+약국계정 발급+RLS 누수테스트 필요 |
+| 2026-06-04 | 웹앱 성능 하네스 + 성능 기준 | agents 1개·skills 2개·CLAUDE.md·memory | web-performance-engineer + web-performance-optimization·web-performance-orchestrator(생성-검증, design-qa-reviewer 재사용). 성능 가이드(15영역) → 영속 표준(CLAUDE.md "성능 기준" + feedback 메모리). 트리거: 성능 측정+코드수정 전용(app-evaluation/tech-audit 리포트와 구분) |
+| 2026-06-04 | 성능 즉시 적용 (C1~C6) | 8 layout·profile·약썸네일5·015·layout폰트·package·confetti | select('*')→컬럼명시, 약 썸네일 lazy/decoding, 015 인덱스 마이그레이션, Paperlogy preload, 미사용 의존성 제거, confetti 동적 import. 영향도순 적용·빌드 검증 |

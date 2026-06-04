@@ -387,7 +387,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                         <div className="w-12 h-12 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
                           {di?.found && di.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
                           ) : '💊'}
                         </div>
                         <div className="flex-1 min-w-0">

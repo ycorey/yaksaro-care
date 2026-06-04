@@ -74,7 +74,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         <div className="w-11 h-11 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0">
           {m.drug?.image_url
             // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={m.drug.image_url} alt={name} className="w-full h-full object-cover" />
+            ? <img loading="lazy" decoding="async" src={m.drug.image_url} alt={name} className="w-full h-full object-cover" />
             : (m.supplement ? '🌿' : '💊')}
         </div>
         <div className="flex-1 min-w-0">

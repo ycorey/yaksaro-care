@@ -10,7 +10,7 @@ export default async function TodayLayout({ children }: { children: React.ReactN
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, full_name, role')
     .eq('id', user.id)
     .single()
 

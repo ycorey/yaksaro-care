@@ -40,6 +40,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {/* 디스플레이 폰트(헤더 전역 사용) 선로딩 → 첫 헤딩 페인트 가속 */}
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="/fonts/Paperlogy-ExtraBold.woff2"
+          crossOrigin="anonymous"
+        />
         <link
           rel="stylesheet"
           as="style"

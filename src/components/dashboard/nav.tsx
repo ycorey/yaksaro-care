@@ -76,7 +76,8 @@ const sideItems = [
 
 interface Props {
   user: User
-  profile: Profile | null
+  // 네비는 full_name만 사용 → 레이아웃에서 좁혀 select한 컬럼만 받는다(성능: select 컬럼 최소화)
+  profile: Pick<Profile, 'id' | 'full_name' | 'role'> | null
 }
 
 export default function DashboardNav({ user, profile }: Props) {

@@ -1,5 +1,3 @@
-import confetti from 'canvas-confetti'
-
 /**
  * 디자인 토큰을 단일 출처로 사용하는 색 상수.
  * globals.css의 @theme 토큰(--color-yc-*)을 런타임에 읽어, 화면 코드에 hex를
@@ -25,7 +23,9 @@ export function confettiColors(): string[] {
  * 전체 복약 완료 축하 — 화면 상단에서 색종이가 쏟아진다.
  * Today 화면의 "오늘 복약 끝!" 오버레이와 함께 호출한다.
  */
-export function celebrateAllDone(): void {
+export async function celebrateAllDone(): Promise<void> {
+  // canvas-confetti는 호출 시점에 동적 로드 → 초기 번들에서 제외(코드분할)
+  const confetti = (await import('canvas-confetti')).default
   const colors = confettiColors()
   const end = Date.now() + 900
 

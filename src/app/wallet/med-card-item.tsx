@@ -166,7 +166,7 @@ export default function MedCardItem(p: MedCardItemProps) {
       <div className="w-14 h-14 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={p.name} className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={image} alt={p.name} className="w-full h-full object-cover" />
         ) : (p.isSupplement ? '🌿' : '💊')}
       </div>
 

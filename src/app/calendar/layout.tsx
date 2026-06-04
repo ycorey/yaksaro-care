@@ -10,7 +10,7 @@ export default async function CalendarLayout({ children }: { children: React.Rea
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, full_name, role')
     .eq('id', user.id)
     .single()
 

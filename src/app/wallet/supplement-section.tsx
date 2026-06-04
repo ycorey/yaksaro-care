@@ -64,7 +64,7 @@ export default function SupplementSection({ meds }: { meds: MedCard[] }) {
                 style={{ zIndex: 3 - i }}>
                 {med.imageUrl
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={med.imageUrl} alt={med.name} className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={med.imageUrl} alt={med.name} className="w-full h-full object-cover" />
                   : '🌿'}
               </div>
             ))}
