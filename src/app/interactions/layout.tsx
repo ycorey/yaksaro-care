@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DashboardNav from '@/components/dashboard/nav'
+import RouteTransition from '@/components/route-transition'
 
 export default async function InteractionsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -18,7 +19,7 @@ export default async function InteractionsLayout({ children }: { children: React
       <DashboardNav user={user} profile={profile} />
       <main className="pb-24 md:pb-0 md:ml-64">
         <div className="max-w-2xl mx-auto px-4 pt-6">
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </div>
       </main>
     </div>
