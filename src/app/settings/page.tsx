@@ -10,9 +10,12 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, consent_health')
+    .select('full_name, role, consent_health, consent_pharmacist_view, regular_pharmacy:pharmacies!regular_pharmacy_id(name)')
     .eq('id', user.id)
     .single()
+
+  const regularPharmacyName =
+    (profile?.regular_pharmacy as unknown as { name?: string | null } | null)?.name ?? null
 
   return (
     <div className="space-y-6">
@@ -30,6 +33,8 @@ export default async function SettingsPage() {
         userEmail={user.email ?? null}
         userRole={profile?.role ?? null}
         consentHealth={!!profile?.consent_health}
+        pharmacistConsent={!!profile?.consent_pharmacist_view}
+        regularPharmacyName={regularPharmacyName}
       />
     </div>
   )

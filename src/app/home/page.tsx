@@ -7,6 +7,10 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // 약사 계정은 약사 대시보드로
+  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (prof?.role === 'pharmacist') redirect('/pharmacy')
+
   const todayStr = new Date().toISOString().split('T')[0]
 
   const [{ data: meds }, { data: checks }] = await Promise.all([

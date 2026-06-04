@@ -67,13 +67,42 @@ export default function SettingsClient({
   userEmail,
   userRole,
   consentHealth,
+  pharmacistConsent,
+  regularPharmacyName,
 }: {
   userName:      string | null
   userEmail:     string | null
   userRole:      string | null
   consentHealth: boolean
+  pharmacistConsent:   boolean
+  regularPharmacyName: string | null
 }) {
   const router = useRouter()
+
+  // 단골 약사 열람 동의
+  const [pharmConsent, setPharmConsent] = useState(pharmacistConsent)
+  const [pharmBusy, setPharmBusy]       = useState(false)
+
+  async function togglePharmacistConsent() {
+    if (!regularPharmacyName || pharmBusy) return
+    const next = !pharmConsent
+    setPharmBusy(true)
+    setPharmConsent(next) // 낙관적
+    try {
+      const res = await fetch('/api/profile/pharmacist-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: next }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success(next ? '단골 약사에게 공개로 설정했어요' : '공개를 해제했어요')
+    } catch {
+      setPharmConsent(!next) // 롤백
+      toast.error('변경에 실패했어요')
+    } finally {
+      setPharmBusy(false)
+    }
+  }
 
   // 글자 크기
   const [fontSize, setFontSize] = useState<FontSize>('normal')
@@ -222,6 +251,35 @@ export default function SettingsClient({
         <p className="text-xs text-yc-neutral400 mt-1.5 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">🔒</span>
           알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
+        </p>
+      </section>
+
+      {/* ── 단골 약사에게 공개 ── */}
+      <section>
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">단골 약국</p>
+        <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
+          <Row>
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-xl">🏥</span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-yc-neutral900">단골 약사에게 내 약 목록 공개</p>
+                <p className="text-xs text-yc-neutral400 mt-0.5 truncate">
+                  {regularPharmacyName
+                    ? `${regularPharmacyName} 약사가 읽기 전용으로 볼 수 있어요`
+                    : 'QR로 단골약국을 먼저 연결해주세요'}
+                </p>
+              </div>
+            </div>
+            {regularPharmacyName ? (
+              <Toggle on={pharmConsent} onToggle={togglePharmacistConsent} />
+            ) : (
+              <span className="text-xs text-yc-neutral300 flex-shrink-0">미연결</span>
+            )}
+          </Row>
+        </div>
+        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+          <span className="flex-shrink-0 mt-0.5">ⓘ</span>
+          켜면 단골 약사가 복약 상담에 참고할 수 있어요. 언제든 끄면 즉시 볼 수 없게 돼요.
         </p>
       </section>
 
