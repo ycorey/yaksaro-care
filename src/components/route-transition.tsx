@@ -39,8 +39,12 @@ export default function RouteTransition({ children }: { children: React.ReactNod
   }
 
   useEffect(() => {
-    if (idx >= 0) prevTab = idx
-  }, [idx])
+    if (idx < 0) return
+    prevTab = idx
+    // 인접 탭 미리 받아두기 → 스와이프/탭 전환 시 즉각 표시(프로덕션에서 효과)
+    if (idx + 1 < TAB_ORDER.length) router.prefetch(TAB_ORDER[idx + 1])
+    if (idx - 1 >= 0) router.prefetch(TAB_ORDER[idx - 1])
+  }, [idx, router])
 
   function onTouchStart(e: React.TouchEvent) {
     if (e.touches.length !== 1) { start.current = null; return }
