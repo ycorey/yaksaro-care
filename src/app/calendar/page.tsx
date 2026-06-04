@@ -97,7 +97,7 @@ export default function CalendarPage() {
                        { emoji: '🤗', text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
 
   return (
-    <div className="space-y-5 anim-fade">
+    <div className="space-y-5">
       <AppHeader />
       <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더 📅</h1>
 

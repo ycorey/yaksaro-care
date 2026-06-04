@@ -74,7 +74,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots }: Props) {
   const allDone   = doneCount >= totalSlots
 
   return (
-    <div className="space-y-5 pb-4 anim-fade">
+    <div className="space-y-5 pb-4">
       {/* 로고 + 설정 헤더 */}
       <AppHeader
         actions={

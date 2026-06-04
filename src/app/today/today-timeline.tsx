@@ -128,7 +128,7 @@ export default function TodayTimeline({
   }
 
   return (
-    <div className="space-y-5 anim-fade">
+    <div className="space-y-5">
       <AppHeader />
       <h1 className="font-display text-2xl text-yc-neutral900">오늘 복약 ☀️</h1>
 

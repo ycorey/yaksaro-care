@@ -23,7 +23,7 @@ export default function ShareClient({ meds, doctorData }: Props) {
   const otc  = meds.filter(m => m.type === 'otc')
 
   return (
-    <div className="space-y-5 anim-fade">
+    <div className="space-y-5">
       <AppHeader />
       <div>
         <h1 className="font-display text-2xl text-yc-neutral900">의사·약사님께 보여주기 📢</h1>

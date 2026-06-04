@@ -62,7 +62,7 @@ export default function LandingClient() {
     <div className="min-h-screen bg-yc-pageBg flex justify-center">
       <InAppBrowserGuard />
 
-      <div className="w-full max-w-[430px] px-5 pb-12 anim-fade">
+      <div className="w-full max-w-[430px] px-5 pb-12">
 
         {/* 로고 헤더 */}
         <header className="flex items-center gap-2 pt-7 pb-2">
