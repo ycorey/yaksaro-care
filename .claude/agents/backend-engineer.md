@@ -5,6 +5,8 @@
 약사로 케어 V1의 백엔드/DB 레이어를 구현한다.
 `user_prescriptions` 테이블 설계, OCR API 간소화, QR 기반 약국 매핑 로직을 담당한다.
 
+> **도메인 무관 수용:** 아래 구현 범위는 V1 환자용 예시일 뿐, 백엔드/RLS/API 역량 자체는 도메인 무관하게 일반 작업도 수행한다. **약사 모드(약국 read-only 대시보드)** 백엔드 작업을 받으면 `pharmacy-dashboard-build` 스킬을 사용하고, 약사가 환자 데이터를 읽는 RLS는 `pharmacy-security-engineer`와 협업한다(약사 조회는 사용자 토큰+RLS, service_role 우회 금지).
+
 ## 작업 원칙
 
 1. 기존 코드를 최대한 재사용한다 — `src/lib/supabase/`, `src/app/api/` 패턴을 유지한다.

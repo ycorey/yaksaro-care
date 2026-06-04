@@ -104,6 +104,12 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 **트리거:** "디자인 핸드오프 구현", "디자인 적용", "프로토타입 반영", "그린 토큰 적용", "화면 재구현", "디자인 시스템 구축", "UI 개선 구현" 요청 시 `ui-ux-implementation-orchestrator` 스킬 사용. (기존 앱 *평가*는 `app-evaluation-orchestrator`/ux-audit — 이쪽은 *구현*.) 모든 개발 에이전트는 `design_handoff_yaksaro_care/README.md`를 단일 진실 공급원으로 읽는다.
 
+## 하네스: 약사 모드(약국 read-only 대시보드) 개발
+
+**목표:** 약사(약국)가 동의한 단골 환자의 복약을 읽기 전용으로 보는 B2B 대시보드를 규제·동의·RLS 보안 게이트 기반으로 개발한다.
+
+**트리거:** "약사 모드", "약국 대시보드", "약사 화면 개발", "단골 환자 조회", "약사 RLS", "약국 B2B" 요청 시 `pharmacist-mode-orchestrator` 스킬 사용. (환자용 코어=`v1-dev-orchestrator`, 디자인 구현=`ui-ux-implementation-orchestrator`와 구분 — 이쪽은 약사/약국이 *타인(환자)* 데이터를 보는 영역 전용.) 핵심 계율: 관계(QR 단골) ≠ 동의 → 명시적 opt-in 동의가 RLS의 AND 조건. 약사 조회는 사용자 토큰+RLS(service_role 우회 금지), read-only 최소권한.
+
 ---
 
 ## 변경 이력
@@ -131,3 +137,4 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-03 | 그린 디자인 시스템 + 9개 화면 전체 재구현 | globals.css·components/yc·9개 화면 | 블루→그린 토큰 마이그레이션·Paperlogy ExtraBold·키프레임·YC 컴포넌트 7종. Home·Today(confetti)·Wallet·Calendar·Settings·Share·Landing·AddMed·OCR 전부 토큰화(데이터/API 보존). tsc 통과·규제 0·하드코딩 hex 0 |
 | 2026-06-03 | PWA 풀세트 | manifest·sw·splash·install·push·cron | 설치가능(manifest+아이콘)·오프라인 SW·런치 스플래시 애니메이션·설치배너(Chrome/iOS/카카오)·웹푸시(VAPID, 013 push_subscriptions)·예약 복약 리마인더(cron+vercel.json). 사용 전 013 마이그레이션 실행 + Vercel VAPID/CRON_SECRET env 필요 |
 | 2026-06-03 | DUR 성분기반 ETL | scripts/etl-dur-ingredient.mjs | 기존 item_seq 제품매칭(수율~0) → 성분(INGR_CODE)쌍 매칭으로 재작성. 풀 페이징이 우리 약 성분코드 역적재+교차곱. 실행 중 |
+| 2026-06-04 | 약사 모드 개발 하네스 추가 | agents 1개·skills 3개 | pharmacy-security-engineer 신규 + pharmacy-rls-security·pharmacy-dashboard-build·pharmacist-mode-orchestrator. tech-architect·regulatory-analyst·design-system·design-qa 재사용, backend/frontend-engineer 도메인무관 보강. 규제·RLS 보안 선행게이트. (Layer1 하네스만 — 실제 약사 코드는 오케스트레이터 실행 시) |
