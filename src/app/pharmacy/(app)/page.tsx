@@ -6,7 +6,7 @@ import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 export default async function PharmacyHome() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/pharmacy/login')
 
   // 동의한 단골 환자 (RLS: profiles_pharmacist_view가 이 약사의 동의 환자만 노출)
   const { data: patients } = await supabase

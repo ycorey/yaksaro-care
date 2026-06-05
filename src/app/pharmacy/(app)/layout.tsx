@@ -8,7 +8,7 @@ import PharmacyLogout from './pharmacy-logout'
 export default async function PharmacyLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/pharmacy/login')
 
   const { data: profile } = await supabase
     .from('profiles')

@@ -12,7 +12,7 @@ export default function PharmacyLogout() {
     await supabase.auth.signOut()
     try { localStorage.clear() } catch {}
     try { document.cookie = 'pending_pharmacy_id=; Max-Age=0; path=/' } catch {}
-    router.push('/login')
+    router.push('/pharmacy/login')
     router.refresh()
   }
 

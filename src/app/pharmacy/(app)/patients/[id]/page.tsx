@@ -29,7 +29,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/pharmacy/login')
 
   // RLS: 동의·단골 아닌 환자면 null
   const { data: patient } = await supabase

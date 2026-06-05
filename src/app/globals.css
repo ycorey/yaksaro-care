@@ -235,11 +235,11 @@
  * confetti(전체 복약 완료)는 CSS가 아니라 canvas-confetti 라이브러리로 처리한다.
  * prefers-reduced-motion 가드는 핸드오프 지침대로 의도적으로 적용하지 않는다. */
 @keyframes ycSlideFwd {
-  from { transform: translateX(28px);  opacity: 0; }
+  from { transform: translateX(20px);  opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
 }
 @keyframes ycSlideBack {
-  from { transform: translateX(-28px); opacity: 0; }
+  from { transform: translateX(-20px); opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
 }
 @keyframes ycFadeScreen {
@@ -267,23 +267,55 @@
   from { transform: scale(0.92); opacity: 0; }
   to   { transform: scale(1);    opacity: 1; }
 }
-/* 화면 전환(라우트 이동마다 template.tsx가 재생) — 페이드 + 가벼운 슬라이드 */
+/* 중립 전환(같은 탭 내부·첫 진입) — 가로 이동 없는 세로 페이드(방향감을 주지 않음) */
 @keyframes ycPageIn {
-  from { opacity: 0; transform: translateX(14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* 화면 전환 3종: backwards fill — 애니메이션 종료 후 transform을 남기지 않아야
- * 하위 position:fixed(하단 탭바 등)가 뷰포트 기준으로 고정된다. (both는 transform 잔류) */
-.anim-fwd           { animation: ycSlideFwd     320ms cubic-bezier(0.32,0.72,0,1) backwards; }
-.anim-page          { animation: ycPageIn       300ms cubic-bezier(0.32,0.72,0,1) backwards; }
-.anim-back          { animation: ycSlideBack    320ms cubic-bezier(0.32,0.72,0,1) backwards; }
+ * 하위 position:fixed(하단 탭바 등)가 뷰포트 기준으로 고정된다. (both는 transform 잔류)
+ * will-change로 합성 레이어 승격 → 슬라이드/페이드를 부드럽게(GPU). */
+.anim-fwd           { animation: ycSlideFwd     240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
+.anim-page          { animation: ycPageIn       240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
+.anim-back          { animation: ycSlideBack    240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
 .anim-fade          { animation: ycFadeScreen   260ms ease both; }
 .anim-pop           { animation: ycPop          480ms cubic-bezier(0.34,1.56,0.64,1) both; }
 .anim-spin          { animation: ycSpin         0.7s  linear infinite; }
 .anim-scan          { animation: ycScan         1.6s  ease-in-out infinite; }
 .anim-check-pop     { animation: ycCheckPop     600ms ease; }
 .anim-checked-flash { animation: ycCheckedFlash 360ms ease both; }
+
+/* ── 화면 전환: View Transitions API ─────────────────────────────────────
+ * 콘텐츠(view-transition-name:yc-content)만 옛/새 화면이 "한 장처럼" 함께 좌우 슬라이드.
+ * 탭바·헤더·배경은 root(기본)로 남아 고정. 방향은 <html data-vt="fwd|back">로 선택.
+ * (navigateWithTransition()이 document.startViewTransition으로 구동) */
+::view-transition-group(yc-content) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.3, 0.82, 0.28, 1);
+}
+::view-transition-old(yc-content),
+::view-transition-new(yc-content) {
+  /* 기본 크로스페이드 제거 → 두 화면이 불투명하게 맞붙어 슬라이드(연속감) */
+  mix-blend-mode: normal;
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.3, 0.82, 0.28, 1);
+}
+/* 앞으로(오른쪽 탭/상세로): 옛 화면 왼쪽으로, 새 화면 오른쪽에서 */
+::view-transition-old(yc-content) { animation-name: ycVtExitLeft; }
+::view-transition-new(yc-content) { animation-name: ycVtEnterRight; }
+/* 뒤로(왼쪽 탭/복귀): 옛 화면 오른쪽으로, 새 화면 왼쪽에서 */
+html[data-vt="back"]::view-transition-old(yc-content) { animation-name: ycVtExitRight; }
+html[data-vt="back"]::view-transition-new(yc-content) { animation-name: ycVtEnterLeft; }
+
+@keyframes ycVtExitLeft   { to   { transform: translateX(-100%); } }
+@keyframes ycVtEnterRight { from { transform: translateX(100%);  } }
+@keyframes ycVtExitRight  { to   { transform: translateX(100%);  } }
+@keyframes ycVtEnterLeft  { from { transform: translateX(-100%); } }
+
+/* root(탭바·배경·활성탭 하이라이트 변화)는 짧고 은은한 크로스페이드만 */
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 180ms; }
 
 /* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }

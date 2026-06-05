@@ -2,22 +2,18 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { navigateWithTransition, resolvePendingTransition } from '@/lib/view-transition'
 
 /**
- * 화면 전환 애니메이션 + 좌우 스와이프 탭 이동.
- * **콘텐츠만** 감싼다(탭바·헤더는 바깥). transform이 걸린 조상 안에서는
- * position:fixed가 그 요소 기준이 되므로 이 래퍼가 탭바를 포함하면 안 된다.
+ * 화면 전환(View Transitions) + 좌우 스와이프 탭 이동.
+ * **콘텐츠만** 감싼다(탭바·헤더는 바깥). 이 래퍼에 view-transition-name:yc-content를 주어
+ * 옛 화면과 새 화면이 "한 장처럼" 함께 슬라이드한다(시각 효과는 globals.css의 ::view-transition-* 가 담당).
+ * 하단 탭바/배경은 root(기본)로 남아 고정된다.
  *
- * 방향(탭 누름·스와이프 일관 — 콘텐츠가 손가락을 따라감):
- *  · 오른쪽 탭(더 큰 index) → 콘텐츠 우측으로 슬라이드(왼쪽에서 진입, anim-back)
- *  · 왼쪽 탭(더 작은 index) → 콘텐츠 좌측으로 슬라이드(오른쪽에서 진입, anim-fwd)
- *  · 탭 외 화면·같은 탭 → 기본 페이드(anim-page)
- *
- * 스와이프: 오른쪽으로 밀기 → 오른쪽 탭, 왼쪽으로 밀기 → 왼쪽 탭.
- * 직전 탭은 모듈 변수(prevTab)로 보존, key={pathname}으로 애니메이션 재생.
+ * 실제 슬라이드/방향은 navigateWithTransition()이 document.startViewTransition으로 구동.
+ * 이 컴포넌트는 (1) 콘텐츠 래퍼 제공 (2) 경로 변경 시 대기 트랜지션 완료 (3) 스와이프 처리 (4) 탭 프리페치.
  */
 const TAB_ORDER = ['/home', '/wallet', '/today', '/calendar', '/share']
-let prevTab = -1
 
 function tabIndex(pathname: string): number {
   return TAB_ORDER.findIndex(t => pathname === t || pathname.startsWith(t + '/'))
@@ -33,17 +29,15 @@ export default function RouteTransition({ children }: { children: React.ReactNod
 
   const start = useRef<{ x: number; y: number } | null>(null)
 
-  let cls = 'anim-page'
-  if (idx >= 0 && prevTab >= 0 && idx !== prevTab) {
-    cls = idx > prevTab ? 'anim-back' : 'anim-fwd'
-  }
+  // 새 라우트가 커밋되면(경로 변경) 대기 중인 뷰 트랜지션을 완료시킨다.
+  useEffect(() => {
+    resolvePendingTransition()
+  }, [pathname])
 
   useEffect(() => {
     if (idx < 0) return
-    prevTab = idx
-    // 인접 탭 미리 받아두기 → 스와이프/탭 전환 시 즉각 표시(프로덕션에서 효과)
-    if (idx + 1 < TAB_ORDER.length) router.prefetch(TAB_ORDER[idx + 1])
-    if (idx - 1 >= 0) router.prefetch(TAB_ORDER[idx - 1])
+    // 모든 탭 미리 받아두기 → 전환 시 서버 왕복 없이 즉시(프로덕션에서 효과, dev는 프리페치 OFF)
+    for (const t of TAB_ORDER) router.prefetch(t)
   }, [idx, router])
 
   function onTouchStart(e: React.TouchEvent) {
@@ -61,14 +55,18 @@ export default function RouteTransition({ children }: { children: React.ReactNod
     if (Math.abs(dx) < SWIPE_MIN) return            // 너무 짧음(탭/작은 이동)
     if (Math.abs(dx) < Math.abs(dy) * HORIZONTAL_RATIO) return // 세로 스크롤 우세 → 무시
 
-    // 손가락 방향으로: 오른쪽으로 밀기 → 오른쪽(다음) 탭, 왼쪽으로 밀기 → 왼쪽(이전) 탭
-    const target = dx > 0 ? idx + 1 : idx - 1
+    // 왼쪽으로 밀기(dx<0) → 다음(오른쪽) 탭 / 오른쪽으로 밀기(dx>0) → 이전(왼쪽) 탭
+    const target = dx < 0 ? idx + 1 : idx - 1
     if (target < 0 || target >= TAB_ORDER.length) return // 양 끝
-    router.push(TAB_ORDER[target])
+    navigateWithTransition(router, pathname, TAB_ORDER[target])
   }
 
   return (
-    <div key={pathname} className={cls} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div
+      style={{ viewTransitionName: 'yc-content' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {children}
     </div>
   )

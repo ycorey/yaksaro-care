@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { createClient } from '@/lib/supabase/client'
+import { navigateWithTransition } from '@/lib/view-transition'
 
 // ── SVG 아이콘 ─────────────────────────────────────────────────────
 function IconHome({ active }: { active: boolean }) {
@@ -140,7 +141,9 @@ export default function DashboardNav({ user, profile }: Props) {
         {tabItems.map(({ href, label, Icon }) => {
           const active = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'))
           return (
+            // href는 유지(프리페치/접근성) + 클릭은 가로채 View Transition으로 한 장처럼 슬라이드
             <Link key={href} href={href}
+              onClick={(e) => { e.preventDefault(); navigateWithTransition(router, pathname, href) }}
               className="w-1/5 flex flex-col items-center justify-center gap-1 active:opacity-70 transition-opacity"
             >
               <Icon active={active} />
