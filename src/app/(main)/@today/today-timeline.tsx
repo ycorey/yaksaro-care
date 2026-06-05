@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
@@ -56,6 +57,7 @@ export default function TodayTimeline({
   initialSlots: SlotState[]
   hasMeds: boolean
 }) {
+  const router = useRouter()
   const [slots, setSlots] = useState<SlotState[]>(initialSlots)
   const [now, setNow] = useState<Date>(() => new Date())
   const [justChecked, setJustChecked] = useState<Meal | null>(null)  // 방금 체크 — pop/flash용
@@ -98,7 +100,11 @@ export default function TodayTimeline({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ meal_time: meal, is_checked: isChecked }),
-    }).catch(() => {})
+    })
+      // 페이저에선 다른 탭(홈 요약·캘린더)이 유지(persist)되므로, 서버 슬롯을 새로고침해 동기화.
+      // today 자신은 낙관적 로컬 state라 영향 없음(깜빡임 X).
+      .then(() => router.refresh())
+      .catch(() => {})
   }
 
   function check(meal: Meal) {

@@ -286,37 +286,6 @@
 .anim-check-pop     { animation: ycCheckPop     600ms ease; }
 .anim-checked-flash { animation: ycCheckedFlash 360ms ease both; }
 
-/* ── 화면 전환: View Transitions API ─────────────────────────────────────
- * 콘텐츠(view-transition-name:yc-content)만 옛/새 화면이 "한 장처럼" 함께 좌우 슬라이드.
- * 탭바·헤더·배경은 root(기본)로 남아 고정. 방향은 <html data-vt="fwd|back">로 선택.
- * (navigateWithTransition()이 document.startViewTransition으로 구동) */
-::view-transition-group(yc-content) {
-  animation-duration: 300ms;
-  animation-timing-function: cubic-bezier(0.3, 0.82, 0.28, 1);
-}
-::view-transition-old(yc-content),
-::view-transition-new(yc-content) {
-  /* 기본 크로스페이드 제거 → 두 화면이 불투명하게 맞붙어 슬라이드(연속감) */
-  mix-blend-mode: normal;
-  animation-duration: 300ms;
-  animation-timing-function: cubic-bezier(0.3, 0.82, 0.28, 1);
-}
-/* 앞으로(오른쪽 탭/상세로): 옛 화면 왼쪽으로, 새 화면 오른쪽에서 */
-::view-transition-old(yc-content) { animation-name: ycVtExitLeft; }
-::view-transition-new(yc-content) { animation-name: ycVtEnterRight; }
-/* 뒤로(왼쪽 탭/복귀): 옛 화면 오른쪽으로, 새 화면 왼쪽에서 */
-html[data-vt="back"]::view-transition-old(yc-content) { animation-name: ycVtExitRight; }
-html[data-vt="back"]::view-transition-new(yc-content) { animation-name: ycVtEnterLeft; }
-
-@keyframes ycVtExitLeft   { to   { transform: translateX(-100%); } }
-@keyframes ycVtEnterRight { from { transform: translateX(100%);  } }
-@keyframes ycVtExitRight  { to   { transform: translateX(100%);  } }
-@keyframes ycVtEnterLeft  { from { transform: translateX(-100%); } }
-
-/* root(탭바·배경·활성탭 하이라이트 변화)는 짧고 은은한 크로스페이드만 */
-::view-transition-old(root),
-::view-transition-new(root) { animation-duration: 180ms; }
-
 /* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
