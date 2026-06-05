@@ -22,10 +22,11 @@ Return ONLY a JSON object with exactly these fields:
 - name: 상품명+제형+함량(용량)까지 포함 (예: "타이레놀정500밀리그람", "아모잘탄정5/50밀리그람"). 괄호 안 성분명은 제외.
 - ingredient: 괄호 안 주성분명 (예: 록소프로펜나트륨). null if not found.
 - edi_code: 약품명 앞 대괄호 안 9자리 보험코드 (예: [671701890] → "671701890"). null if not found.
-- dose_amount: 1회 투약량 (정/포/캡슐 등 개수, 처방전 '1회투약량' 칸의 값). 상품명 옆 mg/g 함량(예: 50mg, 2g)은 함량이지 투약량이 아니므로 dose_amount로 쓰지 말 것. null if not found.
-- doses_per_day: 1일 투여 횟수 (1일투여횟수 칸). null if not found.
-- days: 총 투약 일수 (총투약일수 칸). null if not found.
-- 약품마다 보통 [1회투약량, 1일투여횟수, 총투약일수] 3개 숫자가 따라온다.
+- dose_amount: 1회 투약량 (정/포/캡슐 등 개수, '1회투약량' 칸). 상품명 옆 mg/g 함량(예: 50mg, 2g)은 함량이지 투약량이 아니므로 쓰지 말 것. 보통 0.5~10. null if not found.
+- doses_per_day: 1일 투여 횟수 ('1일투여횟수' 칸). 거의 항상 1~4. 5 이상이면 일수를 잘못 본 것일 수 있으니 의심할 것. null if not found.
+- days: 총 투약 일수 ('총투약일수' 칸). 보통 1~90이며 세 숫자 중 가장 큰 값인 경우가 많다. null if not found.
+- 각 약품 행에는 보통 [1회투약량, 1일투여횟수, 총투약일수] 순서로 숫자 3개가 같은 줄(또는 그 약품 바로 다음 줄들)에 나온다. 이 열 순서를 반드시 지켜 매칭할 것. 약품마다 자기 행의 숫자만 쓰고 다른 약 행의 숫자와 섞지 말 것.
+- 9자리 보험(EDI)코드·금액(원)·본인부담금·단가·약품일련번호는 절대 dose/횟수/일수로 쓰지 말 것.
 - "사용기간 교부일부터 (N)" 의 N은 무시할 것 (days 아님).
 - pharmacy_name: 조제 약국명. null if not found.
 - Return exactly this JSON shape, no extra fields.`
@@ -46,8 +47,8 @@ type ParsedPrescription = {
   institution_code: string | null   // 요양기관기호 (8자리)
 }
 
-// CLOVA OCR 필드 타입
-type ClovaField = { inferText: string; inferConfidence: number }
+// CLOVA OCR 필드 타입 (V2는 줄 끝에 lineBreak=true 제공 → 행 구조 복원에 사용)
+type ClovaField = { inferText: string; inferConfidence: number; lineBreak?: boolean }
 
 async function runClovaOcr(imageBytes: ArrayBuffer, mime: string, ext: string): Promise<string> {
   const url    = process.env.CLOVA_OCR_API_URL
@@ -75,11 +76,23 @@ async function runClovaOcr(imageBytes: ArrayBuffer, mime: string, ext: string): 
 
   const json   = await res.json()
   const fields: ClovaField[] = json.images?.[0]?.fields ?? []
-  return fields.map(f => f.inferText).join(' ')
+  // 줄바꿈(lineBreak) 보존 → 처방전 표의 행 구조를 유지해야 1회량/1일횟수/총일수
+  // 숫자가 어느 약·어느 칸인지 정확히 매칭된다. (전부 공백으로 이으면 표 구조가 뭉개짐)
+  return fields
+    .map(f => f.inferText + (f.lineBreak ? '\n' : ' '))
+    .join('')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
 }
 
 function isValidOpenAiKey(key: string | undefined): boolean {
   return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
+}
+
+// 용법 숫자 상식 범위 검증 — 범위 밖(9자리 코드·금액 등 오인)은 null로 두어
+// "틀린 값"보다 "빈칸(사용자 수정)"이 되게 한다.
+function saneNum(v: unknown, lo: number, hi: number): number | null {
+  return typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null
 }
 
 // ── 정규식 파서 (GPT 미사용 폴백) ─────────────────────────────────────
@@ -204,9 +217,9 @@ async function parseWithGpt(rawText: string): Promise<ParsedPrescription> {
         name:          m.name,
         ingredient:    typeof m.ingredient === 'string' ? m.ingredient : null,
         edi_code:      typeof m.edi_code === 'string' ? m.edi_code.replace(/\D/g, '') || null : null,
-        dose_amount:   typeof m.dose_amount === 'number' ? m.dose_amount : null,
-        doses_per_day: typeof m.doses_per_day === 'number' ? m.doses_per_day : null,
-        days:          typeof m.days === 'number' ? m.days : null,
+        dose_amount:   saneNum(m.dose_amount, 0.25, 30),
+        doses_per_day: saneNum(m.doses_per_day, 1, 6),
+        days:          saneNum(m.days, 1, 365),
       })),
     pharmacy_name:    typeof parsed.pharmacy_name === 'string' ? parsed.pharmacy_name : null,
     hospital_name:    typeof parsed.hospital_name === 'string' && parsed.hospital_name ? parsed.hospital_name : extractHospital(rawText).hospital_name,
