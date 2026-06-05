@@ -19,7 +19,7 @@ Return ONLY a JSON object with exactly these fields:
 }
 - hospital_name: 처방전을 발급한 병원/의원명 (예: 세브란스병원).
 - institution_code: "요양기관기호" 뒤 8자리 숫자.
-- name: drug brand/generic name (제형 정/캡슐 등 포함, 괄호 안 성분명은 제외).
+- name: 상품명+제형+함량(용량)까지 포함 (예: "타이레놀정500밀리그람", "아모잘탄정5/50밀리그람"). 괄호 안 성분명은 제외.
 - ingredient: 괄호 안 주성분명 (예: 록소프로펜나트륨). null if not found.
 - edi_code: 약품명 앞 대괄호 안 9자리 보험코드 (예: [671701890] → "671701890"). null if not found.
 - dose_amount: 1회 투약량 (정/포/캡슐 등 개수, 처방전 '1회투약량' 칸의 값). 상품명 옆 mg/g 함량(예: 50mg, 2g)은 함량이지 투약량이 아니므로 dose_amount로 쓰지 말 것. null if not found.
@@ -95,6 +95,15 @@ function cleanDrugName(raw: string): string | null {
   name = name.replace(/\s+/g, '').trim()
   if (name.length < 3 || !/[가-힣]/.test(name)) return null
   return name
+}
+
+// 허가 품목명(EDI 역조회로 받은 공식명) 표시용 정리: 괄호 안 성분명만 제거하고
+// 함량/규격(예: 500밀리그람, 60mg)은 **보존**한다. cleanDrugName은 제형(정/캡슐)에서
+// 잘라 함량을 버리므로 권위 있는 공식명에는 쓰지 않는다.
+// (자동완성은 item_name을 그대로 보여줘 함량이 보이는데, OCR만 함량이 사라지던 문제 교정)
+function officialDisplayName(itemName: string): string | null {
+  const name = itemName.split(/[(_]/)[0].replace(/\s+/g, ' ').trim()
+  return name.length >= 2 && /[가-힣A-Za-z]/.test(name) ? name : null
 }
 
 // 괄호 안 성분명 추출: "...정(록소프로펜나트륨" → "록소프로펜나트륨"
@@ -230,7 +239,7 @@ async function correctIdentityByEdi(meds: ParsedMedicine[]): Promise<ParsedMedic
     const lic = await fetchLicenseNameByEdi(m.edi_code)
     const itemName = lic?.ITEM_NAME
     if (!itemName) return m
-    const name = cleanDrugName(itemName)
+    const name = officialDisplayName(itemName) // 함량 보존(공식 품목명)
     if (!name) return m
     return { ...m, name, ingredient: extractIngredient(itemName) ?? m.ingredient }
   }))
@@ -285,7 +294,7 @@ async function parseByCodes(rawText: string): Promise<ParsedMedicine[]> {
     const lic = await fetchLicenseNameByEdi(pos.code)
     const itemName = lic?.ITEM_NAME
     if (!itemName) return null
-    const name = cleanDrugName(itemName)
+    const name = officialDisplayName(itemName) // 함량 보존(공식 품목명)
     if (!name) return null
 
     return {
