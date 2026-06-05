@@ -83,7 +83,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [file,             setFile]             = useState<File | null>(null)
   const [state,            setState]            = useState<State>('idle')
   const [result,           setResult]           = useState<OcrResult | null>(null)
-  const [excluded,         setExcluded]         = useState<Set<number>>(new Set())
+  const [editIdx,          setEditIdx]          = useState<number | null>(null)  // 수정 중인 약 인덱스
+  const [edit,             setEdit]             = useState<{ name: string; dose_amount: string; doses_per_day: string; days: string }>({ name: '', dose_amount: '', doses_per_day: '', days: '' })
   const [saving,           setSaving]           = useState(false)
   const [error,            setError]            = useState<string | null>(null)
   const [info,             setInfo]             = useState<Record<number, DrugInfo>>({})
@@ -141,7 +142,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const onFile = async (f: File) => {
     setResult(null)
     setError(null)
-    setExcluded(new Set())
+    setEditIdx(null)
     setPharmacy(emptyPharmacy(regularPharmacy?.name))
     let blob: Blob = f
     try { blob = await compressImage(f, 1600, 0.8) } catch {}
@@ -179,24 +180,50 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     }
   }
 
-  const toggleExclude = (i: number) =>
-    setExcluded(prev => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s })
+  // 수정 시작 — 현재 약 값으로 폼 채우기
+  function startEdit(i: number, m: Medicine) {
+    setEditIdx(i)
+    setEdit({
+      name:          m.name,
+      dose_amount:   m.dose_amount?.toString()   ?? '',
+      doses_per_day: m.doses_per_day?.toString() ?? '',
+      days:          m.days?.toString()          ?? '',
+    })
+  }
+
+  // 수정 저장 — result.medicines[i]에 반영(빈칸은 null)
+  function saveEdit(i: number) {
+    if (!result) return
+    const num = (s: string) => { const n = Number(s); return s.trim() !== '' && Number.isFinite(n) ? n : null }
+    const next = result.medicines.map((m, idx) =>
+      idx === i
+        ? { ...m, name: edit.name.trim() || m.name, dose_amount: num(edit.dose_amount), doses_per_day: num(edit.doses_per_day), days: num(edit.days) }
+        : m
+    )
+    setResult({ ...result, medicines: next })
+    setEditIdx(null)
+  }
+
+  // 삭제 — 목록에서 제거
+  function deleteMed(i: number) {
+    if (!result) return
+    setResult({ ...result, medicines: result.medicines.filter((_, idx) => idx !== i) })
+    if (editIdx === i) setEditIdx(null)
+  }
 
   const confirm = async () => {
     if (!result) return
     setSaving(true)
     try {
-      // user_medications에 용법 + EDI 코드(정확 매칭용) 포함 저장
-      const confirmed = result.medicines
-        .filter((_, i) => !excluded.has(i))
-        .map(m => ({
-          name:          m.name,
-          edi_code:      m.edi_code,
-          ingredient:    m.ingredient,
-          dose_amount:   m.dose_amount,
-          doses_per_day: m.doses_per_day,
-          days:          m.days,
-        }))
+      // user_medications에 용법 + EDI 코드(정확 매칭용) 포함 저장 (삭제되지 않고 남은 약 전부)
+      const confirmed = result.medicines.map(m => ({
+        name:          m.name,
+        edi_code:      m.edi_code,
+        ingredient:    m.ingredient,
+        dose_amount:   m.dose_amount,
+        doses_per_day: m.doses_per_day,
+        days:          m.days,
+      }))
       const res = await fetch('/api/medications/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -365,74 +392,112 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             <div>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest">
-                  💊 추출된 약품 목록 ({result.medicines.length - excluded.size}/{result.medicines.length}종 선택)
+                  💊 추출된 약품 목록 ({result.medicines.length}종)
                 </p>
+                <p className="text-xs text-yc-neutral400">눌러서 수정·삭제</p>
               </div>
 
               <div className="space-y-3">
                 {result.medicines.map((med, i) => {
-                  const excl   = excluded.has(i)
                   const di     = info[i]
                   const dosage = [
                     med.dose_amount   ? `1회 ${med.dose_amount}` : null,
                     med.doses_per_day ? `1일 ${med.doses_per_day}회` : null,
                     med.days          ? `${med.days}일분` : null,
                   ].filter(Boolean).join(' · ')
+                  const editing = editIdx === i
+
                   return (
-                    <div
-                      key={i}
-                      className={`bg-white border rounded-yc-lg px-5 py-4 transition-opacity ${excl ? 'opacity-35 border-yc-neutral100' : 'border-yc-neutral200'}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
-                          {di?.found && di.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img loading="lazy" decoding="async" src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
-                          ) : '💊'}
+                    <div key={i} className="bg-white border border-yc-neutral200 rounded-yc-lg px-5 py-4">
+                      {editing ? (
+                        /* ── 수정 모드 ── */
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-xs text-yc-neutral500">약 이름</label>
+                            <input
+                              value={edit.name}
+                              onChange={e => setEdit(p => ({ ...p, name: e.target.value }))}
+                              className="w-full border border-yc-neutral300 rounded-yc-md px-3 py-2 text-base font-bold mt-0.5"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <label className="flex-1 text-xs text-yc-neutral500">1회량
+                              <input value={edit.dose_amount} onChange={e => setEdit(p => ({ ...p, dose_amount: e.target.value }))}
+                                inputMode="decimal" placeholder="예: 1"
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                            </label>
+                            <label className="flex-1 text-xs text-yc-neutral500">1일 횟수
+                              <input value={edit.doses_per_day} onChange={e => setEdit(p => ({ ...p, doses_per_day: e.target.value }))}
+                                inputMode="numeric" placeholder="예: 3"
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                            </label>
+                            <label className="flex-1 text-xs text-yc-neutral500">총 일수
+                              <input value={edit.days} onChange={e => setEdit(p => ({ ...p, days: e.target.value }))}
+                                inputMode="numeric" placeholder="예: 5"
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                            </label>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => saveEdit(i)}
+                              className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-display active:opacity-90">저장</button>
+                            <button onClick={() => setEditIdx(null)}
+                              className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-display active:bg-yc-neutral100">취소</button>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          {med.edi_code && (
-                            <p className="text-xs font-mono text-yc-neutral400 mb-0.5">[{med.edi_code}]</p>
-                          )}
-                          <p className="text-2xl font-bold text-yc-neutral900 leading-tight break-keep">
-                            {med.name}
-                          </p>
-                          {med.ingredient && (
-                            <p className="text-sm text-yc-neutral400 mt-0.5">({med.ingredient})</p>
-                          )}
-                          {dosage && (
-                            <p className="text-sm font-medium text-yc-blue500 mt-2">{dosage}</p>
-                          )}
-                          {di === undefined && (
-                            <p className="text-xs text-yc-neutral300 mt-2">약품 정보 조회 중…</p>
-                          )}
-                          {di?.found && (
-                            <div className="mt-2 space-y-1.5">
-                              {(di.category || di.classType) && (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {di.category && (
-                                    <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{di.category}</span>
-                                  )}
-                                  {di.classType && (
-                                    <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{di.classType}</span>
-                                  )}
-                                </div>
-                              )}
-                              {di.efcy && (
-                                <p className="text-xs text-yc-neutral500 leading-relaxed line-clamp-2">
-                                  <span className="font-semibold text-yc-neutral600">효능 </span>{di.efcy}
-                                </p>
-                              )}
+                      ) : (
+                        /* ── 보기 모드 ── */
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
+                            {di?.found && di.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img loading="lazy" decoding="async" src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
+                            ) : '💊'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {med.edi_code && (
+                              <p className="text-xs font-mono text-yc-neutral400 mb-0.5">[{med.edi_code}]</p>
+                            )}
+                            <p className="text-2xl font-bold text-yc-neutral900 leading-tight break-keep">
+                              {med.name}
+                            </p>
+                            {med.ingredient && (
+                              <p className="text-sm text-yc-neutral400 mt-0.5">({med.ingredient})</p>
+                            )}
+                            {dosage ? (
+                              <p className="text-sm font-medium text-yc-blue500 mt-2">{dosage}</p>
+                            ) : (
+                              <p className="text-sm font-medium text-yc-warning mt-2">용법 미인식 — 수정에서 입력</p>
+                            )}
+                            {di === undefined && (
+                              <p className="text-xs text-yc-neutral300 mt-2">약품 정보 조회 중…</p>
+                            )}
+                            {di?.found && (
+                              <div className="mt-2 space-y-1.5">
+                                {(di.category || di.classType) && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {di.category && (
+                                      <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{di.category}</span>
+                                    )}
+                                    {di.classType && (
+                                      <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{di.classType}</span>
+                                    )}
+                                  </div>
+                                )}
+                                {di.efcy && (
+                                  <p className="text-xs text-yc-neutral500 leading-relaxed line-clamp-2">
+                                    <span className="font-semibold text-yc-neutral600">효능 </span>{di.efcy}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {/* 수정·삭제 */}
+                            <div className="flex gap-3 mt-2.5">
+                              <button onClick={() => startEdit(i, med)} className="text-sm text-yc-blue500 font-medium active:opacity-70">수정</button>
+                              <button onClick={() => deleteMed(i)} className="text-sm text-yc-error font-medium active:opacity-70">삭제</button>
                             </div>
-                          )}
+                          </div>
                         </div>
-                        <button
-                          onClick={() => toggleExclude(i)}
-                          className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 mt-1 ${excl ? 'bg-yc-neutral100 text-yc-neutral400' : 'bg-yc-errorBg text-yc-error'}`}
-                        >
-                          {excl ? '제외됨' : '제외'}
-                        </button>
-                      </div>
+                      )}
                     </div>
                   )
                 })}
@@ -508,12 +573,12 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-yc-neutral100 px-5 py-4 z-10">
             <button
               onClick={confirm}
-              disabled={saving || result.medicines.every((_, i) => excluded.has(i))}
+              disabled={saving || result.medicines.length === 0}
               className="w-full py-5 rounded-yc-lg bg-yc-green600 text-white text-lg font-display active:bg-yc-green700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[var(--yc-shadow-lg)]"
             >
               {saving
                 ? '저장 중...'
-                : `✅ 확인 완료 — 내 약 지갑에 저장하기 (${result.medicines.length - excluded.size}종)`}
+                : `✅ 확인 완료 — 내 약 지갑에 저장하기 (${result.medicines.length}종)`}
             </button>
           </div>
         </div>

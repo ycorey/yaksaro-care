@@ -101,6 +101,19 @@ export default function MedCardItem(p: MedCardItemProps) {
   const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays)
   const hasDetail = info?.found && (info.efcy || info.useMethod || info.atpn)
 
+  // 수정 진입 시 현재 값으로 항상 리셋 → 한 번 수정 후 재수정이 막히던 문제 해결
+  // (picked가 남아 자동완성 검색이 멈추거나, 직전 편집값이 그대로 남는 현상 방지)
+  function enterEdit() {
+    setName(p.name)
+    setAmount(p.doseAmount?.toString() ?? '')
+    setPerDay(p.dosesPerDay?.toString() ?? '')
+    setDays(p.totalDays?.toString() ?? '')
+    setPicked(null)
+    setHits(null)
+    setDropOpen(false)
+    setMode('edit')
+  }
+
   async function save() {
     setBusy(true)
     try {
@@ -302,7 +315,7 @@ export default function MedCardItem(p: MedCardItemProps) {
               </div>
             ) : (
               <div className="flex gap-3 mt-2">
-                <button onClick={() => setMode('edit')} className="text-sm text-yc-neutral500 active:text-yc-blue500">수정</button>
+                <button onClick={enterEdit} className="text-sm text-yc-neutral500 active:text-yc-blue500">수정</button>
                 <button onClick={() => setMode('confirmDelete')} className="text-sm text-yc-neutral500 active:text-yc-error">삭제</button>
               </div>
             )}
