@@ -5,11 +5,7 @@ import HomeClient from './home-client'
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // 약사 계정은 약사 대시보드로
-  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (prof?.role === 'pharmacist') redirect('/pharmacy')
+  if (!user) redirect('/login') // 방어용 — 인증/약사분기는 (main)/layout이 처리
 
   const todayStr = new Date().toISOString().split('T')[0]
 

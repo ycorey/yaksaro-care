@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import DoctorView, { type DoctorData } from '@/app/wallet/doctor-view'
+import DoctorView, { type DoctorData } from './doctor-view'
 import AppHeader from '@/components/app-header'
 
 interface Med {

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ShareClient from './share-client'
-import type { DoctorData } from '@/app/wallet/doctor-view'
+import type { DoctorData } from './doctor-view'
 
 export default async function SharePage() {
   const supabase = await createClient()
