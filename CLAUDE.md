@@ -170,3 +170,4 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-10 | DB 타입 전면 적용 + lint 0 | types/database.ts·클라이언트 3종·30파일 | supabase gen types 주입, 조인 캐스팅 18곳 제거. React19 lint 에러 16→0(렌더중 상태조정·파생 loading·비동기 초기화·모듈 스코프 컴포넌트), 워닝 10→0 |
 | 2026-06-10 | B2B 약국 QR 온보딩 | api/pharmacy/store-id·pharmacy/qr·대시보드 카드 | store_id 셀프 발급(owner RLS) + QR SVG 생성(qrcode)·A4 인쇄 안내문(print: variant). 환자 스캔→/store→단골 매핑 연결 — B2B 영업 가능 상태 진입 |
 | 2026-06-10 | UX Low 일괄 | home·wallet 헤더·ocr-uploader·bulk | 설정 기어 aria-label, OCR 복용시간 칩 터치 타겟 py-2.5·text-sm, 로딩 스피너, bulk 이름 매칭 정확 일치 우선 |
+| 2026-06-10 | 4차 평가 91점 (1차67→2차76→3차82→4차91) + 후속 수정 | _workspace/eval·meal-slots·cron·bulk | 제품 92(독립 에이전트)·UX 90·기술 91(에이전트 한도로 인라인 감사, 3차 산식 적용 — 리셋 후 재감사 가능). 발견 즉시수정: 무시간대 약 defaultMealKeys 폴백(홈/today 동일 규칙), sync-supplements cron secret 미설정 시 401, EDI 콤마 경계 매칭. Critical·High 잔여 0 |
