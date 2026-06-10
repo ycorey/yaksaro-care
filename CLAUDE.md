@@ -165,3 +165,4 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-10 | 미커밋 작업 정리 커밋 (6/8~9분) | 마이그레이션 018~022·meal-slots·Phosphor 전환 | 슬롯 개인화(meal_times 실측)·체크 서버 단일화·OCR EDI 매칭 수정·trigram 검색·건기식 동기화 cron을 3개 커밋으로 분리. 018~022 운영 DB 적용 확인 완료 |
 | 2026-06-10 | 접근성 대비 상향 (평가 H6) | ocr-uploader·otc-section | neutral400/300 본문·정보성 텍스트 11곳 → neutral500 (WCAG AA 4.5:1). 장식 아이콘·워드마크는 유지 |
 | 2026-06-10 | 001 베이스 스키마 역덤프 (평가 H7) + 중복 인덱스 정리 | migrations/001·023 | 운영 DB 역덤프로 베이스 스키마(8테이블·RLS·handle_new_user·pharmacy_patients/prescriptions 레거시 포함) 버전관리 편입 — 운영 DB 재실행 무해성 검증 완료. 015/022가 베이스와 중복 생성한 인덱스 2개 DROP(023, 운영 적용) |
+| 2026-06-10 | 핵심 본문 px→rem 전환 (평가 5위) | home-client·calendar·today-timeline·landing·yc-button | 22px/17px/34px/15px 본문·버튼 텍스트 → rem. 글자크기 설정(html font-size 16/18/20)이 핵심 읽기 경로에 실제 반영. 장식 칩·배지(10~11px)는 px 유지 |

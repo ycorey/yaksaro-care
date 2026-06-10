@@ -239,14 +239,14 @@ export default function CalendarPage() {
           {streak >= 2 && (
             <div className="flex items-center gap-2 pb-3 mb-3 border-b border-yc-green100">
               <Fire weight="fill" size={22} className="text-yc-warning" />
-              <p className="text-[17px] font-bold text-yc-green600">
+              <p className="text-[1.0625rem] font-bold text-yc-green600">
                 {streak}일 연속으로 약을 챙기고 계세요!
               </p>
             </div>
           )}
           <div className="flex items-start gap-3">
             <span className="leading-none mt-0.5">{cheer.icon}</span>
-            <p className="text-[17px] font-medium text-yc-neutral800 leading-relaxed">{cheer.text}</p>
+            <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{cheer.text}</p>
           </div>
         </div>
       )}

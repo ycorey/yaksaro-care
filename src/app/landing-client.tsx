@@ -74,7 +74,7 @@ export default function LandingClient() {
         {/* ① 히어로 */}
         <section className="pt-10 pb-8">
           <p className="text-yc-neutral500 text-lg mb-2">병원 갈 때 무슨 약 먹는지 기억나시나요?</p>
-          <h1 className="font-display text-[34px] text-yc-neutral900 tracking-tight leading-[1.15] mb-4">
+          <h1 className="font-display text-[2.125rem] text-yc-neutral900 tracking-tight leading-[1.15] mb-4">
             이제 드시는 약,<br />3초 만에 보여주세요.
           </h1>
           <p className="text-base text-yc-neutral500 leading-relaxed mb-7">

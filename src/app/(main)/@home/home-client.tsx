@@ -103,13 +103,13 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
             </p>
             {overdue ? (
               <>
-                <p className="font-display text-[22px] leading-tight">{overdue.slot.label} 약 드실 시간이에요</p>
+                <p className="font-display text-[1.375rem] leading-tight">{overdue.slot.label} 약 드실 시간이에요</p>
                 <p className="text-white/80 text-sm">
                   {formatSlotTime(overdue.slot)} · {formatElapsed(overdue.elapsed)}
                 </p>
               </>
             ) : (
-              <p className="font-display text-[22px] leading-tight">
+              <p className="font-display text-[1.375rem] leading-tight">
                 {(() => {
                   const nowMin = now.getHours() * 60 + now.getMinutes()
                   const next = SLOTS.filter(s => activeSlotKeys.includes(s.key)).find(s => !doneKeys.includes(s.key) && s.h * 60 + s.m > nowMin)
@@ -134,7 +134,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         ) : (
           <div className="rounded-yc-lg p-5 text-white bg-yc-status-next">
             <p className="text-white/80 text-sm font-medium">오늘 복약 완료</p>
-            <p className="font-display text-[22px] mt-1 flex items-center gap-2">모두 챙기셨어요 <Check weight="bold" size={20} /></p>
+            <p className="font-display text-[1.375rem] mt-1 flex items-center gap-2">모두 챙기셨어요 <Check weight="bold" size={20} /></p>
             <p className="text-white/80 text-sm mt-3">오늘의 {totalSlots}번 복약을 모두 완료했습니다</p>
           </div>
         )}

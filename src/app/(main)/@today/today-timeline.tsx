@@ -260,7 +260,7 @@ export default function TodayTimeline({
         </div>
         <div className="flex items-start gap-3">
           <span className="text-2xl leading-none mt-0.5">{tip.emoji}</span>
-          <p className="text-[17px] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
+          <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
         </div>
       </div>
 
