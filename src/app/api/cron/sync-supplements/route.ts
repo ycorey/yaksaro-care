@@ -16,9 +16,9 @@ function toArr(v: unknown): Record<string, unknown>[] {
 }
 
 export async function GET(req: NextRequest) {
-  // Vercel cron 보안 — CRON_SECRET 헤더 검증
+  // Vercel cron 보안 — CRON_SECRET 미설정이어도 차단 (medication-reminders와 동일 패턴)
   const secret = process.env.CRON_SECRET
-  if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   if (!KEY) return NextResponse.json({ error: 'MFDS_HEALTH_FOOD_KEY 없음' }, { status: 500 })

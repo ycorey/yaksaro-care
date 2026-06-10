@@ -8,7 +8,7 @@ function today() {
   return new Date().toISOString().split('T')[0]
 }
 
-// GET: 오늘 복약 체크 상태 { morning, afternoon, evening }
+// GET: 오늘 복약 체크 상태 { morning, afternoon, evening, bedtime }
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

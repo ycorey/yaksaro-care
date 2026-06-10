@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Camera, PencilSimple, Pill, Warning, Phone, MapPin, Clock, Trash, SunHorizon, Sun, Moon, MoonStars, Check } from '@phosphor-icons/react'
+import { defaultMealKeys } from '@/lib/meal-slots'
 import MedCardItem from './med-card-item'
 
 export type MedCard = {
@@ -80,12 +81,6 @@ function mealsFor(mealTimes: string[]) {
   return MEALS.filter(m => mealTimes.includes(m.key))
 }
 
-// 복용횟수 기반 기본값 (meal_times 없는 레거시 데이터 폴백)
-function defaultMealKeys(dosesPerDay: number): string[] {
-  if (dosesPerDay === 1) return ['morning']
-  if (dosesPerDay === 2) return ['morning', 'evening']
-  return ['morning', 'afternoon', 'evening']
-}
 
 function GroupMealButtons({ groupKey, mealTimes, initialChecks, onAnyChecked }: {
   groupKey:      string

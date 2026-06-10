@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
-import { MEAL_SLOTS, ALL_MEALS, type Meal } from '@/lib/meal-slots'
+import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -28,7 +28,7 @@ export default async function TodayPage() {
       .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
-      .select('meal_times')
+      .select('meal_times, doses_per_day')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .is('ended_at', null),
@@ -50,33 +50,27 @@ export default async function TodayPage() {
     else checkedAt[m] = null
   }
 
-  // meal_times 기반 슬롯별 약 수 산출
+  // meal_times 기반 슬롯별 약 수 산출 — 미지정 약은 복용횟수 기반 기본 슬롯에 폴백
+  // (어떤 약도 화면에서 사라지지 않도록, 모든 약이 최소 1개 슬롯에 배정된다)
   const slotCounts: Record<Meal, number> = { morning: 0, afternoon: 0, evening: 0, bedtime: 0 }
-  let anyMealTimes = false
   const medTotal = medsData?.length ?? 0
 
   for (const med of medsData ?? []) {
-    const times = med.meal_times as string[] | null
-    if (times && times.length > 0) {
-      anyMealTimes = true
-      for (const mt of times) {
-        if (mt in slotCounts) slotCounts[mt as Meal]++
-      }
+    const times = med.meal_times && med.meal_times.length > 0
+      ? med.meal_times
+      : defaultMealKeys(med.doses_per_day ?? 0)
+    for (const mt of times) {
+      if (mt in slotCounts) slotCounts[mt as Meal]++
     }
   }
 
-  // meal_times 미지정 약이 있으면 모든 슬롯에 균등 분배(하위호환)
-  const activeMeals = anyMealTimes
-    ? ALL_MEALS.filter(m => slotCounts[m] > 0)
-    : ALL_MEALS
-
   const slots: SlotState[] = MEAL_SLOTS
-    .filter(s => activeMeals.includes(s.meal))
+    .filter(s => slotCounts[s.meal] > 0)
     .map(s => ({
       meal:      s.meal,
       label:     s.label,
       time:      s.time,
-      medCount:  anyMealTimes ? slotCounts[s.meal] : medTotal,
+      medCount:  slotCounts[s.meal],
       checked:   checked[s.meal],
       checkedAt: checked[s.meal] ? checkedAt[s.meal] : null,
     }))

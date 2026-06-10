@@ -8,3 +8,10 @@ export const MEAL_SLOTS = [
 ] as const
 
 export const ALL_MEALS = MEAL_SLOTS.map(s => s.meal)
+
+// 복용횟수 기반 기본 슬롯 (meal_times 미지정 약 폴백 — 화면 간 동일 규칙 유지)
+export function defaultMealKeys(dosesPerDay: number): Meal[] {
+  if (dosesPerDay === 1) return ['morning']
+  if (dosesPerDay === 2) return ['morning', 'evening']
+  return ['morning', 'afternoon', 'evening']
+}

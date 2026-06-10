@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HomeClient from './home-client'
-import { ALL_MEALS } from '@/lib/meal-slots'
+import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -13,7 +13,7 @@ export default async function HomePage() {
   const [{ data: meds }, { data: checks }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, meal_times')
+      .select('id, meal_times, doses_per_day')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .is('ended_at', null),
@@ -25,19 +25,15 @@ export default async function HomePage() {
       .eq('is_checked', true),
   ])
 
-  // 활성 슬롯 도출 (meal_times 미지정 시 전체 4슬롯으로 하위호환)
+  // 활성 슬롯 도출 — 미지정 약은 복용횟수 기반 기본 슬롯 폴백 (/today와 동일 규칙)
   const activeMealSet = new Set<string>()
-  let anyMealTimes = false
   for (const med of meds ?? []) {
-    const times = med.meal_times as string[] | null
-    if (times && times.length > 0) {
-      anyMealTimes = true
-      for (const mt of times) activeMealSet.add(mt)
-    }
+    const times = med.meal_times && med.meal_times.length > 0
+      ? med.meal_times
+      : defaultMealKeys(med.doses_per_day ?? 0)
+    for (const mt of times) activeMealSet.add(mt)
   }
-  const activeSlotKeys = anyMealTimes
-    ? ALL_MEALS.filter(m => activeMealSet.has(m))
-    : [...ALL_MEALS]
+  const activeSlotKeys = ALL_MEALS.filter(m => activeMealSet.has(m))
 
   const doneMeals = (checks ?? []).map(c => c.meal_time as string)
 

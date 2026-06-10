@@ -37,8 +37,10 @@ export async function POST(request: Request) {
       let drugRow: { id: string } | null = null
 
       if (ediCode) {
+        // 콤마 경계 매칭 — 9자리 코드가 더 긴 코드의 부분문자열로 오매칭되는 것 방지
+        // (ediCode는 숫자만 — 콤마 포함 like 패턴은 PostgREST 규칙대로 큰따옴표로 감싼다)
         const { data } = await supabase.from('drugs').select('id')
-          .ilike('edi_code', `%${ediCode}%`)
+          .or(`edi_code.eq.${ediCode},edi_code.like."${ediCode},%",edi_code.like."%,${ediCode}",edi_code.like."%,${ediCode},%"`)
           .eq('is_canceled', false)
           .limit(1).maybeSingle()
         drugRow = data
