@@ -21,7 +21,7 @@ export default async function PharmacyLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen bg-yc-pageBg">
-      <header className="sticky top-0 z-40 bg-white border-b border-yc-neutral100">
+      <header className="sticky top-0 z-40 bg-white border-b border-yc-neutral100 print:hidden">
         <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between">
           <Link href="/pharmacy" className="flex items-center gap-2">
             <LogoMark size={24} />

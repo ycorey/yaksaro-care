@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
-import { PharmacyEmptyIcon } from './pharmacy-icons'
+import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -47,6 +48,19 @@ export default async function PharmacyHome() {
           내 약 목록 공개에 동의한 단골 환자 {rows.length}명 · 읽기 전용
         </p>
       </div>
+
+      {/* 약국 QR — 환자 단골 연결 진입점 */}
+      <Link
+        href="/pharmacy/qr"
+        className="flex items-center gap-3 bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:bg-yc-neutral50"
+      >
+        <PharmacyQrIcon />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-yc-neutral900">우리 약국 QR 만들기 · 인쇄</p>
+          <p className="text-xs text-yc-neutral500 mt-0.5">환자가 스캔하면 자동으로 단골 연결돼요</p>
+        </div>
+        <span className="text-yc-neutral400">›</span>
+      </Link>
 
       {rows.length === 0 ? (
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
