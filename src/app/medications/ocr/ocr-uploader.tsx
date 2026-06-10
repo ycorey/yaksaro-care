@@ -372,7 +372,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
           {/* 개인정보 보안 안심 문구 */}
           <div className="bg-yc-neutral50 border border-yc-neutral100 rounded-yc-md px-4 py-3 text-center">
-            <p className="text-xs text-yc-neutral400 leading-relaxed flex items-start justify-center gap-1">
+            <p className="text-xs text-yc-neutral500 leading-relaxed flex items-start justify-center gap-1">
               <Lock weight="fill" size={13} className="flex-shrink-0 mt-0.5" />
               <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.</span>
             </p>
@@ -406,7 +406,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             </div>
             <button
               onClick={() => { setState('idle'); setPreview(null); setFile(null); setResult(null) }}
-              className="text-sm font-bold text-yc-neutral400 px-3 py-2 rounded-yc-md active:bg-yc-neutral100"
+              className="text-sm font-bold text-yc-neutral500 px-3 py-2 rounded-yc-md active:bg-yc-neutral100"
             >
               재촬영
             </button>
@@ -417,7 +417,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             {/* 병원·약국 정보 */}
             {result.pharmacy_name && (
               <div className="bg-yc-neutral50 rounded-yc-lg px-5 py-4">
-                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-2 flex items-center gap-1"><Hospital weight="fill" size={13} /> 발행 병원 / 조제 약국</p>
+                <p className="text-xs font-bold text-yc-neutral500 uppercase tracking-widest mb-2 flex items-center gap-1"><Hospital weight="fill" size={13} /> 발행 병원 / 조제 약국</p>
                 <p className="font-display text-xl text-yc-neutral900">{result.pharmacy_name}</p>
               </div>
             )}
@@ -425,7 +425,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             {/* 추출된 약품 목록 */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest">
+                <p className="text-xs font-bold text-yc-neutral500 uppercase tracking-widest">
                   <span className="inline-flex items-center gap-1"><Pill weight="fill" size={13} /> 추출된 약품 목록 ({result.medicines.length}종)</span>
                 </p>
                 <p className="text-xs text-yc-neutral500">눌러서 수정·삭제</p>
@@ -489,7 +489,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                           </div>
                           <div className="flex-1 min-w-0">
                             {med.edi_code && (
-                              <p className="text-xs font-mono text-yc-neutral400 mb-0.5">[{med.edi_code}]</p>
+                              <p className="text-xs font-mono text-yc-neutral500 mb-0.5">[{med.edi_code}]</p>
                             )}
                             <p className="text-2xl font-bold text-yc-neutral900 leading-tight break-keep">
                               {med.name}
@@ -503,7 +503,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                               <p className="text-sm font-medium text-yc-warning mt-2">용법 미인식 — 수정에서 입력</p>
                             )}
                             {di === undefined && (
-                              <p className="text-xs text-yc-neutral300 mt-2">약품 정보 조회 중…</p>
+                              <p className="text-xs text-yc-neutral500 mt-2">약품 정보 조회 중…</p>
                             )}
                             {di?.found && (
                               <div className="mt-2 space-y-1.5">
@@ -563,7 +563,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
             {/* 조제 약국 검색 */}
             <div className="bg-white border border-yc-neutral200 rounded-yc-lg px-5 py-4 space-y-3">
-              <p className="text-sm font-semibold text-yc-neutral700 flex items-center gap-1"><Storefront weight="fill" size={15} /> 조제 약국 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+              <p className="text-sm font-semibold text-yc-neutral700 flex items-center gap-1"><Storefront weight="fill" size={15} /> 조제 약국 <span className="font-normal text-yc-neutral500">(선택)</span></p>
 
               {regularPharmacy && (
                 <button
@@ -579,7 +579,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   }`}
                 >
                   {pharmacy.name === regularPharmacy.name && <Check weight="bold" size={14} className="mr-1 inline" />}{regularPharmacy.name}
-                  {pharmacy.name !== regularPharmacy.name && <span className="ml-1.5 text-yc-neutral400 font-normal">단골약국</span>}
+                  {pharmacy.name !== regularPharmacy.name && <span className="ml-1.5 text-yc-neutral500 font-normal">단골약국</span>}
                 </button>
               )}
 
@@ -597,7 +597,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   className="w-full border border-yc-neutral200 rounded-yc-md px-3 py-2.5 text-sm text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:border-yc-green600"
                 />
                 {pharmSearching && (
-                  <span className="absolute right-3 top-2.5 text-xs text-yc-neutral400">검색 중…</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-yc-neutral500">검색 중…</span>
                 )}
                 {pharmDropOpen && pharmResults.length > 0 && (
                   <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-yc-neutral200 rounded-yc-md shadow-[var(--yc-shadow-lg)] overflow-hidden max-h-56 overflow-y-auto">
@@ -609,7 +609,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                         className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 active:bg-yc-neutral100 border-b border-yc-neutral100 last:border-0"
                       >
                         <p className="text-sm font-semibold text-yc-neutral900">{p.name}</p>
-                        <p className="text-xs text-yc-neutral400 mt-0.5">{p.address}</p>
+                        <p className="text-xs text-yc-neutral500 mt-0.5">{p.address}</p>
                         {p.phone && <p className="text-xs text-yc-blue500 mt-0.5 flex items-center gap-0.5"><Phone weight="fill" size={11} /> {p.phone}</p>}
                       </button>
                     ))}
