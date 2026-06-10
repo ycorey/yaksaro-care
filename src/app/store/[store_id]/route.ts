@@ -35,8 +35,8 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    // 즉시 매핑
-    await admin
+    // 즉시 매핑 — 본인 행 update이므로 user 토큰 + RLS(profiles_self)로 충분
+    await supabase
       .from('profiles')
       .update({ regular_pharmacy_id: pharmacy.id })
       .eq('id', user.id)

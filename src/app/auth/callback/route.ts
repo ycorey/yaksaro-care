@@ -50,7 +50,8 @@ export async function GET(request: Request) {
           .maybeSingle()
 
         if (pharmacy) {
-          await admin
+          // 본인 행 update이므로 세션(user 토큰) 클라이언트 + RLS(profiles_self)로 충분
+          await supabase
             .from('profiles')
             .update({ regular_pharmacy_id: pharmacy.id })
             .eq('id', user.id)

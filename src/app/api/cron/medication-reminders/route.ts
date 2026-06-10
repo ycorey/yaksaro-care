@@ -18,8 +18,9 @@ function todayKST(): string {
 }
 
 /**
- * 복약 리마인더 cron — 끼니별로 호출(?meal=morning|afternoon|evening).
- * 푸시 구독한 사용자 중 ① 활성 복약이 있고 ② 이 끼니를 아직 체크하지 않은 사람에게 전송.
+ * 복약 리마인더 cron — 끼니별로 호출(?meal=morning|afternoon|evening|bedtime).
+ * 푸시 구독한 사용자 중 ① 활성 복약이 있고 ② 이 끼니를 아직 체크하지 않았고
+ * ③ 알림 설정(profiles.alarm_enabled + alarm_times[meal])을 켜둔 사람에게 전송.
  * 인증: Authorization: Bearer <CRON_SECRET> 또는 ?key=<CRON_SECRET>.
  */
 export async function GET(req: NextRequest) {
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   const meal = req.nextUrl.searchParams.get('meal') ?? ''
   const slot = MEALS[meal]
-  if (!slot) return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening)' }, { status: 400 })
+  if (!slot) return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening/bedtime)' }, { status: 400 })
 
   const admin = createAdminClient()
   const day = todayKST()
@@ -47,7 +48,20 @@ export async function GET(req: NextRequest) {
   const pushUsers = [...new Set((subs ?? []).map((s) => s.user_id as string))]
   if (pushUsers.length === 0) return NextResponse.json({ sent: 0, reason: '구독자 없음' })
 
-  // 2) 이 끼니를 이미 체크한 사용자
+  // 2) 알림 설정을 켜둔 사용자 (전체 토글 + 이 끼니 토글)
+  const { data: prefs } = await admin
+    .from('profiles')
+    .select('id, alarm_enabled, alarm_times')
+    .in('id', pushUsers)
+  const allowedSet = new Set(
+    (prefs ?? [])
+      .filter((p) =>
+        p.alarm_enabled !== false &&
+        (p.alarm_times as Record<string, boolean> | null)?.[meal] !== false)
+      .map((p) => p.id as string),
+  )
+
+  // 3) 이 끼니를 이미 체크한 사용자
   const { data: checked } = await admin
     .from('medication_schedules')
     .select('user_id')
@@ -55,7 +69,7 @@ export async function GET(req: NextRequest) {
     .in('user_id', pushUsers)
   const checkedSet = new Set((checked ?? []).map((c) => c.user_id as string))
 
-  // 3) 활성 복약이 있는 사용자
+  // 4) 활성 복약이 있는 사용자
   const { data: active } = await admin
     .from('user_medications')
     .select('user_id')
@@ -63,7 +77,7 @@ export async function GET(req: NextRequest) {
     .is('deleted_at', null).is('ended_at', null)
   const activeSet = new Set((active ?? []).map((m) => m.user_id as string))
 
-  const targets = pushUsers.filter((u) => activeSet.has(u) && !checkedSet.has(u))
+  const targets = pushUsers.filter((u) => allowedSet.has(u) && activeSet.has(u) && !checkedSet.has(u))
 
   let sent = 0
   await Promise.allSettled(

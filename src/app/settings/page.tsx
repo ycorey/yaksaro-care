@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, consent_health, consent_pharmacist_view, regular_pharmacy:pharmacies!regular_pharmacy_id(name)')
+    .select('full_name, role, consent_health, consent_pharmacist_view, font_size, alarm_enabled, alarm_times, regular_pharmacy:pharmacies!regular_pharmacy_id(name)')
     .eq('id', user.id)
     .single()
 
@@ -35,6 +35,9 @@ export default async function SettingsPage() {
         consentHealth={!!profile?.consent_health}
         pharmacistConsent={!!profile?.consent_pharmacist_view}
         regularPharmacyName={regularPharmacyName}
+        initialFontSize={(profile?.font_size as 'normal' | 'large' | 'xlarge') ?? 'normal'}
+        initialAlarmEnabled={profile?.alarm_enabled !== false}
+        initialAlarmTimes={(profile?.alarm_times as Record<string, boolean> | null) ?? {}}
       />
     </div>
   )

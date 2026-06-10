@@ -19,12 +19,22 @@ const FONT_SIZES: { key: FontSize; label: string; px: number }[] = [
   { key: 'xlarge', label: '아주 크게', px: 20 },
 ]
 
+// 키는 lib/meal-slots.ts의 Meal과 동일 — cron이 profiles.alarm_times[meal]로 필터한다
 const ALARM_TIMES = [
   { key: 'morning',   label: '아침 알림' },
   { key: 'afternoon', label: '점심 알림' },
   { key: 'evening',   label: '저녁 알림' },
-  { key: 'night',     label: '취침 알림' },
+  { key: 'bedtime',   label: '취침 알림' },
 ]
+
+// 설정 서버 영속 (실패해도 localStorage 폴백이 있으므로 조용히 무시)
+function persistSettings(patch: Record<string, unknown>) {
+  fetch('/api/profile/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  }).catch(() => {})
+}
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
@@ -70,6 +80,9 @@ export default function SettingsClient({
   consentHealth,
   pharmacistConsent,
   regularPharmacyName,
+  initialFontSize,
+  initialAlarmEnabled,
+  initialAlarmTimes,
 }: {
   userName:      string | null
   userEmail:     string | null
@@ -77,6 +90,9 @@ export default function SettingsClient({
   consentHealth: boolean
   pharmacistConsent:   boolean
   regularPharmacyName: string | null
+  initialFontSize:     FontSize
+  initialAlarmEnabled: boolean
+  initialAlarmTimes:   Record<string, boolean>
 }) {
   const router = useRouter()
 
@@ -105,25 +121,24 @@ export default function SettingsClient({
     }
   }
 
-  // 글자 크기
-  const [fontSize, setFontSize] = useState<FontSize>('normal')
+  // 글자 크기 — 서버(profiles)가 진실원, localStorage는 FOUC 방지 캐시
+  const [fontSize, setFontSize] = useState<FontSize>(initialFontSize)
 
-  // 알림
-  const [alarmEnabled, setAlarmEnabled]   = useState(true)
+  // 알림 — 서버(profiles)가 진실원, cron이 이 값으로 발송 대상을 거른다
+  const [alarmEnabled, setAlarmEnabled]   = useState(initialAlarmEnabled)
   const [alarmTimes, setAlarmTimes]       = useState<Record<string, boolean>>({
-    morning: true, afternoon: true, evening: true, night: true,
+    morning: true, afternoon: true, evening: true, bedtime: true,
+    ...initialAlarmTimes,
   })
 
-  // localStorage에서 설정 복원
+  // 서버 값을 화면·localStorage 캐시에 동기화 (기기 변경 시 복원)
   useEffect(() => {
+    applyFontSize(initialFontSize)
     try {
-      const fs = localStorage.getItem('yaksaro_font_size') as FontSize | null
-      if (fs) { setFontSize(fs); applyFontSize(fs) }
-      const ae = localStorage.getItem('yaksaro_alarm_enabled')
-      if (ae !== null) setAlarmEnabled(ae === '1')
-      const at = localStorage.getItem('yaksaro_alarm_times')
-      if (at) setAlarmTimes(JSON.parse(at))
+      localStorage.setItem('yaksaro_font_size', initialFontSize)
+      localStorage.setItem('yaksaro_alarm_enabled', initialAlarmEnabled ? '1' : '0')
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function applyFontSize(fs: FontSize) {
@@ -135,6 +150,7 @@ export default function SettingsClient({
     setFontSize(fs)
     applyFontSize(fs)
     try { localStorage.setItem('yaksaro_font_size', fs) } catch {}
+    persistSettings({ font_size: fs })
   }
 
   async function toggleAlarm() {
@@ -171,12 +187,14 @@ export default function SettingsClient({
 
     setAlarmEnabled(next)
     try { localStorage.setItem('yaksaro_alarm_enabled', next ? '1' : '0') } catch {}
+    persistSettings({ alarm_enabled: next })
   }
 
   function toggleAlarmTime(key: string) {
     const next = { ...alarmTimes, [key]: !alarmTimes[key] }
     setAlarmTimes(next)
     try { localStorage.setItem('yaksaro_alarm_times', JSON.stringify(next)) } catch {}
+    persistSettings({ alarm_times: next })
   }
 
   async function handleLogout() {

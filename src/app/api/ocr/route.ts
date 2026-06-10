@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { logDurShadow } from '@/lib/dur-shadow'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
@@ -344,8 +343,6 @@ export async function POST(request: Request) {
   const mime  = file.type || 'image/jpeg'
   const ext   = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
 
-  const admin = createAdminClient()
-
   // CLOVA OCR → 원문 텍스트 (bytes를 직접 전달 — Storage 경유 불필요)
   let rawText = ''
   let parsed: ParsedPrescription = { medicines: [], pharmacy_name: null, hospital_name: null, institution_code: null }
@@ -379,8 +376,8 @@ export async function POST(request: Request) {
   const names   = parsed.medicines.map(m => m.name)
   const maxDays = parsed.medicines.reduce((mx, m) => (m.days && m.days > mx ? m.days : mx), 0) || null
 
-  // 4. user_prescriptions에 저장
-  const { data: prescription } = await admin
+  // 4. user_prescriptions에 저장 — 본인 행 insert이므로 user 토큰 + RLS로 충분
+  const { data: prescription } = await supabase
     .from('user_prescriptions')
     .insert({
       user_id:           user.id,
