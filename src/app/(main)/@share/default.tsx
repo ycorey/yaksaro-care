@@ -16,15 +16,10 @@ export default async function SharePage() {
     .is('ended_at', null)
     .order('created_at', { ascending: false })
 
-  type DrugRow = { item_name?: string; entp_name?: string }
-  type SuppRow = { product_name?: string }
-
   const activeMeds = meds ?? []
 
   function getName(m: typeof activeMeds[number]) {
-    const drug = m.drug as unknown as DrugRow | null
-    const s    = m.supplement as unknown as SuppRow | null
-    return drug?.item_name ?? s?.product_name ?? m.custom_name ?? '알 수 없음'
+    return m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
   }
   function getDosage(m: typeof activeMeds[number]) {
     return [
@@ -34,9 +29,8 @@ export default async function SharePage() {
   }
 
   const items = activeMeds.map(m => {
-    const supp = m.supplement as unknown as SuppRow | null
-    const type = supp ? 'supp' : m.prescription_id ? 'rx' : 'otc'
-    return { id: m.id, name: getName(m), ingredient: (m.ingredient as string | null) ?? null, dosage: getDosage(m), type } as const
+    const type = m.supplement ? 'supp' : m.prescription_id ? 'rx' : 'otc'
+    return { id: m.id, name: getName(m), ingredient: m.ingredient ?? null, dosage: getDosage(m), type } as const
   })
 
   // DoctorView용 데이터

@@ -17,9 +17,7 @@ export default async function PharmacyLayout({ children }: { children: React.Rea
     .single()
   if (profile?.role !== 'pharmacist') redirect('/home')
 
-  const pharmacyName =
-    (profile?.regular_pharmacy as unknown as { name?: string }[] | null)?.[0]?.name ??
-    (profile?.regular_pharmacy as unknown as { name?: string } | null)?.name ?? null
+  const pharmacyName = profile?.regular_pharmacy?.[0]?.name ?? null
 
   return (
     <div className="min-h-screen bg-yc-pageBg">

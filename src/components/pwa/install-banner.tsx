@@ -37,8 +37,12 @@ export default function InstallBanner() {
     const dismissed = localStorage.getItem(DISMISS_KEY)
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_DAYS * 86400_000) return
 
-    if (isKakaoTalkApp()) { setMode('kakao'); return }
-    if (isIosSafari()) { setMode('ios'); return }
+    const manualMode = isKakaoTalkApp() ? 'kakao' : isIosSafari() ? 'ios' : null
+    if (manualMode) {
+      // 배너 노출도 비동기로 — 마운트 직후 동기 setState 캐스케이드 방지
+      const t = setTimeout(() => setMode(manualMode), 0)
+      return () => clearTimeout(t)
+    }
 
     const handler = (e: Event) => {
       e.preventDefault()

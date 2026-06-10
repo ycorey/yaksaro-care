@@ -19,13 +19,6 @@ function KakaoIcon() {
   )
 }
 
-function NaverIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M13.93 12.515 9.814 6H6v12h4.07v-6.515L14.186 18H18V6h-4.07v6.515Z" fill="white" />
-    </svg>
-  )
-}
 
 function GoogleIcon() {
   return (

@@ -18,7 +18,6 @@ readFileSync(envPath, 'utf-8').split('\n').forEach(line => {
 })
 
 const url       = env['NEXT_PUBLIC_SUPABASE_URL']        // https://tjtugyoexwsqaquheega.supabase.co
-const serviceKey = env['SUPABASE_SERVICE_ROLE_KEY']
 const ref        = url.replace('https://', '').replace('.supabase.co', '')
 
 // DB_PASSWORD 환경변수 또는 인자로 받기

@@ -24,8 +24,11 @@ export default function SplashScreen() {
     let seen = false
     try { seen = sessionStorage.getItem('yc_splashed') === '1' } catch {}
 
-    // 설치형은 항상, 브라우저는 세션 첫 진입에만
-    if (seen && !standalone) { setShow(false); return }
+    // 설치형은 항상, 브라우저는 세션 첫 진입에만 (즉시 숨김도 비동기로 — 캐스케이드 방지)
+    if (seen && !standalone) {
+      const t = setTimeout(() => setShow(false), 0)
+      return () => clearTimeout(t)
+    }
 
     try { sessionStorage.setItem('yc_splashed', '1') } catch {}
     const t = setTimeout(() => setShow(false), 1550)

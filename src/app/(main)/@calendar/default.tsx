@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import AppHeader from '@/components/app-header'
 import { CalendarBlank, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
 
@@ -33,21 +33,25 @@ export default function CalendarPage() {
   const [year, setYear]   = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [data, setData]   = useState<CalendarData | null>(null)
-  const [loading, setLoading] = useState(true)
+  // 로딩은 파생값 — "마지막으로 적재 완료한 연-월"과 현재 연-월이 다르면 로딩 중
+  const [loadedKey, setLoadedKey] = useState('')
+  const monthKey = `${year}-${month}`
+  const loading = loadedKey !== monthKey
 
   const todayStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
 
-  const load = useCallback(async (y: number, m: number) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/calendar?year=${y}&month=${m}`)
-      if (res.ok) setData(await res.json())
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { load(year, month) }, [year, month, load])
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/calendar?year=${year}&month=${month}`)
+        if (active && res.ok) setData(await res.json())
+      } finally {
+        if (active) setLoadedKey(`${year}-${month}`)
+      }
+    })()
+    return () => { active = false }
+  }, [year, month])
 
   function prev() {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }

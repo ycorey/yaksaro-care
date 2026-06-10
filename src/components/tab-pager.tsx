@@ -42,9 +42,12 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
   } | null>(null)
 
   // URL이 바뀌면(탭 클릭·뒤로가기·QR 등) 트랙을 그 탭으로 애니메이션
-  useEffect(() => {
+  // — effect 대신 렌더 중 상태 조정 패턴(공식 권장): 커밋 전에 반영돼 깜빡임도 없다
+  const [prevActiveIndex, setPrevActiveIndex] = useState(activeIndex)
+  if (prevActiveIndex !== activeIndex) {
+    setPrevActiveIndex(activeIndex)
     setDisplayIndex(activeIndex)
-  }, [activeIndex])
+  }
 
   // 인접 탭 프리페치(빈 page.tsx라 가볍지만, 슬롯은 이미 마운트돼 전환은 즉시)
   useEffect(() => {

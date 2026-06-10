@@ -132,7 +132,7 @@ export default async function InteractionsPage() {
                   key={m.id}
                   className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full"
                 >
-                  {(m.drug as unknown as Record<string, string> | null)?.item_name ?? '알 수 없음'}
+                  {m.drug?.item_name ?? '알 수 없음'}
                 </span>
               ))}
             </div>

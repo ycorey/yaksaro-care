@@ -14,8 +14,7 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single()
 
-  const regularPharmacyName =
-    (profile?.regular_pharmacy as unknown as { name?: string | null } | null)?.name ?? null
+  const regularPharmacyName = profile?.regular_pharmacy?.name ?? null
 
   return (
     <div className="space-y-6">

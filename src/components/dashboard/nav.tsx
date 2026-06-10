@@ -33,7 +33,8 @@ const sideItems: { href: string; label: string; Icon: Icon }[] = [
 interface Props {
   user: User
   // 네비는 full_name만 사용 → 레이아웃에서 좁혀 select한 컬럼만 받는다(성능: select 컬럼 최소화)
-  profile: Pick<Profile, 'id' | 'full_name' | 'role'> | null
+  // role은 DB 조회가 string으로 돌려주므로 넓게 받는다
+  profile: (Pick<Profile, 'id' | 'full_name'> & { role: string }) | null
 }
 
 export default function DashboardNav({ user, profile }: Props) {
@@ -52,6 +53,8 @@ export default function DashboardNav({ user, profile }: Props) {
       <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-yc-neutral100 flex-col">
         <div className="p-5 border-b border-yc-neutral100">
           <Link href="/home">
+            {/* 로컬 SVG 워드마크 — next/image 최적화 이득 없음 */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand-assets/logo-wordmark.svg"
               alt="약사로"

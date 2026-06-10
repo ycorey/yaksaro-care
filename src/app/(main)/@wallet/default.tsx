@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 
 import AppHeader from '@/components/app-header'
 import { WalletHeaderActions } from './wallet-header-actions'
@@ -45,37 +44,30 @@ export default async function WalletPage() {
 
   if (medsError) console.error('[wallet] meds query error:', medsError.message)
 
-  const regularPharmacyPhone =
-    (profile?.regular_pharmacy as unknown as { phone?: string | null } | null)?.phone ?? null
-
-  type Rx = {
-    pharmacy_name?: string | null; pharmacy_address?: string | null; pharmacy_phone?: string | null
-    prescribed_at?: string | null; duration_days?: number | null
-    hospital_name?: string | null; institution_code?: string | null
-  }
+  const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? null
 
   const activeMeds = meds ?? []
 
-  const suppRaws = activeMeds.filter(m => !!(m.supplement as unknown as Record<string, string> | null))
-  const rxRaws   = activeMeds.filter(m => !!m.prescription_id && !(m.supplement as unknown as Record<string, string> | null))
-  const otcRaws  = activeMeds.filter(m => !m.prescription_id  && !(m.supplement as unknown as Record<string, string> | null))
+  const suppRaws = activeMeds.filter(m => !!m.supplement)
+  const rxRaws   = activeMeds.filter(m => !!m.prescription_id && !m.supplement)
+  const otcRaws  = activeMeds.filter(m => !m.prescription_id  && !m.supplement)
 
   function toCard(med: typeof activeMeds[number]): MedCard {
-    const drug = med.drug as unknown as Record<string, string> | null
-    const supp = med.supplement as unknown as Record<string, string> | null
+    const drug = med.drug
+    const supp = med.supplement
     return {
       id:                    med.id,
       name:                  drug?.item_name ?? supp?.product_name ?? med.custom_name ?? '알 수 없음',
       sub:                   drug?.entp_name ?? (supp ? '건강기능식품' : ''),
-      ingredient:            (med.ingredient as string | null) ?? null,
+      ingredient:            med.ingredient ?? null,
       isSupplement:          !!supp,
       isCustom:              !drug && !supp,
       imageUrl:              drug?.image_url ?? null,
       itemSeq:               drug?.item_seq ?? null,
-      doseAmount:            (med.dose_amount   as number | null) ?? null,
-      dosesPerDay:           (med.doses_per_day as number | null) ?? null,
-      totalDays:             (med.total_days    as number | null) ?? null,
-      mealTimes:             (med.meal_times as string[] | null) ?? [],
+      doseAmount:            med.dose_amount ?? null,
+      dosesPerDay:           med.doses_per_day ?? null,
+      totalDays:             med.total_days ?? null,
+      mealTimes:             med.meal_times ?? [],
       hasInteractionWarning: !!(med.has_interaction_warning),
     }
   }
@@ -91,7 +83,7 @@ export default async function WalletPage() {
   }>()
 
   for (const med of rxRaws) {
-    const rx       = med.prescription as unknown as Rx | null
+    const rx       = med.prescription
     const key      = med.prescription_id!
     const hospName = rx?.hospital_name ?? rx?.pharmacy_name ?? '처방전'
 

@@ -15,7 +15,6 @@ export default function InAppBrowserGuard() {
     if (!INAPP_RE.test(ua)) return
 
     const current = window.location.href
-    setUrl(current)
 
     // 안드로이드: intent 스킴으로 크롬 강제 실행 (없으면 fallback URL로 복귀)
     if (/Android/i.test(ua)) {
@@ -34,8 +33,9 @@ export default function InAppBrowserGuard() {
       return
     }
 
-    // 그 외 iOS 인앱 브라우저: 강제 전환 불가 → 수동 안내
-    setBlocked(true)
+    // 그 외 iOS 인앱 브라우저: 강제 전환 불가 → 수동 안내 (비동기 — 캐스케이드 방지)
+    const t = setTimeout(() => { setUrl(current); setBlocked(true) }, 0)
+    return () => clearTimeout(t)
   }, [])
 
   if (!blocked) return null

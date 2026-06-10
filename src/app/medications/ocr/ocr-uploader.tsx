@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, SunHorizon, Sun, Moon, MoonStars, ArrowsClockwise, Check } from '@phosphor-icons/react'
 
@@ -110,12 +109,11 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [pharmDropOpen,    setPharmDropOpen]    = useState(false)
   const fileRef    = useRef<HTMLInputElement>(null)
   const cameraRef  = useRef<HTMLInputElement>(null)
-  const router     = useRouter()
 
   // 추출 완료 시 약품별 효능·효과 조회 (e약은요 API)
   useEffect(() => {
     if (state !== 'done' || !result) return
-    setInfo({})
+    queueMicrotask(() => setInfo({}))  // 초기화는 비동기로 — 캐스케이드 방지
     result.medicines.forEach((med, i) => {
       const q = `name=${encodeURIComponent(med.name)}`
         + (med.ingredient ? `&ingredient=${encodeURIComponent(med.ingredient)}` : '')
@@ -130,7 +128,11 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   // 약국명 검색 (디바운스 400ms)
   useEffect(() => {
     const q = pharmSearch.trim()
-    if (q.length < 2) { setPharmResults([]); setPharmDropOpen(false); return }
+    if (q.length < 2) {
+      // 초기화도 비동기로 — 동기 setState 캐스케이드 방지
+      const t = setTimeout(() => { setPharmResults([]); setPharmDropOpen(false) }, 0)
+      return () => clearTimeout(t)
+    }
     const t = setTimeout(async () => {
       setPharmSearching(true)
       try {

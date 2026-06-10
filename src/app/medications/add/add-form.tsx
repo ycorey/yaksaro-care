@@ -103,7 +103,11 @@ function DrugSearch({
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!query || selected) { setResults(null); setOpen(false); return }
+    if (!query || selected) {
+      // 초기화도 비동기로 — 동기 setState 캐스케이드 방지
+      const t = setTimeout(() => { setResults(null); setOpen(false) }, 0)
+      return () => clearTimeout(t)
+    }
     if (debounce.current) clearTimeout(debounce.current)
     debounce.current = setTimeout(async () => {
       const url = `/api/drugs/search?q=${encodeURIComponent(query.trim())}${otcOnly ? '&otcOnly=true' : ''}`

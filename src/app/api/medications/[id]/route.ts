@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import type { TablesUpdate } from '@/types/database'
 
 // 본인 복약 항목 삭제(소프트 삭제) / 수정. RLS + user_id 필터로 본인 것만 처리.
 
@@ -40,7 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     drug_img?:      string | null
   }
 
-  const patch: Record<string, unknown> = {}
+  const patch: TablesUpdate<'user_medications'> = {}
   if ('dose_amount'   in body) patch.dose_amount   = body.dose_amount
   if ('doses_per_day' in body) patch.doses_per_day = body.doses_per_day
   if ('total_days'    in body) patch.total_days    = body.total_days

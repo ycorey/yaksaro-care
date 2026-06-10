@@ -148,11 +148,6 @@ function PrescriptionCard({
   const [busyDel, setBusyDel]         = useState(false)
   const [deleted, setDeleted]         = useState(false)
 
-  const handleMealChecked = useCallback((k: string, v: boolean) => {
-    setIsChecked(v)
-    onAnyMealChecked(k, v)
-  }, [onAnyMealChecked])
-
   // 그룹 내 복용 시간 합집합 — 없으면 dosesPerDay 기반 기본값
   const mealTimesUnion = [...new Set(g.meds.flatMap(m => m.mealTimes ?? []))]
   const effectiveMealTimes = mealTimesUnion.length > 0
@@ -162,6 +157,11 @@ function PrescriptionCard({
   const [isChecked, setIsChecked] = useState(
     () => effectiveMealTimes.some(m => !!serverChecks[m])
   )
+
+  const handleMealChecked = useCallback((k: string, v: boolean) => {
+    setIsChecked(v)
+    onAnyMealChecked(k, v)
+  }, [onAnyMealChecked])
 
   // 경과일 · 잔여일 계산
   const elapsed  = calcElapsed(g.prescribedAt)
@@ -317,7 +317,7 @@ function PrescriptionCard({
 
 // ── 섹션 ──────────────────────────────────────────────────────────────
 export default function PrescriptionSection({ groups, serverChecks }: { groups: HospitalGroup[], serverChecks: Record<string, boolean> }) {
-  const handleMealChecked = useCallback((_k: string, _v: boolean) => {}, [])
+  const handleMealChecked = useCallback(() => {}, [])
 
   if (groups.length === 0) return (
     <div className="flex gap-2">

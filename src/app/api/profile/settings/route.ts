@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { ALL_MEALS } from '@/lib/meal-slots'
+import type { TablesUpdate } from '@/types/database'
 
 const FONT_SIZES = ['normal', 'large', 'xlarge']
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
   }
 
-  const patch: Record<string, unknown> = {}
+  const patch: TablesUpdate<'profiles'> = {}
   if (typeof body.font_size === 'string' && FONT_SIZES.includes(body.font_size)) {
     patch.font_size = body.font_size
   }

@@ -21,8 +21,45 @@ type MedRow = {
   custom_name: string | null
   prescription_id: string | null
   has_interaction_warning: boolean | null
-  drug: Record<string, string> | null
-  supplement: Record<string, string> | null
+  drug: { item_name: string; entp_name: string | null; image_url: string | null } | null
+  supplement: { product_name: string } | null
+}
+
+function Card({ m }: { m: MedRow }) {
+  const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
+  const sub  = m.drug?.entp_name ?? (m.supplement ? '건강기능식품' : '')
+  const dosage = buildDosage(m.dose_amount, m.doses_per_day, m.total_days)
+  return (
+    <div className="flex items-start gap-3 px-5 py-4">
+      <div className="w-11 h-11 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0">
+        {m.drug?.image_url
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img loading="lazy" decoding="async" src={m.drug.image_url} alt={name} className="w-full h-full object-cover" />
+          : <MedThumbnailIcon isSupplement={!!m.supplement} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-lg font-bold text-yc-neutral900 leading-snug">
+          {name}
+          {m.ingredient && <span className="text-sm font-normal text-yc-neutral400 ml-1">({m.ingredient})</span>}
+        </p>
+        {sub && <p className="text-sm text-yc-neutral400 mt-0.5">{sub}</p>}
+        {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
+        {m.has_interaction_warning && (
+          <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
+            <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Group({ rows }: { rows: MedRow[] }) {
+  return (
+    <ul className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
+      {rows.map(m => <li key={m.id}><Card m={m} /></li>)}
+    </ul>
+  )
 }
 
 // 약사용 환자 복약 상세 — read-only. 접근 가능 여부는 RLS(pharmacist_can_view)가 강제.
@@ -61,47 +98,10 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
     )
   }
 
-  const rows = (meds ?? []) as unknown as MedRow[]
+  const rows: MedRow[] = meds ?? []
   const rx   = rows.filter(m => m.prescription_id && !m.supplement)
   const supp = rows.filter(m => !!m.supplement)
   const otc  = rows.filter(m => !m.prescription_id && !m.supplement)
-
-  function Card({ m }: { m: MedRow }) {
-    const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
-    const sub  = m.drug?.entp_name ?? (m.supplement ? '건강기능식품' : '')
-    const dosage = buildDosage(m.dose_amount, m.doses_per_day, m.total_days)
-    return (
-      <div className="flex items-start gap-3 px-5 py-4">
-        <div className="w-11 h-11 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0">
-          {m.drug?.image_url
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img loading="lazy" decoding="async" src={m.drug.image_url} alt={name} className="w-full h-full object-cover" />
-            : <MedThumbnailIcon isSupplement={!!m.supplement} />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-lg font-bold text-yc-neutral900 leading-snug">
-            {name}
-            {m.ingredient && <span className="text-sm font-normal text-yc-neutral400 ml-1">({m.ingredient})</span>}
-          </p>
-          {sub && <p className="text-sm text-yc-neutral400 mt-0.5">{sub}</p>}
-          {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
-          {m.has_interaction_warning && (
-            <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
-              <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다
-            </p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  function Group({ rows }: { rows: MedRow[] }) {
-    return (
-      <ul className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
-        {rows.map(m => <li key={m.id}><Card m={m} /></li>)}
-      </ul>
-    )
-  }
 
   return (
     <div className="space-y-6">

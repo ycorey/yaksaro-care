@@ -93,9 +93,10 @@ export default function TodayTimeline({
   const doneCount = slots.filter(s => s.checked).length
 
   // 오늘의 건강 한 줄 (날짜 기준 고정 — 분 단위 갱신에 영향받지 않음)
+  const tipDateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
   const tip = useMemo(
     () => getDailyTip(now),
-    [now.getFullYear(), now.getMonth(), now.getDate()] // eslint-disable-line react-hooks/exhaustive-deps
+    [tipDateKey] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   function persist(meal: Meal, isChecked: boolean) {

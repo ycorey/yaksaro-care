@@ -15,10 +15,9 @@ export default async function OcrPage() {
     .eq('id', user.id)
     .single()
 
-  type PharmRow = { name: string }
-  const ph = profile?.pharmacies as unknown as PharmRow | null
+  const ph = profile?.pharmacies
   const regularPharmacy = profile?.regular_pharmacy_id && ph?.name
-    ? { id: profile.regular_pharmacy_id as string, name: ph.name }
+    ? { id: profile.regular_pharmacy_id, name: ph.name }
     : null
 
   return (

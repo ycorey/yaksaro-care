@@ -131,6 +131,11 @@ export default function SettingsClient({
     ...initialAlarmTimes,
   })
 
+  function applyFontSize(fs: FontSize) {
+    const px = FONT_SIZES.find(f => f.key === fs)?.px ?? 16
+    document.documentElement.style.fontSize = `${px}px`
+  }
+
   // 서버 값을 화면·localStorage 캐시에 동기화 (기기 변경 시 복원)
   useEffect(() => {
     applyFontSize(initialFontSize)
@@ -140,11 +145,6 @@ export default function SettingsClient({
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  function applyFontSize(fs: FontSize) {
-    const px = FONT_SIZES.find(f => f.key === fs)?.px ?? 16
-    document.documentElement.style.fontSize = `${px}px`
-  }
 
   function changeFontSize(fs: FontSize) {
     setFontSize(fs)

@@ -104,7 +104,7 @@ async function main() {
   }
   for (const [edi, ids] of ediToDrugs) { const code = ediToIngr.get(edi); if (code) ids.forEach(id => addIngr(id, code)) }
   // 이름 fallback (EDI 미부여만)
-  for (const [key, idx] of [['full', byFull], ['base', byBase]]) {
+  for (const [, idx] of [['full', byFull], ['base', byBase]]) {
     for (const [name, ids] of idx) { const code = prodToIngr.get(name); if (code) ids.forEach(id => { if (!drugIngr.has(id)) addIngr(id, code) }) }
   }
   const drugsWithCode = drugIngr.size
