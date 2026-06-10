@@ -166,3 +166,7 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 | 2026-06-10 | 접근성 대비 상향 (평가 H6) | ocr-uploader·otc-section | neutral400/300 본문·정보성 텍스트 11곳 → neutral500 (WCAG AA 4.5:1). 장식 아이콘·워드마크는 유지 |
 | 2026-06-10 | 001 베이스 스키마 역덤프 (평가 H7) + 중복 인덱스 정리 | migrations/001·023 | 운영 DB 역덤프로 베이스 스키마(8테이블·RLS·handle_new_user·pharmacy_patients/prescriptions 레거시 포함) 버전관리 편입 — 운영 DB 재실행 무해성 검증 완료. 015/022가 베이스와 중복 생성한 인덱스 2개 DROP(023, 운영 적용) |
 | 2026-06-10 | 핵심 본문 px→rem 전환 (평가 5위) | home-client·calendar·today-timeline·landing·yc-button | 22px/17px/34px/15px 본문·버튼 텍스트 → rem. 글자크기 설정(html font-size 16/18/20)이 핵심 읽기 경로에 실제 반영. 장식 칩·배지(10~11px)는 px 유지 |
+| 2026-06-10 | 설정 서버 영속(024) + cron 토글 반영 + admin→user 토큰 | migrations/024·api/profile/settings·settings·cron·ocr·store·auth/callback | profiles에 font_size/alarm_enabled/alarm_times(키=meal-slots와 동일, night→bedtime). 리마인더 cron이 토글 꺼진 사용자 제외 + bedtime cron(22시 KST) 추가. 본인 행 쓰기는 전부 user 토큰+RLS로 전환(admin은 약국 조회만) |
+| 2026-06-10 | DB 타입 전면 적용 + lint 0 | types/database.ts·클라이언트 3종·30파일 | supabase gen types 주입, 조인 캐스팅 18곳 제거. React19 lint 에러 16→0(렌더중 상태조정·파생 loading·비동기 초기화·모듈 스코프 컴포넌트), 워닝 10→0 |
+| 2026-06-10 | B2B 약국 QR 온보딩 | api/pharmacy/store-id·pharmacy/qr·대시보드 카드 | store_id 셀프 발급(owner RLS) + QR SVG 생성(qrcode)·A4 인쇄 안내문(print: variant). 환자 스캔→/store→단골 매핑 연결 — B2B 영업 가능 상태 진입 |
+| 2026-06-10 | UX Low 일괄 | home·wallet 헤더·ocr-uploader·bulk | 설정 기어 aria-label, OCR 복용시간 칩 터치 타겟 py-2.5·text-sm, 로딩 스피너, bulk 이름 매칭 정확 일치 우선 |

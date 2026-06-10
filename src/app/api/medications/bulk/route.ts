@@ -44,6 +44,14 @@ export async function POST(request: Request) {
         drugRow = data
       }
       if (!drugRow) {
+        // 이름 폴백: 정확 일치 우선 → 부분 일치
+        const { data: exact } = await supabase.from('drugs').select('id')
+          .eq('item_name', m.name)
+          .eq('is_canceled', false)
+          .limit(1).maybeSingle()
+        drugRow = exact
+      }
+      if (!drugRow) {
         const { data } = await supabase.from('drugs').select('id')
           .ilike('item_name', `%${m.name}%`)
           .eq('is_canceled', false)

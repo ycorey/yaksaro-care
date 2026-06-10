@@ -505,7 +505,10 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                               <p className="text-sm font-medium text-yc-warning mt-2">용법 미인식 — 수정에서 입력</p>
                             )}
                             {di === undefined && (
-                              <p className="text-xs text-yc-neutral500 mt-2">약품 정보 조회 중…</p>
+                              <p className="text-xs text-yc-neutral500 mt-2 flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-full border-2 border-yc-neutral200 border-t-yc-green600 animate-spin" aria-hidden="true" />
+                                약품 정보 조회 중…
+                              </p>
                             )}
                             {di?.found && (
                               <div className="mt-2 space-y-1.5">
@@ -537,7 +540,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                       key={o.key}
                                       type="button"
                                       onClick={() => toggleMealTime(i, o.key)}
-                                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                      className={`flex items-center gap-1 px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
                                         active
                                           ? 'bg-yc-blue500 text-white'
                                           : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'

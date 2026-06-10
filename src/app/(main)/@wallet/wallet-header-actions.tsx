@@ -6,7 +6,7 @@ import { GearSix, Plus } from '@phosphor-icons/react'
 export function WalletHeaderActions() {
   return (
     <div className="flex items-center gap-2">
-      <Link href="/settings"
+      <Link href="/settings" aria-label="설정"
         className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
         <GearSix size={20} />
       </Link>

@@ -79,7 +79,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
       {/* 로고 + 설정 헤더 */}
       <AppHeader
         actions={
-          <Link href="/settings"
+          <Link href="/settings" aria-label="설정"
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
             <GearSix size={20} />
           </Link>
