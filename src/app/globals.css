@@ -230,10 +230,16 @@
   to   { opacity: 1; }
 }
 
-/* ── 핸드오프 전환·이벤트 애니메이션 ──────────────────────────────────
- * 스펙: design_handoff_yaksaro_care/README.md "Animations".
- * confetti(전체 복약 완료)는 CSS가 아니라 canvas-confetti 라이브러리로 처리한다.
- * prefers-reduced-motion 가드는 핸드오프 지침대로 의도적으로 적용하지 않는다. */
+/* ── prefers-reduced-motion — 전정기관 민감 사용자 보호 ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 핸드오프 전환·이벤트 애니메이션 ────────────────────────────────── */
 @keyframes ycSlideFwd {
   from { transform: translateX(20px);  opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
@@ -272,6 +278,26 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* 약 추가 화면 진입 — 살짝 작은 상태에서 자연스럽게 커지며 나타남 */
+@keyframes ycScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+/* 풀스크린 모달 진입 — 아래서 올라오며 나타남 (iOS 시트 패턴) */
+@keyframes ycSheetIn {
+  from { opacity: 0.4; transform: translateY(100%); }
+  to   { opacity: 1;   transform: translateY(0); }
+}
+/* 풀스크린 모달 퇴장 — 살짝 내려가며 빠르게 사라짐 */
+@keyframes ycSheetOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(48px); }
+}
+/* 카드 펼침 패널 — 위에서 아래로 자연스럽게 펼쳐짐 */
+@keyframes ycExpandIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* 화면 전환 3종: backwards fill — 애니메이션 종료 후 transform을 남기지 않아야
  * 하위 position:fixed(하단 탭바 등)가 뷰포트 기준으로 고정된다. (both는 transform 잔류)
@@ -280,6 +306,10 @@
 .anim-page          { animation: ycPageIn       240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
 .anim-back          { animation: ycSlideBack    240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
 .anim-fade          { animation: ycFadeScreen   260ms ease both; }
+.anim-scale-in      { animation: ycScaleIn      300ms cubic-bezier(0.16,1,0.3,1)   backwards; will-change: transform, opacity; }
+.anim-sheet-in      { animation: ycSheetIn      420ms cubic-bezier(0.32,0.72,0,1) backwards; will-change: transform, opacity; }
+.anim-sheet-out     { animation: ycSheetOut     260ms cubic-bezier(0.4,0,1,1)     forwards;  will-change: transform, opacity; }
+.anim-expand        { animation: ycExpandIn      200ms cubic-bezier(0.16,1,0.3,1) backwards; }
 .anim-pop           { animation: ycPop          480ms cubic-bezier(0.34,1.56,0.64,1) both; }
 .anim-spin          { animation: ycSpin         0.7s  linear infinite; }
 .anim-scan          { animation: ycScan         1.6s  ease-in-out infinite; }

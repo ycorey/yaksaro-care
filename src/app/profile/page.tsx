@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from './logout-button'
+import { Check, X } from '@phosphor-icons/react/dist/ssr'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -41,8 +42,8 @@ export default async function ProfilePage() {
       <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4">
         <p className="text-sm font-semibold text-gray-700 mb-3">동의 현황</p>
         <div className="flex items-center gap-2 text-sm">
-          <span className={profile?.consent_health ? 'text-green-600' : 'text-red-500'}>
-            {profile?.consent_health ? '✓' : '✗'}
+          <span className={profile?.consent_health ? 'text-yc-green600' : 'text-yc-error'}>
+            {profile?.consent_health ? <Check weight="bold" size={14} /> : <X weight="bold" size={14} />}
           </span>
           <span className="text-gray-700">민감정보(건강·복약) 수집·이용 동의</span>
         </div>

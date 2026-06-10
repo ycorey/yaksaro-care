@@ -24,6 +24,7 @@ export function confettiColors(): string[] {
  * Today 화면의 "오늘 복약 끝!" 오버레이와 함께 호출한다.
  */
 export async function celebrateAllDone(): Promise<void> {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   // canvas-confetti는 호출 시점에 동적 로드 → 초기 번들에서 제외(코드분할)
   const confetti = (await import('canvas-confetti')).default
   const colors = confettiColors()

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
+import { PharmacyEmptyIcon } from './pharmacy-icons'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -49,7 +50,7 @@ export default async function PharmacyHome() {
 
       {rows.length === 0 ? (
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
-          <div className="text-4xl mb-3">🏥</div>
+          <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
           <p className="text-sm text-yc-neutral400">환자가 설정에서 “단골 약사에게 공개”를 켜면 여기에 표시돼요</p>
         </div>

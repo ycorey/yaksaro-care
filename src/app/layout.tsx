@@ -4,6 +4,7 @@ import BackGuard from '@/components/back-guard'
 import PWARegister from '@/components/pwa-register'
 import SplashScreen from '@/components/splash-screen'
 import InstallBanner from '@/components/pwa/install-banner'
+import { PhosphorProvider } from '@/components/providers/phosphor-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -31,7 +32,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: 'cover',
   themeColor: '#0E6E54',
 }
@@ -40,6 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {/* 글자 크기 설정 — localStorage에서 즉시 복원 (FOUC 방지) */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var fs=localStorage.getItem('yaksaro_font_size');var px={'normal':16,'large':18,'xlarge':20}[fs];if(px)document.documentElement.style.fontSize=px+'px';}catch(e){}` }} />
         {/* 디스플레이 폰트(헤더 전역 사용) 선로딩 → 첫 헤딩 페인트 가속 */}
         <link
           rel="preload"
@@ -55,12 +57,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-pretendard antialiased text-yc-neutral900" style={{ backgroundColor: '#EFEBE2' }}>
-        <SplashScreen />
-        <BackGuard />
-        {children}
-        <Toaster position="top-center" richColors />
-        <InstallBanner />
-        <PWARegister />
+        <PhosphorProvider>
+          <SplashScreen />
+          <BackGuard />
+          {children}
+          <Toaster position="top-center" richColors />
+          <InstallBanner />
+          <PWARegister />
+        </PhosphorProvider>
       </body>
     </html>
   )

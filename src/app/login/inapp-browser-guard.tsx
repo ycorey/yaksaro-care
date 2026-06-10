@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ClipboardText, Globe } from '@phosphor-icons/react'
 
 // 카카오톡·네이버·인스타·페북·라인·다음 등 인앱 브라우저(WebView) 시그니처
 const INAPP_RE = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|DaumApps|everytimeApp|kakaostory|; wv\)/i
@@ -49,7 +50,7 @@ export default function InAppBrowserGuard() {
 
   return (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center px-6 text-center">
-      <div className="text-5xl mb-6">🌐</div>
+      <div className="mb-6 flex justify-center"><Globe weight="fill" size={56} className="text-yc-blue500" /></div>
       <h2 className="text-xl font-bold text-gray-950 mb-3 leading-snug">
         외부 브라우저에서 열어주세요
       </h2>
@@ -63,7 +64,7 @@ export default function InAppBrowserGuard() {
         onClick={copyUrl}
         className="w-full max-w-xs py-4 rounded-2xl bg-blue-600 text-white text-base font-bold active:bg-blue-800 mb-3"
       >
-        📋 주소 복사하기
+        <ClipboardText weight="fill" size={18} className="inline mr-1.5" /> 주소 복사하기
       </button>
       <p className="text-sm text-gray-400">
         우측 상단 메뉴(•••) → <span className="font-semibold">Safari로 열기</span> 를 눌러도 됩니다

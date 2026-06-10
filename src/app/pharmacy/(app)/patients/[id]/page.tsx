@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SectionHeader } from '@/components/yc/section-header'
+import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
   return [
@@ -52,7 +53,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
       <div className="space-y-5">
         <Link href="/pharmacy" className="text-sm text-yc-green600 font-medium">‹ 목록으로</Link>
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
-          <div className="text-4xl mb-3">🔒</div>
+          <div className="mb-3 flex justify-center"><LockEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">볼 수 없는 환자예요</p>
           <p className="text-sm text-yc-neutral400">동의가 해제되었거나 내 단골 환자가 아니에요</p>
         </div>
@@ -75,7 +76,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
           {m.drug?.image_url
             // eslint-disable-next-line @next/next/no-img-element
             ? <img loading="lazy" decoding="async" src={m.drug.image_url} alt={name} className="w-full h-full object-cover" />
-            : (m.supplement ? '🌿' : '💊')}
+            : <MedThumbnailIcon isSupplement={!!m.supplement} />}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-lg font-bold text-yc-neutral900 leading-snug">
@@ -86,7 +87,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
           {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
           {m.has_interaction_warning && (
             <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
-              <span>⚠️</span> 알려진 상호작용 정보가 있습니다
+              <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다
             </p>
           )}
         </div>

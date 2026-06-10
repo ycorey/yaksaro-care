@@ -9,6 +9,7 @@ import {
   showLocalNotification,
 } from '@/lib/notifications'
 import { subscribeToPush, unsubscribeFromPush, pushSupported } from '@/lib/push-client'
+import { Lock, Hospital, Bell, Check, X } from '@phosphor-icons/react'
 
 type FontSize = 'normal' | 'large' | 'xlarge'
 
@@ -192,7 +193,7 @@ export default function SettingsClient({
     <div className="space-y-6 pb-8">
 
       {/* ── 글자 크기 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '0ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">글자 크기</p>
         <div className="flex gap-2">
           {FONT_SIZES.map(f => (
@@ -206,35 +207,35 @@ export default function SettingsClient({
             </button>
           ))}
         </div>
-        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           눈이 편한 크기로 골라보세요. 앱 전체 글자가 함께 커져요.
         </p>
       </section>
 
       {/* ── 복약 알림 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '50ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">복약 알림</p>
         <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
           <Row>
             <div className="flex items-center gap-3">
-              <span className="text-xl">🕐</span>
+              <Bell weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-yc-neutral900">복약 시간 알림</p>
-                <p className="text-xs text-yc-neutral400 mt-0.5">약 드실 시간에 알려드려요</p>
+                <p className="text-xs text-yc-neutral500 mt-0.5">약 드실 시간에 알려드려요</p>
               </div>
             </div>
             <Toggle on={alarmEnabled} onToggle={toggleAlarm} />
           </Row>
         </div>
-        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           처음 켜면 알림 허용을 물어봐요. 홈 화면에 앱을 추가하면 알림이 더 잘 도착해요.
         </p>
       </section>
 
       {/* ── 시간대별 알림 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '100ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">시간대별 알림</p>
         <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
           {ALARM_TIMES.map(({ key, label }) => (
@@ -244,26 +245,26 @@ export default function SettingsClient({
             </Row>
           ))}
         </div>
-        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           꺼진 시간대는 알림이 오지 않아요.
         </p>
-        <p className="text-xs text-yc-neutral400 mt-1.5 flex items-start gap-1">
-          <span className="flex-shrink-0 mt-0.5">🔒</span>
+        <p className="text-xs text-yc-neutral500 mt-1.5 flex items-start gap-1">
+          <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
           알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
         </p>
       </section>
 
       {/* ── 단골 약사에게 공개 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '150ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">단골 약국</p>
         <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
           <Row>
             <div className="flex items-center gap-3 min-w-0">
-              <span className="text-xl">🏥</span>
+              <Hospital weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-yc-neutral900">단골 약사에게 내 약 목록 공개</p>
-                <p className="text-xs text-yc-neutral400 mt-0.5 truncate">
+                <p className="text-xs text-yc-neutral500 mt-0.5 truncate">
                   {regularPharmacyName
                     ? `${regularPharmacyName} 약사가 읽기 전용으로 볼 수 있어요`
                     : 'QR로 단골약국을 먼저 연결해주세요'}
@@ -277,26 +278,26 @@ export default function SettingsClient({
             )}
           </Row>
         </div>
-        <p className="text-xs text-yc-neutral400 mt-2 flex items-start gap-1">
+        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           켜면 단골 약사가 복약 상담에 참고할 수 있어요. 언제든 끄면 즉시 볼 수 없게 돼요.
         </p>
       </section>
 
       {/* ── 내 정보 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '200ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">내 정보</p>
         <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
           <div className="px-5 py-4 border-b border-yc-neutral100">
-            <p className="text-xs text-yc-neutral400 mb-0.5">이름</p>
+            <p className="text-xs text-yc-neutral500 mb-0.5">이름</p>
             <p className="text-sm font-semibold text-yc-neutral900">{userName ?? '—'}</p>
           </div>
           <div className="px-5 py-4 border-b border-yc-neutral100">
-            <p className="text-xs text-yc-neutral400 mb-0.5">이메일</p>
+            <p className="text-xs text-yc-neutral500 mb-0.5">이메일</p>
             <p className="text-sm font-semibold text-yc-neutral900">{userEmail ?? '—'}</p>
           </div>
           <div className="px-5 py-4 border-b border-yc-neutral100">
-            <p className="text-xs text-yc-neutral400 mb-0.5">역할</p>
+            <p className="text-xs text-yc-neutral500 mb-0.5">역할</p>
             <p className="text-sm font-semibold text-yc-neutral900">
               {userRole === 'pharmacist' ? '약사' : '환자·보호자'}
             </p>
@@ -304,7 +305,7 @@ export default function SettingsClient({
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 text-sm">
               <span className={consentHealth ? 'text-yc-green600' : 'text-yc-error'}>
-                {consentHealth ? '✓' : '✗'}
+                {consentHealth ? <Check weight="bold" size={14} /> : <X weight="bold" size={14} />}
               </span>
               <span className="text-yc-neutral700">건강정보 수집·이용 동의</span>
             </div>
@@ -313,7 +314,7 @@ export default function SettingsClient({
       </section>
 
       {/* ── 계정 ── */}
-      <section>
+      <section className="anim-page" style={{ animationDelay: '250ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">계정</p>
         <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
           <button onClick={handleLogout}
@@ -321,7 +322,7 @@ export default function SettingsClient({
             로그아웃
           </button>
         </div>
-        <p className="text-xs text-yc-neutral400 mt-3 text-center leading-relaxed">
+        <p className="text-xs text-yc-neutral500 mt-3 text-center leading-relaxed">
           계정 삭제·개인정보 열람 요청은 ycorey@gmail.com 으로 문의하세요.
         </p>
       </section>

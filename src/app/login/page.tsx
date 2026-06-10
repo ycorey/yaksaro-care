@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Pill } from '@phosphor-icons/react'
 import type { Provider } from '@supabase/supabase-js'
 import Link from 'next/link'
 import InAppBrowserGuard from './inapp-browser-guard'
@@ -90,7 +91,9 @@ function LoginContent() {
 
         {/* 로고 */}
         <div className="text-center mb-14">
-          <div className="text-6xl mb-5">💊</div>
+          <div className="mb-5 flex justify-center">
+            <Pill weight="fill" size={64} className="text-yc-green600" />
+          </div>
           <h1 className="text-3xl font-bold text-gray-950 tracking-tight">약사로 케어</h1>
           <p className="text-base text-gray-400 mt-2 font-medium">나의 복약 주치의</p>
         </div>

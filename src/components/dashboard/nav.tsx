@@ -5,73 +5,29 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { createClient } from '@/lib/supabase/client'
+import {
+  House, Wallet, Heart, CalendarBlank, PaperPlaneTilt,
+  Camera, PlusCircle, User as UserIcon, SignOut,
+  type Icon,
+} from '@phosphor-icons/react'
 
-// ── SVG 아이콘 ─────────────────────────────────────────────────────
-function IconHome({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke={active ? '#15604E' : '#9CA3AF'} strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  )
-}
-function IconWallet({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke={active ? '#15604E' : '#9CA3AF'} strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path d="M16 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill={active ? '#15604E' : '#9CA3AF'} stroke="none" />
-      <path d="M2 10h20" />
-    </svg>
-  )
-}
-function IconHeart({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? '#15604E' : 'none'}
-      stroke={active ? '#15604E' : '#9CA3AF'} strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  )
-}
-function IconCalendar({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke={active ? '#15604E' : '#9CA3AF'} strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  )
-}
-function IconSend({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke={active ? '#15604E' : '#9CA3AF'} strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-    </svg>
-  )
-}
-
-const tabItems = [
-  { href: '/home',     label: '홈',      Icon: IconHome },
-  { href: '/wallet',   label: '약지갑',  Icon: IconWallet },
-  { href: '/today',    label: '오늘복약', Icon: IconHeart },
-  { href: '/calendar', label: '캘린더',  Icon: IconCalendar },
-  { href: '/share',    label: '전달',    Icon: IconSend },
+const tabItems: { href: string; label: string; Icon: Icon }[] = [
+  { href: '/home',     label: '홈',      Icon: House },
+  { href: '/wallet',   label: '약지갑',  Icon: Wallet },
+  { href: '/today',    label: '오늘복약', Icon: Heart },
+  { href: '/calendar', label: '캘린더',  Icon: CalendarBlank },
+  { href: '/share',    label: '전달',    Icon: PaperPlaneTilt },
 ]
 
-const sideItems = [
-  { href: '/home',             label: '홈',       icon: '🏠' },
-  { href: '/wallet',           label: '약 지갑',   icon: '💊' },
-  { href: '/today',            label: '오늘 복약', icon: '❤️' },
-  { href: '/calendar',         label: '캘린더',    icon: '📅' },
-  { href: '/share',            label: '약 목록 전달', icon: '📤' },
-  { href: '/medications/ocr',  label: '처방전',    icon: '📸' },
-  { href: '/medications/add',  label: '약 추가',   icon: '➕' },
-  { href: '/profile',          label: '내 정보',   icon: '👤' },
+const sideItems: { href: string; label: string; Icon: Icon }[] = [
+  { href: '/home',             label: '홈',           Icon: House },
+  { href: '/wallet',           label: '약 지갑',      Icon: Wallet },
+  { href: '/today',            label: '오늘 복약',    Icon: Heart },
+  { href: '/calendar',         label: '캘린더',       Icon: CalendarBlank },
+  { href: '/share',            label: '약 목록 전달', Icon: PaperPlaneTilt },
+  { href: '/medications/ocr',  label: '처방전',       Icon: Camera },
+  { href: '/medications/add',  label: '약 추가',      Icon: PlusCircle },
+  { href: '/profile',          label: '내 정보',      Icon: UserIcon },
 ]
 
 interface Props {
@@ -93,8 +49,8 @@ export default function DashboardNav({ user, profile }: Props) {
   return (
     <>
       {/* ── 데스크탑 사이드바 ── */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-100 flex-col">
-        <div className="p-5 border-b border-gray-100">
+      <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-yc-neutral100 flex-col">
+        <div className="p-5 border-b border-yc-neutral100">
           <Link href="/home">
             <img
               src="/brand-assets/logo-wordmark.svg"
@@ -102,7 +58,7 @@ export default function DashboardNav({ user, profile }: Props) {
               style={{ height: '28px', width: 'auto' }}
             />
           </Link>
-          <p className="text-xs text-gray-400 mt-2 truncate">{profile?.full_name ?? user.email}</p>
+          <p className="text-xs text-yc-neutral400 mt-2 truncate">{profile?.full_name ?? user.email}</p>
         </div>
         <nav className="flex-1 p-3">
           {sideItems.map((item) => {
@@ -110,42 +66,44 @@ export default function DashboardNav({ user, profile }: Props) {
             return (
               <Link key={item.href} href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium mb-1 transition-colors ${
-                  active ? 'bg-[#E9F1DC] text-[#15604E]' : 'text-gray-600 hover:bg-gray-50'
+                  active ? 'bg-yc-green50 text-yc-green600' : 'text-yc-neutral600 hover:bg-yc-neutral50'
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <item.Icon size={18} weight={active ? 'fill' : 'light'} />
                 {item.label}
               </Link>
             )
           })}
         </nav>
-        <div className="p-3 border-t border-gray-100">
+        <div className="p-3 border-t border-yc-neutral100">
           <button onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-red-500 transition-colors">
-            <span>🚪</span>로그아웃
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-yc-neutral400 hover:bg-yc-neutral50 hover:text-yc-error transition-colors">
+            <SignOut size={18} />
+            로그아웃
           </button>
         </div>
       </aside>
 
       {/* ── 모바일 하단 탭바 ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t border-yc-neutral200 bg-white"
         style={{
           height: '68px',
           paddingBottom: 'env(safe-area-inset-bottom)',
-          backgroundColor: '#FFFFFF',
-          borderTop: '1px solid #E5E7EB',
         }}
       >
         {tabItems.map(({ href, label, Icon }) => {
           const active = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'))
           return (
-            // 탭 전환 애니메이션은 TabPager가 담당 → 평범한 Link로 URL만 변경
             <Link key={href} href={href}
               className="w-1/5 flex flex-col items-center justify-center gap-1 active:opacity-70 transition-opacity"
+              aria-label={label}
             >
-              <Icon active={active} />
-              <span className={`text-[10px] font-semibold leading-none ${active ? 'text-[#15604E]' : 'text-gray-400'}`}>
+              <Icon
+                weight={active ? 'fill' : 'light'}
+                color={active ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral400)'}
+              />
+              <span className={`text-[0.6875rem] font-semibold leading-none ${active ? 'text-yc-green600' : 'text-yc-neutral400'}`}>
                 {label}
               </span>
             </Link>

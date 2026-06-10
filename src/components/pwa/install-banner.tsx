@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Download, Share, ExternalLink } from 'lucide-react'
+import { X, DownloadSimple, ShareNetwork, ArrowSquareOut } from '@phosphor-icons/react'
 
 const DISMISS_KEY = 'yc_install_dismissed'
 const DISMISS_DAYS = 7
@@ -74,9 +74,9 @@ export default function InstallBanner() {
     <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-[80]
       bg-white border border-[#89CCB3] rounded-yc-lg shadow-[var(--yc-shadow-lg)] p-4 flex items-start gap-3 anim-fade">
       <div className="w-10 h-10 rounded-yc-md bg-yc-green600 flex items-center justify-center flex-shrink-0">
-        {mode === 'ios' ? <Share className="w-5 h-5 text-white" /> :
-         mode === 'kakao' ? <ExternalLink className="w-5 h-5 text-white" /> :
-         <Download className="w-5 h-5 text-white" />}
+        {mode === 'ios' ? <ShareNetwork size={20} weight="fill" className="text-white" /> :
+         mode === 'kakao' ? <ArrowSquareOut size={20} weight="fill" className="text-white" /> :
+         <DownloadSimple size={20} weight="fill" className="text-white" />}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-display text-sm text-yc-neutral900">약사로케어 앱 설치</p>
@@ -109,7 +109,7 @@ export default function InstallBanner() {
         )}
       </div>
       <button onClick={dismiss} className="text-yc-neutral400 active:text-yc-neutral600 flex-shrink-0 mt-0.5" aria-label="닫기">
-        <X className="w-4 h-4" />
+        <X size={16} />
       </button>
     </div>
   )

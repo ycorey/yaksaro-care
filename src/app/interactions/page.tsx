@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { checkInteractions } from '@/lib/dur'
 import type { InteractionResult } from '@/types'
+import { SeverityIcon, SummaryIcon, DrugEmptyIcon } from './interaction-icons'
 
 const SEVERITY_CONFIG = {
   contraindicated: {
@@ -9,28 +10,24 @@ const SEVERITY_CONFIG = {
     wrapperClass: 'bg-red-50 border-red-200',
     textClass: 'text-red-800',
     badgeClass: 'bg-red-100 text-red-700',
-    icon: '🚫',
   },
   warning: {
     label: '주의',
     wrapperClass: 'bg-amber-50 border-amber-200',
     textClass: 'text-amber-800',
     badgeClass: 'bg-amber-100 text-amber-700',
-    icon: '⚠️',
   },
   monitor: {
     label: '모니터링',
     wrapperClass: 'bg-yellow-50 border-yellow-200',
     textClass: 'text-yellow-800',
     badgeClass: 'bg-yellow-100 text-yellow-700',
-    icon: '👁',
   },
   ok: {
     label: '안전',
     wrapperClass: 'bg-green-50 border-green-200',
     textClass: 'text-green-800',
     badgeClass: 'bg-green-100 text-green-700',
-    icon: '✅',
   },
 } as const
 
@@ -91,7 +88,7 @@ export default async function InteractionsPage() {
       {/* 의약품 없음 */}
       {drugIds.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
-          <div className="text-4xl mb-3">💊</div>
+          <div className="mb-3 flex justify-center"><DrugEmptyIcon /></div>
           <p className="font-medium text-gray-700 mb-1">확인할 의약품이 없습니다</p>
           <p className="text-sm text-gray-400">
             복약 목록에 의약품을 2종 이상 추가하면 상호작용을 확인할 수 있습니다.
@@ -113,7 +110,7 @@ export default async function InteractionsPage() {
           <div className={`rounded-xl border p-4 flex items-center gap-3 ${
             hasIssues ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
           }`}>
-            <span className="text-2xl">{hasIssues ? '🚫' : '✅'}</span>
+            <SummaryIcon hasIssues={hasIssues} />
             <div>
               <p className={`font-semibold text-sm ${hasIssues ? 'text-red-800' : 'text-green-800'}`}>
                 {hasIssues
@@ -155,8 +152,8 @@ export default async function InteractionsPage() {
             const cfg = SEVERITY_CONFIG[sev]
             return (
               <div key={sev} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
-                  {cfg.icon} {cfg.label} {items.length}건
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 flex items-center gap-1">
+                  <SeverityIcon severity={sev} size={14} /> {cfg.label} {items.length}건
                 </p>
                 {items.map((item, idx) => (
                   <div key={idx} className={`rounded-xl border p-4 ${cfg.wrapperClass}`}>

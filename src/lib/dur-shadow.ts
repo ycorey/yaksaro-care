@@ -27,6 +27,26 @@ export function logDurShadow(
         interaction_count: interactions.length,
         severity_summary:  severitySummary,
       })
+
+      // M1: 상호작용이 있는 약의 has_interaction_warning 갱신
+      if (interactions.length > 0) {
+        const { data: pairs } = await admin.from('interactions')
+          .select('drug_a_id, drug_b_id')
+          .in('drug_a_id', drugIds)
+          .in('drug_b_id', drugIds)
+        const interactingIds = new Set<string>()
+        for (const p of pairs ?? []) {
+          if (p.drug_a_id) interactingIds.add(p.drug_a_id as string)
+          if (p.drug_b_id) interactingIds.add(p.drug_b_id as string)
+        }
+        if (interactingIds.size > 0) {
+          await admin.from('user_medications')
+            .update({ has_interaction_warning: true })
+            .eq('user_id', userId)
+            .in('drug_id', [...interactingIds])
+            .is('deleted_at', null)
+        }
+      }
     } catch (e) {
       console.warn('[DUR shadow] log failed:', e)
     }
