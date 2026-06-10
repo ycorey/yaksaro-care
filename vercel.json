@@ -3,6 +3,7 @@
   "crons": [
     { "path": "/api/cron/medication-reminders?meal=morning",   "schedule": "0 23 * * *" },
     { "path": "/api/cron/medication-reminders?meal=afternoon", "schedule": "30 3 * * *" },
-    { "path": "/api/cron/medication-reminders?meal=evening",   "schedule": "0 10 * * *" }
+    { "path": "/api/cron/medication-reminders?meal=evening",   "schedule": "0 10 * * *" },
+    { "path": "/api/cron/sync-supplements", "schedule": "0 18 1 * *" }
   ]
 }

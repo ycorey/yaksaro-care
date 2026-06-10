@@ -39,40 +39,61 @@ async function searchLicenseApi(q: string): Promise<DrugResult[]> {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const q = searchParams.get('q')?.trim()
+  const q       = searchParams.get('q')?.trim()
+  const otcOnly = searchParams.get('otcOnly') === 'true'
 
   if (!q || q.length < 1) return NextResponse.json({ drugs: [], supplements: [] })
 
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const [drugsRes, suppsRes] = await Promise.all([
-    supabase
-      .from('drugs')
-      .select('id, item_seq, item_name, entp_name')
-      .ilike('item_name', `%${q}%`)
-      .eq('is_canceled', false)   // 허가취하 품목 제외(016 partial 인덱스 활용)
+  // 약품: prefix 우선 + contains 보완, (수출용) 제외 — 쿼리 빌더 공유 금지(필터 누적)
+  function drugBase(extra?: { otc?: boolean }) {
+    let q2 = supabase.from('drugs').select('id, item_seq, item_name, entp_name')
+      .eq('is_canceled', false)
+      .not('item_name', 'ilike', '%(수출용)%')
+    if (extra?.otc) q2 = q2.eq('etc_otc_name', '일반의약품')
+    return q2
+  }
+
+  const [drugPrefixRes, drugContainsRes, suppPrefixRes, suppContainsRes] = await Promise.all([
+    drugBase({ otc: otcOnly }).ilike('item_name', `${q}%`).limit(8),
+    drugBase({ otc: otcOnly }).ilike('item_name', `%${q}%`).not('item_name', 'ilike', `${q}%`).limit(8),
+    supabase.from('supplements').select('id, product_name, company_name')
+      .ilike('product_name', `${q}%`)
+      .not('product_name', 'ilike', '%(전량수출용)%')
       .limit(8),
-    supabase
-      .from('supplements')
-      .select('id, product_name, company_name')
+    supabase.from('supplements').select('id, product_name, company_name')
       .ilike('product_name', `%${q}%`)
-      .limit(5),
+      .not('product_name', 'ilike', `${q}%`)
+      .not('product_name', 'ilike', '%(전량수출용)%')
+      .limit(8),
   ])
 
-  const localDrugs: DrugResult[] = (drugsRes.data ?? []).map(d => ({
+  const seenDrugIds = new Set<string>()
+  const mergedDrugs = [...(drugPrefixRes.data ?? []), ...(drugContainsRes.data ?? [])]
+    .filter(d => !seenDrugIds.has(d.id) && seenDrugIds.add(d.id))
+    .slice(0, 8)
+
+  const seenSuppIds = new Set<string>()
+  const mergedSupps = [...(suppPrefixRes.data ?? []), ...(suppContainsRes.data ?? [])]
+    .filter(s => !seenSuppIds.has(s.id) && seenSuppIds.add(s.id))
+    .slice(0, 8)
+
+  const localDrugs: DrugResult[] = mergedDrugs.map(d => ({
     id:        d.id,
     item_seq:  d.item_seq ?? null,
     item_name: d.item_name,
     entp_name: d.entp_name ?? null,
-    image_url: null,  // DB 약품 이미지는 med-card-item의 info API로 lazy-load
+    image_url: null,
     source:    'db' as const,
   }))
 
-  // 로컬 결과가 적을 때만 허가정보 API 보완 (처방의약품 커버리지 확장)
+  // otcOnly일 때는 외부 API 보완 생략 (전문/일반 구분 불가)
   let apiDrugs: DrugResult[] = []
-  if (localDrugs.length < 5) {
+  if (!otcOnly && localDrugs.length < 5) {
     apiDrugs = await searchLicenseApi(q)
-    // 로컬에 이미 있는 약은 제외 (item_seq 또는 이름 중복 방지)
     const localSeqs  = new Set(localDrugs.map(d => d.item_seq).filter(Boolean))
     const localNames = new Set(localDrugs.map(d => d.item_name.toLowerCase()))
     apiDrugs = apiDrugs.filter(d =>
@@ -82,6 +103,6 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     drugs:       [...localDrugs, ...apiDrugs],
-    supplements: suppsRes.data ?? [],
+    supplements: mergedSupps,
   })
 }
