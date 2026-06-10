@@ -6,9 +6,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const MEALS: Record<string, { label: string; time: string }> = {
-  morning:   { label: '아침', time: '08:00' },
-  afternoon: { label: '점심', time: '12:30' },
-  evening:   { label: '저녁', time: '19:00' },
+  morning:   { label: '아침',   time: '08:00' },
+  afternoon: { label: '점심',   time: '12:30' },
+  evening:   { label: '저녁',   time: '19:00' },
+  bedtime:   { label: '자기 전', time: '22:00' },
 }
 
 // KST(UTC+9) 기준 오늘 날짜
@@ -35,6 +36,11 @@ export async function GET(req: NextRequest) {
 
   const admin = createAdminClient()
   const day = todayKST()
+
+  // 0) 만료 처방 약 자동 종료 — 매 cron 실행마다 한 번만 처리 (morning 끼니에 한정)
+  if (meal === 'morning') {
+    try { await admin.rpc('end_expired_medications', { today: day }) } catch { /* 함수 미생성 시 무시 */ }
+  }
 
   // 1) 푸시 구독한 사용자
   const { data: subs } = await admin.from('push_subscriptions').select('user_id')

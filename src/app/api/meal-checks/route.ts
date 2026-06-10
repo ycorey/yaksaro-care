@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-type Meal = 'morning' | 'afternoon' | 'evening'
-const MEALS: Meal[] = ['morning', 'afternoon', 'evening']
+type Meal = 'morning' | 'afternoon' | 'evening' | 'bedtime'
+const MEALS: Meal[] = ['morning', 'afternoon', 'evening', 'bedtime']
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -20,7 +20,7 @@ export async function GET() {
     .eq('user_id', user.id)
     .eq('check_date', today())
 
-  const checks = { morning: false, afternoon: false, evening: false }
+  const checks = { morning: false, afternoon: false, evening: false, bedtime: false }
   for (const row of data ?? []) {
     if (MEALS.includes(row.meal_time as Meal)) {
       checks[row.meal_time as Meal] = !!row.is_checked

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Flask, Pill, Hospital, Megaphone, X } from '@phosphor-icons/react'
 
 export type DoctorMed = { name: string; dosage: string }
 
@@ -11,25 +12,33 @@ export type DoctorData = {
 }
 
 export default function DoctorView({ data }: { data: DoctorData }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen]       = useState(false)
+  const [closing, setClosing] = useState(false)
+
   const totalCount =
     data.prescriptionGroups.reduce((s, g) => s + g.meds.length, 0) +
     data.supplements.length +
     data.otc.length
 
+  function openModal()  { setOpen(true) }
+  function closeModal() {
+    setClosing(true)
+    setTimeout(() => { setOpen(false); setClosing(false) }, 240)
+  }
+
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         className="w-full py-5 rounded-yc-lg bg-yc-green600 text-white text-lg font-display active:opacity-80 transition-opacity"
       >
-        의사·약사님께 보여주기 📢
+        <span className="flex items-center justify-center gap-2">의사·약사님께 보여주기 <Megaphone weight="fill" size={20} /></span>
       </button>
 
       {/* 풀스크린 메디컬 전광판 모달 (고대비 읽기 전용) */}
       {open && (
         <div
-          className="fixed inset-0 z-[100] bg-white overflow-y-auto"
+          className={`fixed inset-0 z-[100] bg-white overflow-y-auto ${closing ? 'anim-sheet-out' : 'anim-sheet-in'}`}
           role="dialog"
           aria-modal="true"
         >
@@ -40,10 +49,10 @@ export default function DoctorView({ data }: { data: DoctorData }) {
               <p className="font-display text-xl text-yc-neutral900">현재 복용 중인 약 {totalCount}종</p>
             </div>
             <button
-              onClick={() => setOpen(false)}
+              onClick={closeModal}
               className="text-base font-bold text-yc-blue500 px-4 py-2.5 rounded-yc-md active:bg-yc-neutral100"
             >
-              닫기 ✕
+              <span className="flex items-center gap-1">닫기 <X weight="bold" size={14} /></span>
             </button>
           </div>
 
@@ -57,11 +66,11 @@ export default function DoctorView({ data }: { data: DoctorData }) {
                 </p>
                 {data.prescriptionGroups.map((g, gi) => (
                   <div key={gi} className={gi > 0 ? 'mt-8' : ''}>
-                    <p className="text-sm font-bold text-yc-neutral400 mb-4">🏥 {g.hospitalName}</p>
+                    <p className="text-sm font-bold text-yc-neutral400 mb-4 flex items-center gap-1.5"><Hospital weight="fill" size={14} /> {g.hospitalName}</p>
                     <ul className="space-y-5">
                       {g.meds.map((m, i) => (
                         <li key={i} className="border-b border-yc-neutral100 last:border-0 pb-5 last:pb-0">
-                          <p className="text-[30px] leading-tight font-black text-yc-neutral900 break-keep">{m.name}</p>
+                          <p className="text-[1.875rem] leading-tight font-black text-yc-neutral900 break-keep">{m.name}</p>
                           {m.dosage && (
                             <p className="text-lg font-semibold text-yc-neutral500 mt-1">{m.dosage}</p>
                           )}
@@ -82,7 +91,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
                 <ul className="space-y-5">
                   {data.supplements.map((m, i) => (
                     <li key={i} className="border-b border-yc-neutral100 last:border-0 pb-5 last:pb-0">
-                      <p className="text-[30px] leading-tight font-black text-yc-neutral900 break-keep">🌿 {m.name}</p>
+                      <p className="text-[1.875rem] leading-tight font-black text-yc-neutral900 break-keep flex items-center gap-2"><Flask weight="fill" size={26} className="text-yc-green700 flex-shrink-0" /><span>{m.name}</span></p>
                       {m.dosage && (
                         <p className="text-lg font-semibold text-yc-neutral500 mt-1">{m.dosage}</p>
                       )}
@@ -101,7 +110,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
                 <ul className="space-y-5">
                   {data.otc.map((m, i) => (
                     <li key={i} className="border-b border-yc-neutral100 last:border-0 pb-5 last:pb-0">
-                      <p className="text-[30px] leading-tight font-black text-yc-neutral900 break-keep">💊 {m.name}</p>
+                      <p className="text-[1.875rem] leading-tight font-black text-yc-neutral900 break-keep flex items-center gap-2"><Pill weight="fill" size={26} className="text-yc-blue500 flex-shrink-0" /><span>{m.name}</span></p>
                       {m.dosage && (
                         <p className="text-lg font-semibold text-yc-neutral500 mt-1">{m.dosage}</p>
                       )}

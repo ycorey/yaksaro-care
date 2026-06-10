@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, SunHorizon, Sun, Moon, MoonStars, ArrowsClockwise, Check } from '@phosphor-icons/react'
 
 type Medicine = {
   name:          string
@@ -11,6 +12,20 @@ type Medicine = {
   dose_amount:   number | null
   doses_per_day: number | null
   days:          number | null
+  meal_times:    string[]
+}
+
+const MEAL_OPTIONS = [
+  { key: 'morning',   label: '아침',   icon: <SunHorizon weight="fill" size={12} /> },
+  { key: 'afternoon', label: '점심',   icon: <Sun        weight="fill" size={12} /> },
+  { key: 'evening',   label: '저녁',   icon: <Moon       weight="fill" size={12} /> },
+  { key: 'bedtime',   label: '자기전', icon: <MoonStars  weight="fill" size={12} /> },
+]
+
+function defaultMealTimes(dosesPerDay: number | null): string[] {
+  if (dosesPerDay === 1) return ['morning']
+  if (dosesPerDay === 2) return ['morning', 'evening']
+  return ['morning', 'afternoon', 'evening']
 }
 
 type OcrResult = {
@@ -171,7 +186,13 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       if (res.status === 413) throw new Error('이미지가 너무 큽니다. 더 가까이서 다시 촬영해 주세요.')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? '오류')
-      setResult(data)
+      setResult({
+        ...data,
+        medicines: (data.medicines ?? []).map((m: Omit<Medicine, 'meal_times'>) => ({
+          ...m,
+          meal_times: defaultMealTimes(m.doses_per_day),
+        })),
+      })
       setState('done')
     } catch (e: unknown) {
       // 실패해도 찍은 사진(file)은 유지 → 재촬영 없이 '다시 분석하기' 가능
@@ -211,6 +232,18 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     if (editIdx === i) setEditIdx(null)
   }
 
+  // 복용 시간 토글 — 아침/점심/저녁/자기전 중 선택
+  function toggleMealTime(i: number, key: string) {
+    if (!result) return
+    const next = result.medicines.map((m, idx) => {
+      if (idx !== i) return m
+      const times = m.meal_times ?? []
+      const updated = times.includes(key) ? times.filter(t => t !== key) : [...times, key]
+      return { ...m, meal_times: updated }
+    })
+    setResult({ ...result, medicines: next })
+  }
+
   const confirm = async () => {
     if (!result) return
     setSaving(true)
@@ -223,6 +256,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         dose_amount:   m.dose_amount,
         doses_per_day: m.doses_per_day,
         days:          m.days,
+        meal_times:    m.meal_times ?? [],
       }))
       const res = await fetch('/api/medications/bulk', {
         method: 'POST',
@@ -248,7 +282,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 anim-scale-in">
       {/* 업로드 영역 (대기/오류 상태에서만) */}
       {(state === 'idle') && (
         <div className="space-y-3">
@@ -259,7 +293,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             </div>
           ) : (
             <div className="border-2 border-dashed border-yc-neutral200 rounded-yc-lg p-8 text-center">
-              <div className="text-4xl mb-3">📸</div>
+              <Camera size={48} weight="light" className="text-yc-neutral400 mx-auto mb-3" />
               <p className="font-medium text-yc-neutral700">처방전 사진을 올려주세요</p>
             </div>
           )}
@@ -286,7 +320,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             onClick={() => cameraRef.current?.click()}
             className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700 transition-colors"
           >
-            📷 카메라 촬영
+            <Camera weight="fill" size={20} /> 카메라 촬영
           </button>
 
           <button
@@ -294,7 +328,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             onClick={() => fileRef.current?.click()}
             className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md border border-yc-neutral300 bg-white text-yc-neutral700 font-display active:bg-yc-neutral100 transition-colors"
           >
-            🖼 사진 선택
+            <Images size={20} /> 사진 선택
           </button>
         </div>
       )}
@@ -308,7 +342,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
               onClick={() => runOcr(file, file)}
               className="mt-3 w-full h-12 rounded-yc-md bg-yc-green600 text-white text-base font-display active:bg-yc-green700 transition-colors"
             >
-              🔄 같은 사진으로 다시 분석하기
+              <span className="flex items-center justify-center gap-2"><ArrowsClockwise weight="bold" size={16} /> 같은 사진으로 다시 분석하기</span>
             </button>
           )}
         </div>
@@ -318,11 +352,11 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         <div className="space-y-4">
           {/* 신뢰 메시지 — 스캔 빔 느낌의 펄스 */}
           <div className="text-center pt-4 pb-2">
-            <div className="text-4xl mb-4 anim-spin inline-block">🔍</div>
+            <CircleNotch size={48} weight="bold" className="text-yc-green600 mx-auto mb-4 animate-spin" />
             <p className="font-display text-xl text-yc-neutral900 leading-snug px-2">
               처방전에서 안전하게<br />약 이름을 읽어오고 있습니다...
             </p>
-            <p className="text-sm text-yc-neutral400 mt-2">CLOVA OCR → GPT 정제 처리 중</p>
+            <p className="text-sm text-yc-neutral500 mt-2">CLOVA OCR → GPT 정제 처리 중</p>
           </div>
 
           {/* 스켈레톤 카드 × 4 */}
@@ -338,9 +372,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
           {/* 개인정보 보안 안심 문구 */}
           <div className="bg-yc-neutral50 border border-yc-neutral100 rounded-yc-md px-4 py-3 text-center">
-            <p className="text-xs text-yc-neutral400 leading-relaxed">
-              🔒 주민등록번호 등 민감한 개인정보는<br />
-              읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.
+            <p className="text-xs text-yc-neutral400 leading-relaxed flex items-start justify-center gap-1">
+              <Lock weight="fill" size={13} className="flex-shrink-0 mt-0.5" />
+              <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.</span>
             </p>
           </div>
         </div>
@@ -383,7 +417,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             {/* 병원·약국 정보 */}
             {result.pharmacy_name && (
               <div className="bg-yc-neutral50 rounded-yc-lg px-5 py-4">
-                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-2">🏥 발행 병원 / 조제 약국</p>
+                <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-2 flex items-center gap-1"><Hospital weight="fill" size={13} /> 발행 병원 / 조제 약국</p>
                 <p className="font-display text-xl text-yc-neutral900">{result.pharmacy_name}</p>
               </div>
             )}
@@ -392,9 +426,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             <div>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest">
-                  💊 추출된 약품 목록 ({result.medicines.length}종)
+                  <span className="inline-flex items-center gap-1"><Pill weight="fill" size={13} /> 추출된 약품 목록 ({result.medicines.length}종)</span>
                 </p>
-                <p className="text-xs text-yc-neutral400">눌러서 수정·삭제</p>
+                <p className="text-xs text-yc-neutral500">눌러서 수정·삭제</p>
               </div>
 
               <div className="space-y-3">
@@ -451,7 +485,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             {di?.found && di.imageUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img loading="lazy" decoding="async" src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
-                            ) : '💊'}
+                            ) : <Pill weight="fill" size={20} className="text-yc-blue500 opacity-60" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             {med.edi_code && (
@@ -461,7 +495,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                               {med.name}
                             </p>
                             {med.ingredient && (
-                              <p className="text-sm text-yc-neutral400 mt-0.5">({med.ingredient})</p>
+                              <p className="text-sm text-yc-neutral500 mt-0.5">({med.ingredient})</p>
                             )}
                             {dosage ? (
                               <p className="text-sm font-medium text-yc-blue500 mt-2">{dosage}</p>
@@ -490,6 +524,29 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                 )}
                               </div>
                             )}
+                            {/* 복용 시간 선택 */}
+                            <div className="mt-2.5">
+                              <p className="text-xs text-yc-neutral500 mb-1.5">복용 시간 선택</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {MEAL_OPTIONS.map(o => {
+                                  const active = (med.meal_times ?? []).includes(o.key)
+                                  return (
+                                    <button
+                                      key={o.key}
+                                      type="button"
+                                      onClick={() => toggleMealTime(i, o.key)}
+                                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        active
+                                          ? 'bg-yc-blue500 text-white'
+                                          : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'
+                                      }`}
+                                    >
+                                      {o.icon} {o.label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
                             {/* 수정·삭제 */}
                             <div className="flex gap-3 mt-2.5">
                               <button onClick={() => startEdit(i, med)} className="text-sm text-yc-blue500 font-medium active:opacity-70">수정</button>
@@ -506,7 +563,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
             {/* 조제 약국 검색 */}
             <div className="bg-white border border-yc-neutral200 rounded-yc-lg px-5 py-4 space-y-3">
-              <p className="text-sm font-semibold text-yc-neutral700">🏪 조제 약국 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+              <p className="text-sm font-semibold text-yc-neutral700 flex items-center gap-1"><Storefront weight="fill" size={15} /> 조제 약국 <span className="font-normal text-yc-neutral400">(선택)</span></p>
 
               {regularPharmacy && (
                 <button
@@ -521,7 +578,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                       : 'bg-yc-neutral50 text-yc-neutral700 border border-yc-neutral200 active:bg-yc-neutral100'
                   }`}
                 >
-                  {pharmacy.name === regularPharmacy.name ? '✓ ' : ''}{regularPharmacy.name}
+                  {pharmacy.name === regularPharmacy.name && <Check weight="bold" size={14} className="mr-1 inline" />}{regularPharmacy.name}
                   {pharmacy.name !== regularPharmacy.name && <span className="ml-1.5 text-yc-neutral400 font-normal">단골약국</span>}
                 </button>
               )}
@@ -553,7 +610,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                       >
                         <p className="text-sm font-semibold text-yc-neutral900">{p.name}</p>
                         <p className="text-xs text-yc-neutral400 mt-0.5">{p.address}</p>
-                        {p.phone && <p className="text-xs text-yc-blue500 mt-0.5">📞 {p.phone}</p>}
+                        {p.phone && <p className="text-xs text-yc-blue500 mt-0.5 flex items-center gap-0.5"><Phone weight="fill" size={11} /> {p.phone}</p>}
                       </button>
                     ))}
                   </div>
@@ -562,8 +619,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
               {(pharmacy.address || pharmacy.phone) && (
                 <div className="bg-yc-infoBg rounded-yc-md px-3 py-2.5 space-y-0.5">
-                  {pharmacy.address && <p className="text-xs text-yc-infoText">📍 {pharmacy.address}</p>}
-                  {pharmacy.phone   && <p className="text-xs text-yc-infoText">📞 {pharmacy.phone}</p>}
+                  {pharmacy.address && <p className="text-xs text-yc-infoText flex items-center gap-0.5"><MapPin weight="fill" size={11} /> {pharmacy.address}</p>}
+                  {pharmacy.phone   && <p className="text-xs text-yc-infoText flex items-center gap-0.5"><Phone weight="fill" size={11} /> {pharmacy.phone}</p>}
                 </div>
               )}
             </div>
@@ -578,7 +635,10 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             >
               {saving
                 ? '저장 중...'
-                : `✅ 확인 완료 — 내 약 지갑에 저장하기 (${result.medicines.length}종)`}
+                : <span className="flex items-center justify-center gap-2">
+                    <CheckCircle weight="fill" size={20} />
+                    확인 완료 — 내 약 지갑에 저장하기 ({result.medicines.length}종)
+                  </span>}
             </button>
           </div>
         </div>

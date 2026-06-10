@@ -1,7 +1,9 @@
 'use client'
 
+import type React from 'react'
 import { useState, useEffect, useCallback } from 'react'
 import AppHeader from '@/components/app-header'
+import { CalendarBlank, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
 
 type DayStatus = 'full' | 'partial' | 'miss'
 type DaySummary = { done: number; status: DayStatus }
@@ -90,23 +92,24 @@ export default function CalendarPage() {
 
   // 격려 메시지 (완벽 복용 비율 기준)
   const fullRatio = recordedDays > 0 ? fullDays / recordedDays : 0
-  const cheer =
-    fullRatio >= 0.9 ? { emoji: '👏', text: '정말 훌륭해요! 거의 매일 완벽하게 챙기셨어요.' } :
-    fullRatio >= 0.6 ? { emoji: '💪', text: '잘하고 계세요. 꾸준함이 가장 큰 힘이에요.' } :
-    fullRatio >= 0.3 ? { emoji: '🌱', text: '조금씩 챙기고 계시네요. 오늘 한 번 더 챙겨볼까요?' } :
-                       { emoji: '🤗', text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
+  const cheer: { icon: React.ReactNode; text: string } =
+    fullRatio >= 0.9 ? { icon: <HandsClapping weight="fill" size={24} className="text-yc-green700" />, text: '정말 훌륭해요! 거의 매일 완벽하게 챙기셨어요.' } :
+    fullRatio >= 0.6 ? { icon: <Lightning     weight="fill" size={24} className="text-yc-green700" />, text: '잘하고 계세요. 꾸준함이 가장 큰 힘이에요.' } :
+    fullRatio >= 0.3 ? { icon: <Leaf          weight="fill" size={24} className="text-yc-green700" />, text: '조금씩 챙기고 계시네요. 오늘 한 번 더 챙겨볼까요?' } :
+                       { icon: <Heart         weight="fill" size={24} className="text-yc-green700" />, text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
 
   return (
     <div className="space-y-5">
       <AppHeader />
-      <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더 📅</h1>
+      <h1 className="font-display text-2xl text-yc-neutral900 flex items-center gap-2">복약 캘린더 <CalendarBlank weight="fill" size={22} className="text-yc-green600" /></h1>
 
       {/* 월 네비게이션 */}
-      <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-4">
+      <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-4 anim-page" style={{ animationDelay: '40ms' }}>
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prev}
-            className="w-9 h-9 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
+            aria-label="이전 달"
+            className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
           >
             ‹
           </button>
@@ -116,7 +119,8 @@ export default function CalendarPage() {
           <button
             onClick={next}
             disabled={isCurrentMonth}
-            className="w-9 h-9 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
+            aria-label="다음 달"
+            className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
           >
             ›
           </button>
@@ -200,7 +204,7 @@ export default function CalendarPage() {
 
       {/* 이번 달 요약 */}
       {!loading && Object.keys(days).length > 0 && (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4">
+        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 anim-page" style={{ animationDelay: '80ms' }}>
           <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-3">
             {month}월 복약 요약
           </p>
@@ -223,25 +227,25 @@ export default function CalendarPage() {
 
       {!loading && Object.keys(days).length === 0 && (
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-10 text-center">
-          <p className="text-4xl mb-3">📅</p>
+          <div className="mb-3 flex justify-center"><CalendarBlank weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-base font-semibold text-yc-neutral700">복약 기록이 없어요</p>
-          <p className="text-sm text-yc-neutral400 mt-1">오늘 탭에서 복약을 체크해보세요</p>
+          <p className="text-sm text-yc-neutral500 mt-1">오늘 탭에서 복약을 체크해보세요</p>
         </div>
       )}
 
       {/* ── 복약 습관 응원 ── */}
       {!loading && recordedDays > 0 && (
-        <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
+        <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4 anim-page" style={{ animationDelay: '120ms' }}>
           {streak >= 2 && (
             <div className="flex items-center gap-2 pb-3 mb-3 border-b border-yc-green100">
-              <span className="text-2xl">🔥</span>
+              <Fire weight="fill" size={22} className="text-yc-warning" />
               <p className="text-[17px] font-bold text-yc-green600">
                 {streak}일 연속으로 약을 챙기고 계세요!
               </p>
             </div>
           )}
           <div className="flex items-start gap-3">
-            <span className="text-2xl leading-none mt-0.5">{cheer.emoji}</span>
+            <span className="leading-none mt-0.5">{cheer.icon}</span>
             <p className="text-[17px] font-medium text-yc-neutral800 leading-relaxed">{cheer.text}</p>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Flask, Pill, Check } from '@phosphor-icons/react'
 
 type DrugHit = { id: string; item_seq: string | null; item_name: string; entp_name: string | null; image_url: string | null; source: 'db' | 'api' }
 type SuppHit = { id: string; product_name: string; company_name: string | null }
@@ -57,6 +58,7 @@ export default function MedCardItem(p: MedCardItemProps) {
 
   const [mode, setMode]     = useState<'view' | 'edit' | 'confirmDelete'>('view')
   const [busy, setBusy]     = useState(false)
+  const [deleted, setDeleted] = useState(false)
   const [name, setName]     = useState(p.name)
   const [amount, setAmount] = useState(p.doseAmount?.toString() ?? '')
   const [perDay, setPerDay] = useState(p.dosesPerDay?.toString() ?? '')
@@ -82,21 +84,21 @@ export default function MedCardItem(p: MedCardItemProps) {
         setHits(data)
         setDropOpen((data.drugs?.length ?? 0) + (data.supplements?.length ?? 0) > 0)
       } catch { setHits(null) }
-    }, 250)
+    }, 150)
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current) }
   }, [name, mode, p.isCustom, picked])
 
-  useEffect(() => {
-    let alive = true
+  // 약 상세 정보는 토글 클릭 시점에만 조회 (N+1 방지)
+  function fetchInfoIfNeeded() {
+    if (info !== null) return
     const q = `name=${encodeURIComponent(p.name)}`
       + (p.ingredient ? `&ingredient=${encodeURIComponent(p.ingredient)}` : '')
       + (p.itemSeq    ? `&item_seq=${encodeURIComponent(p.itemSeq)}`      : '')
     fetch(`/api/drugs/info?${q}`)
       .then(r => r.json())
-      .then((d: Info) => { if (alive) { setInfo(d); if (d.imageUrl && !image) setImage(d.imageUrl) } })
-      .catch(() => { if (alive) setInfo({ found: false }) })
-    return () => { alive = false }
-  }, [p.name, p.ingredient, p.itemSeq]) // eslint-disable-line react-hooks/exhaustive-deps
+      .then((d: Info) => { setInfo(d); if (d.imageUrl && !image) setImage(d.imageUrl) })
+      .catch(() => setInfo({ found: false }))
+  }
 
   const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays)
   const hasDetail = info?.found && (info.efcy || info.useMethod || info.atpn)
@@ -165,6 +167,7 @@ export default function MedCardItem(p: MedCardItemProps) {
       const res = await fetch(`/api/medications/${p.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('삭제했습니다')
+      setDeleted(true)
       router.refresh()
     } catch {
       toast.error('삭제 실패')
@@ -173,6 +176,8 @@ export default function MedCardItem(p: MedCardItemProps) {
     }
   }
 
+  if (deleted) return null
+
   return (
     <div className="flex items-start gap-4">
       {/* 약 사진 */}
@@ -180,7 +185,10 @@ export default function MedCardItem(p: MedCardItemProps) {
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img loading="lazy" decoding="async" src={image} alt={p.name} className="w-full h-full object-cover" />
-        ) : (p.isSupplement ? '🌿' : '💊')}
+        ) : (p.isSupplement
+          ? <Flask weight="fill" size={22} className="text-yc-green700 opacity-70" />
+          : <Pill  weight="fill" size={22} className="text-yc-blue500 opacity-60" />
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -200,7 +208,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                 />
                 {picked && (
                   <p className="text-xs text-yc-green600 mt-1">
-                    ✓ {picked.type === 'supplement' ? '건강기능식품' : '의약품'} 연결됨 — 사진·정보 자동 표시
+                    <span className="flex items-center gap-1"><Check weight="bold" size={12} /> {picked.type === 'supplement' ? '건강기능식품' : '의약품'} 연결됨 — 사진·정보 자동 표시</span>
                   </p>
                 )}
                 {dropOpen && hits && (
@@ -215,7 +223,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                         }}
                         className="w-full text-left px-3 py-2.5 active:bg-yc-neutral50 flex items-center gap-2.5 border-b border-yc-neutral100 last:border-0"
                       >
-                        <span>💊</span>
+                        <Pill weight="fill" size={16} className="text-yc-blue500 flex-shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
                           {d.entp_name && <span className="block text-xs text-yc-neutral400 truncate">{d.entp_name}</span>}
@@ -231,7 +239,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                         onClick={() => { setPicked({ type: 'supplement', id: s.id, name: s.product_name }); setName(s.product_name); setDropOpen(false) }}
                         className="w-full text-left px-3 py-2.5 active:bg-yc-neutral50 flex items-center gap-2.5 border-b border-yc-neutral100 last:border-0"
                       >
-                        <span>🌿</span>
+                        <Flask weight="fill" size={16} className="text-yc-green700 flex-shrink-0" />
                         <span className="min-w-0">
                           <span className="block text-sm font-medium text-yc-neutral900 truncate">{s.product_name}</span>
                           {s.company_name && <span className="block text-xs text-yc-neutral400 truncate">{s.company_name}</span>}
@@ -273,9 +281,9 @@ export default function MedCardItem(p: MedCardItemProps) {
           <>
             <p className="text-2xl font-bold text-yc-neutral900 leading-snug">
               {p.name}
-              {p.ingredient && <span className="text-base font-normal text-yc-neutral400 ml-1">({p.ingredient})</span>}
+              {p.ingredient && <span className="text-base font-normal text-yc-neutral500 ml-1">({p.ingredient})</span>}
             </p>
-            {p.sub && <p className="text-sm text-yc-neutral400 mt-0.5">{p.sub}</p>}
+            {p.sub && <p className="text-sm text-yc-neutral500 mt-0.5">{p.sub}</p>}
             {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
 
             {/* 분류 배지 */}
@@ -289,7 +297,7 @@ export default function MedCardItem(p: MedCardItemProps) {
             {/* 효능 토글 */}
             {hasDetail && (
               <div className="mt-2">
-                <button onClick={() => setOpen(o => !o)} className="text-sm text-yc-blue500 font-medium">
+                <button onClick={() => { setOpen(o => !o); fetchInfoIfNeeded() }} className="text-sm text-yc-blue500 font-medium min-h-[44px] flex items-center">
                   {open ? '닫기 ▲' : 'ⓘ 이 약은 어떤 약인가요? ▼'}
                 </button>
                 {open && (
@@ -307,16 +315,18 @@ export default function MedCardItem(p: MedCardItemProps) {
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-sm text-yc-neutral500">삭제할까요?</span>
                 <button onClick={remove} disabled={busy}
-                  className="text-sm font-semibold text-yc-error px-3 py-1 rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
+                  className="text-sm font-semibold text-yc-error px-4 min-h-[44px] rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
                   {busy ? '삭제 중…' : '예, 삭제'}
                 </button>
                 <button onClick={() => setMode('view')} disabled={busy}
-                  className="text-sm text-yc-neutral500 px-3 py-1 rounded-yc-md active:bg-yc-neutral100">아니오</button>
+                  className="text-sm text-yc-neutral500 px-4 min-h-[44px] rounded-yc-md active:bg-yc-neutral100">아니오</button>
               </div>
             ) : (
-              <div className="flex gap-3 mt-2">
-                <button onClick={enterEdit} className="text-sm text-yc-neutral500 active:text-yc-blue500">수정</button>
-                <button onClick={() => setMode('confirmDelete')} className="text-sm text-yc-neutral500 active:text-yc-error">삭제</button>
+              <div className="flex gap-1 mt-2">
+                <button onClick={enterEdit} aria-label="수정"
+                  className="text-sm text-yc-neutral500 active:text-yc-blue500 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral50">수정</button>
+                <button onClick={() => setMode('confirmDelete')} aria-label="삭제"
+                  className="text-sm text-yc-neutral500 active:text-yc-error px-3 min-h-[44px] rounded-yc-md active:bg-yc-errorBg">삭제</button>
               </div>
             )}
           </>

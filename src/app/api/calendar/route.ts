@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-type Meal = 'morning' | 'afternoon' | 'evening'
-const MEALS: Meal[] = ['morning', 'afternoon', 'evening']
-const TOTAL = MEALS.length // 항상 3 (아침/점심/저녁)
+type Meal = 'morning' | 'afternoon' | 'evening' | 'bedtime'
+const MEALS: Meal[] = ['morning', 'afternoon', 'evening', 'bedtime']
+const TOTAL = MEALS.length // 4 (아침/점심/저녁/자기 전)
 
 type DayStatus = 'full' | 'partial' | 'miss'
 type DaySummary = { done: number; status: DayStatus }

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
   const body = await request.json() as {
-    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null }[]
+    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[] }[]
     names?: string[]
     prescription_id:  string | null
     pharmacy_name?:   string | null
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   // 신규: 용법 포함 medicines[] / 구버전: names[] 모두 지원
   const items = Array.isArray(body.medicines) && body.medicines.length > 0
     ? body.medicines
-    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null }))
+    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [] as string[] }))
 
   if (items.length === 0) {
     return NextResponse.json({ error: '약품명 없음' }, { status: 400 })
@@ -30,13 +30,27 @@ export async function POST(request: Request) {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // drugs 매칭: EDI 코드(품목기준코드)가 있으면 item_seq 정확 조회, 없으면 이름 ilike 폴백
+  // drugs 매칭: EDI 보험코드 → edi_code 컬럼 ilike(콤마 다중코드 대응) → 이름 ilike 폴백
   const rows = await Promise.all(
     items.map(async (m) => {
       const ediCode = m.edi_code?.replace(/\D/g, '') || null
-      const { data } = ediCode
-        ? await supabase.from('drugs').select('id').eq('item_seq', ediCode).maybeSingle()
-        : await supabase.from('drugs').select('id').ilike('item_name', `%${m.name}%`).limit(1).maybeSingle()
+      let drugRow: { id: string } | null = null
+
+      if (ediCode) {
+        const { data } = await supabase.from('drugs').select('id')
+          .ilike('edi_code', `%${ediCode}%`)
+          .eq('is_canceled', false)
+          .limit(1).maybeSingle()
+        drugRow = data
+      }
+      if (!drugRow) {
+        const { data } = await supabase.from('drugs').select('id')
+          .ilike('item_name', `%${m.name}%`)
+          .eq('is_canceled', false)
+          .limit(1).maybeSingle()
+        drugRow = data
+      }
+      const data = drugRow
 
       return {
         user_id:         user.id,
@@ -47,6 +61,7 @@ export async function POST(request: Request) {
         dose_amount:     m.dose_amount   ?? null,
         doses_per_day:   m.doses_per_day ?? null,
         total_days:      m.days          ?? null,
+        meal_times:      m.meal_times    ?? [],
         started_at:      today,
         source:          'ocr' as const,
         prescription_id: prescription_id ?? null,

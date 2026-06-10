@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import OcrUploader from './ocr-uploader'
+import { BackButton } from '../back-button'
 
 export default async function OcrPage() {
   const supabase = await createClient()
@@ -23,8 +24,11 @@ export default async function OcrPage() {
   return (
     <div className="space-y-6">
       <div className="pt-2">
-        <h1 className="font-display text-xl text-yc-neutral900">처방전 촬영</h1>
-        <p className="text-sm text-yc-neutral500 mt-0.5">처방전을 찍으면 약 목록이 자동으로 추출됩니다.</p>
+        <div className="flex items-center gap-3 mb-3">
+          <BackButton />
+          <h1 className="font-display text-xl text-yc-neutral900">처방전 촬영</h1>
+        </div>
+        <p className="text-sm text-yc-neutral500">처방전을 찍으면 약 목록이 자동으로 추출됩니다.</p>
       </div>
       <OcrUploader regularPharmacy={regularPharmacy} />
     </div>

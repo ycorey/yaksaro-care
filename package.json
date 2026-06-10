@@ -13,6 +13,7 @@
     "etl:dur": "node scripts/etl-drugs.mjs --dur"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "canvas-confetti": "^1.9.4",

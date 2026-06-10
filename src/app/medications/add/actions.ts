@@ -21,6 +21,7 @@ export async function addMedication(formData: FormData) {
   const dose         = (formData.get('dose')           as string | null) || null
   const frequency    = (formData.get('frequency')      as string | null) || null
   const startedAt    = (formData.get('started_at')     as string | null) || null
+  const mealTimes    = formData.getAll('meal_times') as string[]
 
   // API 결과 약품(item_seq만 있고 drug_id 없음) → drugs 테이블에 upsert 후 UUID 획득
   let resolvedDrugId = drugId
@@ -76,6 +77,7 @@ export async function addMedication(formData: FormData) {
       dose_amount:     doseAmount,
       doses_per_day:   dosesPerDay,
       total_days:      totalDays,
+      meal_times:      mealTimes,
       prescription_id: prescriptionId,
       started_at:      today,
       source:          'manual',
@@ -94,6 +96,7 @@ export async function addMedication(formData: FormData) {
       custom_name:   (!resolvedDrugId && !supplementId) ? (customName || null) : null,
       dose:          dose,
       frequency:     frequency,
+      meal_times:    mealTimes,
       started_at:    startedAt,
       source:        'manual',
     })

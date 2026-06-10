@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-import { Settings, Plus } from 'lucide-react'
 import AppHeader from '@/components/app-header'
+import { WalletHeaderActions } from './wallet-header-actions'
 import { SectionHeader } from '@/components/yc/section-header'
 import PharmacyToast from './pharmacy-toast'
 import PrescriptionSection, { type MedCard, type HospitalGroup } from './prescription-section'
@@ -15,10 +15,12 @@ export default async function WalletPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: meds, error: medsError }, { data: profile }] = await Promise.all([
+  const todayStr = new Date().toISOString().split('T')[0]
+
+  const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code)')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .is('ended_at', null)
@@ -28,7 +30,18 @@ export default async function WalletPage() {
       .select('regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
       .eq('id', user.id)
       .single(),
+    supabase
+      .from('medication_schedules')
+      .select('meal_time, is_checked')
+      .eq('user_id', user.id)
+      .eq('check_date', todayStr),
   ])
+
+  // 오늘 서버 체크 상태 — 단일 진실 소스로 클라이언트에 전달
+  const serverChecks: Record<string, boolean> = {}
+  for (const row of schedules ?? []) {
+    serverChecks[row.meal_time as string] = !!row.is_checked
+  }
 
   if (medsError) console.error('[wallet] meds query error:', medsError.message)
 
@@ -62,6 +75,7 @@ export default async function WalletPage() {
       doseAmount:            (med.dose_amount   as number | null) ?? null,
       dosesPerDay:           (med.doses_per_day as number | null) ?? null,
       totalDays:             (med.total_days    as number | null) ?? null,
+      mealTimes:             (med.meal_times as string[] | null) ?? [],
       hasInteractionWarning: !!(med.has_interaction_warning),
     }
   }
@@ -134,54 +148,42 @@ export default async function WalletPage() {
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
   // 카테고리별 종수
-  const rxOtcCount  = rxRaws.length + otcRaws.length
-  const suppCount   = suppRaws.length
+  const rxCount   = rxRaws.length
+  const otcCount  = otcRaws.length
+  const suppCount = suppRaws.length
 
   return (
     <div className="space-y-5 pb-6">
       <PharmacyToast />
 
       {/* ── 헤더 ── */}
-      <AppHeader actions={
-        <div className="flex items-center gap-2">
-          <Link href="/settings"
-            className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
-            <Settings size={20} />
-          </Link>
-          <Link href="/medications/add"
-            className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:bg-yc-green700">
-            <Plus size={18} /> 추가
-          </Link>
-        </div>
-      } />
+      <AppHeader actions={<WalletHeaderActions />} />
       <div className="flex items-center justify-between pt-1">
         <div>
           <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>
           <p className="text-sm text-yc-neutral400 mt-0.5">종류별로 나눠서 한눈에</p>
         </div>
-        <div className="hidden md:flex items-center gap-2">
-          <Link href="/settings"
-            className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
-            <Settings size={20} />
-          </Link>
-          <Link href="/medications/add"
-            className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:bg-yc-green700">
-            <Plus size={18} /> 추가
-          </Link>
+        <div className="hidden md:flex">
+          <WalletHeaderActions />
         </div>
       </div>
 
-      {/* ── 카테고리 1: 처방약 · 일반약 ── */}
+      {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">
-        <SectionHeader label="처방약 · 일반약" count={rxOtcCount} dotClassName="bg-yc-blue500" />
-        <PrescriptionSection groups={prescriptionGroups} />
+        <SectionHeader label="처방의약품" count={rxCount} dotClassName="bg-yc-blue500" />
+        <PrescriptionSection groups={prescriptionGroups} serverChecks={serverChecks} />
+      </div>
+
+      {/* ── 섹션 2: 일반의약품 ── */}
+      <div className="space-y-3">
+        <SectionHeader label="일반의약품" count={otcCount} dotClassName="bg-yc-warning" />
         <OtcSection meds={otcCards} regularPharmacyPhone={regularPharmacyPhone} />
       </div>
 
-      {/* ── 카테고리 2: 영양제 · 보조제 ── */}
+      {/* ── 섹션 3: 영양보조제 ── */}
       <div className="space-y-3">
-        <SectionHeader label="영양제 · 보조제" count={suppCount} dotClassName="bg-yc-green600" />
-        <SupplementSection meds={supplementCards} />
+        <SectionHeader label="영양보조제" count={suppCount} dotClassName="bg-yc-green600" />
+        <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>
     </div>
   )

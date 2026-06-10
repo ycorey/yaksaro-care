@@ -346,13 +346,7 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
-  // 1. Storage 임시 업로드 (OCR 처리 후 즉시 삭제)
-  const storagePath = `${user.id}/${Date.now()}.${ext}`
-  const { error: upErr } = await admin.storage.from('prescriptions')
-    .upload(storagePath, Buffer.from(bytes), { contentType: mime })
-  if (upErr) console.warn('[ocr] storage upload 실패:', upErr.message)
-
-  // 2. CLOVA OCR → 원문 텍스트
+  // CLOVA OCR → 원문 텍스트 (bytes를 직접 전달 — Storage 경유 불필요)
   let rawText = ''
   let parsed: ParsedPrescription = { medicines: [], pharmacy_name: null, hospital_name: null, institution_code: null }
 
@@ -380,10 +374,6 @@ export async function POST(request: Request) {
     }
   } catch (e) {
     console.error('OCR 오류:', e)
-  } finally {
-    // 3. 이미지 원본 즉시 파기 (개인정보보호법 준수) — 예외 시에도 반드시 실행
-    await admin.storage.from('prescriptions').remove([storagePath])
-      .catch(e => console.error('[ocr] 이미지 파기 실패:', e))
   }
 
   const names   = parsed.medicines.map(m => m.name)

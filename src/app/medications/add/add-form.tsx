@@ -1,6 +1,8 @@
 'use client'
 
+import type React from 'react'
 import { useState, useEffect, useRef } from 'react'
+import { Hospital, Pill, Flask, SunHorizon, Sun, Moon, MoonStars } from '@phosphor-icons/react'
 import { addMedication } from './actions'
 
 type TabType = 'prescription' | 'otc' | 'supplement'
@@ -13,14 +15,39 @@ type Selected =
   | { type: 'supplement'; id: string; name: string; sub: string }
   | { type: 'custom'; name: string }
 
-const TABS: { key: TabType; icon: string; label: string }[] = [
-  { key: 'prescription', icon: '🏥', label: '처방의약품' },
-  { key: 'otc',         icon: '💊', label: '약국 일반약' },
-  { key: 'supplement',  icon: '🌿', label: '영양제'     },
-]
+const TAB_LABELS: Record<TabType, { icon: React.ReactNode; label: string }> = {
+  prescription: { icon: <Hospital weight="fill" size={15} />, label: '처방의약품' },
+  otc:          { icon: <Pill     weight="fill" size={15} />, label: '약국 일반약' },
+  supplement:   { icon: <Flask    weight="fill" size={15} />, label: '영양제'      },
+}
 
 const DAY_PRESETS = [3, 5, 7, 14, 30]
 const FREQUENCIES = ['하루 1회', '하루 2회', '하루 3회', '하루 4회', '필요시(PRN)', '격일 1회', '주 1회']
+
+const MEAL_SLOTS = [
+  { key: 'morning',   label: '아침',    icon: <SunHorizon weight="fill" size={14} /> },
+  { key: 'afternoon', label: '점심',    icon: <Sun        weight="fill" size={14} /> },
+  { key: 'evening',   label: '저녁',    icon: <Moon       weight="fill" size={14} /> },
+  { key: 'bedtime',   label: '자기 전', icon: <MoonStars  weight="fill" size={14} /> },
+]
+
+function MealTimePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {MEAL_SLOTS.map(({ key, label, icon }) => {
+        const on = value.includes(key)
+        return (
+          <button key={key} type="button"
+            onClick={() => onChange(on ? value.filter(v => v !== key) : [...value, key])}
+            className={`${BTN_BASE} flex-col gap-1 py-3 h-auto ${on ? BTN_ACTIVE : BTN_INACTIVE}`}>
+            {icon}
+            <span className="text-xs">{label}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 // ── 버튼 스타일 상수 ──────────────────────────────────────────────────
 // 모든 선택·스테퍼·프리셋 버튼이 동일한 높이(h-12 = 48px)를 공유한다.
@@ -61,9 +88,10 @@ function Stepper({
 
 // ── 약품 검색 드롭다운 ────────────────────────────────────────────────
 function DrugSearch({
-  mode, selected, onSelect, onClear, onCustom,
+  mode, otcOnly = false, selected, onSelect, onClear, onCustom,
 }: {
   mode: 'drug' | 'supplement'
+  otcOnly?: boolean
   selected: Selected | null
   onSelect: (hit: DrugHit | SuppHit, kind: 'drug' | 'supplement') => void
   onClear: () => void
@@ -78,18 +106,21 @@ function DrugSearch({
     if (!query || selected) { setResults(null); setOpen(false); return }
     if (debounce.current) clearTimeout(debounce.current)
     debounce.current = setTimeout(async () => {
-      const res  = await fetch(`/api/drugs/search?q=${encodeURIComponent(query)}`)
+      const url = `/api/drugs/search?q=${encodeURIComponent(query.trim())}${otcOnly ? '&otcOnly=true' : ''}`
+      const res  = await fetch(url)
       const data = await res.json()
       setResults(data)
       setOpen(true)
-    }, 300)
+    }, 150)
     return () => { if (debounce.current) clearTimeout(debounce.current) }
-  }, [query, selected])
+  }, [query, selected, otcOnly])
 
   if (selected) {
     return (
       <div className="flex items-center gap-3 bg-yc-infoBg border border-yc-blue500/30 rounded-yc-md px-4 py-3">
-        <span className="text-xl">{selected.type === 'supplement' ? '🌿' : '💊'}</span>
+        {selected.type === 'supplement'
+          ? <Flask weight="fill" size={20} className="text-yc-green700 flex-shrink-0" />
+          : <Pill  weight="fill" size={20} className="text-yc-blue500 flex-shrink-0" />}
         <div className="flex-1 min-w-0">
           <p className="font-bold text-yc-neutral900 text-base truncate">{selected.name}</p>
           {'sub' in selected && selected.sub && <p className="text-xs text-yc-neutral400 truncate mt-0.5">{selected.sub}</p>}
@@ -126,7 +157,7 @@ function DrugSearch({
                   onClick={() => { onSelect(d, 'drug'); setQuery(''); setOpen(false) }}
                   className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
-                  <span>💊</span>
+                  <Pill weight="fill" size={16} className="text-yc-blue500 flex-shrink-0" />
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
                     {d.entp_name && <span className="block text-xs text-yc-neutral400 truncate">{d.entp_name}</span>}
@@ -141,7 +172,7 @@ function DrugSearch({
                   onClick={() => { onSelect(s, 'supplement'); setQuery(''); setOpen(false) }}
                   className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
-                  <span>🌿</span>
+                  <Flask weight="fill" size={16} className="text-yc-green700 flex-shrink-0" />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-yc-neutral900 truncate">{s.product_name}</span>
                     {s.company_name && <span className="block text-xs text-yc-neutral400 truncate">{s.company_name}</span>}
@@ -176,7 +207,7 @@ function DrugSearch({
 
 // ── 메인 폼 ──────────────────────────────────────────────────────────
 export default function AddForm({ initialTab }: { initialTab: TabType }) {
-  const [tab, setTab]           = useState<TabType>(initialTab)
+  const tab = initialTab  // 진입 탭에 고정 (변경 없음)
   const [selected, setSelected] = useState<Selected | null>(null)
   const [saving, setSaving]     = useState(false)
 
@@ -184,6 +215,7 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
   const [doseAmount,  setDoseAmount]  = useState<number | null>(null)
   const [dosesPerDay, setDosesPerDay] = useState<number | null>(null)
   const [totalDays,   setTotalDays]   = useState<number | null>(null)
+  const [mealTimes,   setMealTimes]   = useState<string[]>([])
 
   function clearSelected() { setSelected(null) }
 
@@ -198,14 +230,6 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
     }
   }
 
-  function switchTab(t: TabType) {
-    setTab(t)
-    setSelected(null)
-    setDoseAmount(null)
-    setDosesPerDay(null)
-    setTotalDays(null)
-  }
-
   const canSubmit = !!selected
 
   async function handleSubmit(formData: FormData) {
@@ -217,20 +241,15 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
     }
   }
 
+  const { icon, label } = TAB_LABELS[tab]
+
   return (
     <form action={handleSubmit} className="space-y-5">
 
-      {/* ── 탭 (flex-1로 동일 너비 유지) ── */}
-      <div className="flex gap-1 p-1 bg-yc-neutral100 rounded-yc-md">
-        {TABS.map(t => (
-          <button key={t.key} type="button" onClick={() => switchTab(t.key)}
-            className={`flex-1 ${BTN_H} rounded-yc-sm text-sm font-display transition-colors ${
-              tab === t.key ? 'bg-white text-yc-neutral900 shadow-[var(--yc-shadow-sm)]' : 'text-yc-neutral500'
-            }`}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
+      {/* ── 카테고리 배지 (고정, 전환 없음) ── */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-yc-neutral100 rounded-yc-md w-fit">
+        <span className="text-yc-neutral600">{icon}</span>
+        <span className="text-sm font-display text-yc-neutral700">{label}</span>
       </div>
 
       {/* 숨김 필드 */}
@@ -253,6 +272,7 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
           {totalDays   != null && <input type="hidden" name="total_days"    value={totalDays} />}
         </>
       )}
+      {mealTimes.map(mt => <input key={mt} type="hidden" name="meal_times" value={mt} />)}
 
       {/* ═══════════════════════════════════════════════════════════════
           처방의약품 탭
@@ -309,6 +329,12 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
             </div>
           </div>
 
+          {/* 복용 시간대 */}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <MealTimePicker value={mealTimes} onChange={setMealTimes} />
+          </div>
+
           {/* 병원명 */}
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">발급 병원 <span className="font-normal text-yc-neutral400">(선택)</span></p>
@@ -324,7 +350,7 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
         <div className="space-y-5">
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">약 이름 *</p>
-            <DrugSearch mode="drug" selected={selected}
+            <DrugSearch mode="drug" otcOnly selected={selected}
               onSelect={handleDrugSelect} onClear={clearSelected} onCustom={n => setSelected({ type: 'custom', name: n })} />
           </div>
 
@@ -339,6 +365,11 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
               <option value="">선택 안 함</option>
               {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
         </div>
       )}
@@ -370,6 +401,11 @@ export default function AddForm({ initialTab }: { initialTab: TabType }) {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">복용 시작일 <span className="font-normal text-yc-neutral400">(선택)</span></p>
             <input name="started_at" type="date" className={INPUT} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
         </div>
       )}

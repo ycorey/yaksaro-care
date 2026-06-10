@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
+import { Pill, Flask, Sun, SunHorizon, Moon, MoonStars, HandsClapping, Check } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
-export type Meal = 'morning' | 'afternoon' | 'evening'
+export type { Meal } from '@/lib/meal-slots'
+import type { Meal } from '@/lib/meal-slots'
 
 export interface SlotState {
   meal: Meal
@@ -103,8 +106,11 @@ export default function TodayTimeline({
     })
       // 페이저에선 다른 탭(홈 요약·캘린더)이 유지(persist)되므로, 서버 슬롯을 새로고침해 동기화.
       // today 자신은 낙관적 로컬 state라 영향 없음(깜빡임 X).
-      .then(() => router.refresh())
-      .catch(() => {})
+      .then(async (res) => {
+        if (!res.ok) toast.error('복약 저장에 실패했어요. 다시 시도해 주세요.')
+        else router.refresh()
+      })
+      .catch(() => toast.error('복약 저장에 실패했어요. 다시 시도해 주세요.'))
   }
 
   function check(meal: Meal) {
@@ -136,7 +142,7 @@ export default function TodayTimeline({
   return (
     <div className="space-y-5">
       <AppHeader />
-      <h1 className="font-display text-2xl text-yc-neutral900">오늘 복약 ☀️</h1>
+      <h1 className="font-display text-2xl text-yc-neutral900 flex items-center gap-2">오늘 복약 <Sun weight="fill" size={22} className="text-yc-warning" /></h1>
 
       {/* 지연 알림 배너 */}
       {hasMeds && overdue && (
@@ -168,25 +174,32 @@ export default function TodayTimeline({
 
       {!hasMeds ? (
         <div className="bg-white rounded-yc-lg border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
-          <div className="text-4xl mb-3">💊</div>
+          <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-lg font-semibold text-yc-neutral900 mb-1">복용 중인 약이 없어요</p>
-          <p className="text-sm text-yc-neutral400">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
+          <p className="text-sm text-yc-neutral500">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
         </div>
       ) : (
         <div className="bg-white rounded-yc-lg border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
-          {slots.map((s) => {
+          {slots.map((s, i) => {
             const isNext = nextMeal === s.meal && !s.checked
             return (
               <div
                 key={s.meal}
-                className={`flex items-start gap-4 px-5 py-4 transition-colors ${
+                className={`flex items-start gap-4 px-5 py-4 transition-colors anim-page ${
                   s.checked ? 'opacity-60' : ''
                 } ${isNext ? 'border-l-4 border-yc-green600 bg-yc-green50/40' : ''}`}
+                style={{ animationDelay: `${i * 80}ms` }}
               >
                 {/* 시간 라벨 */}
                 <div className="w-12 shrink-0 pt-0.5">
-                  <p className="text-xs text-yc-neutral400 leading-tight">{s.time}</p>
-                  <p className="text-sm font-bold text-yc-neutral700 mt-0.5">{s.label}</p>
+                  <p className="text-xs text-yc-neutral500 leading-tight">{s.time}</p>
+                  <p className="text-sm font-bold text-yc-neutral700 mt-0.5 flex items-center gap-1">
+                    {s.meal === 'morning' ? <SunHorizon weight="fill" size={14} className="text-yc-warning" />
+                      : s.meal === 'afternoon' ? <Sun weight="fill" size={14} className="text-yc-warning" />
+                      : s.meal === 'evening' ? <Moon weight="fill" size={14} className="text-yc-blue500" />
+                      : <MoonStars weight="fill" size={14} className="text-yc-neutral500" />}
+                    {s.label}
+                  </p>
                 </div>
 
                 {/* 타임라인 노드 — 완료=green 채움, 다음=흰+green 보더+글로우, 대기=neutral200 */}
@@ -210,7 +223,7 @@ export default function TodayTimeline({
                       onClick={() => uncheck(s.meal)}
                       className={`mt-1 text-sm text-yc-green600 font-medium active:text-yc-neutral500 ${justChecked === s.meal ? 'anim-checked-flash' : ''}`}
                     >
-                      ✓ {fmtCheckedTime(s.checkedAt) || '복용'} 복용
+                      <span className="flex items-center gap-1"><Check weight="bold" size={13} /> {fmtCheckedTime(s.checkedAt) || '복용'} 복용</span>
                       <span className="text-yc-neutral400 font-normal ml-1">· 되돌리기</span>
                     </button>
                   ) : (
@@ -235,14 +248,14 @@ export default function TodayTimeline({
 
       {hasMeds && doneCount === slots.length && (
         <div className="bg-yc-green50 border border-yc-green100 rounded-yc-lg px-5 py-4 text-center">
-          <p className="text-base font-bold text-yc-green700">오늘 복약 완료 ✓</p>
+          <p className="text-base font-bold text-yc-green700 flex items-center justify-center gap-1.5">오늘 복약 완료 <Check weight="bold" size={16} /></p>
         </div>
       )}
 
       {/* ── 오늘의 건강 한 줄 ── */}
       <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-base">🌿</span>
+          <Flask weight="fill" size={16} className="text-yc-green600" />
           <p className="text-xs font-bold tracking-wide text-yc-green600">오늘의 건강 한 줄</p>
         </div>
         <div className="flex items-start gap-3">
@@ -267,7 +280,7 @@ export default function TodayTimeline({
             </svg>
           </div>
           <p className="font-display text-2xl text-yc-neutral900">오늘 복약 끝!</p>
-          <p className="text-base text-yc-neutral600">세 번 모두 잘 챙기셨어요 👏</p>
+          <p className="text-base text-yc-neutral600 flex items-center justify-center gap-1.5">오늘 {slots.length}번 모두 잘 챙기셨어요 <HandsClapping weight="fill" size={20} /></p>
         </div>
       )}
     </div>

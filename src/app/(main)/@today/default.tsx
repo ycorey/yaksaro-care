@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
+import { MEAL_SLOTS, ALL_MEALS, type Meal } from '@/lib/meal-slots'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -13,52 +14,72 @@ export default async function TodayPage() {
 
   const day = today()
 
-  const [{ data: schedules }, { data: logs }, { count: medCount }] = await Promise.all([
-    // 현재 상태(스냅샷)
+  const [{ data: schedules }, { data: logs }, { data: medsData }] = await Promise.all([
     supabase
       .from('medication_schedules')
       .select('meal_time, is_checked')
       .eq('user_id', user.id)
       .eq('check_date', day),
-    // 이력 로그 — 체크된 시각(logged_at) 추출용 (최신순)
     supabase
       .from('medication_check_logs')
       .select('meal_time, is_checked, logged_at')
       .eq('user_id', user.id)
       .eq('check_date', day)
       .order('logged_at', { ascending: true }),
-    // 활성 약 개수
     supabase
       .from('user_medications')
-      .select('id', { count: 'exact', head: true })
+      .select('meal_times')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .is('ended_at', null),
   ])
 
   // 슬롯별 현재 체크 상태
-  const checked: Record<SlotState['meal'], boolean> = { morning: false, afternoon: false, evening: false }
+  const checked: Record<Meal, boolean> = { morning: false, afternoon: false, evening: false, bedtime: false }
   for (const row of schedules ?? []) {
-    const m = row.meal_time as SlotState['meal']
+    const m = row.meal_time as Meal
     if (m in checked) checked[m] = !!row.is_checked
   }
 
-  // 슬롯별 마지막 "체크됨" 이벤트 시각 (로그가 시간순이라 마지막 true가 최종 체크 시각)
-  const checkedAt: Record<SlotState['meal'], string | null> = { morning: null, afternoon: null, evening: null }
+  // 슬롯별 마지막 체크 시각
+  const checkedAt: Record<Meal, string | null> = { morning: null, afternoon: null, evening: null, bedtime: null }
   for (const row of logs ?? []) {
-    const m = row.meal_time as SlotState['meal']
+    const m = row.meal_time as Meal
     if (!(m in checkedAt)) continue
     if (row.is_checked) checkedAt[m] = row.logged_at as string
     else checkedAt[m] = null
   }
 
-  const medTotal = medCount ?? 0
+  // meal_times 기반 슬롯별 약 수 산출
+  const slotCounts: Record<Meal, number> = { morning: 0, afternoon: 0, evening: 0, bedtime: 0 }
+  let anyMealTimes = false
+  const medTotal = medsData?.length ?? 0
 
-  const slots: SlotState[] = [
-    { meal: 'morning',   label: '아침', time: '08:00', medCount: medTotal, checked: checked.morning,   checkedAt: checked.morning   ? checkedAt.morning   : null },
-    { meal: 'afternoon', label: '점심', time: '12:30', medCount: medTotal, checked: checked.afternoon, checkedAt: checked.afternoon ? checkedAt.afternoon : null },
-    { meal: 'evening',   label: '저녁', time: '19:00', medCount: medTotal, checked: checked.evening,   checkedAt: checked.evening   ? checkedAt.evening   : null },
-  ]
+  for (const med of medsData ?? []) {
+    const times = med.meal_times as string[] | null
+    if (times && times.length > 0) {
+      anyMealTimes = true
+      for (const mt of times) {
+        if (mt in slotCounts) slotCounts[mt as Meal]++
+      }
+    }
+  }
+
+  // meal_times 미지정 약이 있으면 모든 슬롯에 균등 분배(하위호환)
+  const activeMeals = anyMealTimes
+    ? ALL_MEALS.filter(m => slotCounts[m] > 0)
+    : ALL_MEALS
+
+  const slots: SlotState[] = MEAL_SLOTS
+    .filter(s => activeMeals.includes(s.meal))
+    .map(s => ({
+      meal:      s.meal,
+      label:     s.label,
+      time:      s.time,
+      medCount:  anyMealTimes ? slotCounts[s.meal] : medTotal,
+      checked:   checked[s.meal],
+      checkedAt: checked[s.meal] ? checkedAt[s.meal] : null,
+    }))
 
   return <TodayTimeline initialSlots={slots} hasMeds={medTotal > 0} />
 }
