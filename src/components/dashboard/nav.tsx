@@ -104,9 +104,9 @@ export default function DashboardNav({ user, profile }: Props) {
             >
               <Icon
                 weight={active ? 'fill' : 'light'}
-                color={active ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral400)'}
+                color={active ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral500)'}
               />
-              <span className={`text-[0.6875rem] font-semibold leading-none ${active ? 'text-yc-green600' : 'text-yc-neutral400'}`}>
+              <span className={`text-xs font-semibold leading-none ${active ? 'text-yc-green600' : 'text-yc-neutral500'}`}>
                 {label}
               </span>
             </Link>

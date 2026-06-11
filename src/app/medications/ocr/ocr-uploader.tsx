@@ -540,7 +540,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                       key={o.key}
                                       type="button"
                                       onClick={() => toggleMealTime(i, o.key)}
-                                      className={`flex items-center gap-1 px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                                      className={`flex items-center justify-center gap-1 min-h-[48px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                                         active
                                           ? 'bg-yc-blue500 text-white'
                                           : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'
