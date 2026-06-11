@@ -153,7 +153,7 @@ export default async function WalletPage() {
       <div className="flex items-center justify-between pt-1">
         <div>
           <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>
-          <p className="text-sm text-yc-neutral400 mt-0.5">종류별로 나눠서 한눈에</p>
+          <p className="text-sm text-yc-neutral500 mt-0.5">종류별로 나눠서 한눈에</p>
         </div>
         <div className="hidden md:flex">
           <WalletHeaderActions />

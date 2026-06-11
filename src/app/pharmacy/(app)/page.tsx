@@ -66,13 +66,13 @@ export default async function PharmacyHome() {
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
-          <p className="text-sm text-yc-neutral400">환자가 설정에서 “단골 약사에게 공개”를 켜면 여기에 표시돼요</p>
+          <p className="text-sm text-yc-neutral500">환자가 설정에서 “단골 약사에게 공개”를 켜면 여기에 표시돼요</p>
         </div>
       ) : (
         <PharmacyPatientList patients={rows} />
       )}
 
-      <p className="text-xs text-yc-neutral400 leading-relaxed pt-2">
+      <p className="text-xs text-yc-neutral500 leading-relaxed pt-2">
         이 화면은 환자가 동의한 복약 정보를 <b>읽기 전용</b>으로 보여주는 참고 도구입니다.
         진단·처방 변경·복약 중단 등 의학적 판단을 대체하지 않습니다.
       </p>

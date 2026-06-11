@@ -22,7 +22,7 @@ export default function ComingSoonCard({
           <p className="font-display text-base text-yc-neutral600">{title}</p>
           <span className="text-[10px] font-bold text-yc-neutral500 bg-yc-neutral100 px-2 py-0.5 rounded-full flex-shrink-0">추후 제공</span>
         </div>
-        <p className="text-sm text-yc-neutral400 mt-0.5">{desc}</p>
+        <p className="text-sm text-yc-neutral500 mt-0.5">{desc}</p>
       </div>
     </button>
   )

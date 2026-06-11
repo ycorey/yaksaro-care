@@ -225,7 +225,7 @@ export default function TodayTimeline({
                       className={`mt-1 text-sm text-yc-green600 font-medium active:text-yc-neutral500 ${justChecked === s.meal ? 'anim-checked-flash' : ''}`}
                     >
                       <span className="flex items-center gap-1"><Check weight="bold" size={13} /> {fmtCheckedTime(s.checkedAt) || '복용'} 복용</span>
-                      <span className="text-yc-neutral400 font-normal ml-1">· 되돌리기</span>
+                      <span className="text-yc-neutral500 font-normal ml-1">· 되돌리기</span>
                     </button>
                   ) : (
                     <button
@@ -265,7 +265,7 @@ export default function TodayTimeline({
         </div>
       </div>
 
-      <p className="text-xs text-yc-neutral400 text-center pb-36 leading-relaxed">
+      <p className="text-xs text-yc-neutral500 text-center pb-36 leading-relaxed">
         이 앱은 복약 정보 기록·참고 서비스입니다.<br />의학적 진단·처방을 대체하지 않습니다.
       </p>
 

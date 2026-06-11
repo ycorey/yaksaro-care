@@ -21,7 +21,7 @@ export default function PharmacyPatientList({ patients }: { patients: PatientRow
       />
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-yc-neutral400 py-6 text-center">검색 결과가 없어요</p>
+        <p className="text-sm text-yc-neutral500 py-6 text-center">검색 결과가 없어요</p>
       ) : (
         <ul className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
           {filtered.map(p => (

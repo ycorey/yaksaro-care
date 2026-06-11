@@ -40,9 +40,9 @@ function Card({ m }: { m: MedRow }) {
       <div className="flex-1 min-w-0">
         <p className="text-lg font-bold text-yc-neutral900 leading-snug">
           {name}
-          {m.ingredient && <span className="text-sm font-normal text-yc-neutral400 ml-1">({m.ingredient})</span>}
+          {m.ingredient && <span className="text-sm font-normal text-yc-neutral500 ml-1">({m.ingredient})</span>}
         </p>
-        {sub && <p className="text-sm text-yc-neutral400 mt-0.5">{sub}</p>}
+        {sub && <p className="text-sm text-yc-neutral500 mt-0.5">{sub}</p>}
         {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
         {m.has_interaction_warning && (
           <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
@@ -92,7 +92,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><LockEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">볼 수 없는 환자예요</p>
-          <p className="text-sm text-yc-neutral400">동의가 해제되었거나 내 단골 환자가 아니에요</p>
+          <p className="text-sm text-yc-neutral500">동의가 해제되었거나 내 단골 환자가 아니에요</p>
         </div>
       </div>
     )
@@ -128,11 +128,11 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
       {rows.length === 0 && (
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-10 text-center">
-          <p className="text-sm text-yc-neutral400">등록된 복약이 없어요</p>
+          <p className="text-sm text-yc-neutral500">등록된 복약이 없어요</p>
         </div>
       )}
 
-      <p className="text-xs text-yc-neutral400 leading-relaxed">
+      <p className="text-xs text-yc-neutral500 leading-relaxed">
         환자 동의 하에 제공되는 <b>읽기 전용</b> 참고 정보입니다. 복약 중단·처방 변경 등은
         의·약사의 직접 판단에 따르세요.
       </p>

@@ -112,7 +112,7 @@ export default function PharmacyLoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-yc-neutral400 mt-6 leading-relaxed">
+        <p className="text-center text-xs text-yc-neutral500 mt-6 leading-relaxed">
           약국 계정은 운영팀에서 발급합니다.<br />
           계정 발급·문의는 ycorey@gmail.com 으로 연락하세요.
         </p>

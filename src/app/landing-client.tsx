@@ -110,7 +110,7 @@ export default function LandingClient() {
 
         {/* ② 핵심 가치 — 3카테고리 미리보기 (랜딩 예시 콘텐츠) */}
         <section className="space-y-4 pt-6">
-          <p className="text-sm font-bold text-yc-neutral400 tracking-wide px-1">
+          <p className="text-sm font-bold text-yc-neutral500 tracking-wide px-1">
             내 약 지갑은 이렇게 정리됩니다
           </p>
 
@@ -122,7 +122,7 @@ export default function LandingClient() {
             >
               <div>
                 <p className="font-display text-xl text-yc-neutral900 flex items-center gap-2"><Hospital weight="fill" size={18} /> 서울내과 처방약</p>
-                <p className="text-sm text-yc-neutral400 mt-0.5">5종 · 눌러서 펼치기</p>
+                <p className="text-sm text-yc-neutral500 mt-0.5">5종 · 눌러서 펼치기</p>
               </div>
               <span className={`text-yc-neutral400 transition-transform duration-200 ${rxOpen ? 'rotate-180' : ''}`}>▾</span>
             </button>
@@ -168,7 +168,7 @@ export default function LandingClient() {
           <div className="bg-white rounded-yc-xl border border-yc-neutral100 overflow-hidden">
             <div className="px-6 pt-5 pb-1">
               <p className="font-display text-base text-yc-neutral500 flex items-center gap-1.5"><Pill weight="fill" size={16} /> 약국 일반약</p>
-              <p className="text-xs text-yc-neutral400 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
+              <p className="text-xs text-yc-neutral500 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
             </div>
             <div className="px-6 py-4 flex flex-wrap gap-2">
               {['타이레놀', '훼스탈', '판콜에이'].map(n => (
@@ -189,7 +189,7 @@ export default function LandingClient() {
               즉시 파기되므로 안심하고 촬영하세요.
             </p>
           </div>
-          <p className="text-xs text-yc-neutral400 text-center leading-relaxed px-2 pt-2">
+          <p className="text-xs text-yc-neutral500 text-center leading-relaxed px-2 pt-2">
             약사로케어는 복약 기록·참고 서비스입니다.<br />
             의학적 진단이나 처방을 대체하지 않습니다.
           </p>

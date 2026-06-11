@@ -93,7 +93,7 @@ export default function InstallBanner() {
                 Chrome으로 열기
               </button>
             ) : (
-              <p className="text-xs text-yc-neutral400 mt-1">
+              <p className="text-xs text-yc-neutral500 mt-1">
                 우측 하단 <span className="font-semibold text-yc-green600">···</span> → <span className="font-semibold text-yc-green600">Safari로 열기</span>
               </p>
             )}

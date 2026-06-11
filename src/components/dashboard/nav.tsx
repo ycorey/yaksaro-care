@@ -61,7 +61,7 @@ export default function DashboardNav({ user, profile }: Props) {
               style={{ height: '28px', width: 'auto' }}
             />
           </Link>
-          <p className="text-xs text-yc-neutral400 mt-2 truncate">{profile?.full_name ?? user.email}</p>
+          <p className="text-xs text-yc-neutral500 mt-2 truncate">{profile?.full_name ?? user.email}</p>
         </div>
         <nav className="flex-1 p-3">
           {sideItems.map((item) => {
@@ -80,7 +80,7 @@ export default function DashboardNav({ user, profile }: Props) {
         </nav>
         <div className="p-3 border-t border-yc-neutral100">
           <button onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-yc-neutral400 hover:bg-yc-neutral50 hover:text-yc-error transition-colors">
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-yc-neutral500 hover:bg-yc-neutral50 hover:text-yc-error transition-colors">
             <SignOut size={18} />
             로그아웃
           </button>

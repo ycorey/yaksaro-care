@@ -292,7 +292,7 @@ export default function SettingsClient({
             {regularPharmacyName ? (
               <Toggle on={pharmConsent} onToggle={togglePharmacistConsent} />
             ) : (
-              <span className="text-xs text-yc-neutral300 flex-shrink-0">미연결</span>
+              <span className="text-xs text-yc-neutral500 flex-shrink-0">미연결</span>
             )}
           </Row>
         </div>

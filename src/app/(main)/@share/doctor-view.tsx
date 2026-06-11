@@ -66,7 +66,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
                 </p>
                 {data.prescriptionGroups.map((g, gi) => (
                   <div key={gi} className={gi > 0 ? 'mt-8' : ''}>
-                    <p className="text-sm font-bold text-yc-neutral400 mb-4 flex items-center gap-1.5"><Hospital weight="fill" size={14} /> {g.hospitalName}</p>
+                    <p className="text-sm font-bold text-yc-neutral500 mb-4 flex items-center gap-1.5"><Hospital weight="fill" size={14} /> {g.hospitalName}</p>
                     <ul className="space-y-5">
                       {g.meds.map((m, i) => (
                         <li key={i} className="border-b border-yc-neutral100 last:border-0 pb-5 last:pb-0">
@@ -121,7 +121,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
             )}
           </div>
 
-          <p className="px-6 pb-10 text-xs text-yc-neutral400 text-center leading-relaxed">
+          <p className="px-6 pb-10 text-xs text-yc-neutral500 text-center leading-relaxed">
             약사로케어 · 복약 정보 기록 서비스<br />
             의학적 진단·처방을 대체하지 않습니다
           </p>

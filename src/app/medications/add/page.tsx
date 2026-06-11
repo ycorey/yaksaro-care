@@ -32,7 +32,7 @@ function MethodCard({ href, iconBg, icon, title, desc, badge }: {
           <p className="font-display text-base text-yc-neutral900">{title}</p>
           {badge && <span className="text-[10px] font-bold text-yc-green700 bg-yc-green100 px-2 py-0.5 rounded-full flex-shrink-0">{badge}</span>}
         </div>
-        <p className="text-sm text-yc-neutral400 mt-0.5">{desc}</p>
+        <p className="text-sm text-yc-neutral500 mt-0.5">{desc}</p>
       </div>
     </Link>
   )
@@ -43,7 +43,7 @@ function TypeSelectScreen() {
   return (
     <div className="space-y-6 anim-scale-in">
       <StepHeader title="약 추가" />
-      <p className="text-sm text-yc-neutral400 flex items-center gap-1">
+      <p className="text-sm text-yc-neutral500 flex items-center gap-1">
         <span>ⓘ</span> 어떤 약을 추가할까요?
       </p>
       <div className="space-y-3">
@@ -77,7 +77,7 @@ function PrescriptionMethodScreen() {
           icon={<AddIcon name="clipboard" className="text-white" />}
           title="건강기록에서 불러오기" desc="최근 1년 투약내역 연동을 준비 중이에요" />
       </div>
-      <p className="text-xs text-yc-neutral400 flex items-start gap-1.5">
+      <p className="text-xs text-yc-neutral500 flex items-start gap-1.5">
         <AddIcon name="lock" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
         불러온 내용은 저장 전에 직접 확인·수정할 수 있어요.
       </p>

@@ -226,7 +226,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                         <Pill weight="fill" size={16} className="text-yc-blue500 flex-shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
-                          {d.entp_name && <span className="block text-xs text-yc-neutral400 truncate">{d.entp_name}</span>}
+                          {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                         </span>
                         {d.source === 'api' && (
                           <span className="text-[10px] text-yc-blue500 bg-yc-infoBg px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
@@ -242,7 +242,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                         <Flask weight="fill" size={16} className="text-yc-green700 flex-shrink-0" />
                         <span className="min-w-0">
                           <span className="block text-sm font-medium text-yc-neutral900 truncate">{s.product_name}</span>
-                          {s.company_name && <span className="block text-xs text-yc-neutral400 truncate">{s.company_name}</span>}
+                          {s.company_name && <span className="block text-xs text-yc-neutral500 truncate">{s.company_name}</span>}
                         </span>
                       </button>
                     ))}
