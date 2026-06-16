@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, SunHorizon, Sun, Moon, MoonStars, ArrowsClockwise, Check } from '@phosphor-icons/react'
+import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, ArrowsClockwise, Check } from '@phosphor-icons/react'
+import { MEAL_SLOTS, defaultMealKeys } from '@/lib/meal-slots'
+import { MEAL_ICONS } from '@/lib/meal-icons'
 
 type Medicine = {
   name:          string
@@ -12,19 +14,6 @@ type Medicine = {
   doses_per_day: number | null
   days:          number | null
   meal_times:    string[]
-}
-
-const MEAL_OPTIONS = [
-  { key: 'morning',   label: '아침',   icon: <SunHorizon weight="fill" size={12} /> },
-  { key: 'afternoon', label: '점심',   icon: <Sun        weight="fill" size={12} /> },
-  { key: 'evening',   label: '저녁',   icon: <Moon       weight="fill" size={12} /> },
-  { key: 'bedtime',   label: '자기전', icon: <MoonStars  weight="fill" size={12} /> },
-]
-
-function defaultMealTimes(dosesPerDay: number | null): string[] {
-  if (dosesPerDay === 1) return ['morning']
-  if (dosesPerDay === 2) return ['morning', 'evening']
-  return ['morning', 'afternoon', 'evening']
 }
 
 type OcrResult = {
@@ -192,7 +181,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         ...data,
         medicines: (data.medicines ?? []).map((m: Omit<Medicine, 'meal_times'>) => ({
           ...m,
-          meal_times: defaultMealTimes(m.doses_per_day),
+          meal_times: defaultMealKeys(m.doses_per_day ?? 0),
         })),
       })
       setState('done')
@@ -533,20 +522,21 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             <div className="mt-2.5">
                               <p className="text-xs text-yc-neutral500 mb-1.5">복용 시간 선택</p>
                               <div className="flex flex-wrap gap-1.5">
-                                {MEAL_OPTIONS.map(o => {
-                                  const active = (med.meal_times ?? []).includes(o.key)
+                                {MEAL_SLOTS.map(s => {
+                                  const active = (med.meal_times ?? []).includes(s.meal)
+                                  const MealIcon = MEAL_ICONS[s.meal]
                                   return (
                                     <button
-                                      key={o.key}
+                                      key={s.meal}
                                       type="button"
-                                      onClick={() => toggleMealTime(i, o.key)}
+                                      onClick={() => toggleMealTime(i, s.meal)}
                                       className={`flex items-center justify-center gap-1 min-h-[48px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                                         active
                                           ? 'bg-yc-blue500 text-white'
                                           : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'
                                       }`}
                                     >
-                                      {o.icon} {o.label}
+                                      <MealIcon weight="fill" size={12} /> {s.label}
                                     </button>
                                   )
                                 })}

@@ -10,6 +10,7 @@ import {
 } from '@/lib/notifications'
 import { subscribeToPush, unsubscribeFromPush, pushSupported } from '@/lib/push-client'
 import { Lock, Hospital, Bell, Check, X } from '@phosphor-icons/react'
+import { MEAL_SLOTS } from '@/lib/meal-slots'
 
 type FontSize = 'normal' | 'large' | 'xlarge'
 
@@ -19,13 +20,8 @@ const FONT_SIZES: { key: FontSize; label: string; px: number }[] = [
   { key: 'xlarge', label: '아주 크게', px: 20 },
 ]
 
-// 키는 lib/meal-slots.ts의 Meal과 동일 — cron이 profiles.alarm_times[meal]로 필터한다
-const ALARM_TIMES = [
-  { key: 'morning',   label: '아침 알림' },
-  { key: 'afternoon', label: '점심 알림' },
-  { key: 'evening',   label: '저녁 알림' },
-  { key: 'bedtime',   label: '취침 알림' },
-]
+// 키·라벨 모두 SSOT(meal-slots)에서 파생 — cron이 profiles.alarm_times[meal]로 필터한다
+const ALARM_TIMES = MEAL_SLOTS.map(s => ({ key: s.meal, label: `${s.label} 알림` }))
 
 // 설정 서버 영속 (실패해도 localStorage 폴백이 있으므로 조용히 무시)
 function persistSettings(patch: Record<string, unknown>) {

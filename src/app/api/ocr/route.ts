@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
 export const maxDuration = 60
@@ -369,7 +370,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (e) {
-    console.error('OCR 오류:', e)
+    logger.error('OCR', '처리 오류', e)
   }
 
   const names   = parsed.medicines.map(m => m.name)

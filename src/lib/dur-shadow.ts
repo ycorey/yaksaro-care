@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkInteractions } from '@/lib/dur'
+import { logger } from '@/lib/logger'
 
 // Fire-and-forget: 절대 await 없이 호출할 것 — 사용자 응답을 차단하면 안 된다
 export function logDurShadow(
@@ -48,7 +49,7 @@ export function logDurShadow(
         }
       }
     } catch (e) {
-      console.warn('[DUR shadow] log failed:', e)
+      logger.warn('DUR shadow', 'log failed', e)
     }
   })()
 }

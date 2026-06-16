@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { type Meal, ALL_MEALS, isMeal } from '@/lib/meal-slots'
 
-type Meal = 'morning' | 'afternoon' | 'evening' | 'bedtime'
-const MEALS: Meal[] = ['morning', 'afternoon', 'evening', 'bedtime']
-const TOTAL = MEALS.length // 4 (아침/점심/저녁/자기 전)
+const TOTAL = ALL_MEALS.length // 4 (아침/점심/저녁/자기 전)
 
 type DayStatus = 'full' | 'partial' | 'miss'
 type DaySummary = { done: number; status: DayStatus }
@@ -71,8 +70,8 @@ export async function GET(request: Request) {
   const latestByDayMeal = new Map<string, Map<Meal, boolean>>()
 
   for (const row of (data ?? []) as CheckLogRow[]) {
-    const meal = row.meal_time as Meal
-    if (!MEALS.includes(meal)) continue
+    const meal = row.meal_time
+    if (!isMeal(meal)) continue
     if (row.check_date > today) continue // 미래 날짜 제외
 
     let mealMap = latestByDayMeal.get(row.check_date)
@@ -88,7 +87,7 @@ export async function GET(request: Request) {
 
   for (const [date, mealMap] of latestByDayMeal) {
     let done = 0
-    for (const meal of MEALS) {
+    for (const meal of ALL_MEALS) {
       if (mealMap.get(meal) === true) done++
     }
 

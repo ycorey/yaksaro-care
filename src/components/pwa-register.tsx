@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { logger } from '@/lib/logger'
 
 /**
  * 서비스워커 등록 — 설치 가능(PWA) + 오프라인 캐시 활성화.
@@ -15,7 +16,7 @@ export default function PWARegister() {
     const onLoad = () => {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
-        .catch((e) => console.warn('[PWA] SW 등록 실패:', e))
+        .catch((e) => logger.warn('PWA', 'SW 등록 실패', e))
     }
     window.addEventListener('load', onLoad)
     return () => window.removeEventListener('load', onLoad)

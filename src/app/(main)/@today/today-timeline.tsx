@@ -5,11 +5,20 @@ import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
-import { Pill, Flask, Sun, SunHorizon, Moon, MoonStars, HandsClapping, Check } from '@phosphor-icons/react'
+import { Pill, Flask, Sun, HandsClapping, Check } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { MEAL_ICONS } from '@/lib/meal-icons'
 
 export type { Meal } from '@/lib/meal-slots'
 import type { Meal } from '@/lib/meal-slots'
+
+// 끼니별 아이콘 강조색 (이 화면 한정 — 아이콘 자체는 공용 MEAL_ICONS)
+const MEAL_ACCENT: Record<Meal, string> = {
+  morning:   'text-yc-warning',
+  afternoon: 'text-yc-warning',
+  evening:   'text-yc-blue500',
+  bedtime:   'text-yc-neutral500',
+}
 
 export interface SlotState {
   meal: Meal
@@ -183,6 +192,7 @@ export default function TodayTimeline({
         <div className="bg-white rounded-yc-lg border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
           {slots.map((s, i) => {
             const isNext = nextMeal === s.meal && !s.checked
+            const MealIcon = MEAL_ICONS[s.meal]
             return (
               <div
                 key={s.meal}
@@ -195,10 +205,7 @@ export default function TodayTimeline({
                 <div className="w-12 shrink-0 pt-0.5">
                   <p className="text-xs text-yc-neutral500 leading-tight">{s.time}</p>
                   <p className="text-sm font-bold text-yc-neutral700 mt-0.5 flex items-center gap-1">
-                    {s.meal === 'morning' ? <SunHorizon weight="fill" size={14} className="text-yc-warning" />
-                      : s.meal === 'afternoon' ? <Sun weight="fill" size={14} className="text-yc-warning" />
-                      : s.meal === 'evening' ? <Moon weight="fill" size={14} className="text-yc-blue500" />
-                      : <MoonStars weight="fill" size={14} className="text-yc-neutral500" />}
+                    <MealIcon weight="fill" size={14} className={MEAL_ACCENT[s.meal]} />
                     {s.label}
                   </p>
                 </div>

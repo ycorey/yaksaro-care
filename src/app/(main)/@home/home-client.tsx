@@ -4,14 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Flask, Check, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
-
-// 아침 08:00 / 점심 12:30 / 저녁 19:00 / 자기 전 22:00
-const SLOTS = [
-  { key: 'morning',   label: '아침',    h: 8,  m: 0  },
-  { key: 'afternoon', label: '점심',    h: 12, m: 30 },
-  { key: 'evening',   label: '저녁',    h: 19, m: 0  },
-  { key: 'bedtime',   label: '자기 전', h: 22, m: 0  },
-]
+import { MEAL_SLOTS } from '@/lib/meal-slots'
 
 function koreanDate() {
   const d = new Date()
@@ -22,8 +15,8 @@ function koreanDate() {
 function getOverdueSlot(doneKeys: string[], activeKeys: string[]) {
   const now = new Date()
   const nowMin = now.getHours() * 60 + now.getMinutes()
-  for (const slot of SLOTS.filter(s => activeKeys.includes(s.key))) {
-    if (doneKeys.includes(slot.key)) continue
+  for (const slot of MEAL_SLOTS.filter(s => activeKeys.includes(s.meal))) {
+    if (doneKeys.includes(slot.meal)) continue
     const slotMin = slot.h * 60 + slot.m
     if (nowMin >= slotMin + 30) return { slot, elapsed: nowMin - slotMin }
   }
@@ -38,7 +31,7 @@ function formatElapsed(minutes: number) {
   return `${m}분 지났어요`
 }
 
-function formatSlotTime(slot: typeof SLOTS[number]) {
+function formatSlotTime(slot: typeof MEAL_SLOTS[number]) {
   return `${String(slot.h).padStart(2, '0')}:${String(slot.m).padStart(2, '0')}`
 }
 
@@ -112,7 +105,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
               <p className="font-display text-[1.375rem] leading-tight">
                 {(() => {
                   const nowMin = now.getHours() * 60 + now.getMinutes()
-                  const next = SLOTS.filter(s => activeSlotKeys.includes(s.key)).find(s => !doneKeys.includes(s.key) && s.h * 60 + s.m > nowMin)
+                  const next = MEAL_SLOTS.filter(s => activeSlotKeys.includes(s.meal)).find(s => !doneKeys.includes(s.meal) && s.h * 60 + s.m > nowMin)
                   if (!next) return '오늘 복약을 챙겨보세요'
                   const diff = next.h * 60 + next.m - nowMin
                   const dh = Math.floor(diff / 60), dm = diff % 60

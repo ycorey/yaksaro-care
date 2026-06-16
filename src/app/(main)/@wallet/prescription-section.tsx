@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Camera, PencilSimple, Pill, Warning, Phone, MapPin, Clock, Trash, SunHorizon, Sun, Moon, MoonStars, Check } from '@phosphor-icons/react'
-import { defaultMealKeys } from '@/lib/meal-slots'
+import { Camera, PencilSimple, Pill, Warning, Phone, MapPin, Clock, Trash, Check } from '@phosphor-icons/react'
+import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { MEAL_ICONS } from '@/lib/meal-icons'
+import { logger } from '@/lib/logger'
 import MedCardItem from './med-card-item'
 
 export type MedCard = {
@@ -37,11 +39,12 @@ export type HospitalGroup = {
   totalDays:       number | null  // 최대 투약일수 (프로그레스바용)
 }
 
-const MEALS = [
-  { key: 'morning',   label: '아침 약 한번에 먹기',   done: '아침 약 복용 완료',   icon: <SunHorizon weight="fill" size={18} /> },
-  { key: 'afternoon', label: '점심 약 한번에 먹기',   done: '점심 약 복용 완료',   icon: <Sun        weight="fill" size={18} /> },
-  { key: 'evening',   label: '저녁 약 한번에 먹기',   done: '저녁 약 복용 완료',   icon: <Moon       weight="fill" size={18} /> },
-  { key: 'bedtime',   label: '자기 전 약 한번에 먹기', done: '취침 전 복용 완료',   icon: <MoonStars  weight="fill" size={18} /> },
+// 끼니 순서·아이콘은 SSOT(meal-slots/meal-icons), 라벨은 처방약 도메인 카피
+const MEALS: { key: Meal; label: string; done: string }[] = [
+  { key: 'morning',   label: '아침 약 한번에 먹기',   done: '아침 약 복용 완료' },
+  { key: 'afternoon', label: '점심 약 한번에 먹기',   done: '점심 약 복용 완료' },
+  { key: 'evening',   label: '저녁 약 한번에 먹기',   done: '저녁 약 복용 완료' },
+  { key: 'bedtime',   label: '자기 전 약 한번에 먹기', done: '취침 전 복용 완료' },
 ]
 
 function haptic() { try { navigator.vibrate?.([50]) } catch {} }
@@ -110,19 +113,22 @@ function GroupMealButtons({ groupKey, mealTimes, initialChecks, onAnyChecked }: 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ meal_time: meal, is_checked: next }),
-    }).catch(e => console.warn('[wallet] meal-checks 동기화 실패:', e))
+    }).catch(e => logger.warn('wallet', 'meal-checks 동기화 실패', e))
   }
 
   return (
     <div className="space-y-2 pt-4 border-t border-yc-blue500/15 mt-4">
-      {activeMeals.map(({ key, label, done, icon }) => (
+      {activeMeals.map(({ key, label, done }) => {
+        const Icon = MEAL_ICONS[key]
+        return (
         <button key={key} onClick={() => toggle(key)} aria-pressed={checks[key]}
           className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-yc-lg text-base font-display transition-colors ${
             checks[key] ? 'bg-yc-blue500 text-white' : 'bg-yc-infoBg text-yc-infoText active:opacity-90'
           }`}>
-          <span>{icon}</span><span>{checks[key] ? <><Check weight="bold" size={14} className="inline mr-1" />{done}</> : label}</span>
+          <span><Icon weight="fill" size={18} /></span><span>{checks[key] ? <><Check weight="bold" size={14} className="inline mr-1" />{done}</> : label}</span>
         </button>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
+import { MEAL_LABELS, MEAL_TIMES, isMeal } from '@/lib/meal-slots'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-const MEALS: Record<string, { label: string; time: string }> = {
-  morning:   { label: '아침',   time: '08:00' },
-  afternoon: { label: '점심',   time: '12:30' },
-  evening:   { label: '저녁',   time: '19:00' },
-  bedtime:   { label: '자기 전', time: '22:00' },
-}
 
 // KST(UTC+9) 기준 오늘 날짜
 function todayKST(): string {
@@ -32,8 +26,9 @@ export async function GET(req: NextRequest) {
   }
 
   const meal = req.nextUrl.searchParams.get('meal') ?? ''
-  const slot = MEALS[meal]
-  if (!slot) return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening/bedtime)' }, { status: 400 })
+  if (!isMeal(meal)) return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening/bedtime)' }, { status: 400 })
+  const label = MEAL_LABELS[meal]
+  const time  = MEAL_TIMES[meal]
 
   const admin = createAdminClient()
   const day = todayKST()
@@ -83,8 +78,8 @@ export async function GET(req: NextRequest) {
   await Promise.allSettled(
     targets.map(async (u) => {
       const n = await sendPushToUser(u, {
-        title: `${slot.label} 약 드실 시간이에요 💊`,
-        body: `${slot.time} · 오늘 ${slot.label} 약을 챙겨보세요.`,
+        title: `${label} 약 드실 시간이에요 💊`,
+        body: `${time} · 오늘 ${label} 약을 챙겨보세요.`,
         url: '/today',
       })
       sent += n

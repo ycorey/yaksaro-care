@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-type Meal = 'morning' | 'afternoon' | 'evening' | 'bedtime'
-const MEALS: Meal[] = ['morning', 'afternoon', 'evening', 'bedtime']
+import { type Meal, isMeal } from '@/lib/meal-slots'
+import { logger } from '@/lib/logger'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -22,8 +21,8 @@ export async function GET() {
 
   const checks = { morning: false, afternoon: false, evening: false, bedtime: false }
   for (const row of data ?? []) {
-    if (MEALS.includes(row.meal_time as Meal)) {
-      checks[row.meal_time as Meal] = !!row.is_checked
+    if (isMeal(row.meal_time)) {
+      checks[row.meal_time] = !!row.is_checked
     }
   }
   return NextResponse.json({ checks })
@@ -36,7 +35,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
   const { meal_time, is_checked } = await request.json() as { meal_time: Meal; is_checked: boolean }
-  if (!MEALS.includes(meal_time)) {
+  if (!isMeal(meal_time)) {
     return NextResponse.json({ error: '잘못된 meal_time' }, { status: 400 })
   }
 
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
       is_checked,
     })
     .then(({ error }) => {
-      if (error) console.warn('[meal-checks] 이력 로그 실패:', error.message)
+      if (error) logger.warn('meal-checks', '이력 로그 실패', error.message)
     })
 
   return NextResponse.json({ ok: true })

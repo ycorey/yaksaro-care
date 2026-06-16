@@ -2,15 +2,19 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Flask, SunHorizon, Sun, Moon, MoonStars, Check } from '@phosphor-icons/react'
+import { Flask, Check } from '@phosphor-icons/react'
 import MedCardItem from './med-card-item'
 import { type MedCard } from './prescription-section'
+import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { MEAL_ICONS } from '@/lib/meal-icons'
+import { logger } from '@/lib/logger'
 
-const MEALS = [
-  { key: 'morning',   label: '아침 영양제 한번에 먹기',    done: '아침 복용 완료',    icon: <SunHorizon weight="fill" size={18} /> },
-  { key: 'afternoon', label: '점심 영양제 한번에 먹기',    done: '점심 복용 완료',    icon: <Sun        weight="fill" size={18} /> },
-  { key: 'evening',   label: '저녁 영양제 한번에 먹기',    done: '저녁 복용 완료',    icon: <Moon       weight="fill" size={18} /> },
-  { key: 'bedtime',   label: '자기 전 영양제 한번에 먹기',  done: '취침 전 복용 완료', icon: <MoonStars  weight="fill" size={18} /> },
+// 끼니 순서·아이콘은 SSOT(meal-slots/meal-icons), 라벨은 영양제 도메인 카피
+const MEALS: { key: Meal; label: string; done: string }[] = [
+  { key: 'morning',   label: '아침 영양제 한번에 먹기',    done: '아침 복용 완료' },
+  { key: 'afternoon', label: '점심 영양제 한번에 먹기',    done: '점심 복용 완료' },
+  { key: 'evening',   label: '저녁 영양제 한번에 먹기',    done: '저녁 복용 완료' },
+  { key: 'bedtime',   label: '자기 전 영양제 한번에 먹기',  done: '취침 전 복용 완료' },
 ]
 
 function haptic() { try { navigator.vibrate?.([50]) } catch {} }
@@ -24,7 +28,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
   const maxDoses = Math.max(0, ...meds.map(m => m.dosesPerDay ?? 0)) || 3
   const activeMeals = mealTimesUnion.length > 0
     ? mealsFor(mealTimesUnion)
-    : mealsFor(maxDoses === 1 ? ['morning'] : maxDoses === 2 ? ['morning', 'evening'] : ['morning', 'afternoon', 'evening'])
+    : mealsFor(defaultMealKeys(maxDoses))
 
   const [checks, setChecks] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
@@ -42,7 +46,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meal_time: meal, is_checked: next[meal] }),
-      }).catch(e => console.warn('[wallet] meal-checks 동기화 실패:', e))
+      }).catch(e => logger.warn('wallet', 'meal-checks 동기화 실패', e))
       return next
     })
   }, [])
@@ -108,7 +112,9 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
             </ul>
             {/* 영양제 일괄 복약 버튼 */}
             <div className="space-y-2 pt-4 border-t border-yc-green600/20 mt-4">
-              {activeMeals.map(({ key, label, done, icon }) => (
+              {activeMeals.map(({ key, label, done }) => {
+                const Icon = MEAL_ICONS[key]
+                return (
                 <button
                   key={key}
                   onClick={() => toggle(key)}
@@ -119,10 +125,11 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
                       : 'bg-yc-green100 text-yc-green700 active:opacity-90'
                   }`}
                 >
-                  <span>{icon}</span>
+                  <span><Icon weight="fill" size={18} /></span>
                   <span>{checks[key] ? <><Check weight="bold" size={14} className="inline mr-1" />{done}</> : label}</span>
                 </button>
-              ))}
+                )
+              })}
             </div>
             <Link href="/medications/add?tab=supplement"
               className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-green600 font-medium border border-dashed border-yc-green100 rounded-yc-lg active:bg-yc-green50">

@@ -12,10 +12,12 @@
 
 ## 📈 점수 상승 (91 → 93~94권, 평가 에이전트가 짚은 감점 요인 순)
 
-- [ ] **하단 탭바 비활성 라벨 대비** — `nav.tsx` neutral400(≈3.1:1)·text-[10px] → neutral500·12px (UX +3~4, 최저비용)
-- [ ] **끼니 표시 상수 완전 단일화** — 폴백 로직(defaultMealKeys)은 단일화됐으나 라벨/아이콘/시각이 5개 파일에 중복(home-client 시각 하드코딩·cron·meal-checks·calendar·supplement-section) → `lib/meal-slots.ts`로 통합 (기술 +2~3)
-- [ ] **Sentry(또는 경량 로거) 도입** — DUR shadow·푸시 fire-and-forget 실패 추적, console.error 산재 해소 (기술 +2)
-- [ ] OCR 복용시간 칩 터치 타겟 마무리 — ~40px → 48px (UX +1)
+- [x] **하단 탭바 비활성 라벨 대비** — `nav.tsx` 이미 neutral500·text-xs(12px) 적용돼 있었음 (6/10 작업에서 반영, 재확인 완료)
+- [x] **끼니 표시 상수 완전 단일화** (2026-06-15) — 라벨·시각은 `lib/meal-slots.ts`(MEAL_LABELS/MEAL_TIMES/isMeal 추가), 아이콘은 신규 `lib/meal-icons.tsx`(서버 번들 분리)로 SSOT화. home-client·today-timeline·cron·ocr-uploader·meal-checks·calendar·settings-client·supplement-section·prescription-section·add-form 10개 파일의 중복 배열/아이콘/폴백 제거. 부수효과: 알림 라벨 '취침 알림'→'자기 전 알림' 통일 (기술 +2~3)
+- [x] **경량 로거 도입** (2026-06-15) — 신규 `lib/logger.ts`(외부 의존성 0, 서버·클라 공용)로 흩어진 console.* 11곳 통일(DUR shadow·OTC·푸시 SW·OCR·bulk·meal-checks·wallet). Sentry 확장 지점(emit()/DSN 분기)만 주석으로 남김. ※ Sentry 풀 도입은 추후 운영 배포 시 (기술 +2)
+- [x] OCR 복용시간 칩 터치 타겟 — `ocr-uploader.tsx` 이미 min-h-[48px] 적용돼 있었음 (재확인 완료)
+
+> 검증(2026-06-15): `tsc --noEmit` 통과 + `eslint` 0건. ⚠️ `next build`는 미실행(PC 부하) — 배포 전 1회 확정 필요.
 
 ## 🗓️ 중기 (1개월)
 

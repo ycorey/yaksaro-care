@@ -2,8 +2,10 @@
 
 import type React from 'react'
 import { useState, useEffect, useRef } from 'react'
-import { Hospital, Pill, Flask, SunHorizon, Sun, Moon, MoonStars } from '@phosphor-icons/react'
+import { Hospital, Pill, Flask } from '@phosphor-icons/react'
 import { addMedication } from './actions'
+import { MEAL_SLOTS } from '@/lib/meal-slots'
+import { MEAL_ICONS } from '@/lib/meal-icons'
 
 type TabType = 'prescription' | 'otc' | 'supplement'
 
@@ -24,24 +26,18 @@ const TAB_LABELS: Record<TabType, { icon: React.ReactNode; label: string }> = {
 const DAY_PRESETS = [3, 5, 7, 14, 30]
 const FREQUENCIES = ['하루 1회', '하루 2회', '하루 3회', '하루 4회', '필요시(PRN)', '격일 1회', '주 1회']
 
-const MEAL_SLOTS = [
-  { key: 'morning',   label: '아침',    icon: <SunHorizon weight="fill" size={14} /> },
-  { key: 'afternoon', label: '점심',    icon: <Sun        weight="fill" size={14} /> },
-  { key: 'evening',   label: '저녁',    icon: <Moon       weight="fill" size={14} /> },
-  { key: 'bedtime',   label: '자기 전', icon: <MoonStars  weight="fill" size={14} /> },
-]
-
 function MealTimePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   return (
     <div className="grid grid-cols-4 gap-2">
-      {MEAL_SLOTS.map(({ key, label, icon }) => {
-        const on = value.includes(key)
+      {MEAL_SLOTS.map(s => {
+        const on = value.includes(s.meal)
+        const Icon = MEAL_ICONS[s.meal]
         return (
-          <button key={key} type="button"
-            onClick={() => onChange(on ? value.filter(v => v !== key) : [...value, key])}
+          <button key={s.meal} type="button"
+            onClick={() => onChange(on ? value.filter(v => v !== s.meal) : [...value, s.meal])}
             className={`${BTN_BASE} flex-col gap-1 py-3 h-auto ${on ? BTN_ACTIVE : BTN_INACTIVE}`}>
-            {icon}
-            <span className="text-xs">{label}</span>
+            <Icon weight="fill" size={14} />
+            <span className="text-xs">{s.label}</span>
           </button>
         )
       })}

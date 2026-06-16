@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkInteractions } from '@/lib/dur'
+import { logger } from '@/lib/logger'
 
 // Fire-and-forget — 절대 await 없이 호출할 것 (사용자 응답 차단 금지)
 // OTC 일반약(drug_id 있는 manual 약) 등록 시 현재 처방약과 상호작용 체크
@@ -39,9 +40,9 @@ export function checkOtcInteraction(
         .update({ has_interaction_warning: true })
         .eq('id', newMedId)
 
-      console.info(`[DUR OTC] interaction warning set: medId=${newMedId}, count=${interactions.length}`)
+      logger.info('DUR OTC', `interaction warning set: medId=${newMedId}, count=${interactions.length}`)
     } catch (e) {
-      console.warn('[DUR OTC] check failed:', e)
+      logger.warn('DUR OTC', 'check failed', e)
     }
   })()
 }

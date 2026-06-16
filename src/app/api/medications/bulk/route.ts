@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logDurShadow } from '@/lib/dur-shadow'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase.from('user_medications').insert(rows)
   if (error) {
-    console.error('bulk insert 오류:', error.message)
+    logger.error('medications/bulk', 'insert 오류', error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

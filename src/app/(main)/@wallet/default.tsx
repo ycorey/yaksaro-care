@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 import AppHeader from '@/components/app-header'
 import { WalletHeaderActions } from './wallet-header-actions'
@@ -42,7 +43,7 @@ export default async function WalletPage() {
     serverChecks[row.meal_time as string] = !!row.is_checked
   }
 
-  if (medsError) console.error('[wallet] meds query error:', medsError.message)
+  if (medsError) logger.error('wallet', 'meds query error', medsError.message)
 
   const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? null
 
