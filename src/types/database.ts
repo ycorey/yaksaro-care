@@ -1,4 +1,4 @@
-// Supabase MCP generate_typescript_types로 생성 (2026-06-10, 마이그레이션 001~024 기준).
+// Supabase MCP generate_typescript_types로 생성 (2026-06-15, 마이그레이션 001~025 기준).
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
 export type Json =
   | string
@@ -408,6 +408,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pubmed_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          query_key: string
+          raw_results: Json
+          summary_ko: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          query_key: string
+          raw_results: Json
+          summary_ko?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          query_key?: string
+          raw_results?: Json
+          summary_ko?: string | null
+        }
+        Relationships: []
       }
       push_subscriptions: {
         Row: {

@@ -44,6 +44,9 @@ nul
 # workspace (analysis output, not source)
 _workspace/
 
+# claude tooling (oh-my-claudecode session/state — 로컬 전용)
+.omc/
+
 # runtime/local files
 .etl-dur-checkpoint.json
 .etl-dur-ingr-checkpoint.json
