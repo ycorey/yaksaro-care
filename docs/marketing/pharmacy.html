@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약사로 케어 for 약국 — 처방 그 이후, 단골을 잇다</title>
+<meta name="description" content="QR 한 장으로 단골 환자와 연결되고, 동의한 환자의 복약을 한 화면에서 read-only로. 동의 기반·규제 안전 설계의 약국 파트너 솔루션.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#0E6E54; --green-2:#13815F; --green-bright:#1FA37C; --green-deep:#0A2A22; --green-deep2:#0E3A2D;
+    --blue:#2563EB; --blue-soft:#DCE8FD;
+    --ink:#0E1A16; --ink-soft:#465650; --muted:#7A8B83;
+    --bg:#F4F7F6; --paper:#FFFFFF; --line:#E3EAE7;
+    --shadow-sm:0 2px 10px rgba(14,30,22,.05);
+    --shadow:0 18px 50px -16px rgba(10,42,34,.22);
+    --shadow-lg:0 40px 90px -28px rgba(10,42,34,.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden}
+  .serif{font-family:'Fraunces',serif; font-optical-sizing:auto}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px}
+  a{text-decoration:none; color:inherit}
+
+  /* 네비 */
+  nav{position:sticky; top:0; z-index:100; backdrop-filter:blur(14px); background:rgba(244,247,246,.85); border-bottom:1px solid rgba(227,234,231,.8)}
+  .nav-in{display:flex; align-items:center; justify-content:space-between; height:70px}
+  .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:18px; color:var(--green)}
+  .brand .mk{width:32px; height:32px; border-radius:10px; background:var(--green); display:grid; place-items:center; color:#fff; font-size:17px; box-shadow:var(--shadow-sm)}
+  .brand .for{font-size:12px; font-weight:800; color:#fff; background:var(--blue); padding:2px 9px; border-radius:7px; margin-left:2px}
+  .nav-links{display:flex; align-items:center; gap:30px; font-size:14.5px; font-weight:600; color:var(--ink-soft)}
+  .nav-links a:hover{color:var(--green)}
+  .btn{display:inline-flex; align-items:center; gap:8px; font-weight:700; border-radius:999px; padding:12px 22px; font-size:14.5px; transition:transform .18s, box-shadow .18s; cursor:pointer; border:none}
+  .btn-primary{background:var(--green); color:#fff; box-shadow:0 10px 24px -8px rgba(14,110,84,.5)}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 16px 32px -10px rgba(14,110,84,.6)}
+  .btn-ghost{background:transparent; color:#CDE7DD; border:1.5px solid rgba(205,231,221,.4)}
+  .btn-ghost:hover{background:rgba(255,255,255,.08)}
+  .btn-lg{padding:16px 30px; font-size:16px}
+  @media(max-width:740px){ .nav-links a:not(.btn){display:none} }
+
+  /* HERO 다크 */
+  .hero{background:linear-gradient(160deg, var(--green-deep) 0%, var(--green-deep2) 55%, #114433 100%); color:#EAF5F0; position:relative; overflow:hidden; padding:78px 0 96px}
+  .hero::before{content:''; position:absolute; top:-200px; right:-140px; width:640px; height:640px; background:radial-gradient(circle, rgba(31,163,124,.28), transparent 64%)}
+  .hero::after{content:''; position:absolute; bottom:-220px; left:-160px; width:560px; height:560px; background:radial-gradient(circle, rgba(37,99,235,.16), transparent 66%)}
+  .hero-grid{position:relative; z-index:1; display:grid; grid-template-columns:1.04fr .96fr; gap:50px; align-items:center}
+  @media(max-width:940px){ .hero-grid{grid-template-columns:1fr; gap:48px} }
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:999px; padding:7px 15px; font-size:13px; font-weight:700; color:#9FE6CC}
+  .eyebrow .pip{width:7px; height:7px; border-radius:50%; background:var(--green-bright); box-shadow:0 0 0 4px rgba(31,163,124,.25)}
+  h1.hero-h{font-size:clamp(34px,5vw,56px); line-height:1.13; letter-spacing:-.03em; font-weight:800; color:#fff; margin:22px 0 0}
+  h1.hero-h .em{color:#5FD9B0; position:relative}
+  .hero-sub{font-size:clamp(16px,2vw,19px); color:#BFDBD0; margin-top:22px; max-width:540px; font-weight:500}
+  .hero-cta{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap}
+  .hero-trust{display:flex; gap:24px; margin-top:32px; flex-wrap:wrap}
+  .hero-trust .t{font-size:13.5px; font-weight:600; color:#A9CCC0} .hero-trust .t b{color:#7BE3BC}
+
+  /* 데스크탑 목업 */
+  .desk{position:relative; z-index:1; border-radius:16px; overflow:hidden; box-shadow:var(--shadow-lg); background:#fff; border:1px solid rgba(255,255,255,.1); transform:perspective(1600px) rotateY(-4deg) rotateX(2deg)}
+  .desk-bar{background:#E8EDEB; padding:9px 14px; display:flex; align-items:center; gap:7px}
+  .desk-bar .d{width:11px; height:11px; border-radius:50%}
+  .desk-bar .url{margin-left:10px; background:#fff; border-radius:7px; font-size:10.5px; color:var(--muted); padding:4px 13px}
+  .desk-body{display:flex; min-height:340px; color:var(--ink)}
+  .side{width:172px; background:#fff; border-right:1px solid var(--line); padding:15px 11px; flex:none}
+  @media(max-width:480px){ .side{display:none} }
+  .side .logo{font-weight:800; color:var(--green); font-size:14px; padding:0 7px 12px; border-bottom:1px solid var(--line); margin-bottom:9px}
+  .side .who{font-size:9.5px; color:var(--muted); padding:0 7px 11px}
+  .side .mi{display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:9px; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:2px}
+  .side .mi.on{background:var(--blue-soft); color:var(--blue)}
+  .main{flex:1; padding:20px 22px; background:var(--bg); min-width:0}
+  .main h3{font-size:16px; font-weight:800}
+  .main .ms{font-size:11px; color:var(--muted); margin:3px 0 14px}
+  .qr-ban{display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line); border-radius:11px; padding:11px 13px; margin-bottom:14px}
+  .qr-ban .qi{width:34px; height:34px; border-radius:9px; background:#EAF6F1; color:var(--green); display:grid; place-items:center; font-size:16px; flex:none}
+  .qr-ban .qt{font-size:11.5px; font-weight:700} .qr-ban .qd{font-size:10px; color:var(--muted); margin-top:1px}
+  .ptable{background:#fff; border:1px solid var(--line); border-radius:11px; overflow:hidden}
+  .prow{display:flex; align-items:center; gap:11px; padding:11px 14px; border-bottom:1px solid var(--line)}
+  .prow:last-child{border-bottom:0}
+  .prow.head{background:#EEF3F1; font-size:10px; font-weight:700; color:var(--muted)}
+  .pav{width:28px; height:28px; border-radius:50%; background:var(--blue-soft); color:var(--blue); display:grid; place-items:center; font-weight:700; font-size:11px; flex:none}
+  .pnm{font-size:12px; font-weight:700; flex:1} .pmed{font-size:11px; color:var(--ink-soft); width:54px} .pro{font-size:10.5px; font-weight:700; color:var(--blue); width:44px; text-align:right}
+
+  /* 섹션 */
+  section.blk{padding:88px 0; position:relative}
+  .sec-head{text-align:center; max-width:680px; margin:0 auto 56px}
+  .sec-tag{font-size:13px; font-weight:800; color:var(--green-bright); letter-spacing:.08em; text-transform:uppercase}
+  .sec-h{font-size:clamp(27px,3.6vw,40px); line-height:1.2; letter-spacing:-.02em; font-weight:800; margin-top:12px}
+  .sec-desc{font-size:16.5px; color:var(--ink-soft); margin-top:16px; font-weight:500}
+
+  /* 문제 */
+  .prob{background:var(--paper)}
+  .prob-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px}
+  @media(max-width:820px){ .prob-grid{grid-template-columns:1fr} }
+  .prob-c{border:1px solid var(--line); border-left:3px solid var(--peach,#E9A06A); border-radius:14px; padding:26px 24px; background:var(--bg)}
+  .prob-c .n{font-family:'Fraunces',serif; font-size:22px; color:#C98A4E}
+  .prob-c h4{font-size:18px; font-weight:800; margin:8px 0 8px; letter-spacing:-.01em}
+  .prob-c p{font-size:14.5px; color:var(--ink-soft); font-weight:500}
+
+  /* 솔루션 */
+  .sol{display:grid; grid-template-columns:repeat(3,1fr); gap:24px}
+  @media(max-width:860px){ .sol{grid-template-columns:1fr} }
+  .sol-c{position:relative; background:#fff; border:1px solid var(--line); border-radius:24px; padding:34px 30px; box-shadow:var(--shadow-sm); transition:transform .25s, box-shadow .25s; overflow:hidden}
+  .sol-c:hover{transform:translateY(-5px); box-shadow:var(--shadow)}
+  .sol-c .ic{width:62px; height:62px; border-radius:18px; display:grid; place-items:center; font-size:29px; margin-bottom:20px; background:linear-gradient(145deg,#EAF6F1,#D7EEE5)}
+  .sol-c.blue .ic{background:linear-gradient(145deg,#EAF1FE,#D6E4FD)}
+  .sol-c h3{font-size:20px; font-weight:800; margin-bottom:10px; letter-spacing:-.01em}
+  .sol-c p{font-size:14.5px; color:var(--ink-soft); font-weight:500}
+  .sol-c .tags{margin-top:16px; display:flex; gap:7px; flex-wrap:wrap}
+  .sol-c .tags b{font-size:12px; font-weight:700; background:var(--bg); color:var(--green); padding:4px 11px; border-radius:999px}
+
+  /* 가치 (split) */
+  .value{background:linear-gradient(180deg, var(--bg), #EAF1EE)}
+  .val-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:22px}
+  @media(max-width:760px){ .val-grid{grid-template-columns:1fr} }
+  .val-c{background:#fff; border:1px solid var(--line); border-radius:20px; padding:30px 26px; text-align:center; box-shadow:var(--shadow-sm)}
+  .val-c .big{font-family:'Fraunces',serif; font-size:42px; color:var(--green); line-height:1; letter-spacing:-.02em}
+  .val-c h4{font-size:17px; font-weight:800; margin:14px 0 7px}
+  .val-c p{font-size:14px; color:var(--ink-soft); font-weight:500}
+
+  /* 보안 (다크) */
+  .sec-trust{background:var(--green-deep); color:#D6EAE2; border-radius:40px; margin:0 28px; padding:74px 40px; position:relative; overflow:hidden}
+  .sec-trust::before{content:''; position:absolute; top:-160px; left:-100px; width:520px; height:520px; background:radial-gradient(circle, rgba(37,99,235,.2), transparent 64%)}
+  .sec-trust .in{position:relative; z-index:1; max-width:1124px; margin:0 auto}
+  .sec-trust .sec-tag{color:#7BE3BC}
+  .sec-trust h2{font-size:clamp(26px,3.4vw,38px); font-weight:800; color:#fff; letter-spacing:-.02em; margin-top:12px; max-width:640px}
+  .sec-trust .lead{color:#A9CCC0; font-size:16px; margin-top:14px; max-width:600px; font-weight:500}
+  .gate{display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap; margin:42px 0 34px}
+  .gate .cond{background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); border-radius:16px; padding:18px 22px; text-align:center; max-width:230px}
+  .gate .cond .e{font-size:24px} .gate .cond .t{font-size:14.5px; font-weight:800; color:#fff; margin-top:6px} .gate .cond .d{font-size:12px; color:#A9CCC0; margin-top:3px}
+  .gate .op{font-size:18px; font-weight:800; color:#0A2A22; background:#7BE3BC; width:48px; height:48px; border-radius:50%; display:grid; place-items:center; flex:none}
+  .gate .res{background:rgba(123,227,188,.14); border:1px solid rgba(123,227,188,.4); border-radius:16px; padding:18px 22px; text-align:center; max-width:230px}
+  .gate .res .e{font-size:24px} .gate .res .t{font-size:14px; font-weight:800; color:#7BE3BC; margin-top:6px} .gate .res .d{font-size:12px; color:#BFDBD0; margin-top:3px}
+  .trust-list{display:grid; grid-template-columns:repeat(2,1fr); gap:12px 30px}
+  @media(max-width:680px){ .trust-list{grid-template-columns:1fr} }
+  .trust-list li{list-style:none; font-size:14px; color:#CFE3DB; padding-left:26px; position:relative; line-height:1.5}
+  .trust-list li::before{content:'🛡'; position:absolute; left:0; font-size:14px}
+  .trust-list b{color:#fff}
+
+  /* 도입 3스텝 */
+  .adopt-row{display:grid; grid-template-columns:repeat(3,1fr); gap:20px}
+  @media(max-width:760px){ .adopt-row{grid-template-columns:1fr} }
+  .adopt-c{background:#fff; border:1px solid var(--line); border-radius:22px; padding:30px 26px; box-shadow:var(--shadow-sm); position:relative}
+  .adopt-c .num{font-family:'Fraunces',serif; font-size:46px; color:var(--green-bright); line-height:.9}
+  .adopt-c h4{font-size:19px; font-weight:800; margin:10px 0 8px}
+  .adopt-c p{font-size:14.5px; color:var(--ink-soft); font-weight:500}
+
+  /* 최종 CTA */
+  .final{padding:90px 0 96px}
+  .final-box{background:linear-gradient(135deg, var(--green), var(--green-bright)); border-radius:36px; padding:64px 40px; position:relative; overflow:hidden; box-shadow:var(--shadow-lg); text-align:center}
+  .final-box::before{content:''; position:absolute; inset:0; background:radial-gradient(circle at 78% 0%, rgba(255,255,255,.16), transparent 50%)}
+  .final-box h2{position:relative; font-size:clamp(28px,4vw,44px); font-weight:800; color:#fff; letter-spacing:-.02em; line-height:1.18}
+  .final-box p{position:relative; color:#DDF0E8; font-size:17px; margin-top:16px; font-weight:500}
+  .final-box .btn{position:relative; margin-top:32px}
+  .btn-white{background:#fff; color:var(--green)} .btn-white:hover{transform:translateY(-2px); box-shadow:0 18px 36px -12px rgba(0,0,0,.3)}
+  .final-note{position:relative; font-size:13.5px; color:#CDE7DD; margin-top:18px}
+
+  footer{background:var(--green-deep); color:#9FC0B5; padding:48px 0 40px}
+  .foot-in{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:flex-start}
+  footer .brand{color:#fff} footer .brand .mk{background:rgba(255,255,255,.14)}
+  footer .disc{font-size:12px; max-width:580px; line-height:1.7}
+  footer .copy{font-size:12px; margin-top:24px; opacity:.7}
+
+  .reveal{opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1; transform:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a href="#" class="brand"><span class="mk">⊕</span> 약사로 케어 <span class="for">약국</span></a>
+    <div class="nav-links">
+      <a href="#problem">왜 필요한가</a>
+      <a href="#solution">기능</a>
+      <a href="#trust">보안·규제</a>
+      <a href="#contact" class="btn btn-primary">도입 문의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span class="pip"></span> 약국 파트너 솔루션 · 동의 기반 복약 케어</span>
+      <h1 class="hero-h">처방이 끝난 뒤에도,<br><span class="em">단골은 약국에</span> 남습니다</h1>
+      <p class="hero-sub">QR 한 장으로 단골 환자와 연결되고, 동의한 환자의 복약을 한 화면에서 읽기 전용으로 확인하세요. 처방 외 시간에도 이어지는 복약 상담 — 약국의 새로운 경쟁력.</p>
+      <div class="hero-cta">
+        <a href="#contact" class="btn btn-primary btn-lg">약국 도입 문의 →</a>
+        <a href="#solution" class="btn btn-ghost btn-lg">작동 원리 보기</a>
+      </div>
+      <div class="hero-trust">
+        <span class="t">환자 앱 <b>완전 무료</b></span>
+        <span class="t">환자 <b>동의 기반</b></span>
+        <span class="t">약사 <b>읽기 전용</b></span>
+      </div>
+    </div>
+
+    <div class="desk reveal">
+      <div class="desk-bar"><span class="d" style="background:#FF5F57"></span><span class="d" style="background:#FEBC2E"></span><span class="d" style="background:#28C840"></span><span class="url">yaksaro-care.app/pharmacy</span></div>
+      <div class="desk-body">
+        <aside class="side">
+          <div class="logo">약사로 케어</div>
+          <div class="who">행복약국 · 김약사</div>
+          <div class="mi on">👥 단골 환자</div>
+          <div class="mi">🔳 우리 약국 QR</div>
+          <div class="mi">↩ 로그아웃</div>
+        </aside>
+        <div class="main">
+          <h3>단골 환자 복약 현황</h3>
+          <div class="ms">공개 동의 단골 환자 3명 · 읽기 전용</div>
+          <div class="qr-ban"><div class="qi">🔳</div><div><div class="qt">우리 약국 QR 만들기 · 인쇄</div><div class="qd">환자가 스캔하면 자동 단골 연결</div></div></div>
+          <div class="ptable">
+            <div class="prow head"><div style="width:28px"></div><div class="pnm">환자</div><div class="pmed">활성 복약</div><div class="pro">상세</div></div>
+            <div class="prow"><div class="pav">박</div><div class="pnm">박순자</div><div class="pmed">5종</div><div class="pro">보기 ›</div></div>
+            <div class="prow"><div class="pav">이</div><div class="pnm">이정호</div><div class="pmed">3종</div><div class="pro">보기 ›</div></div>
+            <div class="prow"><div class="pav">최</div><div class="pnm">최영실</div><div class="pmed">2종</div><div class="pro">보기 ›</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 문제 -->
+<section class="blk prob" id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">The Gap</div>
+      <h2 class="sec-h">‘단골’이라 부르지만,<br>접점은 처방 그 순간뿐입니다</h2>
+    </div>
+    <div class="prob-grid">
+      <div class="prob-c reveal"><div class="n">01</div><h4>처방 순간에만 만남</h4><p>환자는 약을 받으면 떠나고, 다음 방문까지 약국이 할 수 있는 일이 없습니다.</p></div>
+      <div class="prob-c reveal"><div class="n">02</div><h4>단골 이탈</h4><p>가까운 약국, 더 빠른 약국으로 발길이 옮겨가도 붙잡을 연결고리가 없습니다.</p></div>
+      <div class="prob-c reveal"><div class="n">03</div><h4>상담의 한계</h4><p>복약 상담을 하고 싶어도 환자가 다른 병원에서 받은 약까지 알 수 없습니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 솔루션 -->
+<section class="blk" id="solution">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Solution</div>
+      <h2 class="sec-h">QR 한 장으로 단골을 잇고,<br>복약을 함께 봅니다</h2>
+      <p class="sec-desc">환자가 무료 앱으로 복약을 관리하고, 동의하면 약사가 그 복약을 읽기 전용으로 확인합니다.</p>
+    </div>
+    <div class="sol">
+      <div class="sol-c reveal">
+        <div class="ic">🔳</div>
+        <h3>QR 한 장으로 단골 확보</h3>
+        <p>약국 전용 QR을 발급해 A4로 인쇄, 카운터에 비치하세요. 환자가 스캔하면 그 환자의 단골약국으로 자동 연결됩니다.</p>
+        <div class="tags"><b>셀프 발급</b><b>A4 인쇄</b></div>
+      </div>
+      <div class="sol-c blue reveal">
+        <div class="ic">👥</div>
+        <h3>동의 환자 복약 대시보드</h3>
+        <p>공개에 동의한 단골 환자의 활성 복약·끼니를 한 화면에서 확인. 복약 상담의 근거가 손안에 들어옵니다.</p>
+        <div class="tags"><b>read-only</b><b>활성 복약 집계</b></div>
+      </div>
+      <div class="sol-c reveal">
+        <div class="ic">🛡</div>
+        <h3>규제 안전 설계</h3>
+        <p>환자 opt-in 동의 + 데이터베이스 권한(RLS) 기반. 약사는 오직 읽기 전용으로, 쓰기·의학적 지시 경로는 처음부터 없습니다.</p>
+        <div class="tags"><b>동의 기반</b><b>최소 권한</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 가치 -->
+<section class="blk value">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Why partner</div>
+      <h2 class="sec-h">도입 부담은 0,<br>차별화는 확실하게</h2>
+    </div>
+    <div class="val-grid">
+      <div class="val-c reveal"><div class="big">무료</div><h4>환자 유입 장벽 0</h4><p>환자 앱이 완전 무료라, 단골에게 권하기 쉽고 거부감이 없습니다.</p></div>
+      <div class="val-c reveal"><div class="big">동의</div><h4>신뢰·분쟁 리스크 최소</h4><p>환자가 직접 켠 동의가 있어야만 열람. 투명한 구조로 신뢰를 쌓습니다.</p></div>
+      <div class="val-c reveal"><div class="big">차별화</div><h4>‘복약관리 약국’</h4><p>디지털 복약 케어를 제공하는 약국으로 동네에서 앞서갑니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 보안 -->
+<section class="blk" id="trust" style="padding-top:20px">
+  <div class="sec-trust">
+    <div class="in">
+      <div class="sec-tag">Security &amp; Compliance</div>
+      <h2>환자의 신뢰를 지키도록, 보안을 먼저 설계했습니다</h2>
+      <p class="lead">단골 관계만으로는 아무것도 볼 수 없습니다. <b style="color:#fff">관계 ≠ 동의</b> — 환자가 직접 동의해야만 열람이 열립니다.</p>
+
+      <div class="gate">
+        <div class="cond"><div class="e">🔗</div><div class="t">단골 관계</div><div class="d">QR로 연결됨</div></div>
+        <div class="op">AND</div>
+        <div class="cond"><div class="e">🤝</div><div class="t">열람 동의 ON</div><div class="d">환자가 직접 켬</div></div>
+        <div class="op">→</div>
+        <div class="res"><div class="e">👁</div><div class="t">read-only 열람 허용</div><div class="d">철회 시 즉시 0건</div></div>
+      </div>
+
+      <ul class="trust-list">
+        <li><b>동의 게이트</b> — 단골 관계와 환자 동의가 모두 있어야만 열람</li>
+        <li><b>최소 권한</b> — 약사 경로는 읽기 전용(SELECT), 쓰기 경로 0</li>
+        <li><b>우회 불가</b> — 관리자 권한 우회 없이 약사 토큰 + RLS로만 조회</li>
+        <li><b>즉시 차단</b> — 환자가 동의를 끄면 그 즉시 화면에서 사라짐</li>
+        <li><b>의학 판단 배제</b> — 진단·처방변경·복약중단 지시 문구 없음(참고 도구)</li>
+        <li><b>개인정보 보호</b> — 처방전 원본 이미지는 텍스트 추출 즉시 파기</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 도입 -->
+<section class="blk">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Get started</div>
+      <h2 class="sec-h">도입은 3단계면 끝</h2>
+    </div>
+    <div class="adopt-row">
+      <div class="adopt-c reveal"><div class="num">1</div><h4>약국 파트너 신청</h4><p>아래 문의로 약국 정보를 보내주시면 파트너 계정을 발급해 드립니다.</p></div>
+      <div class="adopt-c reveal"><div class="num">2</div><h4>QR 발급 · 비치</h4><p>약국 전용 QR을 생성해 A4로 인쇄, 카운터에 비치하면 준비 완료.</p></div>
+      <div class="adopt-c reveal"><div class="num">3</div><h4>복약 확인 시작</h4><p>동의한 단골 환자의 복약을 대시보드에서 읽기 전용으로 확인하세요.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 최종 CTA -->
+<section class="final" id="contact">
+  <div class="wrap">
+    <div class="final-box reveal">
+      <h2>우리 약국, 단골과 다시 이어보세요</h2>
+      <p>도입 비용·절차가 궁금하시면 부담 없이 문의 주세요. 빠르게 안내해 드리겠습니다.</p>
+      <a href="mailto:ycorey@gmail.com?subject=약사로 케어 약국 도입 문의" class="btn btn-white btn-lg">약국 도입 문의하기 →</a>
+      <div class="final-note">📩 ycorey@gmail.com · 약국명·연락처를 함께 남겨주시면 빠르게 연락드립니다</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="mk">⊕</span> 약사로 케어 <span style="font-size:12px;font-weight:800;color:#fff;background:var(--blue);padding:2px 9px;border-radius:7px">약국</span></div>
+        <p style="font-size:13px; margin-top:12px; color:#B9D6CB; max-width:300px">처방 그 이후, 단골을 잇는 약국 파트너 솔루션.</p>
+      </div>
+      <div class="disc">
+        본 솔루션은 약사가 환자의 동의 하에 복약 정보를 <b>읽기 전용</b>으로 참고하도록 돕는 도구입니다.
+        진단·처방 변경·복약 중단 등 의학적 판단을 대체하지 않습니다. 모든 열람은 환자의 명시적 opt-in 동의와
+        데이터베이스 접근 제어(RLS)에 기반하며, 동의 철회 시 즉시 차단됩니다.
+      </div>
+    </div>
+    <div class="copy">© 2026 약사로 케어 (Yaksaro Care). All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.14});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transitionDelay=(i%3*80)+'ms'; io.observe(el); });
+</script>
+</body>
+</html>

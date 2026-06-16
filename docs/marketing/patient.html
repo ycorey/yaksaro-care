@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약사로 케어 — 부모님 약, 멀리서도 안심하고 챙겨드리세요</title>
+<meta name="description" content="처방전 한 장이면 우리 가족 약이 한눈에. 끼니마다 복약 알림, 복약 달력, 단골약국 연결까지. 완전 무료.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#0E6E54; --green-2:#13815F; --green-bright:#1FA37C; --green-deep:#0A4A39;
+    --cream:#FBF7EE; --cream-2:#F5EFE2; --paper:#FFFFFF;
+    --peach:#E9A06A; --peach-soft:#F6D9BE;
+    --ink:#16271F; --ink-soft:#4A5B53; --muted:#7C8A82;
+    --line:#E8E1D2;
+    --shadow-sm:0 2px 10px rgba(16,40,30,.05);
+    --shadow:0 18px 50px -16px rgba(14,74,57,.22);
+    --shadow-lg:0 40px 90px -30px rgba(14,74,57,.34);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+    background:var(--cream); color:var(--ink); line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .serif{font-family:'Fraunces',serif; font-optical-sizing:auto}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px}
+  a{text-decoration:none; color:inherit}
+
+  /* 그레인 텍스처 */
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* 네비 */
+  nav{position:sticky; top:0; z-index:100; backdrop-filter:blur(14px);
+    background:rgba(251,247,238,.82); border-bottom:1px solid rgba(232,225,210,.7)}
+  .nav-in{display:flex; align-items:center; justify-content:space-between; height:70px}
+  .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:18px; color:var(--green)}
+  .brand .mk{width:32px; height:32px; border-radius:10px; background:var(--green);
+    display:grid; place-items:center; color:#fff; font-size:17px; box-shadow:var(--shadow-sm)}
+  .nav-links{display:flex; align-items:center; gap:30px; font-size:14.5px; font-weight:600; color:var(--ink-soft)}
+  .nav-links a:hover{color:var(--green)}
+  .btn{display:inline-flex; align-items:center; gap:8px; font-weight:700; border-radius:999px;
+    padding:12px 22px; font-size:14.5px; transition:transform .18s, box-shadow .18s; cursor:pointer; border:none}
+  .btn-primary{background:var(--green); color:#fff; box-shadow:0 10px 24px -8px rgba(14,110,84,.5)}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 16px 32px -10px rgba(14,110,84,.6)}
+  .btn-ghost{background:#fff; color:var(--green); border:1.5px solid var(--green-soft,#CFE5DC)}
+  .btn-lg{padding:16px 30px; font-size:16px}
+  @media(max-width:740px){ .nav-links a:not(.btn){display:none} }
+
+  /* HERO */
+  .hero{position:relative; padding:80px 0 90px; overflow:hidden}
+  .hero::before{content:''; position:absolute; top:-260px; right:-180px; width:680px; height:680px; z-index:0;
+    background:radial-gradient(circle at 50% 50%, rgba(31,163,124,.20), rgba(31,163,124,0) 62%)}
+  .hero::after{content:''; position:absolute; bottom:-200px; left:-160px; width:520px; height:520px; z-index:0;
+    background:radial-gradient(circle at 50% 50%, rgba(233,160,106,.18), rgba(233,160,106,0) 64%)}
+  .hero-grid{position:relative; z-index:1; display:grid; grid-template-columns:1.08fr .92fr; gap:48px; align-items:center}
+  @media(max-width:920px){ .hero-grid{grid-template-columns:1fr; gap:46px} }
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line);
+    border-radius:999px; padding:7px 15px; font-size:13px; font-weight:700; color:var(--green); box-shadow:var(--shadow-sm)}
+  .eyebrow .pip{width:7px; height:7px; border-radius:50%; background:var(--green-bright); box-shadow:0 0 0 4px rgba(31,163,124,.18)}
+  h1.hero-h{font-size:clamp(34px,5.2vw,58px); line-height:1.12; letter-spacing:-.03em; font-weight:800; margin:22px 0 0}
+  h1.hero-h .em{color:var(--green); position:relative; white-space:nowrap}
+  h1.hero-h .em::after{content:''; position:absolute; left:0; right:0; bottom:6px; height:12px; z-index:-1;
+    background:var(--peach-soft); border-radius:3px; opacity:.7}
+  .hero-sub{font-size:clamp(16px,2vw,19px); color:var(--ink-soft); margin-top:22px; max-width:520px; font-weight:500}
+  .hero-cta{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap}
+  .hero-trust{display:flex; gap:22px; margin-top:30px; flex-wrap:wrap}
+  .hero-trust .t{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; color:var(--ink-soft)}
+  .hero-trust .t b{color:var(--green)}
+
+  /* 히어로 폰 목업 */
+  .hero-art{position:relative; display:flex; justify-content:center}
+  .blob{position:absolute; inset:-6% -8%; z-index:0;
+    background:linear-gradient(150deg, #fff, #F0F7F3); border-radius:46% 54% 58% 42% / 52% 44% 56% 48%;
+    box-shadow:var(--shadow-lg); border:1px solid rgba(255,255,255,.7)}
+  .float-tag{position:absolute; z-index:3; background:#fff; border-radius:16px; padding:11px 14px;
+    box-shadow:var(--shadow); border:1px solid var(--line); display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700}
+  .float-tag .fi{width:34px; height:34px; border-radius:11px; display:grid; place-items:center; font-size:16px; flex:none}
+  .float-tag small{display:block; font-size:10.5px; color:var(--muted); font-weight:600}
+  .ft-1{top:8%; left:-4%; animation:bob 4.5s ease-in-out infinite}
+  .ft-2{bottom:13%; right:-6%; animation:bob 5.2s ease-in-out infinite .6s}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+  /* 폰 프레임 */
+  .phone{position:relative; z-index:2; width:268px; background:#15211D; border-radius:38px; padding:10px;
+    box-shadow:var(--shadow-lg)}
+  .phone-scr{background:var(--cream); border-radius:29px; overflow:hidden; height:540px; display:flex; flex-direction:column}
+  .pnotch{height:24px; display:flex; justify-content:center}
+  .pnotch::after{content:''; width:78px; height:17px; background:#15211D; border-radius:0 0 13px 13px}
+  .pscr{padding:14px 15px; flex:1}
+  .p-h2{font-size:17px; font-weight:800; display:flex; align-items:center; gap:6px; margin-bottom:11px}
+  .p-sum{font-size:11px; color:var(--muted); margin-bottom:9px}
+  .p-card{background:#fff; border:1px solid var(--line); border-radius:15px; overflow:hidden; box-shadow:var(--shadow-sm)}
+  .p-slot{display:flex; gap:10px; padding:12px 13px; border-bottom:1px solid var(--line); align-items:flex-start}
+  .p-slot:last-child{border-bottom:0}
+  .p-slot.next{background:#EBF6F1; border-left:3px solid var(--green)}
+  .p-slot.done{opacity:.5}
+  .p-slot .tm{width:30px; flex:none}
+  .p-slot .tm .h{font-size:9px; color:var(--muted)}
+  .p-slot .tm .n{font-size:9.5px; font-weight:700; margin-top:1px}
+  .p-slot .nd{width:9px; height:9px; border-radius:50%; margin-top:4px; flex:none}
+  .nd-f{background:var(--green)} .nd-o{border:2px solid var(--green); background:#fff} .nd-w{background:var(--line)}
+  .p-slot .bd{flex:1}
+  .p-slot .bd .mt{font-size:12px; font-weight:700}
+  .p-slot .bd .bt{margin-top:6px; font-size:10.5px; font-weight:700; padding:8px 0; border-radius:9px; text-align:center}
+  .bt-g{background:var(--green); color:#fff} .bt-o{border:1px solid var(--line); color:var(--ink-soft)}
+  .bt-done{color:var(--green); font-weight:600; padding:2px 0; text-align:left; font-size:10px}
+
+  /* 섹션 공통 */
+  section.blk{padding:86px 0; position:relative}
+  .sec-head{text-align:center; max-width:660px; margin:0 auto 56px}
+  .sec-tag{font-size:13px; font-weight:800; color:var(--green-bright); letter-spacing:.08em; text-transform:uppercase}
+  .sec-h{font-size:clamp(27px,3.6vw,40px); line-height:1.2; letter-spacing:-.02em; font-weight:800; margin-top:12px}
+  .sec-desc{font-size:16.5px; color:var(--ink-soft); margin-top:16px; font-weight:500}
+
+  /* 페인포인트 */
+  .pains{background:linear-gradient(180deg, var(--cream), var(--cream-2))}
+  .pain-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px; max-width:840px; margin:0 auto}
+  @media(max-width:680px){ .pain-grid{grid-template-columns:1fr} }
+  .pain{background:#fff; border:1px solid var(--line); border-radius:18px; padding:24px 24px 24px 64px;
+    position:relative; font-size:16.5px; font-weight:600; color:var(--ink); box-shadow:var(--shadow-sm)}
+  .pain .q{position:absolute; left:20px; top:22px; font-family:'Fraunces',serif; font-size:30px; color:var(--peach); line-height:1}
+  .pain small{display:block; font-size:13.5px; color:var(--muted); font-weight:500; margin-top:5px}
+  .pain-turn{text-align:center; margin-top:42px; font-size:clamp(20px,2.6vw,27px); font-weight:800; letter-spacing:-.02em}
+  .pain-turn .hl{color:var(--green)}
+
+  /* 기능 */
+  .feat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:24px}
+  @media(max-width:820px){ .feat-grid{grid-template-columns:1fr} }
+  .feat{position:relative; background:#fff; border:1px solid var(--line); border-radius:24px; padding:32px;
+    box-shadow:var(--shadow-sm); transition:transform .25s, box-shadow .25s; overflow:hidden}
+  .feat:hover{transform:translateY(-5px); box-shadow:var(--shadow)}
+  .feat::after{content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; border-radius:50%;
+    background:radial-gradient(circle, rgba(31,163,124,.1), transparent 70%)}
+  .feat .ic{width:60px; height:60px; border-radius:18px; display:grid; place-items:center; font-size:28px; margin-bottom:20px;
+    background:linear-gradient(145deg, #EAF6F1, #D7EEE5); position:relative; z-index:1}
+  .feat .step{font-size:12.5px; font-weight:800; color:var(--green-bright); letter-spacing:.05em}
+  .feat h3{font-size:21px; font-weight:800; margin:6px 0 10px; letter-spacing:-.01em}
+  .feat p{font-size:15px; color:var(--ink-soft); font-weight:500}
+  .feat .tags{margin-top:16px; display:flex; gap:7px; flex-wrap:wrap}
+  .feat .tags b{font-size:12px; font-weight:700; background:var(--cream-2); color:var(--green);
+    padding:4px 11px; border-radius:999px}
+
+  /* 실버 안심 (다크) */
+  .care{background:var(--green-deep); color:#EAF5F0; border-radius:40px; margin:0 28px; padding:72px 40px;
+    position:relative; overflow:hidden}
+  .care::before{content:''; position:absolute; top:-150px; right:-100px; width:480px; height:480px;
+    background:radial-gradient(circle, rgba(31,163,124,.32), transparent 65%)}
+  .care-in{position:relative; z-index:1; max-width:1124px; margin:0 auto}
+  .care .sec-tag{color:var(--peach)}
+  .care h2{font-size:clamp(26px,3.4vw,38px); font-weight:800; letter-spacing:-.02em; color:#fff; margin-top:12px; max-width:620px}
+  .care-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:44px}
+  @media(max-width:760px){ .care-cards{grid-template-columns:1fr} }
+  .care-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:26px}
+  .care-card .ce{font-size:30px; margin-bottom:14px}
+  .care-card h4{font-size:18.5px; font-weight:800; color:#fff; margin-bottom:8px}
+  .care-card p{font-size:14.5px; color:#B9D6CB; font-weight:500}
+
+  /* 숫자 */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; text-align:center}
+  @media(max-width:680px){ .stats{grid-template-columns:1fr; gap:30px} }
+  .stat .n{font-family:'Fraunces',serif; font-size:clamp(40px,5.5vw,58px); font-weight:600; color:var(--green); line-height:1; letter-spacing:-.02em}
+  .stat .l{font-size:15px; color:var(--ink-soft); font-weight:600; margin-top:10px}
+
+  /* 3스텝 */
+  .steps{background:linear-gradient(180deg, var(--cream-2), var(--cream))}
+  .step-row{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; position:relative}
+  @media(max-width:760px){ .step-row{grid-template-columns:1fr} }
+  .step-c{background:#fff; border:1px solid var(--line); border-radius:22px; padding:30px 26px; box-shadow:var(--shadow-sm)}
+  .step-c .num{font-family:'Fraunces',serif; font-size:46px; color:var(--peach); line-height:.9}
+  .step-c h4{font-size:19px; font-weight:800; margin:10px 0 8px}
+  .step-c p{font-size:14.5px; color:var(--ink-soft); font-weight:500}
+
+  /* 최종 CTA */
+  .final{text-align:center; padding:90px 0 96px}
+  .final-box{background:linear-gradient(135deg, var(--green), var(--green-bright)); border-radius:36px;
+    padding:64px 36px; position:relative; overflow:hidden; box-shadow:var(--shadow-lg)}
+  .final-box::before{content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at 80% 0%, rgba(255,255,255,.16), transparent 50%)}
+  .final-box h2{position:relative; font-size:clamp(28px,4vw,44px); font-weight:800; color:#fff; letter-spacing:-.02em; line-height:1.18}
+  .final-box p{position:relative; color:#DDF0E8; font-size:17px; margin-top:16px; font-weight:500}
+  .final-box .btn{position:relative; margin-top:34px}
+  .btn-white{background:#fff; color:var(--green)}
+  .btn-white:hover{transform:translateY(-2px); box-shadow:0 18px 36px -12px rgba(0,0,0,.3)}
+  .final-note{font-size:13px; color:#CDE7DD; margin-top:18px; position:relative}
+
+  footer{background:var(--green-deep); color:#9FC0B5; padding:48px 0 40px}
+  .foot-in{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:flex-start}
+  footer .brand{color:#fff} footer .brand .mk{background:rgba(255,255,255,.14)}
+  footer .disc{font-size:12px; max-width:560px; line-height:1.7}
+  footer .copy{font-size:12px; margin-top:24px; opacity:.7}
+
+  /* reveal */
+  .reveal{opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1; transform:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a href="#" class="brand"><span class="mk">⊕</span> 약사로 케어</a>
+    <div class="nav-links">
+      <a href="#why">왜 필요할까요</a>
+      <a href="#how">사용법</a>
+      <a href="#care">안심 포인트</a>
+      <a href="#start" class="btn btn-primary">무료로 시작하기</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span class="pip"></span> 환자·보호자를 위한 복약관리 · 완전 무료</span>
+      <h1 class="hero-h">부모님 약,<br>멀리서도 <span class="em">안심하고</span><br>챙겨드리세요</h1>
+      <p class="hero-sub">처방전을 사진 한 장으로 찍기만 하면 약이 정리되고, 드실 시간마다 알림이 와요. 자녀는 안심하고, 어르신은 쉽게.</p>
+      <div class="hero-cta">
+        <a href="#start" class="btn btn-primary btn-lg">무료로 시작하기 →</a>
+        <a href="#how" class="btn btn-ghost btn-lg">어떻게 쓰나요</a>
+      </div>
+      <div class="hero-trust">
+        <span class="t">💯 <b>평생 무료</b></span>
+        <span class="t">🔒 사진 <b>즉시 파기</b></span>
+        <span class="t">💊 식약처 <b>의약품 데이터</b></span>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="blob"></div>
+      <div class="float-tag ft-1"><span class="fi" style="background:#EAF6F1">🔔</span><div>점심 약 시간이에요<small>오후 12:30 알림</small></div></div>
+      <div class="float-tag ft-2"><span class="fi" style="background:#FBEBDC">✅</span><div>오늘 복약 완료<small>잘 챙기셨어요</small></div></div>
+      <div class="phone">
+        <div class="phone-scr">
+          <div class="pnotch"></div>
+          <div class="pscr">
+            <div class="p-h2">오늘 복약 <span style="color:var(--peach)">☀</span></div>
+            <div class="p-sum">오늘 1/4 챙김 · 천천히 함께 챙겨요</div>
+            <div class="p-card">
+              <div class="p-slot done"><div class="tm"><div class="h">08:00</div><div class="n">🌅 아침</div></div><div class="nd nd-f"></div><div class="bd"><div class="mt">약 3개</div><div class="bt bt-done">✓ 오전 8:10 복용 · 되돌리기</div></div></div>
+              <div class="p-slot next"><div class="tm"><div class="h">12:30</div><div class="n">☀ 점심</div></div><div class="nd nd-o"></div><div class="bd"><div class="mt">약 2개</div><div class="bt bt-g">지금 먹기</div></div></div>
+              <div class="p-slot"><div class="tm"><div class="h">19:00</div><div class="n">🌙 저녁</div></div><div class="nd nd-w"></div><div class="bd"><div class="mt">약 3개</div><div class="bt bt-o">지금 먹기</div></div></div>
+              <div class="p-slot"><div class="tm"><div class="h">22:00</div><div class="n">🌃 자기 전</div></div><div class="nd nd-w"></div><div class="bd"><div class="mt">약 1개</div><div class="bt bt-o">지금 먹기</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 페인포인트 -->
+<section class="blk pains" id="why">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">이런 걱정, 있으셨죠</div>
+      <h2 class="sec-h">약 챙기기, 생각보다 어렵습니다</h2>
+    </div>
+    <div class="pain-grid">
+      <div class="pain reveal"><span class="q">“</span>어머니가 오늘 약을 드셨는지 모르겠어요<small>매번 전화로 확인하기도 미안하고…</small></div>
+      <div class="pain reveal"><span class="q">“</span>약봉투가 너무 많아 뭐가 뭔지 모르겠어요<small>병원마다 받은 약, 정리가 안 돼요</small></div>
+      <div class="pain reveal"><span class="q">“</span>여러 병원 약, 같이 먹어도 괜찮을까요?<small>중복이나 상호작용이 걱정돼요</small></div>
+      <div class="pain reveal"><span class="q">“</span>멀리 살아서 챙겨드리기 어려워요<small>곁에 있어 드리지 못해 늘 마음이 쓰여요</small></div>
+    </div>
+    <p class="pain-turn reveal">그 걱정, <span class="hl">약사로 케어</span>가 대신 챙겨드릴게요.</p>
+  </div>
+</section>
+
+<!-- 기능 -->
+<section class="blk" id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">How it works</div>
+      <h2 class="sec-h">찍고, 알림 받고, 한눈에 확인하세요</h2>
+      <p class="sec-desc">복잡한 입력은 없어요. 처방전 한 장이면 나머지는 약사로 케어가 합니다.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal">
+        <div class="ic">📷</div>
+        <div class="step">STEP 01</div>
+        <h3>처방전 한 번 촬영</h3>
+        <p>사진을 찍으면 AI가 약 이름·용법을 자동으로 정리해 약 지갑에 담아요. 약 사진과 효능 정보까지 함께요.</p>
+        <div class="tags"><b>AI 자동 인식</b><b>사진 즉시 파기</b></div>
+      </div>
+      <div class="feat reveal">
+        <div class="ic">🔔</div>
+        <div class="step">STEP 02</div>
+        <h3>끼니마다 복약 알림</h3>
+        <p>아침·점심·저녁·자기 전, 드실 시간에 맞춰 알려드려요. 깜빡해도 다시 챙기도록 부드럽게 한 번 더.</p>
+        <div class="tags"><b>4끼니 맞춤</b><b>지연 알림</b></div>
+      </div>
+      <div class="feat reveal">
+        <div class="ic">📅</div>
+        <div class="step">STEP 03</div>
+        <h3>복약 달력으로 한눈에</h3>
+        <p>잘 챙긴 날은 초록색으로. 멀리 있는 자녀도 부모님이 약을 잘 드셨는지 색깔만 보고 안심할 수 있어요.</p>
+        <div class="tags"><b>순응도 한눈에</b><b>가족 안심</b></div>
+      </div>
+      <div class="feat reveal">
+        <div class="ic">🏥</div>
+        <div class="step">STEP 04</div>
+        <h3>단골약국과 연결</h3>
+        <p>약국 QR을 한 번 찍으면 단골약국이 연결돼요. 내가 동의하면 단골 약사가 복약을 보고 상담을 도와드려요.</p>
+        <div class="tags"><b>QR 한 번</b><b>동의는 내 선택</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 실버 안심 -->
+<section class="blk" id="care" style="padding-top:20px">
+  <div class="care">
+    <div class="care-in">
+      <div class="sec-tag">어르신도 쉽게</div>
+      <h2>나이 드신 부모님도 혼자서 쓸 수 있게, 끝까지 배려했습니다</h2>
+      <div class="care-cards">
+        <div class="care-card reveal"><div class="ce">🔠</div><h4>큰 글씨, 쉬운 화면</h4><p>약 이름은 크게, 버튼은 넉넉하게. 글자 크기도 ‘아주 크게’까지 골라요. 어르신 눈높이에 맞췄어요.</p></div>
+        <div class="care-card reveal"><div class="ce">💝</div><h4>평생 무료</h4><p>복약 기록·알림·달력 모두 무료입니다. 가족 누구나 부담 없이 오래 쓰세요.</p></div>
+        <div class="care-card reveal"><div class="ce">🔒</div><h4>개인정보는 안전하게</h4><p>처방전 속 주민번호 같은 민감 정보는 읽는 즉시 가리고, 사진 원본은 바로 파기합니다.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 숫자 -->
+<section class="blk" style="padding:60px 0 80px">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat reveal"><div class="n">43,000+</div><div class="l">식약처 의약품 데이터로 정확하게 인식</div></div>
+      <div class="stat reveal"><div class="n">30만+</div><div class="l">약물 상호작용을 백그라운드에서 점검</div></div>
+      <div class="stat reveal"><div class="n">4끼니</div><div class="l">아침·점심·저녁·자기 전 맞춤 알림</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3스텝 -->
+<section class="blk steps">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">3분이면 시작</div>
+      <h2 class="sec-h">시작은 이렇게 간단해요</h2>
+    </div>
+    <div class="step-row">
+      <div class="step-c reveal"><div class="num">1</div><h4>앱 설치 · 가입</h4><p>휴대폰에 약사로 케어를 추가하고 간단히 가입해요. 부모님 폰에 자녀가 대신 설치해 드려도 좋아요.</p></div>
+      <div class="step-c reveal"><div class="num">2</div><h4>처방전 촬영</h4><p>가지고 계신 처방전·약 봉투를 찍기만 하면 약 지갑이 자동으로 채워집니다.</p></div>
+      <div class="step-c reveal"><div class="num">3</div><h4>알림 받으며 챙기기</h4><p>이제 끼니마다 알림이 와요. 달력으로 잘 챙겼는지 가족이 함께 확인해요.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 최종 CTA -->
+<section class="final" id="start">
+  <div class="wrap">
+    <div class="final-box reveal">
+      <h2>오늘부터, 부모님 약 걱정<br>한 가지는 덜어보세요</h2>
+      <p>설치도 사용도 무료. 처방전 한 장이면 충분합니다.</p>
+      <a href="#" class="btn btn-white btn-lg">약사로 케어 무료로 시작하기 →</a>
+      <div class="final-note">디지털 약 지갑 · 복약 알림 · 단골약국 연결 — 모두 무료로 제공됩니다</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="mk">⊕</span> 약사로 케어</div>
+        <p style="font-size:13px; margin-top:12px; color:#B9D6CB; max-width:280px">처방약·일반약·영양제를 한곳에서. 디지털 약 지갑 + 단골약국 케어.</p>
+      </div>
+      <div class="disc">
+        본 서비스는 복약 정보의 기록·관리·참고를 돕는 도구입니다. 의학적 진단·처방·복약 지도를 대체하지 않으며,
+        복용 변경·중단 등은 반드시 의사·약사와 상담하시기 바랍니다. 처방전 이미지는 텍스트 추출 후 즉시 파기되며,
+        민감 개인정보는 비식별 처리됩니다.
+      </div>
+    </div>
+    <div class="copy">© 2026 약사로 케어 (Yaksaro Care). All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.14});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{
+    el.style.transitionDelay = (i % 4 * 70) + 'ms';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>

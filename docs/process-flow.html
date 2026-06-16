@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약사로 케어 — B2C·B2B 프로세스 플로우</title>
+<style>
+  :root{
+    --green:#0E6E54; --green-bg:#E7F3EF; --green-soft:#D1E9E0;
+    --blue:#2563EB;  --blue-bg:#EAF1FE;  --blue-soft:#D2E1FC;
+    --amber:#B45309; --amber-bg:#FEF3E2; --amber-soft:#FBE2BF;
+    --slate:#475569; --slate-bg:#F1F5F9; --slate-soft:#E2E8F0;
+    --ink:#1A2B26; --muted:#64748B; --line:#E5EAE8;
+    --bg:#F7FAF9; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Malgun Gothic','맑은 고딕',system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55;
+    -webkit-font-smoothing:antialiased; padding:0 0 64px;
+  }
+  .wrap{max-width:1240px; margin:0 auto; padding:0 24px}
+
+  /* 헤더 */
+  header.hero{
+    background:linear-gradient(135deg,#0E6E54 0%,#12866A 60%,#1AA883 100%);
+    color:#fff; padding:48px 0 56px; margin-bottom:-24px;
+  }
+  .hero h1{font-size:30px; font-weight:800; letter-spacing:-.02em}
+  .hero .sub{font-size:15px; opacity:.92; margin-top:8px; font-weight:500}
+  .hero .meta{font-size:12.5px; opacity:.8; margin-top:14px}
+  .hero .pill{display:inline-block; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28);
+    padding:3px 11px; border-radius:999px; font-size:12px; font-weight:600; margin-right:6px}
+
+  /* 범례 */
+  .legend{display:flex; flex-wrap:wrap; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+    box-shadow:0 2px 10px rgba(14,110,84,.05); margin:40px 0 36px}
+  .legend .item{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--slate)}
+  .legend .dot{width:13px; height:13px; border-radius:4px; flex:none}
+
+  /* 공통 진입 */
+  .entry{background:var(--card); border:1px dashed var(--green-soft); border-radius:16px;
+    padding:18px 22px; text-align:center; margin-bottom:28px}
+  .entry .t{font-weight:700; font-size:15px; color:var(--green)}
+  .entry .d{font-size:13px; color:var(--muted); margin-top:4px}
+
+  /* 두 레인 */
+  .lanes{display:grid; grid-template-columns:1fr 1fr; gap:28px}
+  @media(max-width:880px){ .lanes{grid-template-columns:1fr} }
+
+  .lane{background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:22px 20px 26px; box-shadow:0 4px 18px rgba(20,40,34,.04)}
+  .lane-head{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+  .lane-head .ic{width:44px; height:44px; border-radius:13px; display:grid; place-items:center; font-size:22px; flex:none}
+  .lane-head .tt{font-size:19px; font-weight:800; letter-spacing:-.01em}
+  .lane-head .tag{font-size:12px; font-weight:700; padding:2px 9px; border-radius:999px; margin-left:auto}
+  .lane-desc{font-size:12.5px; color:var(--muted); margin-bottom:18px; padding-left:2px}
+
+  .b2c .ic{background:var(--green-bg); color:var(--green)}
+  .b2c .tag{background:var(--green-bg); color:var(--green)}
+  .b2b .ic{background:var(--blue-bg); color:var(--blue)}
+  .b2b .tag{background:var(--blue-bg); color:var(--blue)}
+
+  /* 단계 카드 */
+  .step{position:relative; border-radius:14px; padding:14px 16px 14px 52px;
+    border:1px solid var(--line); background:#fff; transition:transform .15s}
+  .step:hover{transform:translateX(2px)}
+  .step .num{position:absolute; left:12px; top:13px; width:28px; height:28px; border-radius:9px;
+    display:grid; place-items:center; font-weight:800; font-size:13px; color:#fff}
+  .b2c .step .num{background:var(--green)}
+  .b2b .step .num{background:var(--blue)}
+  .step .st{font-size:14.5px; font-weight:700}
+  .step .sd{font-size:12.5px; color:var(--muted); margin-top:3px}
+  .step .chips{margin-top:8px; display:flex; flex-wrap:wrap; gap:5px}
+  .chip{font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace; font-size:10.5px;
+    background:var(--slate-bg); color:var(--slate); padding:2px 7px; border-radius:6px; font-weight:600}
+  .chip.sys{background:#EEF6F3; color:var(--green)}
+
+  /* 화살표 */
+  .arr{display:flex; justify-content:center; align-items:center; height:24px; color:var(--slate-soft)}
+  .arr svg{width:16px; height:16px}
+  .b2c .arr{color:var(--green-soft)} .b2b .arr{color:var(--blue-soft)}
+
+  /* 접점 카드(레인 내부) */
+  .step.touch{border:1.5px solid var(--amber-soft); background:var(--amber-bg)}
+  .step.touch .num{background:var(--amber)!important}
+  .step.touch .badge{display:inline-block; font-size:10px; font-weight:800; color:var(--amber);
+    background:#fff; border:1px solid var(--amber-soft); border-radius:6px; padding:1px 6px; margin-left:6px; vertical-align:middle}
+
+  /* 접점 섹션 */
+  .touchpoint{margin-top:40px; background:var(--card); border:1px solid var(--amber-soft);
+    border-radius:20px; padding:28px 26px; box-shadow:0 4px 18px rgba(180,83,9,.06)}
+  .touchpoint .h{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+  .touchpoint .h .ic{font-size:22px}
+  .touchpoint .h .tt{font-size:19px; font-weight:800; color:var(--amber)}
+  .touchpoint .lead{font-size:13px; color:var(--muted); margin-bottom:22px}
+
+  /* QR 연결 흐름 (가로) */
+  .qrflow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; margin-bottom:28px}
+  .qrnode{flex:1; min-width:150px; background:#fff; border:1px solid var(--line); border-radius:13px;
+    padding:14px 15px; text-align:center}
+  .qrnode .e{font-size:24px} .qrnode .t{font-size:13px; font-weight:700; margin-top:6px}
+  .qrnode .d{font-size:11.5px; color:var(--muted); margin-top:3px}
+  .qrsep{display:grid; place-items:center; padding:0 6px; color:var(--amber); font-size:20px; flex:none}
+  @media(max-width:880px){ .qrsep{transform:rotate(90deg); padding:6px 0} .qrnode{min-width:120px} }
+
+  /* 동의 게이트 (AND) */
+  .gate{background:linear-gradient(180deg,#FFFBF5,#FFF7EC); border:1px solid var(--amber-soft);
+    border-radius:16px; padding:24px}
+  .gate-title{font-size:14px; font-weight:800; color:var(--amber); text-align:center; margin-bottom:4px}
+  .gate-sub{font-size:12px; color:var(--muted); text-align:center; margin-bottom:20px}
+  .gate-row{display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap}
+  .cond{background:#fff; border:1.5px solid var(--amber-soft); border-radius:13px; padding:14px 18px;
+    max-width:230px; text-align:center}
+  .cond .e{font-size:22px} .cond .t{font-size:13.5px; font-weight:700; margin-top:5px}
+  .cond .d{font-size:11.5px; color:var(--muted); margin-top:3px}
+  .op{font-size:20px; font-weight:800; color:var(--amber); background:#fff; border:1.5px solid var(--amber-soft);
+    width:46px; height:46px; border-radius:50%; display:grid; place-items:center; flex:none}
+  .gate-out{margin-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  @media(max-width:560px){ .gate-out{grid-template-columns:1fr} }
+  .out{border-radius:12px; padding:13px 15px; font-size:13px; font-weight:600}
+  .out.ok{background:var(--green-bg); color:var(--green); border:1px solid var(--green-soft)}
+  .out.no{background:#FEECEC; color:#B91C1C; border:1px solid #F6C6C6}
+  .out .lbl{font-weight:800; display:block; font-size:12px; margin-bottom:2px}
+
+  /* 보안 계율 */
+  .creed{margin-top:24px; background:#0E2A22; color:#CFE9DF; border-radius:16px; padding:22px 24px}
+  .creed .t{font-size:14px; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:8px}
+  .creed ul{list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:10px 24px}
+  @media(max-width:720px){ .creed ul{grid-template-columns:1fr} }
+  .creed li{font-size:12.5px; padding-left:20px; position:relative; line-height:1.5}
+  .creed li::before{content:'✓'; position:absolute; left:0; color:#34D399; font-weight:800}
+  .creed code{background:rgba(255,255,255,.1); padding:1px 5px; border-radius:4px; font-size:11px}
+
+  footer{text-align:center; font-size:11.5px; color:var(--muted); margin-top:40px; line-height:1.7}
+
+  /* ===== 화면 목업 ===== */
+  .screens{margin-top:52px}
+  .screens-h{font-size:21px; font-weight:800; letter-spacing:-.01em; display:flex; align-items:center; gap:10px}
+  .screens-sub{font-size:13px; color:var(--muted); margin:4px 0 24px}
+  .phones{display:flex; gap:22px; flex-wrap:wrap; justify-content:center}
+  .phone{width:244px; flex:none}
+  .phone-frame{background:#15211D; border-radius:34px; padding:9px; box-shadow:0 14px 34px rgba(20,40,34,.20)}
+  .phone-screen{background:var(--bg); border-radius:26px; overflow:hidden; height:496px; display:flex; flex-direction:column}
+  .notch{height:20px; display:flex; justify-content:center}
+  .notch::after{content:''; width:72px; height:15px; background:#15211D; border-radius:0 0 11px 11px}
+  .scr{padding:12px 13px; flex:1; overflow:hidden}
+  .phone-cap{text-align:center; font-size:12.5px; font-weight:700; color:var(--green); margin-top:13px}
+  .phone-cap span{display:block; font-size:11px; color:var(--muted); font-weight:500; margin-top:2px}
+
+  /* 폰 화면 내부 공통 */
+  .s-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:9px}
+  .s-logo{font-weight:800; color:var(--green); font-size:13.5px}
+  .s-gear{width:23px; height:23px; border-radius:7px; background:#E8EDEB; display:grid; place-items:center; font-size:11px}
+  .s-date{font-size:9.5px; color:var(--muted)}
+  .s-hi{font-size:15px; font-weight:800; margin:1px 0 9px}
+  .s-status{background:linear-gradient(135deg,#12866A,#1AA883); color:#fff; border-radius:13px; padding:11px 12px}
+  .s-status .l{font-size:9px; opacity:.85}
+  .s-status .m{font-size:13.5px; font-weight:800; margin:4px 0}
+  .s-bar{height:5px; background:rgba(0,0,0,.2); border-radius:9px; overflow:hidden; margin:7px 0 5px}
+  .s-bar i{display:block; height:100%; width:33%; background:#fff; border-radius:9px}
+  .s-status .f{font-size:9px; opacity:.9}
+  .s-sech{font-size:10px; font-weight:700; color:var(--muted); margin:13px 0 7px}
+  .s-grid{display:grid; grid-template-columns:1fr 1fr; gap:7px}
+  .s-cell{background:#fff; border:1px solid var(--line); border-radius:11px; padding:9px}
+  .s-cell .ce{width:25px; height:25px; border-radius:8px; display:grid; place-items:center; font-size:12px; margin-bottom:6px}
+  .s-cell .ct{font-size:10.5px; font-weight:700}
+  .s-cell .cd{font-size:8px; color:var(--muted); margin-top:1px; line-height:1.3}
+
+  /* 오늘 복약 슬롯 */
+  .s-h2{font-size:15px; font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:5px}
+  .s-card{background:#fff; border:1px solid var(--line); border-radius:13px; overflow:hidden}
+  .slot{display:flex; gap:8px; padding:9px 11px; border-bottom:1px solid var(--line); align-items:flex-start}
+  .slot:last-child{border-bottom:0}
+  .slot.next{background:#EAF6F1; border-left:3px solid var(--green)}
+  .slot.done{opacity:.55}
+  .slot .tm{width:28px; flex:none}
+  .slot .tm .h{font-size:8.5px; color:var(--muted)}
+  .slot .tm .n{font-size:9px; font-weight:700; margin-top:1px; display:flex; align-items:center; gap:2px}
+  .slot .node{width:8px; height:8px; border-radius:50%; margin-top:3px; flex:none}
+  .node.f{background:var(--green)} .node.o{border:2px solid var(--green); background:#fff} .node.w{background:var(--slate-soft)}
+  .slot .bd{flex:1}
+  .slot .bd .mt{font-size:11px; font-weight:700}
+  .slot .bd .bt{margin-top:5px; font-size:9.5px; font-weight:700; padding:6px 0; border-radius:8px; text-align:center}
+  .bt.g{background:var(--green); color:#fff} .bt.o{border:1px solid var(--slate-soft); color:var(--slate)}
+  .bt.done{color:var(--green); font-weight:600; text-align:left; padding:2px 0}
+
+  /* 약 지갑 카드 */
+  .w-card{border-radius:13px; padding:12px; margin-bottom:9px; border:1px solid var(--line); background:#fff}
+  .w-card.supp{background:var(--green-bg); border-color:var(--green-soft)}
+  .w-top{display:flex; align-items:center; gap:7px; margin-bottom:8px}
+  .w-thumbs{display:flex}
+  .w-thumbs span{width:25px; height:25px; border-radius:50%; border:2px solid #fff; display:grid; place-items:center; font-size:11px; margin-left:-7px}
+  .w-thumbs span:first-child{margin-left:0}
+  .th-b{background:var(--blue-bg)} .th-g{background:var(--green-soft)}
+  .w-tt{font-size:11.5px; font-weight:700}
+  .w-sub{font-size:9px; color:var(--muted); margin-top:1px}
+  .w-dday{margin-left:auto; font-size:8.5px; font-weight:700; background:var(--amber-bg); color:var(--amber); padding:2px 7px; border-radius:999px}
+  .w-name{font-size:10.5px; font-weight:600; color:var(--ink)}
+  .w-meal{margin-top:8px; display:flex; gap:5px}
+  .w-meal b{flex:1; text-align:center; font-size:9px; font-weight:700; padding:7px 0; border-radius:8px; background:var(--blue-bg); color:var(--blue)}
+  .w-card.supp .w-meal b{background:#fff; color:var(--green)}
+
+  /* 데스크탑 목업 */
+  .desk{margin-top:36px}
+  .desk-frame{border:1px solid var(--slate-soft); border-radius:14px; overflow:hidden; box-shadow:0 14px 34px rgba(20,40,34,.13); background:#fff}
+  .desk-bar{background:#E8EDEB; padding:9px 14px; display:flex; align-items:center; gap:7px}
+  .desk-bar .d{width:11px; height:11px; border-radius:50%}
+  .desk-bar .url{margin-left:10px; background:#fff; border-radius:7px; font-size:10.5px; color:var(--muted); padding:4px 13px; flex:1; max-width:300px}
+  .desk-body{display:flex; min-height:372px}
+  @media(max-width:640px){ .desk-body{flex-direction:column} .side{width:100%!important} }
+  .side{width:196px; background:#fff; border-right:1px solid var(--line); padding:15px 11px; flex:none}
+  .side .logo{font-weight:800; color:var(--green); font-size:14.5px; padding:0 7px 13px; border-bottom:1px solid var(--line); margin-bottom:9px}
+  .side .who{font-size:9.5px; color:var(--muted); padding:0 7px 10px}
+  .side .mi{display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:9px; font-size:12px; font-weight:600; color:var(--slate); margin-bottom:2px}
+  .side .mi.on{background:var(--blue-bg); color:var(--blue)}
+  .main{flex:1; padding:22px 24px; background:var(--bg); min-width:0}
+  .main h3{font-size:17px; font-weight:800}
+  .main .ms{font-size:11.5px; color:var(--muted); margin:3px 0 16px}
+  .qr-ban{display:flex; align-items:center; gap:11px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 15px; margin-bottom:16px}
+  .qr-ban .qi{width:38px; height:38px; border-radius:9px; background:var(--green-bg); color:var(--green); display:grid; place-items:center; font-size:18px; flex:none}
+  .qr-ban .qt{font-size:12.5px; font-weight:700}
+  .qr-ban .qd{font-size:10.5px; color:var(--muted); margin-top:1px}
+  .ptable{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .prow{display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line)}
+  .prow:last-child{border-bottom:0}
+  .prow.head{background:var(--slate-bg); font-size:10.5px; font-weight:700; color:var(--muted)}
+  .pav{width:30px; height:30px; border-radius:50%; background:var(--blue-bg); color:var(--blue); display:grid; place-items:center; font-weight:700; font-size:12px; flex:none}
+  .pnm{font-size:12.5px; font-weight:700; flex:1}
+  .pmed{font-size:11.5px; color:var(--slate); width:70px}
+  .pro{font-size:11px; font-weight:700; color:var(--blue); width:48px; text-align:right}
+  .ro-note{font-size:10px; color:var(--muted); margin-top:13px; line-height:1.5}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>약사로 케어 — 서비스 프로세스 플로우</h1>
+    <div class="sub">환자(B2C)와 약사·약국(B2B)이 실제로 어떻게 동작하는지 한눈에</div>
+    <div class="meta">
+      <span class="pill">디지털 약 지갑 + 단골약국 CRM</span>
+      <span class="pill">실제 구현 기준</span>
+      코드베이스(라우트·테이블·RLS) 기반 도식 · 2026-06-15
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 범례 -->
+  <div class="legend">
+    <div class="item"><span class="dot" style="background:#0E6E54"></span>B2C · 환자/보호자</div>
+    <div class="item"><span class="dot" style="background:#2563EB"></span>B2B · 약사/약국</div>
+    <div class="item"><span class="dot" style="background:#B45309"></span>접점 · 두 영역이 만나는 곳</div>
+    <div class="item"><span class="dot" style="background:#475569"></span><span style="font-family:monospace;font-size:11px">route / table</span> 실제 구현 위치</div>
+  </div>
+
+  <!-- 공통 진입 -->
+  <div class="entry">
+    <div class="t">① 공통 진입 — 회원가입 · 로그인</div>
+    <div class="d">Server Action 방식(모바일 GET 제출 버그 회피) · 역할(role)에 따라 환자 / 약사 흐름으로 분기 · 건강정보 수집·이용 동의</div>
+  </div>
+
+  <!-- 두 레인 -->
+  <div class="lanes">
+
+    <!-- ===== B2C ===== -->
+    <section class="lane b2c">
+      <div class="lane-head">
+        <div class="ic">🧑‍🦳</div>
+        <div class="tt">B2C — 환자 복약관리</div>
+        <div class="tag">무료</div>
+      </div>
+      <div class="lane-desc">처방약 + 일반약(OTC) + 영양제를 한곳에서 기록하고, 끼니마다 챙기도록 돕는다.</div>
+
+      <div class="step">
+        <div class="num">1</div>
+        <div class="st">📷 처방전 촬영</div>
+        <div class="sd">카메라/갤러리로 처방전을 찍으면 기기에서 먼저 압축(1600px) — 업로드 용량·413 오류 방지</div>
+        <div class="chips"><span class="chip">/medications/ocr</span><span class="chip">Canvas 압축</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div class="st">🔎 OCR 파이프라인 (자동)</div>
+        <div class="sd">CLOVA OCR로 글자 추출 → GPT가 약품·용법 파싱 → EDI 보험코드로 약 신원 교정 → 처방전 <b>텍스트만</b> 저장하고 원본 이미지는 즉시 파기</div>
+        <div class="chips"><span class="chip sys">POST /api/ocr</span><span class="chip sys">CLOVA+GPT-4o-mini</span><span class="chip">user_prescriptions</span><span class="chip">🗑 이미지 파기</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div class="st">✅ 약 확인 · 저장</div>
+        <div class="sd">추출된 약을 확인·수정 후 저장(또는 처방약/일반약/영양제 직접 등록). 저장 시 약물 상호작용을 백그라운드로 점검(DUR shadow)</div>
+        <div class="chips"><span class="chip">/medications/add</span><span class="chip">user_medications</span><span class="chip sys">DUR shadow · 비차단</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div class="st">💊 약 지갑</div>
+        <div class="sd">처방전·일반약·영양제 묶음 보관. 약 이미지·성분명·만료 D-day 표시 (실버 세대용 큰 글씨)</div>
+        <div class="chips"><span class="chip">/wallet</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">5</div>
+        <div class="st">🕒 오늘 복약 체크</div>
+        <div class="sd">아침·점심·저녁·자기 전 4슬롯으로 복약 체크. 지연 알림, 전체 완료 시 축하 효과. 현재 상태와 이력을 함께 기록</div>
+        <div class="chips"><span class="chip">/today</span><span class="chip">medication_schedules</span><span class="chip">medication_check_logs</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">6</div>
+        <div class="st">📅 복약 캘린더</div>
+        <div class="sd">날짜별 복약 순응도를 한눈에(전부/일부/놓침). 체크 이력 로그를 집계해 표시</div>
+        <div class="chips"><span class="chip">/calendar</span><span class="chip">GET /api/calendar</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">7</div>
+        <div class="st">🔔 복약 리마인더 (자동 발송)</div>
+        <div class="sd">끼니 시각마다 서버 cron 실행 → 푸시 구독 + 활성 복약 있음 + 아직 미체크 + 해당 알림 ON 인 사용자에게만 웹푸시</div>
+        <div class="chips"><span class="chip sys">Vercel cron</span><span class="chip sys">/api/cron/medication-reminders</span><span class="chip">push_subscriptions</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <!-- 접점 1: QR 단골 -->
+      <div class="step touch">
+        <div class="num">＋</div>
+        <div class="st">🔗 단골약국 연결 <span class="badge">접점</span></div>
+        <div class="sd">약국 QR을 스캔하면 단골약국으로 자동 매핑. 미로그인 시 쿠키+리다이렉트로 로그인 후에도 매핑 보장</div>
+        <div class="chips"><span class="chip">/store/[store_id]</span><span class="chip">profiles.regular_pharmacy_id</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <!-- 접점 2: 동의 -->
+      <div class="step touch">
+        <div class="num">＋</div>
+        <div class="st">🤝 단골 약사에게 공개 동의 <span class="badge">접점</span></div>
+        <div class="sd">설정에서 “단골 약사에게 내 약 목록 공개” opt-in. 언제든 끄면 약사 화면에서 즉시 사라짐</div>
+        <div class="chips"><span class="chip">/settings</span><span class="chip">consent_pharmacist_view</span></div>
+      </div>
+    </section>
+
+    <!-- ===== B2B ===== -->
+    <section class="lane b2b">
+      <div class="lane-head">
+        <div class="ic">🧑‍⚕️</div>
+        <div class="tt">B2B — 약사/약국</div>
+        <div class="tag">유료 SaaS</div>
+      </div>
+      <div class="lane-desc">동의한 단골 환자의 복약을 <b>읽기 전용</b>으로 보며 복약 상담에 참고한다.</div>
+
+      <div class="step">
+        <div class="num">1</div>
+        <div class="st">🏥 약국 계정 발급</div>
+        <div class="sd">운영팀이 약국 계정을 수동 발급(약국 정보 + 약사 역할 부여). 셀프 가입은 중기 과제</div>
+        <div class="chips"><span class="chip">pharmacies</span><span class="chip">role = pharmacist</span><span class="chip sys">운영자 수동</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div class="st">🔐 약사 로그인 · 역할 가드</div>
+        <div class="sd">약사 전용 로그인. /pharmacy/* 경로는 미들웨어·레이아웃에서 약사 역할만 통과(환자 접근 차단)</div>
+        <div class="chips"><span class="chip">/pharmacy/login</span><span class="chip sys">proxy.ts role 가드</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div class="st">🔳 약국 QR 생성 · 인쇄</div>
+        <div class="sd">약국 식별자(store_id)를 셀프 발급하고 QR 코드 생성 → A4 인쇄. 카운터에 비치해 환자가 스캔</div>
+        <div class="chips"><span class="chip">/pharmacy/qr</span><span class="chip">store_id (owner RLS)</span><span class="chip">QR SVG · A4</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <!-- 접점 표시 -->
+      <div class="step touch">
+        <div class="num">↔</div>
+        <div class="st">🔗 환자가 QR 스캔 → 단골 연결 <span class="badge">접점</span></div>
+        <div class="sd">환자가 약국 QR을 스캔하면 그 환자의 단골약국으로 매핑됨 (← B2C 흐름의 ‘단골약국 연결’과 동일 지점)</div>
+        <div class="chips"><span class="chip">/store/[store_id]</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step touch">
+        <div class="num">↔</div>
+        <div class="st">🤝 환자의 공개 동의 대기 <span class="badge">접점</span></div>
+        <div class="sd">단골로 연결돼 있어도, 환자가 설정에서 ‘공개’를 켜야만 약사 화면에 나타남 (← B2C ‘공개 동의’와 동일 지점)</div>
+        <div class="chips"><span class="chip">consent_pharmacist_view = true</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div class="st">📋 단골 환자 대시보드</div>
+        <div class="sd">동의한 단골 환자 목록 + 환자별 활성 복약 종수. 모든 조회는 약사 본인 토큰 + RLS로만 — 동의 환자 것만 노출</div>
+        <div class="chips"><span class="chip">/pharmacy</span><span class="chip sys">user token + RLS</span></div>
+      </div>
+      <div class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num">5</div>
+        <div class="st">👁 환자 복약 상세 (읽기 전용)</div>
+        <div class="sd">선택한 환자의 복약 목록을 read-only로 확인. 쓰기 경로 0 · 진단/처방변경/복약중단 지시 문구 0 — 참고 도구로 한정</div>
+        <div class="chips"><span class="chip">/pharmacy/patients/[id]</span><span class="chip">read-only</span></div>
+      </div>
+    </section>
+
+  </div><!-- /lanes -->
+
+  <!-- ===== 접점 상세 ===== -->
+  <section class="touchpoint">
+    <div class="h"><span class="ic">🔗</span><span class="tt">두 영역이 만나는 곳 — 단골 연결과 동의</span></div>
+    <div class="lead">B2C와 B2B는 따로 동작하다가, <b>QR 단골 연결</b>과 <b>환자의 열람 동의</b> 두 지점에서만 이어진다. 약사가 환자 복약을 보려면 이 둘이 <b>모두</b> 성립해야 한다.</div>
+
+    <!-- QR 흐름 -->
+    <div class="qrflow">
+      <div class="qrnode"><div class="e">🏥</div><div class="t">약국이 QR 발급</div><div class="d">store_id → QR · A4 인쇄</div></div>
+      <div class="qrsep">→</div>
+      <div class="qrnode"><div class="e">📱</div><div class="t">환자가 스캔</div><div class="d">/store/[store_id] 진입</div></div>
+      <div class="qrsep">→</div>
+      <div class="qrnode"><div class="e">🔗</div><div class="t">단골 매핑</div><div class="d">regular_pharmacy_id 저장</div></div>
+      <div class="qrsep">→</div>
+      <div class="qrnode"><div class="e">⚙️</div><div class="t">환자가 공개 ON</div><div class="d">설정 opt-in 동의</div></div>
+    </div>
+
+    <!-- 동의 게이트 AND -->
+    <div class="gate">
+      <div class="gate-title">🔒 약사 열람 게이트 — pharmacist_can_view()</div>
+      <div class="gate-sub">SECURITY DEFINER 함수 + RLS 정책으로 강제 (관계 ≠ 동의)</div>
+      <div class="gate-row">
+        <div class="cond">
+          <div class="e">🔗</div>
+          <div class="t">단골 관계 있음</div>
+          <div class="d">QR로 연결된<br>regular_pharmacy_id 일치</div>
+        </div>
+        <div class="op">AND</div>
+        <div class="cond">
+          <div class="e">🤝</div>
+          <div class="t">열람 동의 ON</div>
+          <div class="d">환자가 직접 켠<br>consent_pharmacist_view</div>
+        </div>
+      </div>
+      <div class="gate-out">
+        <div class="out ok"><span class="lbl">둘 다 충족 →</span>해당 환자 복약이 약사 대시보드에 read-only로 표시</div>
+        <div class="out no"><span class="lbl">하나라도 빠지면 →</span>약사 토큰으로 조회해도 결과 0건 (동의 철회 시 즉시 사라짐)</div>
+      </div>
+    </div>
+
+    <!-- 보안 계율 -->
+    <div class="creed">
+      <div class="t">🛡 약사 모드 보안 계율</div>
+      <ul>
+        <li>관계(QR 단골) ≠ 동의 — <code>opt-in</code> 동의가 RLS의 필수 AND 조건</li>
+        <li>약사 조회는 <code>service_role</code> 우회 없이 사용자 토큰 + RLS로만</li>
+        <li>최소권한 — 약사 경로는 <code>SELECT</code> 전용, 환자 데이터 쓰기 경로 0</li>
+        <li>처방전 원본 이미지는 텍스트 추출 즉시 파기(민감정보 비식별화)</li>
+        <li>DUR 상호작용은 백엔드 shadow 로깅 — 사용자 응답을 차단하지 않음</li>
+        <li>의학적 판단(진단·처방변경·복약중단) 지시 문구 0 — 참고 도구로 한정</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===== 모바일 화면 (B2C) ===== -->
+  <section class="screens">
+    <div class="screens-h">📱 환자 모바일 화면 <span style="font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);padding:2px 10px;border-radius:999px">B2C</span></div>
+    <div class="screens-sub">실제 그린 디자인 시스템 기준 — 실버 세대용 큰 글씨·52px 터치 타겟·4끼니 슬롯</div>
+
+    <div class="phones">
+
+      <!-- 홈 -->
+      <div class="phone">
+        <div class="phone-frame"><div class="phone-screen">
+          <div class="notch"></div>
+          <div class="scr">
+            <div class="s-top"><div class="s-logo">약사로 케어</div><div class="s-gear">⚙</div></div>
+            <div class="s-date">6월 15일 일요일</div>
+            <div class="s-hi">좋은 아침이에요</div>
+            <div class="s-status">
+              <div class="l">다음 복약 시간</div>
+              <div class="m">점심 약 · 2시간 12분 후</div>
+              <div class="s-bar"><i></i></div>
+              <div class="f">🧪 오늘 3번 중 1번 챙김</div>
+            </div>
+            <div class="s-sech">무엇을 도와드릴까요</div>
+            <div class="s-grid">
+              <div class="s-cell"><div class="ce" style="background:var(--blue-bg);color:var(--blue)">💊</div><div class="ct">내 약지갑</div><div class="cd">처방·영양제 보관</div></div>
+              <div class="s-cell"><div class="ce" style="background:var(--green-bg);color:var(--green)">❤</div><div class="ct">오늘 복약</div><div class="cd">시간대별 체크</div></div>
+              <div class="s-cell"><div class="ce" style="background:var(--amber-bg);color:var(--amber)">📅</div><div class="ct">복약 캘린더</div><div class="cd">날짜별 기록</div></div>
+              <div class="s-cell"><div class="ce" style="background:var(--green-bg);color:var(--green)">✈</div><div class="ct">의사 보여주기</div><div class="cd">한 화면 정리</div></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-cap">홈<span>/home — 다음 복약·진행률</span></div>
+      </div>
+
+      <!-- 오늘 복약 -->
+      <div class="phone">
+        <div class="phone-frame"><div class="phone-screen">
+          <div class="notch"></div>
+          <div class="scr">
+            <div class="s-h2">오늘 복약 <span style="color:var(--amber)">☀</span></div>
+            <div class="s-sech" style="margin-top:0">오늘 1/4 챙김</div>
+            <div class="s-card">
+              <div class="slot done">
+                <div class="tm"><div class="h">08:00</div><div class="n">🌅 아침</div></div>
+                <div class="node f"></div>
+                <div class="bd"><div class="mt">약 3개</div><div class="bt done">✓ 오전 8:10 복용 · 되돌리기</div></div>
+              </div>
+              <div class="slot next">
+                <div class="tm"><div class="h">12:30</div><div class="n">☀ 점심</div></div>
+                <div class="node o"></div>
+                <div class="bd"><div class="mt">약 2개</div><div class="bt g">지금 먹기</div></div>
+              </div>
+              <div class="slot">
+                <div class="tm"><div class="h">19:00</div><div class="n">🌙 저녁</div></div>
+                <div class="node w"></div>
+                <div class="bd"><div class="mt">약 3개</div><div class="bt o">지금 먹기</div></div>
+              </div>
+              <div class="slot">
+                <div class="tm"><div class="h">22:00</div><div class="n">🌃 자기 전</div></div>
+                <div class="node w"></div>
+                <div class="bd"><div class="mt">약 1개</div><div class="bt o">지금 먹기</div></div>
+              </div>
+            </div>
+            <div style="background:var(--green-bg);border:1px solid var(--green-soft);border-radius:11px;padding:9px 11px;margin-top:10px">
+              <div style="font-size:9px;font-weight:700;color:var(--green)">🧪 오늘의 건강 한 줄</div>
+              <div style="font-size:10px;color:var(--ink);margin-top:3px">💧 물과 함께 약을 드시면 흡수가 더 잘 돼요</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-cap">오늘 복약<span>/today — 4끼니 슬롯 체크</span></div>
+      </div>
+
+      <!-- 약 지갑 -->
+      <div class="phone">
+        <div class="phone-frame"><div class="phone-screen">
+          <div class="notch"></div>
+          <div class="scr">
+            <div class="s-h2">약 지갑 💊</div>
+            <div class="w-card">
+              <div class="w-top">
+                <div class="w-thumbs"><span class="th-b">💊</span><span class="th-b">💊</span><span class="th-b">💊</span></div>
+                <div><div class="w-tt">서울내과의원</div><div class="w-sub">6/12 처방 · 약 3종</div></div>
+                <div class="w-dday">D-3</div>
+              </div>
+              <div class="w-name">아모잘탄정 외 2종</div>
+              <div class="w-meal"><b>🌅 아침</b><b>🌙 저녁</b></div>
+            </div>
+            <div class="w-card supp">
+              <div class="w-top">
+                <div class="w-thumbs"><span class="th-g">🧪</span><span class="th-g">🧪</span></div>
+                <div><div class="w-tt" style="color:var(--green)">내가 챙기는 영양제</div><div class="w-sub" style="color:var(--green)">약 2종</div></div>
+              </div>
+              <div class="w-name">오메가3 · 비타민D</div>
+              <div class="w-meal"><b>🌅 아침 영양제 한번에 먹기</b></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-cap">약 지갑<span>/wallet — 처방·영양제 묶음</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== 약국 PC 화면 (B2B) ===== -->
+  <section class="desk">
+    <div class="screens-h">🖥 약국 PC 화면 <span style="font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-bg);padding:2px 10px;border-radius:999px">B2B</span></div>
+    <div class="screens-sub">데스크탑 사이드바 레이아웃 · 동의한 단골 환자만 read-only로 노출</div>
+
+    <div class="desk-frame">
+      <div class="desk-bar">
+        <span class="d" style="background:#FF5F57"></span><span class="d" style="background:#FEBC2E"></span><span class="d" style="background:#28C840"></span>
+        <span class="url">yaksaro-care.app/pharmacy</span>
+      </div>
+      <div class="desk-body">
+        <aside class="side">
+          <div class="logo">약사로 케어</div>
+          <div class="who">행복약국 · 김약사</div>
+          <div class="mi on">👥 단골 환자</div>
+          <div class="mi">🔳 우리 약국 QR</div>
+          <div class="mi" style="margin-top:auto">↩ 로그아웃</div>
+        </aside>
+        <div class="main">
+          <h3>단골 환자 복약 현황</h3>
+          <div class="ms">내 약 목록 공개에 동의한 단골 환자 3명 · 읽기 전용</div>
+
+          <div class="qr-ban">
+            <div class="qi">🔳</div>
+            <div><div class="qt">우리 약국 QR 만들기 · 인쇄</div><div class="qd">환자가 스캔하면 자동으로 단골 연결돼요</div></div>
+            <div style="margin-left:auto;color:var(--slate-soft)">›</div>
+          </div>
+
+          <div class="ptable">
+            <div class="prow head"><div style="width:30px"></div><div class="pnm">환자</div><div class="pmed">활성 복약</div><div class="pro">상세</div></div>
+            <div class="prow"><div class="pav">박</div><div class="pnm">박순자</div><div class="pmed">5종</div><div class="pro">보기 ›</div></div>
+            <div class="prow"><div class="pav">이</div><div class="pnm">이정호</div><div class="pmed">3종</div><div class="pro">보기 ›</div></div>
+            <div class="prow"><div class="pav">최</div><div class="pnm">최영실</div><div class="pmed">2종</div><div class="pro">보기 ›</div></div>
+          </div>
+
+          <div class="ro-note">🛡 이 화면은 환자가 동의한 복약 정보를 <b>읽기 전용</b>으로 보여주는 참고 도구입니다. 진단·처방 변경·복약 중단 등 의학적 판단을 대체하지 않습니다. · 동의를 끄거나 단골이 아닌 환자는 조회해도 결과 0건.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    약사로 케어(Yaksaro Care) · Next.js + Supabase + CLOVA OCR + GPT 기반 복약관리 SaaS<br>
+    본 도식은 실제 코드베이스(라우트·테이블·RLS 정책)를 기준으로 작성됨 · 생성일 2026-06-15
+  </footer>
+
+</div>
+</body>
+</html>
