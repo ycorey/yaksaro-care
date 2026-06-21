@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Flask, Check, type Icon } from '@phosphor-icons/react'
+import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 
@@ -38,12 +38,12 @@ function formatSlotTime(slot: typeof MEAL_SLOTS[number]) {
 type StatKey = 'med' | 'today' | null
 const GRID_ITEMS: {
   href: string; Icon: Icon; iconColor: string; iconBg: string
-  title: string; desc: string; statKey: StatKey; filled?: boolean
+  title: string; statKey: StatKey; filled?: boolean
 }[] = [
-  { href: '/wallet',   Icon: Wallet,        iconColor: 'text-yc-blue500',  iconBg: 'bg-yc-infoBg',    title: '내 약지갑',        desc: '처방·영양제를 묶음으로 보관해요', statKey: 'med' },
-  { href: '/today',    Icon: Heart,         iconColor: 'text-yc-green600', iconBg: 'bg-yc-green50',   title: '오늘 복약',        desc: '시간대별로 약을 체크해요',     statKey: 'today', filled: true },
-  { href: '/calendar', Icon: CalendarBlank, iconColor: 'text-yc-warning',  iconBg: 'bg-yc-warningBg', title: '복약 캘린더',      desc: '날짜별 복용 기록을 봐요',      statKey: null },
-  { href: '/share',    Icon: PaperPlaneTilt,iconColor: 'text-yc-green600', iconBg: 'bg-yc-green50',   title: '의사·약사 보여주기', desc: '진료·조제 시 한 화면으로',     statKey: null },
+  { href: '/wallet',   Icon: Wallet,         iconColor: 'text-yc-green600',   iconBg: 'bg-yc-green50',    title: '내 약지갑',        statKey: 'med' },
+  { href: '/today',    Icon: Heart,          iconColor: 'text-yc-green600',   iconBg: 'bg-yc-green50',    title: '오늘 복약',        statKey: 'today', filled: true },
+  { href: '/calendar', Icon: CalendarBlank,  iconColor: 'text-yc-neutral500', iconBg: 'bg-yc-neutral100', title: '복약 캘린더',      statKey: null },
+  { href: '/share',    Icon: PaperPlaneTilt, iconColor: 'text-yc-neutral500', iconBg: 'bg-yc-neutral100', title: '의사·약사 보여주기', statKey: null },
 ]
 
 interface Props {
@@ -68,7 +68,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
   const allDone   = doneCount >= totalSlots
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-7 pb-4">
       {/* 로고 + 설정 헤더 */}
       <AppHeader
         actions={
@@ -120,9 +120,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
                 style={{ width: `${Math.min(100, (doneCount / totalSlots) * 100)}%` }}
               />
             </div>
-            <p className="text-white/80 text-sm flex items-center gap-1.5">
-              <Flask weight="fill" size={14} className="text-white/70" />오늘 {totalSlots}번 중 {doneCount}번 챙김
-            </p>
+            <p className="text-white/80 text-sm">오늘 {totalSlots}번 중 {doneCount}번 챙김</p>
           </div>
         ) : (
           <div className="rounded-yc-lg p-5 text-white bg-yc-status-next">
@@ -133,29 +131,25 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         )}
       </Link>
 
-      {/* 2×2 그리드 */}
-      <div>
-        <p className="text-sm font-semibold text-yc-neutral500 mb-3">무엇을 도와드릴까요</p>
-        <div className="grid grid-cols-2 gap-3">
-          {GRID_ITEMS.map(({ href, Icon, iconColor, iconBg, title, desc, statKey, filled }, i) => (
-            <Link key={href} href={href}
-              className="bg-white rounded-yc-lg p-4 border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:scale-95 transition-transform anim-page"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconBg}`}>
-                <Icon size={22} className={iconColor} weight={filled ? 'fill' : 'light'} />
-              </div>
-              <p className="font-display text-[0.9375rem] text-yc-neutral900 leading-snug">{title}</p>
-              <p className="text-xs text-yc-neutral500 mt-1 leading-snug">{desc}</p>
-              {statKey === 'med' && medCount > 0 && (
-                <p className="text-xs font-bold text-yc-green600 mt-2">약 {medCount}종</p>
-              )}
-              {statKey === 'today' && (
-                <p className="text-xs font-bold text-yc-green600 mt-2">{doneCount} / {totalSlots} 챙김</p>
-              )}
-            </Link>
-          ))}
-        </div>
+      {/* 2×2 그리드 — 런처 (제목+스탯만) */}
+      <div className="grid grid-cols-2 gap-3">
+        {GRID_ITEMS.map(({ href, Icon, iconColor, iconBg, title, statKey, filled }, i) => (
+          <Link key={href} href={href}
+            className="bg-white rounded-yc-lg p-4 shadow-[var(--yc-shadow-sm)] active:scale-95 transition-transform anim-page"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconBg}`}>
+              <Icon size={22} className={iconColor} weight={filled ? 'fill' : 'light'} />
+            </div>
+            <p className="font-display text-[0.9375rem] text-yc-neutral900 leading-snug">{title}</p>
+            {statKey === 'med' && medCount > 0 && (
+              <p className="text-xs font-bold text-yc-green600 mt-2">약 {medCount}종</p>
+            )}
+            {statKey === 'today' && (
+              <p className="text-xs font-bold text-yc-green600 mt-2">{doneCount} / {totalSlots} 챙김</p>
+            )}
+          </Link>
+        ))}
       </div>
     </div>
   )

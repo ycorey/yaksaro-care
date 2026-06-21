@@ -52,11 +52,11 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
   }, [])
 
   return (
-    <div className={`rounded-yc-lg border shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${
-      anyChecked ? 'bg-yc-green100 border-yc-green600/40' : 'bg-yc-green50 border-[#89CCB3]'
+    <div className={`rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${
+      anyChecked ? 'bg-yc-green50' : 'bg-white'
     }`}>
       {/* 카드 헤더 */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+      <div className="px-5 pt-4 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex -space-x-2">
             {meds.slice(0, 3).map((med, i) => (
@@ -83,10 +83,10 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
         </Link>
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-5 pb-4">
         {meds.length === 0 ? (
           <Link href="/medications/add?tab=supplement"
-            className="flex items-center justify-center gap-2 py-5 text-sm text-yc-green600 font-medium border-2 border-dashed border-yc-green100 rounded-yc-md active:bg-yc-green50">
+            className="flex items-center justify-center gap-2 py-5 text-sm text-yc-green600 font-medium bg-yc-green50 rounded-yc-md active:opacity-90">
             <Flask size={15} /> 영양제 등록하기
           </Link>
         ) : (
@@ -132,7 +132,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
               })}
             </div>
             <Link href="/medications/add?tab=supplement"
-              className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-green600 font-medium border border-dashed border-yc-green100 rounded-yc-lg active:bg-yc-green50">
+              className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-green600 font-medium bg-yc-green50 rounded-yc-lg active:opacity-90">
               + 영양제 추가
             </Link>
           </>

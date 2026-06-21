@@ -103,12 +103,12 @@ export default function CalendarPage() {
                        { icon: <Heart         weight="fill" size={24} className="text-yc-green700" />, text: '약 챙기기가 쉽지 않죠. 내일은 한 번이라도 더 챙겨봐요.' }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <AppHeader />
-      <h1 className="font-display text-2xl text-yc-neutral900 flex items-center gap-2">복약 캘린더 <CalendarBlank weight="fill" size={22} className="text-yc-green600" /></h1>
+      <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더</h1>
 
       {/* 월 네비게이션 */}
-      <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-4 anim-page" style={{ animationDelay: '40ms' }}>
+      <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] p-4 anim-page" style={{ animationDelay: '40ms' }}>
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prev}
@@ -208,7 +208,7 @@ export default function CalendarPage() {
 
       {/* 이번 달 요약 */}
       {!loading && Object.keys(days).length > 0 && (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 anim-page" style={{ animationDelay: '80ms' }}>
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] px-5 py-4 anim-page" style={{ animationDelay: '80ms' }}>
           <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-3">
             {month}월 복약 요약
           </p>
@@ -230,7 +230,7 @@ export default function CalendarPage() {
       )}
 
       {!loading && Object.keys(days).length === 0 && (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-10 text-center">
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] py-10 text-center">
           <div className="mb-3 flex justify-center"><CalendarBlank weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-base font-semibold text-yc-neutral700">복약 기록이 없어요</p>
           <p className="text-sm text-yc-neutral500 mt-1">오늘 탭에서 복약을 체크해보세요</p>

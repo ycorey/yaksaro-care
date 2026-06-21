@@ -37,11 +37,11 @@ export default function OtcSection({
   const hasAnyWarning = visibleMeds.some(m => m.hasInteractionWarning)
 
   return (
-    <div className="bg-yc-neutral50 rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
-      <div className="px-6 pt-5 pb-5">
+    <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+      <div className="px-5 pt-5 pb-5">
         {visibleMeds.length === 0 ? (
           <Link href="/medications/add?tab=otc"
-            className="flex items-center justify-center gap-2 py-5 text-sm text-yc-neutral500 font-medium border-2 border-dashed border-yc-neutral200 rounded-yc-lg active:bg-yc-neutral100">
+            className="flex items-center justify-center gap-2 py-5 text-sm text-yc-neutral500 font-medium bg-yc-neutral50 rounded-yc-lg active:bg-yc-neutral100">
             <Plus size={15} /> 일반의약품 등록하기
           </Link>
         ) : (
@@ -60,7 +60,7 @@ export default function OtcSection({
               {med.hasInteractionWarning && (
                 <Warning weight="fill" size={14} className="text-yc-warning flex-shrink-0" />
               )}
-              <Pill weight="fill" size={14} className="text-yc-blue500 flex-shrink-0" />
+              <Pill weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0" />
               <span className="text-sm font-medium text-yc-neutral600 max-w-[140px] truncate">{med.name}</span>
               <button
                 onClick={() => deleteMed(med.id)}
@@ -74,7 +74,7 @@ export default function OtcSection({
           ))}
         </div>
         <Link href="/medications/add?tab=otc"
-          className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-neutral500 font-medium border border-dashed border-yc-neutral200 rounded-yc-lg active:bg-yc-neutral50">
+          className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-neutral500 font-medium bg-yc-neutral50 rounded-yc-lg active:bg-yc-neutral100">
           + 일반의약품 추가
         </Link>
         </>

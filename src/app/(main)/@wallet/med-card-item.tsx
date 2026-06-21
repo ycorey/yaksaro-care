@@ -181,13 +181,13 @@ export default function MedCardItem(p: MedCardItemProps) {
   return (
     <div className="flex items-start gap-4">
       {/* 약 사진 */}
-      <div className="w-14 h-14 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">
+      <div className="w-14 h-14 rounded-full bg-yc-neutral100 overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img loading="lazy" decoding="async" src={image} alt={p.name} className="w-full h-full object-cover" />
         ) : (p.isSupplement
           ? <Flask weight="fill" size={22} className="text-yc-green700 opacity-70" />
-          : <Pill  weight="fill" size={22} className="text-yc-blue500 opacity-60" />
+          : <Pill  weight="fill" size={22} className="text-yc-neutral400" />
         )}
       </div>
 
@@ -223,13 +223,13 @@ export default function MedCardItem(p: MedCardItemProps) {
                         }}
                         className="w-full text-left px-3 py-2.5 active:bg-yc-neutral50 flex items-center gap-2.5 border-b border-yc-neutral100 last:border-0"
                       >
-                        <Pill weight="fill" size={16} className="text-yc-blue500 flex-shrink-0" />
+                        <Pill weight="fill" size={16} className="text-yc-neutral400 flex-shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
                           {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                         </span>
                         {d.source === 'api' && (
-                          <span className="text-[10px] text-yc-blue500 bg-yc-infoBg px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
+                          <span className="text-[10px] text-yc-neutral600 bg-yc-neutral100 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
                         )}
                       </button>
                     ))}
@@ -268,7 +268,7 @@ export default function MedCardItem(p: MedCardItemProps) {
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={save} disabled={busy}
-                className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-display active:opacity-90 disabled:opacity-50">
+                className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:opacity-90 disabled:opacity-50">
                 {busy ? '저장 중…' : '저장'}
               </button>
               <button onClick={() => setMode('view')} disabled={busy}
@@ -284,12 +284,12 @@ export default function MedCardItem(p: MedCardItemProps) {
               {p.ingredient && <span className="text-base font-normal text-yc-neutral500 ml-1">({p.ingredient})</span>}
             </p>
             {p.sub && <p className="text-sm text-yc-neutral500 mt-0.5">{p.sub}</p>}
-            {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
+            {dosage && <p className="text-sm text-yc-neutral600 mt-0.5 font-semibold">{dosage}</p>}
 
             {/* 분류 배지 */}
             {info?.found && (info.category || info.classType) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {info.category && <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{info.category}</span>}
+                {info.category && <span className="text-xs bg-yc-neutral100 text-yc-neutral600 rounded-full px-2.5 py-0.5">{info.category}</span>}
                 {info.classType && <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{info.classType}</span>}
               </div>
             )}
@@ -297,11 +297,11 @@ export default function MedCardItem(p: MedCardItemProps) {
             {/* 효능 토글 */}
             {hasDetail && (
               <div className="mt-2">
-                <button onClick={() => { setOpen(o => !o); fetchInfoIfNeeded() }} className="text-sm text-yc-blue500 font-medium min-h-[44px] flex items-center">
+                <button onClick={() => { setOpen(o => !o); fetchInfoIfNeeded() }} className="text-sm text-yc-green600 font-medium min-h-[44px] flex items-center">
                   {open ? '닫기 ▲' : 'ⓘ 이 약은 어떤 약인가요? ▼'}
                 </button>
                 {open && (
-                  <div className="bg-yc-infoBg rounded-yc-md px-3 py-2.5 mt-1.5 space-y-2 text-sm text-yc-neutral700 leading-relaxed">
+                  <div className="bg-yc-neutral50 rounded-yc-md px-3 py-2.5 mt-1.5 space-y-2 text-sm text-yc-neutral700 leading-relaxed">
                     {info?.efcy      && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
                     {info?.useMethod && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
                     {info?.atpn      && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
@@ -324,7 +324,7 @@ export default function MedCardItem(p: MedCardItemProps) {
             ) : (
               <div className="flex gap-1 mt-2">
                 <button onClick={enterEdit} aria-label="수정"
-                  className="text-sm text-yc-neutral500 active:text-yc-blue500 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral50">수정</button>
+                  className="text-sm text-yc-neutral500 active:text-yc-green600 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral50">수정</button>
                 <button onClick={() => setMode('confirmDelete')} aria-label="삭제"
                   className="text-sm text-yc-neutral500 active:text-yc-error px-3 min-h-[44px] rounded-yc-md active:bg-yc-errorBg">삭제</button>
               </div>

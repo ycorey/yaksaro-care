@@ -5,20 +5,11 @@ import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
-import { Pill, Flask, Sun, HandsClapping, Check } from '@phosphor-icons/react'
+import { Pill, HandsClapping, Check } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { MEAL_ICONS } from '@/lib/meal-icons'
 
 export type { Meal } from '@/lib/meal-slots'
 import type { Meal } from '@/lib/meal-slots'
-
-// 끼니별 아이콘 강조색 (이 화면 한정 — 아이콘 자체는 공용 MEAL_ICONS)
-const MEAL_ACCENT: Record<Meal, string> = {
-  morning:   'text-yc-warning',
-  afternoon: 'text-yc-warning',
-  evening:   'text-yc-blue500',
-  bedtime:   'text-yc-neutral500',
-}
 
 export interface SlotState {
   meal: Meal
@@ -99,8 +90,6 @@ export default function TodayTimeline({
     return late[0] ?? null
   }, [slots, cur])
 
-  const doneCount = slots.filter(s => s.checked).length
-
   // 오늘의 건강 한 줄 (날짜 기준 고정 — 분 단위 갱신에 영향받지 않음)
   const tipDateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
   const tip = useMemo(
@@ -150,11 +139,11 @@ export default function TodayTimeline({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <AppHeader />
-      <h1 className="font-display text-2xl text-yc-neutral900 flex items-center gap-2">오늘 복약 <Sun weight="fill" size={22} className="text-yc-warning" /></h1>
+      <h1 className="font-display text-2xl text-yc-neutral900">오늘 복약</h1>
 
-      {/* 지연 알림 배너 */}
+      {/* 지연 알림 배너 (기능상 유지) */}
       {hasMeds && overdue && (
         <div className="bg-yc-warningBg border border-yc-warning/40 rounded-yc-lg px-5 py-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -175,24 +164,16 @@ export default function TodayTimeline({
         </div>
       )}
 
-      {/* 상단 요약 */}
-      {hasMeds && (
-        <p className="text-sm text-yc-neutral500">
-          오늘 {doneCount}/{slots.length} 챙김
-        </p>
-      )}
-
       {!hasMeds ? (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-lg font-semibold text-yc-neutral900 mb-1">복용 중인 약이 없어요</p>
           <p className="text-sm text-yc-neutral500">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
         </div>
       ) : (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
           {slots.map((s, i) => {
             const isNext = nextMeal === s.meal && !s.checked
-            const MealIcon = MEAL_ICONS[s.meal]
             return (
               <div
                 key={s.meal}
@@ -201,13 +182,10 @@ export default function TodayTimeline({
                 } ${isNext ? 'border-l-4 border-yc-green600 bg-yc-green50/40' : ''}`}
                 style={{ animationDelay: `${i * 80}ms` }}
               >
-                {/* 시간 라벨 */}
+                {/* 시간 라벨 — 무채 텍스트만 (강조는 '다음' 슬롯 그린 한 곳) */}
                 <div className="w-12 shrink-0 pt-0.5">
                   <p className="text-xs text-yc-neutral500 leading-tight">{s.time}</p>
-                  <p className="text-sm font-bold text-yc-neutral700 mt-0.5 flex items-center gap-1">
-                    <MealIcon weight="fill" size={14} className={MEAL_ACCENT[s.meal]} />
-                    {s.label}
-                  </p>
+                  <p className="text-sm font-bold text-yc-neutral700 mt-0.5">{s.label}</p>
                 </div>
 
                 {/* 타임라인 노드 — 완료=green 채움, 다음=흰+green 보더+글로우, 대기=neutral200 */}
@@ -254,26 +232,14 @@ export default function TodayTimeline({
         </div>
       )}
 
-      {hasMeds && doneCount === slots.length && (
-        <div className="bg-yc-green50 border border-yc-green100 rounded-yc-lg px-5 py-4 text-center">
-          <p className="text-base font-bold text-yc-green700 flex items-center justify-center gap-1.5">오늘 복약 완료 <Check weight="bold" size={16} /></p>
-        </div>
-      )}
-
-      {/* ── 오늘의 건강 한 줄 ── */}
+      {/* ── 오늘의 건강 한 줄 (톤 다운 — 아이콘·큰 이모지 제거) ── */}
       <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Flask weight="fill" size={16} className="text-yc-green600" />
-          <p className="text-xs font-bold tracking-wide text-yc-green600">오늘의 건강 한 줄</p>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-2xl leading-none mt-0.5">{tip.emoji}</span>
-          <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
-        </div>
+        <p className="text-xs font-bold tracking-wide text-yc-green600 mb-2">오늘의 건강 한 줄</p>
+        <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
       </div>
 
       <p className="text-xs text-yc-neutral500 text-center pb-36 leading-relaxed">
-        이 앱은 복약 정보 기록·참고 서비스입니다.<br />의학적 진단·처방을 대체하지 않습니다.
+        복약 정보 기록·참고 서비스 · 의학적 진단·처방을 대체하지 않습니다.
       </p>
 
       {/* ── 전체 복약 완료 축하 오버레이 (색종이는 canvas-confetti가 별도 렌더) ── */}

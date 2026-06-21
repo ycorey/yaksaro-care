@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Camera, PencilSimple, Pill, Warning, Phone, MapPin, Clock, Trash, Check } from '@phosphor-icons/react'
+import { Phone, MapPin, Trash, Check, Plus, CaretRight } from '@phosphor-icons/react'
 import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 import { logger } from '@/lib/logger'
@@ -64,19 +64,18 @@ function fmtDate(dateStr: string | null): string {
   return `${Number(m)}/${Number(d)} 처방`
 }
 
-// 카드 배경색 결정
-function cardBg(expired: boolean, daysLeft: number | null, isChecked: boolean): string {
-  if (isChecked) return 'bg-yc-infoBg border-yc-blue500/30'
-  if (expired) return 'bg-yc-neutral50 border-yc-neutral200 opacity-60'
-  if (daysLeft != null && daysLeft <= 3) return 'bg-yc-warningBg border-yc-warning/30'
-  return 'bg-white border-yc-neutral100'
+// 카드 배경색 결정 (P2/P3: 흰 면 1종 — 틴트는 체크/만료 상태에만 옅게, 보더 없음)
+function cardBg(expired: boolean, isChecked: boolean): string {
+  if (isChecked) return 'bg-white opacity-70'
+  if (expired) return 'bg-yc-neutral50 opacity-60'
+  return 'bg-white'
 }
 
-// 프로그레스바 색
+// 프로그레스바 색 (P1: 평상시 그린 단일 강조, 임박/만료만 상태색)
 function barColor(expired: boolean, daysLeft: number | null): string {
   if (expired) return 'bg-yc-neutral300'
   if (daysLeft != null && daysLeft <= 3) return 'bg-yc-warning'
-  return 'bg-yc-blue500'
+  return 'bg-yc-green600'
 }
 
 // meal_times 배열 → MEALS 순서를 유지하며 필터링
@@ -117,13 +116,13 @@ function GroupMealButtons({ groupKey, mealTimes, initialChecks, onAnyChecked }: 
   }
 
   return (
-    <div className="space-y-2 pt-4 border-t border-yc-blue500/15 mt-4">
+    <div className="space-y-2 pt-4 border-t border-yc-neutral100 mt-4">
       {activeMeals.map(({ key, label, done }) => {
         const Icon = MEAL_ICONS[key]
         return (
         <button key={key} onClick={() => toggle(key)} aria-pressed={checks[key]}
           className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-yc-lg text-base font-display transition-colors ${
-            checks[key] ? 'bg-yc-blue500 text-white' : 'bg-yc-infoBg text-yc-infoText active:opacity-90'
+            checks[key] ? 'bg-yc-green600 text-white' : 'bg-yc-neutral50 text-yc-neutral700 active:opacity-90'
           }`}>
           <span><Icon weight="fill" size={18} /></span><span>{checks[key] ? <><Check weight="bold" size={14} className="inline mr-1" />{done}</> : label}</span>
         </button>
@@ -176,6 +175,21 @@ function PrescriptionCard({
     ? `처방 ${g.totalDays}일 중 D+${elapsed}`
     : g.expiryLabel
 
+  // 접힌 카드 D-day 한 줄: 임박/만료는 잔여 위주 + 경고색, 그 외 D+경과
+  let ddayLead: string | null = null
+  let ddayTail: string | null = null
+  let ddayWarn = false
+  if (daysLeft != null && (g.expired || daysLeft <= 3)) {
+    ddayWarn = true
+    ddayLead = g.expired ? '복약 종료' : daysLeft === 0 ? '오늘까지' : `D-${daysLeft}`
+    ddayTail = g.expired ? null : '곧 종료'
+  } else if (elapsed != null && g.totalDays) {
+    ddayLead = `D+${elapsed}`
+    ddayTail = `${g.totalDays}일 처방`
+  } else if (g.expiryLabel) {
+    ddayLead = g.expiryLabel
+  }
+
   async function deleteAll() {
     setBusyDel(true)
     try {
@@ -195,76 +209,66 @@ function PrescriptionCard({
     }
   }
 
-  // 썸네일: 이미지 있는 것 최대 3개 + 나머지 💊
-  const thumbs = g.meds.slice(0, 4)
-
   if (deleted) return null
 
   return (
-    <div className={`rounded-yc-lg border shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${cardBg(g.expired, daysLeft, isChecked)}`}>
+    <div className={`rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${cardBg(g.expired, isChecked)}`}>
 
-      {/* ── 컴팩트 헤더 (항상 표시) ── */}
+      {/* ── 컴팩트 헤더 (항상 표시) — 약명·병원·D-day 3요소 ── */}
       <button type="button" onClick={() => setOpen(o => !o)}
-        className="w-full text-left px-4 pt-4 pb-3">
+        className="w-full text-left p-5 flex items-center gap-4">
 
-        {/* 병원명 + 처방일 */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <p className="font-display text-base text-yc-neutral900 leading-snug">{g.hospitalName}</p>
-          <span className="text-xs text-yc-neutral500 flex-shrink-0 mt-0.5">{fmtDate(g.prescribedAt)}</span>
-        </div>
-
-        {/* 약 썸네일 + 종수 */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex -space-x-2">
-            {thumbs.map((med, i) => (
-              <div key={med.id}
-                className="w-10 h-10 rounded-full border-2 border-white bg-yc-infoBg overflow-hidden flex items-center justify-center text-base flex-shrink-0"
-                style={{ zIndex: thumbs.length - i }}>
-                {med.imageUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img loading="lazy" decoding="async" src={med.imageUrl} alt={med.name} className="w-full h-full object-cover" />
-                  : <Pill weight="fill" size={18} className="text-yc-blue500 opacity-60" />}
-              </div>
-            ))}
-          </div>
-          <span className="text-sm text-yc-neutral500 font-medium ml-1">약 {g.meds.length}종</span>
-          {g.meds.some(m => m.hasInteractionWarning) && (
-            <span className="inline-flex items-center gap-0.5 text-xs bg-yc-warningBg text-yc-warningText px-2 py-0.5 rounded-full"><Warning weight="fill" size={11} /> 상호작용</span>
+        <div className="flex-1 min-w-0">
+          {/* 병원명 · 처방일 — 작은 라벨 */}
+          <p className="text-xs text-yc-neutral500 mb-1 truncate">
+            {g.hospitalName}{g.prescribedAt ? ` · ${fmtDate(g.prescribedAt)}` : ''}
+          </p>
+          {/* 첫 약명 — 주인공 (실버 UX: 크게) */}
+          <p className="font-display text-[19px] text-yc-neutral900 leading-snug truncate">
+            {g.meds[0]?.name}
+            {g.meds.length > 1 && (
+              <span className="text-sm font-semibold text-yc-neutral500"> 외 {g.meds.length - 1}종</span>
+            )}
+          </p>
+          {/* D-day 한 줄 */}
+          {ddayLead && (
+            <p className={`text-sm mt-1.5 ${ddayWarn ? 'text-yc-warningText' : 'text-yc-neutral500'}`}>
+              <span className="font-semibold">{ddayLead}</span>{ddayTail ? ` · ${ddayTail}` : ''}
+            </p>
           )}
         </div>
 
-        {/* 첫 약명 미리보기 — 접힌 상태에서도 핵심 정보 노출 */}
-        <p className="text-sm font-semibold text-yc-neutral800 truncate mb-3">
-          {g.meds[0]?.name}{g.meds.length > 1 ? ` 외 ${g.meds.length - 1}종` : ''}
-        </p>
-
-        {/* 프로그레스바 */}
-        {progress != null && (
-          <div className="mb-2">
-            <p className="text-xs text-yc-neutral500 mb-1.5 flex items-center gap-1"><Clock size={12} /> {progressLabel}</p>
-            <div className="w-full h-1.5 bg-yc-neutral200 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${barColor(g.expired, daysLeft)}`}
-                style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        )}
-
-        {/* 펼치기 링크 */}
-        <p className="text-xs text-yc-blue500 font-medium mt-1">
-          {open ? '접기 ▲' : '눌러서 자세히 보기 ›'}
-        </p>
+        {/* 우측: 경고점(상호작용) + 쉐브론 */}
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          {g.meds.some(m => m.hasInteractionWarning) && (
+            <span className="w-1.5 h-1.5 rounded-full bg-yc-warning" aria-label="상호작용 정보 있음" />
+          )}
+          <CaretRight weight="bold" size={16}
+            className={`text-yc-neutral300 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
+        </div>
       </button>
 
       {/* ── 펼쳐진 상세 뷰 ── */}
       {open && (
-        <div className="px-4 pb-4 border-t border-yc-neutral100 anim-expand">
+        <div className="px-5 pb-5 border-t border-yc-neutral100 anim-expand">
+          {/* 처방 진행 — 펼쳤을 때만 */}
+          {progress != null && (
+            <div className="pt-4">
+              <p className="text-xs text-yc-neutral500 mb-1.5">{progressLabel}</p>
+              <div className="w-full h-1.5 bg-yc-neutral200 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${barColor(g.expired, daysLeft)}`}
+                  style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          )}
+
           {/* 약국 연락처 */}
           {(g.pharmacyPhone || g.pharmacyAddress) && (
             <div className="py-3 space-y-0.5">
               {g.pharmacyPhone && (
                 <a href={`tel:${g.pharmacyPhone.replace(/[^0-9]/g, '')}`}
                   onClick={e => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 text-sm text-yc-blue500 font-medium">
+                  className="inline-flex items-center gap-1 text-sm text-yc-green600 font-medium">
                   <Phone weight="fill" size={14} /> {g.pharmacyPhone}
                 </a>
               )}
@@ -316,25 +320,30 @@ function PrescriptionCard({
   )
 }
 
+// 처방전 추가 CTA — 흰 면 단일 버튼 + 직접입력 한 줄 보조 (P: 점선 노이즈 제거)
+function AddPrescriptionCta() {
+  return (
+    <div>
+      <Link href="/medications/ocr"
+        className="flex items-center justify-center gap-1.5 py-4 rounded-yc-lg bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral500 text-sm font-semibold active:opacity-90">
+        <Plus weight="bold" size={16} /> 처방전 추가
+      </Link>
+      <Link href="/medications/add?tab=prescription"
+        className="block text-center text-xs text-yc-neutral500 mt-2.5 active:opacity-70">
+        직접 입력
+      </Link>
+    </div>
+  )
+}
+
 // ── 섹션 ──────────────────────────────────────────────────────────────
 export default function PrescriptionSection({ groups, serverChecks }: { groups: HospitalGroup[], serverChecks: Record<string, boolean> }) {
   const handleMealChecked = useCallback(() => {}, [])
 
-  if (groups.length === 0) return (
-    <div className="flex gap-2">
-      <Link href="/medications/ocr"
-        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
-        <Camera weight="fill" size={16} /> 처방전 촬영
-      </Link>
-      <Link href="/medications/add?tab=prescription"
-        className="flex-1 flex items-center justify-center gap-1.5 py-5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
-        <PencilSimple weight="fill" size={16} /> 직접 등록
-      </Link>
-    </div>
-  )
+  if (groups.length === 0) return <AddPrescriptionCta />
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {groups.map((g, i) => (
         <div key={g.key} className="anim-page" style={{ animationDelay: `${i * 70}ms` }}>
           <PrescriptionCard g={g} serverChecks={serverChecks} onAnyMealChecked={handleMealChecked} />
@@ -342,15 +351,8 @@ export default function PrescriptionSection({ groups, serverChecks }: { groups: 
       ))}
 
       {/* 처방전 추가 CTA */}
-      <div className="flex gap-2">
-        <Link href="/medications/ocr"
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
-          <Camera weight="fill" size={16} /> 처방전 촬영
-        </Link>
-        <Link href="/medications/add?tab=prescription"
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 rounded-yc-lg border-2 border-dashed border-yc-blue500/30 text-yc-blue500 text-sm font-semibold active:bg-yc-infoBg">
-          <PencilSimple weight="fill" size={16} /> 직접 등록
-        </Link>
+      <div className="pt-1">
+        <AddPrescriptionCta />
       </div>
     </div>
   )

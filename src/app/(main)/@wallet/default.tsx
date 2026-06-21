@@ -146,7 +146,7 @@ export default async function WalletPage() {
   const suppCount = suppRaws.length
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-8 pb-6">
       <PharmacyToast />
 
       {/* ── 헤더 ── */}
@@ -154,7 +154,6 @@ export default async function WalletPage() {
       <div className="flex items-center justify-between pt-1">
         <div>
           <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>
-          <p className="text-sm text-yc-neutral500 mt-0.5">종류별로 나눠서 한눈에</p>
         </div>
         <div className="hidden md:flex">
           <WalletHeaderActions />
@@ -163,19 +162,19 @@ export default async function WalletPage() {
 
       {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">
-        <SectionHeader label="처방의약품" count={rxCount} dotClassName="bg-yc-blue500" />
+        <SectionHeader label="처방의약품" count={rxCount} showDot={false} />
         <PrescriptionSection groups={prescriptionGroups} serverChecks={serverChecks} />
       </div>
 
       {/* ── 섹션 2: 일반의약품 ── */}
       <div className="space-y-3">
-        <SectionHeader label="일반의약품" count={otcCount} dotClassName="bg-yc-warning" />
+        <SectionHeader label="일반의약품" count={otcCount} showDot={false} />
         <OtcSection meds={otcCards} regularPharmacyPhone={regularPharmacyPhone} />
       </div>
 
       {/* ── 섹션 3: 영양보조제 ── */}
       <div className="space-y-3">
-        <SectionHeader label="영양보조제" count={suppCount} dotClassName="bg-yc-green600" />
+        <SectionHeader label="영양보조제" count={suppCount} showDot={false} />
         <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>
     </div>
