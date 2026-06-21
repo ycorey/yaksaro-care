@@ -1,0 +1,814 @@
+{
+  "meta": {
+    "generated_from": "_snapshot_raw.json + build-cases.mjs(LABELS)",
+    "snapshot_source": "MedData GET /api/v1/interactions/supplements (실응답 박제, 재호출 금지)",
+    "label_legend": {
+      "true_interaction": "질의약물에 해당하는 페어(매처가 matched 해야 정답). matched→TP, dropped→FN",
+      "noise": "다른 약물의 상호작용(매처가 dropped 해야 정답). matched→FP, dropped→TN",
+      "TODO": "약사 검수 대기 — 채점 제외"
+    },
+    "review_legend": {
+      "proposed": "자동 초안",
+      "confirmed": "약사 검수완료"
+    },
+    "notes": [
+      "라벨은 '매칭 게이트'용(이 페어가 질의약물에 해당하는가)이다. 임상 위험도/근거충분성은 별개 축.",
+      "ODS 출처 중복 페어(c1_p4·c3_p9·c6_p3·c7_p6)는 relevance.mjs가 dedup → 채점에 한 쪽만 나타남.",
+      "no_pairs(c8 자몽=식품 404)는 매칭 채점 대상 아님 — 시스템 커버리지 공백으로 별도 집계.",
+      "현재 모든 라벨 review=proposed. 약사 검수 후 confirmed로 승격 / TODO(c6_p2) 확정 필요."
+    ]
+  },
+  "cases": [
+    {
+      "id": "c1",
+      "supplement_ko": "오메가3",
+      "supplement_en": "Fish Oil",
+      "drug_query": "warfarin",
+      "clinical_fact": "출혈 위험 증가 가능",
+      "status": "has_pairs",
+      "returned_pairs": 4,
+      "snapshot": [
+        {
+          "pair_id": "c1_p1",
+          "item_1_name": "Warfarin and other blood thinners",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Fish Oil",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Fish oil has mild antiplatelet effects and may enhance the anticoagulant effect of warfarin, increasing the risk of bleeding. INR monitoring is recommended.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c1_p2",
+          "item_1_name": "Antiplatelet drugs (aspirin, clopidogrel)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Fish Oil",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Combining fish oil with antiplatelet medications may increase bleeding risk due to additive antiplatelet effects.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c1_p3",
+          "item_1_name": "Blood pressure medications",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Fish Oil",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "low",
+          "description": "Fish oil may modestly lower blood pressure. Combined with antihypertensives, this could lead to additive blood pressure lowering.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c1_p4",
+          "item_1_name": "warfarin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "fish oil",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Fish oil has mild antiplatelet effects and may enhance the anticoagulant effect of warfarin, increasing the risk of bleeding. INR monitoring is recommended.",
+          "source": "https://ods.od.nih.gov/factsheets/Omega3FattyAcids-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c1_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "질의약물 warfarin 직접 표기('Warfarin and other blood thinners'). 어유 항혈소판작용↑ 출혈위험"
+        },
+        "c1_p2": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "항혈소판제(aspirin/clopidogrel)는 warfarin과 다른 약"
+        },
+        "c1_p3": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "혈압약 — 질의약물 warfarin 무관"
+        },
+        "c1_p4": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "warfarin 페어(ODS 출처). p1과 설명 동일 → dedup 대상(채점엔 한 쪽만)"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "supplement_ko": "은행잎추출물",
+      "supplement_en": "Ginkgo",
+      "drug_query": "aspirin",
+      "clinical_fact": "출혈 위험",
+      "status": "has_pairs",
+      "returned_pairs": 1,
+      "snapshot": [
+        {
+          "pair_id": "c2_p1",
+          "item_1_name": "aspirin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Ginkgo",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Ginkgo's antiplatelet effects combined with NSAIDs' antiplatelet properties significantly increase the risk of bleeding, including GI bleeding and intracranial hemorrhage.",
+          "source": "https://ods.od.nih.gov/factsheets/Ginkgo-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c2_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "질의약물 aspirin 직접 표기. 은행잎 항혈소판작용 + NSAID → 출혈위험"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "sertraline",
+      "clinical_fact": "세로토닌 증후군",
+      "status": "has_pairs",
+      "returned_pairs": 9,
+      "snapshot": [
+        {
+          "pair_id": "c3_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Combining St. John's Wort with SSRIs can cause serotonin syndrome, a potentially life-threatening condition characterized by agitation, confusion, rapid heart rate, high blood pressure, and hyperthermia.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p3",
+          "item_1_name": "Oral contraceptives (birth control pills)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort increases metabolism of hormonal contraceptives through CYP3A4 induction, potentially causing breakthrough bleeding and contraceptive failure.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p4",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p5",
+          "item_1_name": "HIV protease inhibitors (indinavir, ritonavir)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort can reduce blood levels of HIV medications by 50% or more, potentially leading to treatment failure and viral resistance. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p6",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p7",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p8",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c3_p9",
+          "item_1_name": "sertraline",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Combining St. John's Wort with SSRIs can cause serotonin syndrome, a potentially life-threatening condition characterized by agitation, confusion, rapid heart rate, high blood pressure, and hyperthermia.",
+          "source": "https://ods.od.nih.gov/factsheets/StJohnsWort-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c3_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "'SSRIs (sertraline, ...)' 클래스에 질의약물 sertraline 포함. 세로토닌증후군"
+        },
+        "c3_p2": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "warfarin은 질의약물(sertraline) 아님"
+        },
+        "c3_p3": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "경구피임약 — sertraline 무관"
+        },
+        "c3_p4": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "면역억제제 — sertraline 무관"
+        },
+        "c3_p5": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "HIV 단백분해효소억제제 — sertraline 무관"
+        },
+        "c3_p6": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "digoxin — sertraline 무관"
+        },
+        "c3_p7": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "항경련제 — sertraline 무관"
+        },
+        "c3_p8": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "statin — sertraline 무관"
+        },
+        "c3_p9": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "sertraline 페어(ODS 출처). p1과 설명 동일 → dedup 대상"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "ethinyl estradiol",
+      "clinical_fact": "경구피임약 효과 감소",
+      "status": "has_pairs",
+      "returned_pairs": 8,
+      "snapshot": [
+        {
+          "pair_id": "c4_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Combining St. John's Wort with SSRIs can cause serotonin syndrome, a potentially life-threatening condition characterized by agitation, confusion, rapid heart rate, high blood pressure, and hyperthermia.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p3",
+          "item_1_name": "Oral contraceptives (birth control pills)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort increases metabolism of hormonal contraceptives through CYP3A4 induction, potentially causing breakthrough bleeding and contraceptive failure.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p4",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p5",
+          "item_1_name": "HIV protease inhibitors (indinavir, ritonavir)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort can reduce blood levels of HIV medications by 50% or more, potentially leading to treatment failure and viral resistance. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p6",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p7",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c4_p8",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        }
+      ],
+      "labels": {
+        "c4_p1": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "SSRI — 질의약물(피임약) 아님"
+        },
+        "c4_p2": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "warfarin — 피임약 아님"
+        },
+        "c4_p3": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "★질의약물 ethinyl estradiol = 경구피임약. 'Oral contraceptives' 클래스 일치. CYP3A4 유도로 피임효과 감소(확립)"
+        },
+        "c4_p4": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "면역억제제 — 피임약 아님"
+        },
+        "c4_p5": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "HIV약 — 피임약 아님"
+        },
+        "c4_p6": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "digoxin — 피임약 아님"
+        },
+        "c4_p7": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "항경련제 — 피임약 아님"
+        },
+        "c4_p8": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "statin — 피임약 아님"
+        }
+      }
+    },
+    {
+      "id": "c5",
+      "supplement_ko": "칼슘",
+      "supplement_en": "Calcium",
+      "drug_query": "ciprofloxacin",
+      "clinical_fact": "흡수 저해(킬레이션)",
+      "status": "has_pairs",
+      "returned_pairs": 5,
+      "snapshot": [
+        {
+          "pair_id": "c5_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium reduces levothyroxine absorption by forming insoluble complexes. Separate doses by at least 4 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c5_p2",
+          "item_1_name": "Fluoroquinolone antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium chelates fluoroquinolones and reduces their absorption. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c5_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium binds to tetracyclines, reducing their absorption significantly. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c5_p4",
+          "item_1_name": "Bisphosphonates (alendronate)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium reduces bisphosphonate absorption. Take bisphosphonates at least 30 minutes before calcium supplements.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c5_p5",
+          "item_1_name": "Thiazide diuretics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Thiazide diuretics reduce calcium excretion. Combined with calcium supplements, this may increase risk of hypercalcemia.",
+          "source": "Supplements DB"
+        }
+      ],
+      "labels": {
+        "c5_p1": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "levothyroxine — 질의약물(ciprofloxacin) 아님"
+        },
+        "c5_p2": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "ciprofloxacin ∈ 'Fluoroquinolone antibiotics'. 칼슘 킬레이션 흡수저해"
+        },
+        "c5_p3": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "tetracycline — 다른 항생제 계열, ciprofloxacin 아님"
+        },
+        "c5_p4": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "bisphosphonate — ciprofloxacin 무관"
+        },
+        "c5_p5": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "thiazide 이뇨제 — ciprofloxacin 무관"
+        }
+      }
+    },
+    {
+      "id": "c6",
+      "supplement_ko": "비타민K",
+      "supplement_en": "Vitamin K",
+      "drug_query": "warfarin",
+      "clinical_fact": "항응고 효과 감소",
+      "status": "has_pairs",
+      "returned_pairs": 3,
+      "snapshot": [
+        {
+          "pair_id": "c6_p1",
+          "item_1_name": "Warfarin (Coumadin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Vitamin K",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Vitamin K directly antagonizes the anticoagulant effect of warfarin. Increased vitamin K intake reduces INR, decreasing warfarin's effectiveness and increasing clotting risk. Patients on warfarin should maintain consistent vitamin K intake and avoid supplementation without medical supervision.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c6_p2",
+          "item_1_name": "Other anticoagulants (novel oral anticoagulants)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Vitamin K",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "low",
+          "description": "NOACs (rivaroxaban, apixaban, dabigatran) work through different mechanisms than warfarin. Vitamin K supplementation does not typically affect their efficacy, but discussion with a healthcare provider is still recommended.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c6_p3",
+          "item_1_name": "warfarin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Vitamin K",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "high",
+          "description": "Vitamin K directly antagonizes the anticoagulant effect of warfarin. Increased vitamin K intake reduces INR, decreasing warfarin's effectiveness and increasing clotting risk. Patients on warfarin should maintain consistent vitamin K intake and avoid supplementation without medical supervision.",
+          "source": "https://ods.od.nih.gov/factsheets/VitaminK-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c6_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "질의약물 warfarin 직접 표기. 비타민K가 항응고작용 직접 길항(INR↓)"
+        },
+        "c6_p2": {
+          "label": "TODO",
+          "review": "proposed",
+          "why": "약사검수: 'Other anticoagulants(NOAC)' 페어. 설명에 warfarin이 '대조'로 등장해 규칙매처가 매칭할 소지 큼. 그러나 실제 약은 NOAC(질의 warfarin 아님)이고 'Vit K가 NOAC엔 영향 없음'을 말함 → warfarin 사용자에게 띄우면 거짓경고(FP)인가? 판단 필요"
+        },
+        "c6_p3": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "warfarin 페어(ODS 출처). p1과 설명 동일 → dedup 대상"
+        }
+      }
+    },
+    {
+      "id": "c7",
+      "supplement_ko": "철분",
+      "supplement_en": "Iron",
+      "drug_query": "levothyroxine",
+      "clinical_fact": "흡수 저해",
+      "status": "has_pairs",
+      "returned_pairs": 6,
+      "snapshot": [
+        {
+          "pair_id": "c7_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron significantly reduces levothyroxine absorption by forming insoluble complexes. Separate doses by at least 4 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c7_p2",
+          "item_1_name": "Fluoroquinolone antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron chelates fluoroquinolones, significantly reducing their absorption and effectiveness. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c7_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron binds to tetracyclines and reduces their absorption. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c7_p4",
+          "item_1_name": "Levodopa/Carbidopa",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron can reduce absorption of levodopa, used for Parkinson's disease. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c7_p5",
+          "item_1_name": "ACE inhibitors",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "low",
+          "description": "Iron may reduce absorption of some ACE inhibitors. Separate doses by at least 2 hours.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c7_p6",
+          "item_1_name": "levothyroxine",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron significantly reduces levothyroxine absorption by forming insoluble complexes. Separate doses by at least 4 hours.",
+          "source": "https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c7_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "질의약물 levothyroxine 직접 표기. 철분이 불용성 복합체 형성 흡수저해"
+        },
+        "c7_p2": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "fluoroquinolone — levothyroxine 아님"
+        },
+        "c7_p3": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "tetracycline — levothyroxine 아님"
+        },
+        "c7_p4": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "levodopa/carbidopa — 이름이 'levo'로 시작하나 levothyroxine과 다른 약(파킨슨약)"
+        },
+        "c7_p5": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "ACE억제제 — levothyroxine 무관"
+        },
+        "c7_p6": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "levothyroxine 페어(ODS 출처). p1과 설명 동일 → dedup 대상"
+        }
+      }
+    },
+    {
+      "id": "c8",
+      "supplement_ko": "자몽",
+      "supplement_en": "Grapefruit",
+      "drug_query": "simvastatin",
+      "clinical_fact": "CYP3A4 억제, 농도 증가 (식품 — DB 미수록)",
+      "status": "no_pairs",
+      "returned_pairs": 0,
+      "snapshot": [],
+      "labels": {}
+    },
+    {
+      "id": "c9",
+      "supplement_ko": "코엔자임Q10",
+      "supplement_en": "Coenzyme Q10",
+      "drug_query": "warfarin",
+      "clinical_fact": "항응고 효과 변동",
+      "status": "has_pairs",
+      "returned_pairs": 1,
+      "snapshot": [
+        {
+          "pair_id": "c9_p1",
+          "item_1_name": "warfarin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Coenzyme Q10",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "CoQ10 is structurally similar to vitamin K and may reduce the effectiveness of warfarin, decreasing INR. Regular INR monitoring is essential.",
+          "source": "https://ods.od.nih.gov/factsheets/CoenzymeQ10-HealthProfessional/"
+        }
+      ],
+      "labels": {
+        "c9_p1": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "질의약물 warfarin 직접 표기. (매칭상 정답. 단 'vit K와 구조유사' 기전설명은 논쟁적 — 임상검증은 근거레이어 몫, 매칭 라벨과 무관)"
+        }
+      }
+    },
+    {
+      "id": "c10",
+      "supplement_ko": "프로바이오틱스",
+      "supplement_en": "Probiotics",
+      "drug_query": "amoxicillin",
+      "clinical_fact": "효과 상쇄(복용 간격)",
+      "status": "has_pairs",
+      "returned_pairs": 2,
+      "snapshot": [
+        {
+          "pair_id": "c10_p1",
+          "item_1_name": "Immunosuppressants",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Probiotics",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "In immunocompromised patients, live probiotics may cause infections (bacteremia or fungemia). Use with caution in transplant recipients and those on immunosuppressive therapy.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c10_p2",
+          "item_1_name": "Antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Probiotics",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "low",
+          "description": "Antibiotics may kill probiotic organisms, reducing their effectiveness. Separate doses by at least 2 hours. Probiotics are often recommended alongside antibiotics to prevent Clostridioides difficile infection.",
+          "source": "Supplements DB"
+        }
+      ],
+      "labels": {
+        "c10_p1": {
+          "label": "noise",
+          "review": "proposed",
+          "why": "면역억제제(균혈증 위험) — 질의약물(amoxicillin) 아님"
+        },
+        "c10_p2": {
+          "label": "true_interaction",
+          "review": "proposed",
+          "why": "amoxicillin ∈ 'Antibiotics'. 항생제가 유산균 사멸 → 2시간 간격"
+        }
+      }
+    }
+  ]
+}

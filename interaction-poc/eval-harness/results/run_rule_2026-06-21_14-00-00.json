@@ -1,0 +1,629 @@
+{
+  "run": {
+    "matcher": "rule",
+    "date": "2026-06-21T14:00:00",
+    "cases_file": "C:/Users/main/yaksaro-care/interaction-poc/eval-harness/golden/cases.json",
+    "n_cases": 10
+  },
+  "metrics": {
+    "precision": 1,
+    "recall": 1,
+    "f1": 1,
+    "f2": 1
+  },
+  "totals": {
+    "tp": 9,
+    "fp": 0,
+    "fn": 0,
+    "tn": 25,
+    "todo_matched": 1,
+    "todo_dropped": 0,
+    "deduped": 4,
+    "unlabeled": 0
+  },
+  "n_cases": 10,
+  "n_scored_cases": 9,
+  "n_no_pairs": 1,
+  "cases": [
+    {
+      "case_id": "c1",
+      "supplement_ko": "오메가3",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 2,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c1_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c1_p2",
+          "c1_p3"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c1_p1": {
+          "score": 6,
+          "reason": "matched keywords: warfarin, anticoagulant, blood thinner, blood thinners"
+        },
+        "c1_p2": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c1_p3": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c1_p1"
+      ],
+      "dropped_ids": [
+        "c1_p2",
+        "c1_p3"
+      ]
+    },
+    {
+      "case_id": "c2",
+      "supplement_ko": "은행잎추출물",
+      "drug_query": "aspirin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c2_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c2_p1": {
+          "score": 3,
+          "reason": "matched keywords: aspirin, nsaid, antiplatelet"
+        }
+      },
+      "matched_ids": [
+        "c2_p1"
+      ],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c3",
+      "supplement_ko": "세인트존스워트",
+      "drug_query": "sertraline",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 7,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c3_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c3_p2",
+          "c3_p3",
+          "c3_p4",
+          "c3_p5",
+          "c3_p6",
+          "c3_p7",
+          "c3_p8"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c3_p1": {
+          "score": 3,
+          "reason": "matched keywords: sertraline, ssri, serotonin"
+        },
+        "c3_p2": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p3": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p4": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p5": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p6": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p7": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c3_p8": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c3_p1"
+      ],
+      "dropped_ids": [
+        "c3_p2",
+        "c3_p3",
+        "c3_p4",
+        "c3_p5",
+        "c3_p6",
+        "c3_p7",
+        "c3_p8"
+      ]
+    },
+    {
+      "case_id": "c4",
+      "supplement_ko": "세인트존스워트",
+      "drug_query": "ethinyl estradiol",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 7,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c4_p3"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c4_p1",
+          "c4_p2",
+          "c4_p4",
+          "c4_p5",
+          "c4_p6",
+          "c4_p7",
+          "c4_p8"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c4_p3": {
+          "score": 7,
+          "reason": "matched keywords: oral contraceptive, contracep, birth control, hormonal contracep"
+        },
+        "c4_p1": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p2": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p4": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p5": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p6": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p7": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c4_p8": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c4_p3"
+      ],
+      "dropped_ids": [
+        "c4_p1",
+        "c4_p2",
+        "c4_p4",
+        "c4_p5",
+        "c4_p6",
+        "c4_p7",
+        "c4_p8"
+      ]
+    },
+    {
+      "case_id": "c5",
+      "supplement_ko": "칼슘",
+      "drug_query": "ciprofloxacin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 4,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c5_p2"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c5_p1",
+          "c5_p3",
+          "c5_p4",
+          "c5_p5"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c5_p2": {
+          "score": 2,
+          "reason": "matched keywords: fluoroquinolone, quinolone"
+        },
+        "c5_p1": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c5_p3": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c5_p4": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c5_p5": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c5_p2"
+      ],
+      "dropped_ids": [
+        "c5_p1",
+        "c5_p3",
+        "c5_p4",
+        "c5_p5"
+      ]
+    },
+    {
+      "case_id": "c6",
+      "supplement_ko": "비타민K",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 1,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c6_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [
+          "c6_p2"
+        ],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c6_p1": {
+          "score": 3,
+          "reason": "matched keywords: warfarin, coumadin, anticoagulant"
+        },
+        "c6_p2": {
+          "score": 2,
+          "reason": "matched keywords: warfarin, anticoagulant"
+        }
+      },
+      "matched_ids": [
+        "c6_p1",
+        "c6_p2"
+      ],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c7",
+      "supplement_ko": "철분",
+      "drug_query": "levothyroxine",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 4,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c7_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c7_p2",
+          "c7_p3",
+          "c7_p4",
+          "c7_p5"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c7_p1": {
+          "score": 3,
+          "reason": "matched keywords: levothyroxine, thyroid, thyroxine"
+        },
+        "c7_p2": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c7_p3": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c7_p4": {
+          "score": 0,
+          "reason": "no keyword match"
+        },
+        "c7_p5": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c7_p1"
+      ],
+      "dropped_ids": [
+        "c7_p2",
+        "c7_p3",
+        "c7_p4",
+        "c7_p5"
+      ]
+    },
+    {
+      "case_id": "c8",
+      "supplement_ko": "자몽",
+      "drug_query": "simvastatin",
+      "status": "no_pairs",
+      "scored": false,
+      "reason": "no_pairs (MedData 미수록 — 매칭할 페어 없음)",
+      "counts": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0
+      },
+      "metrics": {
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "f2": null
+      },
+      "buckets": {
+        "tp": [],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {},
+      "matched_ids": [],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c9",
+      "supplement_ko": "코엔자임Q10",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c9_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c9_p1": {
+          "score": 1,
+          "reason": "matched keywords: warfarin"
+        }
+      },
+      "matched_ids": [
+        "c9_p1"
+      ],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c10",
+      "supplement_ko": "프로바이오틱스",
+      "drug_query": "amoxicillin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c10_p2"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c10_p1"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c10_p2": {
+          "score": 1,
+          "reason": "matched keywords: antibiotic"
+        },
+        "c10_p1": {
+          "score": 0,
+          "reason": "no keyword match"
+        }
+      },
+      "matched_ids": [
+        "c10_p2"
+      ],
+      "dropped_ids": [
+        "c10_p1"
+      ]
+    }
+  ]
+}

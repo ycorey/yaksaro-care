@@ -132,6 +132,19 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 ---
 
+## 하네스: 상호작용 매칭 게이트 평가
+
+**목표:** 건기식·약물 상호작용 파이프라인의 **관련성 매칭 게이트**(MedData가 페어매칭을 안 해서 필요한 핵심 차별점)를 갈아끼울 때(rule→rxclass→claude→hybrid) "정말 나아졌는지"를 precision/recall로 증명한다. (작업 루트: `interaction-poc/eval-harness/`. 무파괴: `interaction-poc/04_pipeline_poc/`는 import만.)
+
+**트리거:** "매칭 게이트 평가", "매처 평가/채점", "precision recall 측정", "매처 baseline", "rxclass 붙이고 재측정", "claude 매처 비교", "hybrid 매처", "매처 회귀", "정답셋 확장/라벨링", "다시 측정", "baseline 갱신" 요청 시 `matcher-eval-orchestrator` 스킬 사용. (상호작용 *파이프라인 자체*는 `interaction-poc/04_pipeline_poc` — 이쪽은 그 매칭 게이트를 *평가/승급*하는 전용 하네스.) 팀: matcher-engineer·golden-curator·eval-scorer·eval-qa.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|------|----------|------|------|
+| 2026-06-21 | 초기 구성 + 평가 코드 STEP1~5 | eval-harness/ 전체·agents 4·skills 4 | 매칭 게이트 precision/recall 채점·회귀 비교 프레임. rule baseline=1.000(시드, DRUG_HINTS 손맞춤 한계 명시), rxclass/claude/hybrid 스켈레톤 |
+
+---
+
 ## 변경 이력
 
 | 날짜 | 변경 내용 | 대상 | 사유 |
