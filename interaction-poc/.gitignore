@@ -1,0 +1,6 @@
+.env
+*_result.json
+*_log.txt
+node_modules/
+.omc/
+nul
