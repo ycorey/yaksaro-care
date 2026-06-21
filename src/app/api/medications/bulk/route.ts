@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logDurShadow } from '@/lib/dur-shadow'
+import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
 
 export async function POST(request: Request) {
@@ -91,6 +92,9 @@ export async function POST(request: Request) {
   if (drugIds.length >= 2) {
     logDurShadow(user.id, drugIds, prescription_id ?? undefined)
   }
+
+  // 건기식·약물 상호작용 shadow: 지갑 전체(약물×건기식) 기준 (fire-and-forget)
+  logSupplementInteractionShadow(user.id, prescription_id ?? undefined)
 
   // 조제 약국 정보를 처방전에 반영
   if (prescription_id && pharmacy_name) {

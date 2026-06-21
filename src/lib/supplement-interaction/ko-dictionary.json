@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "desc": "한글 건기식 통칭 → 영문 임상 성분명/RxCUI 정규화 사전 (PoC 검증 시드 10종)",
+    "rxcui_source": "RxNorm/RxNav (findRxcuiByString, tty=IN)",
+    "note": "rxcui_broad = 통칭이 풀리는 광의 개념(드리프트). strain_level/rule = 규칙기반 보완 항목. 출처: interaction-poc/04_pipeline_poc/ko_supplement_dictionary.json (PoC 검증본)"
+  },
+  "오메가3": { "en": "Fish Oil", "ingredient_en": "omega-3 acid ethyl esters", "rxcui": "484348", "rxcui_broad": "4301", "aliases": ["오메가-3", "오메가쓰리", "EPA", "DHA", "피쉬오일", "fish oil", "omega-3"] },
+  "마그네슘": { "en": "Magnesium", "ingredient_en": "magnesium", "rxcui": "6574", "aliases": ["Mg", "마그네숨", "magnesium"] },
+  "비타민K": { "en": "Vitamin K", "ingredient_en": "phytonadione", "rxcui": "8308", "aliases": ["비타민케이", "vitamin k", "vitamin k1", "phytonadione"] },
+  "은행잎추출물": { "en": "Ginkgo", "ingredient_en": "ginkgo biloba", "rxcui": "236809", "aliases": ["징코", "은행잎", "ginkgo", "ginkgo biloba"] },
+  "세인트존스워트": { "en": "St. John's Wort", "ingredient_en": "st. john's wort", "rxcui": "258326", "aliases": ["성요한초", "고추나물", "st johns wort", "st. john's wort"] },
+  "칼슘": { "en": "Calcium", "ingredient_en": "calcium", "rxcui": "1895", "aliases": ["Ca", "calcium"] },
+  "철분": { "en": "Iron", "ingredient_en": "iron", "rxcui": "90176", "aliases": ["철", "Fe", "훼럼", "iron"] },
+  "코엔자임Q10": { "en": "Coenzyme Q10", "ingredient_en": "ubidecarenone", "rxcui": "21406", "aliases": ["코큐텐", "CoQ10", "유비퀴논", "coenzyme q10", "ubidecarenone"] },
+  "프로바이오틱스": { "en": "Probiotics", "ingredient_en": "lactobacillus acidophilus", "rxcui": "6205", "strain_level": true, "rule": "항생제와 2시간 이상 간격 복용 권장", "aliases": ["유산균", "락토바실러스", "probiotics", "lactobacillus"] },
+  "비타민D": { "en": "Vitamin D", "ingredient_en": "cholecalciferol", "rxcui": "2418", "aliases": ["비타민디", "비타민D3", "D3", "vitamin d", "cholecalciferol"] }
+}

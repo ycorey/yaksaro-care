@@ -471,6 +471,84 @@ export type Database = {
           },
         ]
       }
+      supplement_interaction_cache: {
+        Row: {
+          drug_input: string
+          fetched_at: string
+          id: string
+          interaction_count: number
+          result: Json
+          status: string
+          supplement_input: string
+        }
+        Insert: {
+          drug_input: string
+          fetched_at?: string
+          id?: string
+          interaction_count?: number
+          result: Json
+          status: string
+          supplement_input: string
+        }
+        Update: {
+          drug_input?: string
+          fetched_at?: string
+          id?: string
+          interaction_count?: number
+          result?: Json
+          status?: string
+          supplement_input?: string
+        }
+        Relationships: []
+      }
+      supplement_interaction_shadow_logs: {
+        Row: {
+          cache_hit_count: number
+          created_at: string | null
+          drug_count: number
+          drug_normalized_count: number
+          id: string
+          interaction_found_count: number
+          meddata_called_count: number
+          ocr_session_id: string | null
+          pair_count: number
+          severity_summary: Json | null
+          supplement_count: number
+          supplement_normalized_count: number
+          user_id: string | null
+        }
+        Insert: {
+          cache_hit_count?: number
+          created_at?: string | null
+          drug_count?: number
+          drug_normalized_count?: number
+          id?: string
+          interaction_found_count?: number
+          meddata_called_count?: number
+          ocr_session_id?: string | null
+          pair_count?: number
+          severity_summary?: Json | null
+          supplement_count?: number
+          supplement_normalized_count?: number
+          user_id?: string | null
+        }
+        Update: {
+          cache_hit_count?: number
+          created_at?: string | null
+          drug_count?: number
+          drug_normalized_count?: number
+          id?: string
+          interaction_found_count?: number
+          meddata_called_count?: number
+          ocr_session_id?: string | null
+          pair_count?: number
+          severity_summary?: Json | null
+          supplement_count?: number
+          supplement_normalized_count?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       supplements: {
         Row: {
           caution: string | null
