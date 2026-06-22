@@ -41,6 +41,32 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const q       = searchParams.get('q')?.trim()
   const otcOnly = searchParams.get('otcOnly') === 'true'
+  const barcode = searchParams.get('barcode')?.replace(/\D/g, '') || null
+
+  // 바코드 단건 조회: drugs → supplements 순. 둘 다 없으면 빈 결과(프론트가 검색 폴백)
+  if (barcode) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+    const { data: drug } = await supabase
+      .from('drugs').select('id, item_seq, item_name, entp_name, image_url')
+      .eq('barcode', barcode).eq('is_canceled', false).limit(1).maybeSingle()
+    if (drug) {
+      const hit: DrugResult = {
+        id: drug.id, item_seq: drug.item_seq ?? null, item_name: drug.item_name,
+        entp_name: drug.entp_name ?? null, image_url: drug.image_url ?? null, source: 'db',
+      }
+      return NextResponse.json({ drugs: [hit], supplements: [] })
+    }
+
+    const { data: supp } = await supabase
+      .from('supplements').select('id, product_name, company_name')
+      .eq('barcode', barcode).limit(1).maybeSingle()
+    if (supp) return NextResponse.json({ drugs: [], supplements: [supp] })
+
+    return NextResponse.json({ drugs: [], supplements: [] })
+  }
 
   if (!q || q.length < 1) return NextResponse.json({ drugs: [], supplements: [] })
 
@@ -75,6 +101,26 @@ export async function GET(request: Request) {
   const mergedDrugs = [...(drugPrefixRes.data ?? []), ...(drugContainsRes.data ?? [])]
     .filter(d => !seenDrugIds.has(d.id) && seenDrugIds.add(d.id))
     .slice(0, 8)
+
+  // 성분명 검색: drug_ingredients(한글/영문)에서 매칭되는 drug_id 수집 → 약품 보완
+  // (이름으로 안 잡히는 "성분으로 약 찾기" 케이스. 이름 결과가 8개 미만일 때만 보완)
+  if (mergedDrugs.length < 8) {
+    const [ingKoRes, ingEnRes] = await Promise.all([
+      supabase.from('drug_ingredients').select('drug_id').ilike('name_ko', `%${q}%`).limit(40),
+      supabase.from('drug_ingredients').select('drug_id').ilike('name_en', `%${q}%`).limit(40),
+    ])
+    const ingIds = [...new Set([...(ingKoRes.data ?? []), ...(ingEnRes.data ?? [])].map(r => r.drug_id))]
+      .filter(id => !seenDrugIds.has(id))
+      .slice(0, 20)
+    if (ingIds.length) {
+      const { data: ingDrugs } = await drugBase({ otc: otcOnly }).in('id', ingIds).limit(8 - mergedDrugs.length)
+      for (const d of ingDrugs ?? []) {
+        if (seenDrugIds.has(d.id) || mergedDrugs.length >= 8) continue
+        seenDrugIds.add(d.id)
+        mergedDrugs.push(d)
+      }
+    }
+  }
 
   const seenSuppIds = new Set<string>()
   const mergedSupps = [...(suppPrefixRes.data ?? []), ...(suppContainsRes.data ?? [])]

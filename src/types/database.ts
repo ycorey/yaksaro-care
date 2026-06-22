@@ -18,6 +18,7 @@ export type Database = {
     Tables: {
       drugs: {
         Row: {
+          barcode: string | null
           chart: string | null
           edi_code: string | null
           entp_name: string | null
@@ -33,6 +34,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          barcode?: string | null
           chart?: string | null
           edi_code?: string | null
           entp_name?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          barcode?: string | null
           chart?: string | null
           edi_code?: string | null
           entp_name?: string | null
@@ -63,6 +66,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      drug_ingredients: {
+        Row: {
+          amount: string | null
+          drug_id: string
+          id: string
+          ingredient_code: string | null
+          name_en: string
+          name_ko: string | null
+          position: number
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: string | null
+          drug_id: string
+          id?: string
+          ingredient_code?: string | null
+          name_en: string
+          name_ko?: string | null
+          position?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: string | null
+          drug_id?: string
+          id?: string
+          ingredient_code?: string | null
+          name_en?: string
+          name_ko?: string | null
+          position?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drug_ingredients_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       dur_shadow_logs: {
         Row: {
@@ -551,6 +598,7 @@ export type Database = {
       }
       supplements: {
         Row: {
+          barcode: string | null
           caution: string | null
           company_name: string | null
           id: string
@@ -560,6 +608,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          barcode?: string | null
           caution?: string | null
           company_name?: string | null
           id?: string
@@ -569,6 +618,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          barcode?: string | null
           caution?: string | null
           company_name?: string | null
           id?: string

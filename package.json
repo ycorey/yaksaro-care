@@ -10,13 +10,17 @@
     "etl": "node scripts/etl-drugs.mjs",
     "etl:drugs": "node scripts/etl-drugs.mjs --drugs",
     "etl:supplements": "node scripts/etl-drugs.mjs --supplements",
-    "etl:dur": "node scripts/etl-drugs.mjs --dur"
+    "etl:dur": "node scripts/etl-drugs.mjs --dur",
+    "etl:ingredients": "node scripts/etl-ingredients.mjs",
+    "etl:drug-barcode": "node scripts/etl-drug-barcode.mjs",
+    "etl:supplement-barcode": "node scripts/etl-supplement-barcode.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "@zxing/browser": "^0.2.0",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

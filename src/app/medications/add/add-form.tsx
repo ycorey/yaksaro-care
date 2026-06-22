@@ -9,10 +9,10 @@ import { MEAL_ICONS } from '@/lib/meal-icons'
 
 type TabType = 'prescription' | 'otc' | 'supplement'
 
-type DrugHit = { id: string; item_seq: string | null; item_name: string; entp_name: string | null; image_url: string | null; source: 'db' | 'api' }
-type SuppHit = { id: string; product_name: string; company_name: string | null }
+export type DrugHit = { id: string; item_seq: string | null; item_name: string; entp_name: string | null; image_url: string | null; source: 'db' | 'api' }
+export type SuppHit = { id: string; product_name: string; company_name: string | null }
 
-type Selected =
+export type Selected =
   | { type: 'drug'; id: string; item_seq: string | null; name: string; sub: string; source: 'db' | 'api'; imageUrl: string | null }
   | { type: 'supplement'; id: string; name: string; sub: string }
   | { type: 'custom'; name: string }
@@ -206,9 +206,9 @@ function DrugSearch({
 }
 
 // ── 메인 폼 ──────────────────────────────────────────────────────────
-export default function AddForm({ initialTab }: { initialTab: TabType }) {
+export default function AddForm({ initialTab, initialSelected = null }: { initialTab: TabType; initialSelected?: Selected | null }) {
   const tab = initialTab  // 진입 탭에 고정 (변경 없음)
-  const [selected, setSelected] = useState<Selected | null>(null)
+  const [selected, setSelected] = useState<Selected | null>(initialSelected)
   const [saving, setSaving]     = useState(false)
 
   // 처방의약품 전용 상태

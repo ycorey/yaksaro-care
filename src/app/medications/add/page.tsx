@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
+import BarcodeAddFlow from './barcode-scanner'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
 import { BackButton } from '../back-button'
@@ -70,6 +71,9 @@ function PrescriptionMethodScreen() {
         <MethodCard href="/medications/ocr" iconBg="bg-yc-warning"
           icon={<AddIcon name="qr" className="text-white" />}
           title="처방전 QR 스캔" desc="QR이 있으면 가장 정확해요" />
+        <MethodCard href="/medications/add?method=barcode&tab=otc" iconBg="bg-yc-green600"
+          icon={<AddIcon name="barcode" className="text-white" />}
+          title="바코드 스캔" desc="일반약 박스 바코드를 찍어 담아요" />
         <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green100"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="약 이름·용법을 직접 적어요" />
@@ -97,12 +101,12 @@ function SupplementMethodScreen() {
         <MethodCard href="/medications/ocr" iconBg="bg-yc-warningBg"
           icon={<AddIcon name="camera" className="text-yc-warning" />}
           title="설명서 · 라벨 촬영" desc="성분·섭취방법을 읽어와요" />
+        <MethodCard href="/medications/add?method=barcode&tab=supplement" iconBg="bg-yc-green600"
+          icon={<AddIcon name="barcode" className="text-white" />}
+          title="바코드 스캔" desc="제품 박스 바코드를 찍어 담아요" />
         <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-infoBg"
           icon={<AddIcon name="pencil" className="text-yc-blue500" />}
           title="직접 입력" desc="브랜드·복용 시간 적기" />
-        <ComingSoonCard iconBg="bg-yc-green600"
-          icon={<AddIcon name="barcode" className="text-white" />}
-          title="바코드 스캔" desc="제품 바코드 인식을 준비 중이에요" />
       </div>
     </div>
   )
@@ -124,13 +128,18 @@ function FormScreen({ initialTab }: { initialTab: 'prescription' | 'otc' | 'supp
 export default async function AddMedicationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; type?: string }>
+  searchParams: Promise<{ tab?: string; type?: string; method?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { tab, type } = await searchParams
+  const { tab, type, method } = await searchParams
+
+  // Screen 2c: 바코드 스캔 (일반약/영양제 — 진입 카테고리를 폴백 탭으로 사용)
+  if (method === 'barcode') {
+    return <BarcodeAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} />
+  }
 
   // Screen 2a: 처방약·일반약 방법 선택
   if (type === 'prescription') return <PrescriptionMethodScreen />
