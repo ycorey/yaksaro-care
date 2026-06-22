@@ -14,11 +14,12 @@ type Phase = 'scanning' | 'looking-up' | 'form'
 
 // 1D 소매 코드(EAN/UPC) + 의약품 박스 GS1 DataMatrix(2D). DataMatrix 안의 AI(01)에
 // GTIN이 들어있어 1D와 동일하게 식별됨. (처방전 2D=EMR 비공개 포맷은 여전히 대상 아님)
-const FORMAT_HINTS = new Map([
+const FORMAT_HINTS = new Map<DecodeHintType, unknown>([
   [DecodeHintType.POSSIBLE_FORMATS, [
     BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E,
     BarcodeFormat.DATA_MATRIX,
   ]],
+  [DecodeHintType.TRY_HARDER, true],   // 라이브 영상에서 흐릿한 1D도 더 끈질기게 시도
 ])
 
 // 스캔 결과 → 13자리 표준코드(우리 drugs/supplements.barcode 키)로 정규화.
@@ -111,14 +112,16 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
   useEffect(() => {
     if (phase !== 'scanning') return
     let cancelled = false
-    const reader = new BrowserMultiFormatReader(FORMAT_HINTS)
+    const reader = new BrowserMultiFormatReader(FORMAT_HINTS, { delayBetweenScanAttempts: 100 })
 
     ;(async () => {
       try {
         if (!videoRef.current) return
         // 후면 카메라 우선 — 박스 바코드 스캔
         const controls = await reader.decodeFromConstraints(
-          { video: { facingMode: { ideal: 'environment' } } }, videoRef.current,
+          // 후면 카메라 + 고해상도 요청(초점 되는 주카메라 선택 유도 → 1D 인식률↑)
+          { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+          videoRef.current,
           (result) => { if (result) onDetected(result.getText()) },
         )
         if (cancelled) controls.stop()
