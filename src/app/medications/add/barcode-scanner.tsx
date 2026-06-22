@@ -12,12 +12,28 @@ import { BackButton } from '../back-button'
 type TabType = 'otc' | 'supplement'
 type Phase = 'scanning' | 'looking-up' | 'form'
 
-// 상품 바코드는 1D 소매 코드(EAN/UPC)만 — 처방전 2D(DataMatrix/QR)는 대상 아님
+// 1D 소매 코드(EAN/UPC) + 의약품 박스 GS1 DataMatrix(2D). DataMatrix 안의 AI(01)에
+// GTIN이 들어있어 1D와 동일하게 식별됨. (처방전 2D=EMR 비공개 포맷은 여전히 대상 아님)
 const FORMAT_HINTS = new Map([
   [DecodeHintType.POSSIBLE_FORMATS, [
     BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E,
+    BarcodeFormat.DATA_MATRIX,
   ]],
 ])
+
+// 스캔 결과 → 13자리 표준코드(우리 drugs/supplements.barcode 키)로 정규화.
+// - GS1 DataMatrix(2D): AI(01) + GTIN-14 → 선행 포장표시자(보통 0) 제거해 13자리
+// - 1D(EAN/UPC): 숫자만 추출
+function normalizeBarcode(raw: string): string {
+  // ZXing 심볼로지 식별자(]d2, ]C1, ]Q3 …) 제거 후 GS1 AI(01) 14자리 GTIN 탐지
+  const s = raw.replace(/^\][A-Za-z]\d/, '')
+  const m = s.match(/^01(\d{14})/)
+  if (m) {
+    const gtin14 = m[1]
+    return gtin14.startsWith('0') ? gtin14.slice(1) : gtin14  // GTIN-14 → 표준코드 13
+  }
+  return raw.replace(/\D/g, '')
+}
 
 function StepHeader({ title }: { title: string }) {
   return (
@@ -52,7 +68,8 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
     setPhase('looking-up')
 
     try {
-      const res  = await fetch(`/api/drugs/search?barcode=${encodeURIComponent(raw)}`)
+      const code = normalizeBarcode(raw)
+      const res  = await fetch(`/api/drugs/search?barcode=${encodeURIComponent(code)}`)
       const data = await res.json()
       const drug = data?.drugs?.[0]
       const supp = data?.supplements?.[0]
