@@ -728,6 +728,7 @@ export type Database = {
         Row: {
           created_at: string | null
           duration_days: number | null
+          department: string | null
           hospital_name: string | null
           id: string
           institution_code: string | null
@@ -743,6 +744,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           duration_days?: number | null
+          department?: string | null
           hospital_name?: string | null
           id?: string
           institution_code?: string | null
@@ -758,6 +760,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           duration_days?: number | null
+          department?: string | null
           hospital_name?: string | null
           id?: string
           institution_code?: string | null

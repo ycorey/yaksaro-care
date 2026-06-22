@@ -14,10 +14,12 @@ Return ONLY a JSON object with exactly these fields:
   "medicines": [{ "name": "약품명", "ingredient": "주성분명" 또는 null, "edi_code": "9자리코드" 또는 null, "dose_amount": 숫자 또는 null, "doses_per_day": 숫자 또는 null, "days": 숫자 또는 null }],
   "pharmacy_name": "약국명" 또는 null,
   "hospital_name": "발급 병원명" 또는 null,
-  "institution_code": "요양기관기호 8자리" 또는 null
+  "institution_code": "요양기관기호 8자리" 또는 null,
+  "department": "진료과" 또는 null
 }
 - hospital_name: 처방전을 발급한 병원/의원명 (예: 세브란스병원).
 - institution_code: "요양기관기호" 뒤 8자리 숫자.
+- department: 진료과/진료과목 (예: 내과, 정형외과, 이비인후과). null if not found.
 - name: 상품명+제형+함량(용량)까지 포함 (예: "타이레놀정500밀리그람", "아모잘탄정5/50밀리그람"). 괄호 안 성분명은 제외.
 - ingredient: 괄호 안 주성분명 (예: 록소프로펜나트륨). null if not found.
 - edi_code: 약품명 앞 대괄호 안 9자리 보험코드 (예: [671701890] → "671701890"). null if not found.
@@ -44,6 +46,7 @@ type ParsedPrescription = {
   pharmacy_name:    string | null
   hospital_name:    string | null   // 발급 병원명
   institution_code: string | null   // 요양기관기호 (8자리)
+  department:       string | null   // 진료과
 }
 
 // CLOVA OCR 필드 타입 (V2는 줄 끝에 lineBreak=true 제공 → 행 구조 복원에 사용)
@@ -223,6 +226,7 @@ async function parseWithGpt(rawText: string): Promise<ParsedPrescription> {
     pharmacy_name:    typeof parsed.pharmacy_name === 'string' ? parsed.pharmacy_name : null,
     hospital_name:    typeof parsed.hospital_name === 'string' && parsed.hospital_name ? parsed.hospital_name : extractHospital(rawText).hospital_name,
     institution_code: typeof parsed.institution_code === 'string' && /^\d{8}$/.test(parsed.institution_code) ? parsed.institution_code : extractHospital(rawText).institution_code,
+    department:       typeof parsed.department === 'string' && parsed.department ? parsed.department : extractHospital(rawText).department,
   }
 }
 
@@ -266,7 +270,7 @@ function extractPharmacyName(rawText: string): string | null {
 }
 
 // 발급 병원명 + 요양기관기호 추출 (정규식 경로/폴백용)
-function extractHospital(rawText: string): { hospital_name: string | null; institution_code: string | null } {
+function extractHospital(rawText: string): { hospital_name: string | null; institution_code: string | null; department: string | null } {
   let hospital_name: string | null = null
   for (const line of rawText.split('\n').map(l => l.trim())) {
     const m = line.match(/([가-힣A-Za-z0-9·]+(?:병원|의원|한의원|보건소|의료원|클리닉))/)
@@ -274,7 +278,11 @@ function extractHospital(rawText: string): { hospital_name: string | null; insti
   }
   const joined = rawText.replace(/\s+/g, ' ')
   const codeM  = joined.match(/요양기관기호[^\d]{0,5}(\d{8})/)
-  return { hospital_name, institution_code: codeM ? codeM[1] : null }
+  // 진료과: "진료과목 ○○과" 라벨 우선, 없으면 알려진 과명(구체적 과 먼저) 탐지
+  const deptLabeled = joined.match(/진료\s*과목?[^가-힣]{0,4}([가-힣]{2,7}과)/)
+  const deptKnown   = joined.match(/(정형외과|신경외과|성형외과|흉부외과|이비인후과|소아청소년과|정신건강의학과|가정의학과|재활의학과|영상의학과|산부인과|비뇨의학과|비뇨기과|순환기내과|소화기내과|호흡기내과|내분비내과|신경과|피부과|안과|치과|한방내과|내과|외과)/)
+  const department = deptLabeled ? deptLabeled[1] : (deptKnown ? deptKnown[1] : null)
+  return { hospital_name, institution_code: codeM ? codeM[1] : null, department }
 }
 
 // 숫자 기반 추출(주 경로): 9자리 EDI 코드로 약품을 식별하고, 코드 뒤에 오는 숫자
@@ -345,7 +353,7 @@ export async function POST(request: Request) {
 
   // CLOVA OCR → 원문 텍스트 (bytes를 직접 전달 — Storage 경유 불필요)
   let rawText = ''
-  let parsed: ParsedPrescription = { medicines: [], pharmacy_name: null, hospital_name: null, institution_code: null }
+  let parsed: ParsedPrescription = { medicines: [], pharmacy_name: null, hospital_name: null, institution_code: null, department: null }
 
   try {
     rawText = await runClovaOcr(bytes, mime, ext)
@@ -386,6 +394,7 @@ export async function POST(request: Request) {
       pharmacy_name:     parsed.pharmacy_name,
       hospital_name:     parsed.hospital_name,
       institution_code:  parsed.institution_code,
+      department:        parsed.department,
       prescribed_at:     new Date().toISOString().split('T')[0],
     })
     .select('id')

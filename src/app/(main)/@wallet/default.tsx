@@ -21,7 +21,7 @@ export default async function WalletPage() {
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .is('ended_at', null)
@@ -80,6 +80,7 @@ export default async function WalletPage() {
   const rxGroupMap = new Map<string, {
     key: string; hospitalName: string; subtitle: string; meds: MedCard[]
     pharmacyPhone: string | null; pharmacyAddress: string | null
+    _department: string | null
     _date: string | null; _duration: number | null
     _pharmName: string | null; _pharmPhone: string | null; _pharmAddress: string | null
   }>()
@@ -93,6 +94,7 @@ export default async function WalletPage() {
       rxGroupMap.set(key, {
         key, hospitalName: hospName, subtitle: '', meds: [],
         pharmacyPhone: null, pharmacyAddress: null,
+        _department: rx?.department ?? null,
         _date:     rx?.prescribed_at  ?? null,
         _duration: rx?.duration_days  ?? null,
         _pharmName:    rx?.pharmacy_name    ?? null,
@@ -128,6 +130,7 @@ export default async function WalletPage() {
       return {
         key:          g.key,
         hospitalName: g.hospitalName,
+        department:   g._department,
         subtitle:     subtitleParts.join(' · '),
         meds:         g.meds,
         expiryLabel,

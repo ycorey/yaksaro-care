@@ -52,6 +52,7 @@ export async function addMedication(formData: FormData) {
     const dosesPerDay = formData.get('doses_per_day') ? Number(formData.get('doses_per_day')) : null
     const totalDays   = formData.get('total_days')    ? Number(formData.get('total_days'))    : null
     const hospitalName = (formData.get('hospital_name') as string | null) || null
+    const department   = (formData.get('department')    as string | null) || null
 
     let prescriptionId: string | null = null
     if (hospitalName || totalDays) {
@@ -60,6 +61,7 @@ export async function addMedication(formData: FormData) {
         .insert({
           user_id:       user.id,
           hospital_name: hospitalName,
+          department:    department,
           duration_days: totalDays,
           prescribed_at: today,
           raw_medicine_list: drugName ? [drugName] : (customName ? [customName] : []),

@@ -29,6 +29,7 @@ export type MedCard = {
 export type HospitalGroup = {
   key:             string
   hospitalName:    string
+  department:      string | null
   subtitle:        string
   meds:            MedCard[]
   expiryLabel:     string | null
@@ -221,7 +222,7 @@ function PrescriptionCard({
         <div className="flex-1 min-w-0">
           {/* 병원명 · 처방일 — 작은 라벨 */}
           <p className="text-xs text-yc-neutral500 mb-1 truncate">
-            {g.hospitalName}{g.prescribedAt ? ` · ${fmtDate(g.prescribedAt)}` : ''}
+            {g.hospitalName}{g.department ? ` · ${g.department}` : ''}{g.prescribedAt ? ` · ${fmtDate(g.prescribedAt)}` : ''}
           </p>
           {/* 첫 약명 — 주인공 (실버 UX: 크게) */}
           <p className="font-bold text-[19px] text-yc-neutral900 leading-snug truncate">

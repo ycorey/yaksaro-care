@@ -335,10 +335,14 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
 
-          {/* 병원명 */}
+          {/* 병원명 · 진료과 */}
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">발급 병원 <span className="font-normal text-yc-neutral400">(선택)</span></p>
             <input name="hospital_name" type="text" placeholder="예: 서울내과의원" className={INPUT} />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-yc-neutral700">진료과 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <input name="department" type="text" placeholder="예: 내과, 정형외과" className={INPUT} />
           </div>
         </div>
       )}
