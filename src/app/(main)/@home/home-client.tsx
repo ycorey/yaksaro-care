@@ -54,17 +54,19 @@ interface Props {
 }
 
 export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys }: Props) {
-  const [now, setNow] = useState(new Date())
+  // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
+  const [now, setNow] = useState<Date | null>(null)
 
   useEffect(() => {
+    setNow(new Date())
     const t = setInterval(() => setNow(new Date()), 60_000)
     return () => clearInterval(t)
   }, [])
 
   const doneCount = doneMeals.length
   const doneKeys  = doneMeals
-  const overdue   = getOverdueSlot(doneKeys, activeSlotKeys)
-  const h         = now.getHours()
+  const overdue   = now ? getOverdueSlot(doneKeys, activeSlotKeys) : null
+  const h         = now?.getHours() ?? 0
   const allDone   = doneCount >= totalSlots
 
   return (
@@ -81,9 +83,9 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
 
       {/* 날짜 + 인사말 */}
       <div>
-        <p className="text-sm text-yc-neutral500">{koreanDate()}</p>
+        <p className="text-sm text-yc-neutral500">{now ? koreanDate() : ' '}</p>
         <h1 className="font-display text-[1.625rem] text-yc-neutral900 mt-0.5">
-          {h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후에요' : '좋은 저녁이에요'}
+          {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후에요' : '좋은 저녁이에요') : ' '}
         </h1>
       </div>
 
@@ -104,6 +106,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
             ) : (
               <p className="font-display text-[1.375rem] leading-tight">
                 {(() => {
+                  if (!now) return '오늘 복약 확인'
                   const nowMin = now.getHours() * 60 + now.getMinutes()
                   const next = MEAL_SLOTS.filter(s => activeSlotKeys.includes(s.meal)).find(s => !doneKeys.includes(s.meal) && s.h * 60 + s.m > nowMin)
                   if (!next) return '오늘 복약을 챙겨보세요'

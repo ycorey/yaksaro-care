@@ -62,17 +62,19 @@ export default function TodayTimeline({
 }) {
   const router = useRouter()
   const [slots, setSlots] = useState<SlotState[]>(initialSlots)
-  const [now, setNow] = useState<Date>(() => new Date())
+  // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
+  const [now, setNow] = useState<Date | null>(null)
   const [justChecked, setJustChecked] = useState<Meal | null>(null)  // 방금 체크 — pop/flash용
   const [celebrate, setCelebrate] = useState(false)                  // 전체완료 축하 오버레이
 
   // 1분마다 현재 시각 갱신 → 배너/다음 슬롯 재계산
   useEffect(() => {
+    setNow(new Date())
     const id = setInterval(() => setNow(new Date()), 60_000)
     return () => clearInterval(id)
   }, [])
 
-  const cur = nowMinutes(now)
+  const cur = now ? nowMinutes(now) : -1
 
   // 다음 미완료 슬롯 (현재 시각 이후 가장 가까운 미체크 슬롯; 없으면 가장 이른 미체크)
   const nextMeal: Meal | null = useMemo(() => {
@@ -91,9 +93,9 @@ export default function TodayTimeline({
   }, [slots, cur])
 
   // 오늘의 건강 한 줄 (날짜 기준 고정 — 분 단위 갱신에 영향받지 않음)
-  const tipDateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+  const tipDateKey = now ? `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` : ''
   const tip = useMemo(
-    () => getDailyTip(now),
+    () => now ? getDailyTip(now) : null,
     [tipDateKey] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
@@ -233,10 +235,12 @@ export default function TodayTimeline({
       )}
 
       {/* ── 오늘의 건강 한 줄 (톤 다운 — 아이콘·큰 이모지 제거) ── */}
-      <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
-        <p className="text-xs font-bold tracking-wide text-yc-green600 mb-2">오늘의 건강 한 줄</p>
-        <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
-      </div>
+      {tip && (
+        <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
+          <p className="text-xs font-bold tracking-wide text-yc-green600 mb-2">오늘의 건강 한 줄</p>
+          <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
+        </div>
+      )}
 
       <p className="text-xs text-yc-neutral500 text-center pb-36 leading-relaxed">
         복약 정보 기록·참고 서비스 · 의학적 진단·처방을 대체하지 않습니다.
