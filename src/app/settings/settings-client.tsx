@@ -11,6 +11,7 @@ import {
 import { subscribeToPush, unsubscribeFromPush, pushSupported } from '@/lib/push-client'
 import { Lock, Hospital, Bell, Check, X } from '@phosphor-icons/react'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
+import PharmacyLink from './pharmacy-link'
 
 type FontSize = 'normal' | 'large' | 'xlarge'
 
@@ -76,6 +77,7 @@ export default function SettingsClient({
   consentHealth,
   pharmacistConsent,
   regularPharmacyName,
+  hasB2BPharmacy,
   initialFontSize,
   initialAlarmEnabled,
   initialAlarmTimes,
@@ -86,6 +88,7 @@ export default function SettingsClient({
   consentHealth: boolean
   pharmacistConsent:   boolean
   regularPharmacyName: string | null
+  hasB2BPharmacy:      boolean
   initialFontSize:     FontSize
   initialAlarmEnabled: boolean
   initialAlarmTimes:   Record<string, boolean>
@@ -264,30 +267,31 @@ export default function SettingsClient({
       {/* ── 단골 약사에게 공개 ── */}
       <section className="anim-page" style={{ animationDelay: '150ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">단골 약국</p>
-        <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
-          <Row>
-            <div className="flex items-center gap-3 min-w-0">
-              <Hospital weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-yc-neutral900">단골 약사에게 내 약 목록 공개</p>
-                <p className="text-xs text-yc-neutral500 mt-0.5 truncate">
-                  {regularPharmacyName
-                    ? `${regularPharmacyName} 약사가 읽기 전용으로 볼 수 있어요`
-                    : 'QR로 단골약국을 먼저 연결해주세요'}
-                </p>
-              </div>
+        <PharmacyLink initialName={regularPharmacyName} />
+
+        {/* 약사 열람 동의는 QR로 연결된 B2B 약국에만 의미가 있음 */}
+        {hasB2BPharmacy && (
+          <>
+            <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)] mt-3">
+              <Row>
+                <div className="flex items-center gap-3 min-w-0">
+                  <Hospital weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-yc-neutral900">단골 약사에게 내 약 목록 공개</p>
+                    <p className="text-xs text-yc-neutral500 mt-0.5 truncate">
+                      {regularPharmacyName} 약사가 읽기 전용으로 볼 수 있어요
+                    </p>
+                  </div>
+                </div>
+                <Toggle on={pharmConsent} onToggle={togglePharmacistConsent} />
+              </Row>
             </div>
-            {regularPharmacyName ? (
-              <Toggle on={pharmConsent} onToggle={togglePharmacistConsent} />
-            ) : (
-              <span className="text-xs text-yc-neutral500 flex-shrink-0">미연결</span>
-            )}
-          </Row>
-        </div>
-        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
-          <span className="flex-shrink-0 mt-0.5">ⓘ</span>
-          켜면 단골 약사가 복약 상담에 참고할 수 있어요. 언제든 끄면 즉시 볼 수 없게 돼요.
-        </p>
+            <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
+              <span className="flex-shrink-0 mt-0.5">ⓘ</span>
+              켜면 단골 약사가 복약 상담에 참고할 수 있어요. 언제든 끄면 즉시 볼 수 없게 돼요.
+            </p>
+          </>
+        )}
       </section>
 
       {/* ── 내 정보 ── */}

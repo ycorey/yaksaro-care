@@ -411,7 +411,10 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          regular_pharmacy_address: string | null
           regular_pharmacy_id: string | null
+          regular_pharmacy_name: string | null
+          regular_pharmacy_phone: string | null
           role: string
         }
         Insert: {
@@ -427,7 +430,10 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          regular_pharmacy_address?: string | null
           regular_pharmacy_id?: string | null
+          regular_pharmacy_name?: string | null
+          regular_pharmacy_phone?: string | null
           role?: string
         }
         Update: {
@@ -443,7 +449,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          regular_pharmacy_address?: string | null
           regular_pharmacy_id?: string | null
+          regular_pharmacy_name?: string | null
+          regular_pharmacy_phone?: string | null
           role?: string
         }
         Relationships: [

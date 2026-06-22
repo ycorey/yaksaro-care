@@ -28,7 +28,7 @@ export default async function WalletPage() {
       .order('created_at', { ascending: false }),
     supabase
       .from('profiles')
-      .select('regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
+      .select('regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
       .eq('id', user.id)
       .single(),
     supabase
@@ -46,7 +46,7 @@ export default async function WalletPage() {
 
   if (medsError) logger.error('wallet', 'meds query error', medsError.message)
 
-  const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? null
+  const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? profile?.regular_pharmacy_phone ?? null
 
   const activeMeds = meds ?? []
 
