@@ -212,7 +212,7 @@ function PrescriptionCard({
   if (deleted) return null
 
   return (
-    <div className={`rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${cardBg(g.expired, isChecked)}`}>
+    <div className={`rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${cardBg(g.expired, isChecked)}`}>
 
       {/* ── 컴팩트 헤더 (항상 표시) — 약명·병원·D-day 3요소 ── */}
       <button type="button" onClick={() => setOpen(o => !o)}

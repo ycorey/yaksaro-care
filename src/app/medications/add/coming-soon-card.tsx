@@ -12,7 +12,7 @@ export default function ComingSoonCard({
     <button
       type="button"
       onClick={() => toast('곧 만나보실 수 있어요', { description: '준비되는 대로 알려드릴게요.' })}
-      className="w-full flex items-center gap-4 bg-white rounded-yc-lg px-5 py-5 shadow-[var(--yc-shadow-sm)] text-left opacity-80 active:opacity-100 transition-opacity"
+      className="w-full flex items-center gap-4 bg-white rounded-yc-xl border border-yc-neutral100 px-5 py-5 shadow-[var(--yc-shadow-sm)] text-left opacity-80 active:opacity-100 transition-opacity"
     >
       <div className={`w-12 h-12 rounded-yc-lg flex items-center justify-center flex-shrink-0 grayscale ${iconBg}`}>
         {icon}

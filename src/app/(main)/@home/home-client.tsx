@@ -135,7 +135,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
       <div className="grid grid-cols-2 gap-3">
         {GRID_ITEMS.map(({ href, Icon, iconColor, iconBg, title, statKey, filled }, i) => (
           <Link key={href} href={href}
-            className="bg-white rounded-yc-lg p-4 shadow-[var(--yc-shadow-sm)] active:scale-95 transition-transform anim-page"
+            className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-4 active:scale-95 transition-transform anim-page"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconBg}`}>

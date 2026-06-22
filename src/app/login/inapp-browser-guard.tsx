@@ -50,23 +50,23 @@ export default function InAppBrowserGuard() {
 
   return (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-6 flex justify-center"><Globe weight="fill" size={56} className="text-yc-blue500" /></div>
-      <h2 className="text-xl font-bold text-gray-950 mb-3 leading-snug">
+      <div className="mb-6 flex justify-center"><Globe weight="fill" size={56} className="text-yc-green600" /></div>
+      <h2 className="text-xl font-bold text-yc-neutral900 mb-3 leading-snug">
         외부 브라우저에서 열어주세요
       </h2>
-      <p className="text-base text-gray-500 leading-relaxed mb-8">
+      <p className="text-base text-yc-neutral500 leading-relaxed mb-8">
         보안 정책상 카카오톡·앱 내 브라우저에서는<br />
         구글 로그인이 차단됩니다.<br />
-        <span className="font-semibold text-gray-700">Safari</span>에서 열면 정상적으로 로그인됩니다.
+        <span className="font-semibold text-yc-neutral700">Safari</span>에서 열면 정상적으로 로그인됩니다.
       </p>
 
       <button
         onClick={copyUrl}
-        className="w-full max-w-xs py-4 rounded-2xl bg-blue-600 text-white text-base font-bold active:bg-blue-800 mb-3"
+        className="w-full max-w-xs py-4 rounded-2xl bg-yc-green600 text-white text-base font-bold active:bg-yc-green700 mb-3"
       >
         <ClipboardText weight="fill" size={18} className="inline mr-1.5" /> 주소 복사하기
       </button>
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-yc-neutral400">
         우측 상단 메뉴(•••) → <span className="font-semibold">Safari로 열기</span> 를 눌러도 됩니다
       </p>
     </div>

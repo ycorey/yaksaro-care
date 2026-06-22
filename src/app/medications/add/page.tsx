@@ -24,7 +24,7 @@ function MethodCard({ href, iconBg, icon, title, desc, badge }: {
 }) {
   return (
     <Link href={href}
-      className="flex items-center gap-4 bg-white rounded-yc-lg px-5 py-5 shadow-[var(--yc-shadow-sm)] active:bg-yc-neutral50 transition-colors">
+      className="flex items-center gap-4 bg-white rounded-yc-xl border border-yc-neutral100 px-5 py-5 shadow-[var(--yc-shadow-sm)] active:bg-yc-neutral50 transition-colors">
       <div className={`w-12 h-12 rounded-yc-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
         {icon}
       </div>

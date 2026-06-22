@@ -626,7 +626,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             <button
               onClick={confirm}
               disabled={saving || result.medicines.length === 0}
-              className="w-full py-5 rounded-yc-lg bg-yc-green600 text-white text-lg font-display active:bg-yc-green700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[var(--yc-shadow-lg)]"
+              className="w-full py-5 rounded-yc-lg bg-yc-green600 text-white text-lg font-semibold active:bg-yc-green700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[var(--yc-shadow-lg)]"
             >
               {saving
                 ? '저장 중...'

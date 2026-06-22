@@ -139,7 +139,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-10">
-          <Link href="/login" className="text-sm text-blue-600 underline underline-offset-2">
+          <Link href="/login" className="text-sm text-yc-green600 underline underline-offset-2">
             ← 로그인으로 돌아가기
           </Link>
         </div>

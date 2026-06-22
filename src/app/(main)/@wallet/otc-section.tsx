@@ -37,7 +37,7 @@ export default function OtcSection({
   const hasAnyWarning = visibleMeds.some(m => m.hasInteractionWarning)
 
   return (
-    <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+    <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
       <div className="px-5 pt-5 pb-5">
         {visibleMeds.length === 0 ? (
           <Link href="/medications/add?tab=otc"

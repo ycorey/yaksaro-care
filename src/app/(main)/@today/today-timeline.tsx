@@ -165,13 +165,13 @@ export default function TodayTimeline({
       )}
 
       {!hasMeds ? (
-        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
+        <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-lg font-semibold text-yc-neutral900 mb-1">복용 중인 약이 없어요</p>
           <p className="text-sm text-yc-neutral500">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
         </div>
       ) : (
-        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
+        <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
           {slots.map((s, i) => {
             const isNext = nextMeal === s.meal && !s.checked
             return (

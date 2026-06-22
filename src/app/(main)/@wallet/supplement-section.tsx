@@ -52,9 +52,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
   }, [])
 
   return (
-    <div className={`rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200 ${
-      anyChecked ? 'bg-yc-green50' : 'bg-white'
-    }`}>
+    <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden transition-all duration-200">
       {/* 카드 헤더 */}
       <div className="px-5 pt-4 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">

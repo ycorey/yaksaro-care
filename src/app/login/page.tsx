@@ -78,17 +78,17 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-5">
+    <div className="min-h-screen bg-yc-pageBg flex flex-col items-center justify-center px-5">
       <InAppBrowserGuard />
       <div className="w-full max-w-[430px]">
 
         {/* 로고 */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-12">
           <div className="mb-5 flex justify-center">
             <Pill weight="fill" size={64} className="text-yc-green600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-950 tracking-tight">약사로 케어</h1>
-          <p className="text-base text-gray-400 mt-2 font-medium">나의 복약 주치의</p>
+          <h1 className="font-display text-3xl text-yc-neutral900">약사로 케어</h1>
+          <p className="text-base text-yc-neutral400 mt-2 font-semibold">나의 복약 주치의</p>
         </div>
 
         {/* 에러 메시지 */}
@@ -104,17 +104,17 @@ function LoginContent() {
             type="checkbox"
             checked={consented}
             onChange={e => setConsented(e.target.checked)}
-            className="mt-0.5 w-5 h-5 rounded accent-blue-600 flex-shrink-0"
+            className="mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0"
           />
-          <span className="text-sm text-gray-600 leading-relaxed">
-            <span className="font-semibold text-gray-900">[필수] 민감정보 수집·이용 동의</span><br />
+          <span className="text-sm text-yc-neutral600 leading-relaxed">
+            <span className="font-semibold text-yc-neutral900">[필수] 민감정보 수집·이용 동의</span><br />
             처방전·복약이력·건강기능식품 정보를 수집하여 복약관리 서비스 제공에 활용하는 것에 동의합니다.{' '}
-            <Link href="/privacy" className="text-blue-600 underline underline-offset-2">개인정보 처리방침</Link>
+            <Link href="/privacy" className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
           </span>
         </label>
 
         {/* 소셜 로그인 버튼 3종 */}
-        <div className="space-y-4">
+        <div className="space-y-3">
 
           {/* 카카오 */}
           <button
@@ -154,7 +154,7 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('google')}
             disabled={!!loading || !consented}
-            className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-gray-950 bg-white border border-gray-200 shadow-sm transition-opacity active:opacity-75 disabled:opacity-40"
+            className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ padding: '18px 20px' }}
           >
             {loading === 'google' ? (
@@ -169,11 +169,11 @@ function LoginContent() {
         </div>
 
         {/* 약관 동의 안내 */}
-        <p className="mt-10 text-center text-xs text-gray-400 leading-relaxed px-2">
+        <p className="mt-8 text-center text-xs text-yc-neutral400 leading-relaxed px-2">
           시작하면{' '}
-          <Link href="/privacy" className="underline underline-offset-2">개인정보 처리방침</Link>
+          <Link href="/privacy" className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
           {' '}및{' '}
-          <Link href="/terms" className="underline underline-offset-2">이용약관</Link>
+          <Link href="/terms" className="text-yc-neutral500 underline underline-offset-2">이용약관</Link>
           에 동의합니다.
         </p>
       </div>

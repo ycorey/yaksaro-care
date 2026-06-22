@@ -35,7 +35,7 @@ export default function ShareClient({ meds, doctorData }: Props) {
       <DoctorView data={doctorData} />
 
       {meds.length === 0 ? (
-        <div className="bg-white rounded-yc-lg p-10 text-center shadow-[var(--yc-shadow-sm)]">
+        <div className="bg-white rounded-yc-xl border border-yc-neutral100 p-10 text-center shadow-[var(--yc-shadow-sm)]">
           <Pill size={40} weight="light" className="text-yc-neutral300 mx-auto mb-3" />
           <p className="font-semibold text-yc-neutral700">복용 중인 약이 없어요</p>
           <Link href="/medications/ocr" className="mt-4 inline-block text-sm text-yc-green600 font-medium">
@@ -45,7 +45,7 @@ export default function ShareClient({ meds, doctorData }: Props) {
       ) : (
         <>
           {rx.length > 0 && (
-            <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+            <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
               <div className="px-4 py-3 bg-yc-neutral50 border-b border-yc-neutral100">
                 <p className="text-xs font-bold text-yc-neutral600 uppercase tracking-widest flex items-center gap-1"><Hospital weight="fill" size={13} /> 처방약</p>
               </div>
@@ -60,9 +60,9 @@ export default function ShareClient({ meds, doctorData }: Props) {
           )}
 
           {supp.length > 0 && (
-            <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
-              <div className="px-4 py-3 bg-yc-green50 border-b border-yc-green100">
-                <p className="text-xs font-bold text-yc-green700 uppercase tracking-widest flex items-center gap-1"><Flask weight="fill" size={13} /> 개인 영양제</p>
+            <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
+              <div className="px-4 py-3 bg-yc-neutral50 border-b border-yc-neutral100">
+                <p className="text-xs font-bold text-yc-neutral600 uppercase tracking-widest flex items-center gap-1"><Flask weight="fill" size={13} className="text-yc-green700" /> 개인 영양제</p>
               </div>
               {supp.map(m => (
                 <div key={m.id} className="px-4 py-3 border-b border-yc-neutral100 last:border-0">
@@ -74,7 +74,7 @@ export default function ShareClient({ meds, doctorData }: Props) {
           )}
 
           {otc.length > 0 && (
-            <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+            <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
               <div className="px-4 py-3 bg-yc-neutral50 border-b border-yc-neutral100">
                 <p className="text-xs font-bold text-yc-neutral600 uppercase tracking-widest flex items-center gap-1"><Pill weight="fill" size={13} /> 약국 일반약</p>
               </div>
