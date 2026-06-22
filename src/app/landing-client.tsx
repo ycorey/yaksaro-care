@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Provider } from '@supabase/supabase-js'
-import { Pill, Flask, SunHorizon, Hospital, Lock } from '@phosphor-icons/react'
+import { Pill, Flask, Hospital, Lock } from '@phosphor-icons/react'
 import InAppBrowserGuard from './login/inapp-browser-guard'
 import { LogoMark, LogoWordmark } from '@/components/yc/logo'
 
@@ -72,7 +72,7 @@ export default function LandingClient() {
         </header>
 
         {/* ① 히어로 */}
-        <section className="pt-10 pb-8">
+        <section className="pt-5 pb-8">
           <p className="text-yc-neutral500 text-lg mb-2">병원 갈 때 무슨 약 먹는지 기억나시나요?</p>
           <h1 className="font-display text-[2.125rem] text-yc-neutral900 tracking-tight leading-[1.15] mb-4">
             이제 드시는 약,<br />3초 만에 보여주세요.
@@ -136,15 +136,12 @@ export default function LandingClient() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-infoBg text-yc-infoText text-base font-semibold">
-                  <SunHorizon weight="fill" size={16} /> 아침 약 한번에 먹기
-                </button>
               </div>
             )}
           </div>
 
           {/* 🌿 상시 영양제 */}
-          <div className="bg-yc-green50 rounded-yc-xl border border-[#89CCB3] shadow-[var(--yc-shadow-sm)] overflow-hidden">
+          <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
             <div className="px-6 pt-5 pb-2">
               <p className="font-display text-xl text-yc-green700 flex items-center gap-2"><Flask weight="fill" size={18} /> 상시 영양제</p>
               <p className="text-sm text-yc-green600 mt-0.5">4종 매일 복용 중</p>
@@ -158,14 +155,11 @@ export default function LandingClient() {
                   </li>
                 ))}
               </ul>
-              <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-green100 text-yc-green700 text-base font-semibold">
-                <SunHorizon weight="fill" size={16} /> 아침 영양제 한번에 먹기
-              </button>
             </div>
           </div>
 
           {/* 💊 약국 일반약 — 칩 */}
-          <div className="bg-white rounded-yc-xl border border-yc-neutral100 overflow-hidden">
+          <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
             <div className="px-6 pt-5 pb-1">
               <p className="font-semibold text-base text-yc-neutral500 flex items-center gap-1.5"><Pill weight="fill" size={16} /> 약국 일반약</p>
               <p className="text-xs text-yc-neutral500 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
