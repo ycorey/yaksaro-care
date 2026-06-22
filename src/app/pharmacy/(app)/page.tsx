@@ -19,18 +19,35 @@ export default async function PharmacyHome() {
 
   const ids = (patients ?? []).map(p => p.id as string)
 
-  // 환자별 활성 복약 종수 (RLS가 동의 환자 것만 허용)
+  // 환자별 본인(is_self) 멤버 id 조회 — 약사는 본인 약만 볼 수 있음(가족 누수 방지)
+  const selfMemberByPatient = new Map<string, string>()
+  if (ids.length > 0) {
+    const { data: selfMembers } = await supabase
+      .from('members')
+      .select('id, owner_id')
+      .in('owner_id', ids)
+      .eq('is_self', true)
+    for (const m of selfMembers ?? []) {
+      selfMemberByPatient.set(m.owner_id as string, m.id as string)
+    }
+  }
+
+  // 환자별 활성 복약 종수 (RLS가 동의 환자 것만 허용, 본인 멤버만)
   const countByUser = new Map<string, number>()
   if (ids.length > 0) {
-    const { data: meds } = await supabase
-      .from('user_medications')
-      .select('user_id')
-      .is('deleted_at', null)
-      .is('ended_at', null)
-      .in('user_id', ids)
-    for (const m of meds ?? []) {
-      const uid = m.user_id as string
-      countByUser.set(uid, (countByUser.get(uid) ?? 0) + 1)
+    const selfMemberIds = [...selfMemberByPatient.values()]
+    if (selfMemberIds.length > 0) {
+      const { data: meds } = await supabase
+        .from('user_medications')
+        .select('user_id, member_id')
+        .is('deleted_at', null)
+        .is('ended_at', null)
+        .in('user_id', ids)
+        .in('member_id', selfMemberIds)
+      for (const m of meds ?? []) {
+        const uid = m.user_id as string
+        countByUser.set(uid, (countByUser.get(uid) ?? 0) + 1)
+      }
     }
   }
 

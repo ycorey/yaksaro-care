@@ -2,16 +2,21 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ShareClient from './share-client'
 import type { DoctorData } from './doctor-view'
+import { getActiveMember } from '@/lib/active-member'
+import MemberSwitcher from '@/components/member-switcher'
 
 export default async function SharePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { active, members } = await getActiveMember(supabase, user.id)
+
   const { data: meds } = await supabase
     .from('user_medications')
     .select('id, custom_name, dose_amount, doses_per_day, total_days, ingredient, prescription_id, drug:drugs(item_name, entp_name), supplement:supplements(product_name)')
     .eq('user_id', user.id)
+    .eq('member_id', active.id)
     .is('deleted_at', null)
     .is('ended_at', null)
     .order('created_at', { ascending: false })
@@ -47,5 +52,10 @@ export default async function SharePage() {
     otc:         otcItems.map(m => ({ name: m.name, dosage: m.dosage })),
   }
 
-  return <ShareClient meds={items} doctorData={doctorData} />
+  return (
+    <div>
+      <MemberSwitcher members={members} activeId={active.id} />
+      <ShareClient meds={items} doctorData={doctorData} />
+    </div>
+  )
 }

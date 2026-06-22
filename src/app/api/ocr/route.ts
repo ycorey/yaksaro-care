@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { getActiveMember } from '@/lib/active-member'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
 export const maxDuration = 60
@@ -337,6 +338,8 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
+  const { active } = await getActiveMember(supabase, user.id)
+
   const formData = await request.formData()
   const file     = formData.get('image') as File | null
   if (!file) return NextResponse.json({ error: '이미지 없음' }, { status: 400 })
@@ -389,6 +392,7 @@ export async function POST(request: Request) {
     .from('user_prescriptions')
     .insert({
       user_id:           user.id,
+      member_id:         active.id,
       raw_medicine_list: names,
       duration_days:     maxDays,
       pharmacy_name:     parsed.pharmacy_name,

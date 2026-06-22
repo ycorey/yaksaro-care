@@ -2,11 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HomeClient from './home-client'
 import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
+import { getActiveMember } from '@/lib/active-member'
+import MemberSwitcher from '@/components/member-switcher'
 
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { active, members } = await getActiveMember(supabase, user.id)
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -15,12 +19,14 @@ export default async function HomePage() {
       .from('user_medications')
       .select('id, meal_times, doses_per_day')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .is('deleted_at', null)
       .is('ended_at', null),
     supabase
       .from('medication_schedules')
       .select('meal_time')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .eq('check_date', todayStr)
       .eq('is_checked', true),
   ])
@@ -38,11 +44,14 @@ export default async function HomePage() {
   const doneMeals = (checks ?? []).map(c => c.meal_time as string)
 
   return (
-    <HomeClient
-      medCount={meds?.length ?? 0}
-      doneMeals={doneMeals}
-      totalSlots={activeSlotKeys.length}
-      activeSlotKeys={activeSlotKeys}
-    />
+    <div>
+      <MemberSwitcher members={members} activeId={active.id} />
+      <HomeClient
+        medCount={meds?.length ?? 0}
+        doneMeals={doneMeals}
+        totalSlots={activeSlotKeys.length}
+        activeSlotKeys={activeSlotKeys}
+      />
+    </div>
   )
 }

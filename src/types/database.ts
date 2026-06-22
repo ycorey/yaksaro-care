@@ -1,4 +1,4 @@
-// Supabase MCP generate_typescript_types로 생성 (2026-06-15, 마이그레이션 001~025 기준).
+// Supabase generate_typescript_types로 생성 (2026-06-22, 마이그레이션 001~030 기준).
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
 export type Json =
   | string
@@ -16,6 +16,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      drug_ingredients: {
+        Row: {
+          amount: string | null
+          drug_id: string
+          id: string
+          ingredient_code: string | null
+          name_en: string
+          name_ko: string | null
+          position: number
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: string | null
+          drug_id: string
+          id?: string
+          ingredient_code?: string | null
+          name_en: string
+          name_ko?: string | null
+          position?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: string | null
+          drug_id?: string
+          id?: string
+          ingredient_code?: string | null
+          name_en?: string
+          name_ko?: string | null
+          position?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drug_ingredients_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drugs: {
         Row: {
           barcode: string | null
@@ -66,50 +110,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      drug_ingredients: {
-        Row: {
-          amount: string | null
-          drug_id: string
-          id: string
-          ingredient_code: string | null
-          name_en: string
-          name_ko: string | null
-          position: number
-          unit: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          amount?: string | null
-          drug_id: string
-          id?: string
-          ingredient_code?: string | null
-          name_en: string
-          name_ko?: string | null
-          position?: number
-          unit?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: string | null
-          drug_id?: string
-          id?: string
-          ingredient_code?: string | null
-          name_en?: string
-          name_ko?: string | null
-          position?: number
-          unit?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "drug_ingredients_drug_id_fkey"
-            columns: ["drug_id"]
-            isOneToOne: false
-            referencedRelation: "drugs"
-            referencedColumns: ["id"]
-          }
-        ]
       }
       dur_shadow_logs: {
         Row: {
@@ -196,6 +196,7 @@ export type Database = {
           is_checked: boolean
           logged_at: string | null
           meal_time: string
+          member_id: string | null
           schedule_id: string | null
           user_id: string
         }
@@ -205,6 +206,7 @@ export type Database = {
           is_checked: boolean
           logged_at?: string | null
           meal_time: string
+          member_id?: string | null
           schedule_id?: string | null
           user_id: string
         }
@@ -214,10 +216,18 @@ export type Database = {
           is_checked?: boolean
           logged_at?: string | null
           meal_time?: string
+          member_id?: string | null
           schedule_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medication_check_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medication_check_logs_schedule_id_fkey"
             columns: ["schedule_id"]
@@ -240,6 +250,7 @@ export type Database = {
           id: string
           is_checked: boolean
           meal_time: string
+          member_id: string | null
           prescription_id: string | null
           updated_at: string | null
           user_id: string
@@ -249,6 +260,7 @@ export type Database = {
           id?: string
           is_checked?: boolean
           meal_time: string
+          member_id?: string | null
           prescription_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -258,11 +270,19 @@ export type Database = {
           id?: string
           is_checked?: boolean
           meal_time?: string
+          member_id?: string | null
           prescription_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medication_schedules_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medication_schedules_prescription_id_fkey"
             columns: ["prescription_id"]
@@ -273,6 +293,41 @@ export type Database = {
           {
             foreignKeyName: "medication_schedules_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_self: boolean
+          name: string
+          owner_id: string
+          relation: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_self?: boolean
+          name: string
+          owner_id: string
+          relation?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_self?: boolean
+          name?: string
+          owner_id?: string
+          relation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -653,6 +708,7 @@ export type Database = {
           id: string
           ingredient: string | null
           meal_times: string[] | null
+          member_id: string | null
           prescription_id: string | null
           source: string
           started_at: string | null
@@ -674,6 +730,7 @@ export type Database = {
           id?: string
           ingredient?: string | null
           meal_times?: string[] | null
+          member_id?: string | null
           prescription_id?: string | null
           source?: string
           started_at?: string | null
@@ -695,6 +752,7 @@ export type Database = {
           id?: string
           ingredient?: string | null
           meal_times?: string[] | null
+          member_id?: string | null
           prescription_id?: string | null
           source?: string
           started_at?: string | null
@@ -708,6 +766,13 @@ export type Database = {
             columns: ["drug_id"]
             isOneToOne: false
             referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_medications_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
           {
@@ -736,11 +801,12 @@ export type Database = {
       user_prescriptions: {
         Row: {
           created_at: string | null
-          duration_days: number | null
           department: string | null
+          duration_days: number | null
           hospital_name: string | null
           id: string
           institution_code: string | null
+          member_id: string | null
           pharmacy_address: string | null
           pharmacy_lat: number | null
           pharmacy_lng: number | null
@@ -752,11 +818,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          duration_days?: number | null
           department?: string | null
+          duration_days?: number | null
           hospital_name?: string | null
           id?: string
           institution_code?: string | null
+          member_id?: string | null
           pharmacy_address?: string | null
           pharmacy_lat?: number | null
           pharmacy_lng?: number | null
@@ -768,11 +835,12 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          duration_days?: number | null
           department?: string | null
+          duration_days?: number | null
           hospital_name?: string | null
           id?: string
           institution_code?: string | null
+          member_id?: string | null
           pharmacy_address?: string | null
           pharmacy_lat?: number | null
           pharmacy_lng?: number | null
@@ -782,7 +850,15 @@ export type Database = {
           raw_medicine_list?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_prescriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

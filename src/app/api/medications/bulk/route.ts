@@ -3,11 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import { logDurShadow } from '@/lib/dur-shadow'
 import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
+import { getActiveMember } from '@/lib/active-member'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  const { active } = await getActiveMember(supabase, user.id)
 
   const body = await request.json() as {
     medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[] }[]
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
 
       return {
         user_id:         user.id,
+        member_id:       active.id,
         drug_id:         data?.id ?? null,
         supplement_id:   null,
         custom_name:     data ? null : m.name,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { type Meal, isMeal } from '@/lib/meal-slots'
+import { getActiveMember } from '@/lib/active-member'
 import { logger } from '@/lib/logger'
 
 function today() {
@@ -13,10 +14,12 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
+  const { active } = await getActiveMember(supabase, user.id)
   const { data } = await supabase
     .from('medication_schedules')
     .select('meal_time, is_checked')
     .eq('user_id', user.id)
+    .eq('member_id', active.id)
     .eq('check_date', today())
 
   const checks = { morning: false, afternoon: false, evening: false, bedtime: false }
@@ -39,12 +42,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '잘못된 meal_time' }, { status: 400 })
   }
 
-  // 1) 현재 상태 upsert (medication_schedules)
+  const { active } = await getActiveMember(supabase, user.id)
+
+  // 1) 현재 상태 upsert (medication_schedules) — 멤버별 독립
   const { data: sched, error } = await supabase
     .from('medication_schedules')
     .upsert(
-      { user_id: user.id, check_date: today(), meal_time, is_checked, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id,check_date,meal_time' }
+      { user_id: user.id, member_id: active.id, check_date: today(), meal_time, is_checked, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,member_id,check_date,meal_time' }
     )
     .select('id')
     .single()
@@ -55,6 +60,7 @@ export async function POST(request: Request) {
     .from('medication_check_logs')
     .insert({
       user_id:     user.id,
+      member_id:   active.id,
       schedule_id: sched?.id ?? null,
       check_date:  today(),
       meal_time,

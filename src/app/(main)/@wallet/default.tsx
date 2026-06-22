@@ -10,11 +10,15 @@ import PharmacyToast from './pharmacy-toast'
 import PrescriptionSection, { type MedCard, type HospitalGroup } from './prescription-section'
 import SupplementSection from './supplement-section'
 import OtcSection from './otc-section'
+import { getActiveMember } from '@/lib/active-member'
+import MemberSwitcher from '@/components/member-switcher'
 
 export default async function WalletPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { active, members } = await getActiveMember(supabase, user.id)
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -23,6 +27,7 @@ export default async function WalletPage() {
       .from('user_medications')
       .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .is('deleted_at', null)
       .is('ended_at', null)
       .order('created_at', { ascending: false }),
@@ -35,6 +40,7 @@ export default async function WalletPage() {
       .from('medication_schedules')
       .select('meal_time, is_checked')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .eq('check_date', todayStr),
   ])
 
@@ -151,6 +157,7 @@ export default async function WalletPage() {
 
   return (
     <div className="space-y-8 pb-6">
+      <MemberSwitcher members={members} activeId={active.id} />
       <PharmacyToast />
 
       {/* ── 헤더 ── */}

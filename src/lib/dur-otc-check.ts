@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 // OTC 일반약(drug_id 있는 manual 약) 등록 시 현재 처방약과 상호작용 체크
 export function checkOtcInteraction(
   userId: string,
+  memberId: string,
   newDrugId: string,
   newMedId: string
 ): void {
@@ -18,6 +19,7 @@ export function checkOtcInteraction(
         .from('user_medications')
         .select('drug_id')
         .eq('user_id', userId)
+        .eq('member_id', memberId)
         .not('prescription_id', 'is', null)
         .not('drug_id', 'is', null)
         .is('deleted_at', null)

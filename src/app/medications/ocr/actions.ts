@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getActiveMember } from '@/lib/active-member'
 
 export type ConfirmItem = {
   drug_id:       string | null
@@ -16,10 +17,13 @@ export async function saveOcrMedications(items: ConfirmItem[]) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { active } = await getActiveMember(supabase, user.id)
+
   const rows = items
     .filter(i => i.drug_id || i.custom_name)
     .map(i => ({
       user_id:         user.id,
+      member_id:       active.id,
       drug_id:         i.drug_id || null,
       supplement_id:   null,
       custom_name:     !i.drug_id ? i.custom_name : null,

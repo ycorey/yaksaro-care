@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { checkInteractions } from '@/lib/dur'
 import type { InteractionResult } from '@/types'
 import { SeverityIcon, SummaryIcon, DrugEmptyIcon } from './interaction-icons'
+import { getActiveMember } from '@/lib/active-member'
 
 const SEVERITY_CONFIG = {
   contraindicated: {
@@ -38,10 +39,13 @@ export default async function InteractionsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { active } = await getActiveMember(supabase, user.id)
+
   const { data: meds } = await supabase
     .from('user_medications')
     .select('id, drug_id, custom_name, supplement_id, drug:drugs(id, item_name)')
     .eq('user_id', user.id)
+    .eq('member_id', active.id)
     .is('deleted_at', null)
     .is('ended_at', null)
 

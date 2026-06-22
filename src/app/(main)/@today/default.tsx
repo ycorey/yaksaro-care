@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
 import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { getActiveMember } from '@/lib/active-member'
+import MemberSwitcher from '@/components/member-switcher'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -12,6 +14,8 @@ export default async function TodayPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { active, members } = await getActiveMember(supabase, user.id)
+
   const day = today()
 
   const [{ data: schedules }, { data: logs }, { data: medsData }] = await Promise.all([
@@ -19,17 +23,20 @@ export default async function TodayPage() {
       .from('medication_schedules')
       .select('meal_time, is_checked')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .eq('check_date', day),
     supabase
       .from('medication_check_logs')
       .select('meal_time, is_checked, logged_at')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .eq('check_date', day)
       .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
       .select('meal_times, doses_per_day')
       .eq('user_id', user.id)
+      .eq('member_id', active.id)
       .is('deleted_at', null)
       .is('ended_at', null),
   ])
@@ -75,5 +82,10 @@ export default async function TodayPage() {
       checkedAt: checked[s.meal] ? checkedAt[s.meal] : null,
     }))
 
-  return <TodayTimeline initialSlots={slots} hasMeds={medTotal > 0} />
+  return (
+    <div>
+      <MemberSwitcher members={members} activeId={active.id} />
+      <TodayTimeline initialSlots={slots} hasMeds={medTotal > 0} />
+    </div>
+  )
 }

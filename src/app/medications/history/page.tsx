@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Flask, Pill, Hospital } from '@phosphor-icons/react/dist/ssr'
 import { BackButton } from '../back-button'
 import RestoreButton from './restore-button'
+import { getActiveMember } from '@/lib/active-member'
 
 function fmt(d: string | null) {
   if (!d) return null
@@ -17,10 +18,13 @@ export default async function MedicationHistoryPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { active } = await getActiveMember(supabase, user.id)
+
   const { data: meds } = await supabase
     .from('user_medications')
     .select('id, custom_name, started_at, ended_at, dose_amount, doses_per_day, total_days, supplement:supplements(product_name), drug:drugs(item_name, entp_name, image_url), prescription:user_prescriptions(hospital_name, pharmacy_name)')
     .eq('user_id', user.id)
+    .eq('member_id', active.id)
     .is('deleted_at', null)
     .not('ended_at', 'is', null)
     .order('ended_at', { ascending: false })

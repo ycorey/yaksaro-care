@@ -76,10 +76,21 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
     .eq('id', id)
     .maybeSingle()
 
+  // 약사는 환자의 본인(is_self) 멤버 약만 볼 수 있음 — 가족 멤버 약 노출 방지
+  const { data: selfMember } = await supabase
+    .from('members')
+    .select('id')
+    .eq('owner_id', id)
+    .eq('is_self', true)
+    .maybeSingle()
+
+  const selfMemberId = selfMember?.id ?? null
+
   const { data: meds } = await supabase
     .from('user_medications')
     .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
     .eq('user_id', id)
+    .eq('member_id', selfMemberId ?? '')
     .is('deleted_at', null)
     .is('ended_at', null)
     .order('created_at', { ascending: false })

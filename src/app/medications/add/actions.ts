@@ -4,11 +4,14 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { checkOtcInteraction } from '@/lib/dur-otc-check'
+import { getActiveMember } from '@/lib/active-member'
 
 export async function addMedication(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { active } = await getActiveMember(supabase, user.id)
 
   const type         = formData.get('type') as 'prescription' | 'otc' | 'supplement' | null
   const drugId       = (formData.get('drug_id')       as string | null) || null
@@ -60,6 +63,7 @@ export async function addMedication(formData: FormData) {
         .from('user_prescriptions')
         .insert({
           user_id:       user.id,
+          member_id:     active.id,
           hospital_name: hospitalName,
           department:    department,
           duration_days: totalDays,
@@ -73,6 +77,7 @@ export async function addMedication(formData: FormData) {
 
     await supabase.from('user_medications').insert({
       user_id:         user.id,
+      member_id:       active.id,
       drug_id:         resolvedDrugId,
       supplement_id:   null,
       custom_name:     !resolvedDrugId ? (customName || drugName) : null,
@@ -93,6 +98,7 @@ export async function addMedication(formData: FormData) {
     .from('user_medications')
     .insert({
       user_id:       user.id,
+      member_id:     active.id,
       drug_id:       resolvedDrugId,
       supplement_id: supplementId || null,
       custom_name:   (!resolvedDrugId && !supplementId) ? (customName || null) : null,
@@ -108,7 +114,7 @@ export async function addMedication(formData: FormData) {
   if (error) throw new Error(error.message)
 
   if (resolvedDrugId && !supplementId && data?.id) {
-    checkOtcInteraction(user.id, resolvedDrugId, data.id)
+    checkOtcInteraction(user.id, active.id, resolvedDrugId, data.id)
   }
 
   redirect('/wallet')
