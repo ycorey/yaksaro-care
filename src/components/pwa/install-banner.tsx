@@ -6,8 +6,6 @@ import { X, DownloadSimple, ShareNetwork, ArrowSquareOut } from '@phosphor-icons
 
 const DISMISS_KEY = 'yc_install_dismissed'
 const DISMISS_DAYS = 7
-// 랜딩·로그인 등 공개/인증 페이지에서는 설치 배너를 띄우지 않음(첫인상 침범 방지)
-const PUBLIC_PREFIXES = ['/login', '/signup', '/privacy', '/terms', '/offline', '/pharmacy/login']
 
 function isKakaoTalkApp() { return /kakaotalk/i.test(navigator.userAgent) }
 function isAndroid() { return /android/i.test(navigator.userAgent) }
@@ -31,10 +29,11 @@ export default function InstallBanner() {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [mode, setMode] = useState<'chrome' | 'ios' | 'kakao' | null>(null)
   const pathname = usePathname()
-  const onPublicPage = pathname === '/' || PUBLIC_PREFIXES.some(p => pathname.startsWith(p))
+  // 설치 배너는 홈에서만 — 랜딩/로그인 첫인상 침범 방지 + 약지갑·오늘 등 데이터 화면을 덮지 않도록
+  const onHome = pathname === '/home'
 
   useEffect(() => {
-    if (onPublicPage) return
+    if (!onHome) return
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true
@@ -57,9 +56,9 @@ export default function InstallBanner() {
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [onPublicPage])
+  }, [onHome])
 
-  if (onPublicPage || !mode) return null
+  if (!onHome || !mode) return null
 
   const dismiss = () => {
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())) } catch {}
