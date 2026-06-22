@@ -221,10 +221,6 @@ export default function SettingsClient({
             </button>
           ))}
         </div>
-        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
-          <span className="flex-shrink-0 mt-0.5">ⓘ</span>
-          눈이 편한 크기로 골라보세요. 앱 전체 글자가 함께 커져요.
-        </p>
       </section>
 
       {/* ── 복약 알림 ── */}
@@ -244,7 +240,7 @@ export default function SettingsClient({
         </div>
         <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
-          처음 켜면 알림 허용을 물어봐요. 홈 화면에 앱을 추가하면 알림이 더 잘 도착해요.
+          홈 화면에 앱을 추가하면 알림이 더 잘 도착해요.
         </p>
       </section>
 
@@ -260,10 +256,6 @@ export default function SettingsClient({
           ))}
         </div>
         <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
-          <span className="flex-shrink-0 mt-0.5">ⓘ</span>
-          꺼진 시간대는 알림이 오지 않아요.
-        </p>
-        <p className="text-xs text-yc-neutral500 mt-1.5 flex items-start gap-1">
           <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
           알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
         </p>

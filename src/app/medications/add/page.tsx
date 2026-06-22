@@ -44,16 +44,19 @@ function TypeSelectScreen() {
   return (
     <div className="space-y-6 anim-scale-in">
       <StepHeader title="약 추가" />
-      <p className="text-sm text-yc-neutral500 flex items-center gap-1">
-        <span>ⓘ</span> 어떤 약을 추가할까요?
-      </p>
-      <div className="space-y-3">
-        <MethodCard href="/medications/add?type=prescription" iconBg="bg-yc-infoBg"
-          icon={<AddIcon name="pill" className="text-yc-blue500" />}
+      <div className="flex flex-col justify-center gap-3 min-h-[55vh]">
+        <p className="text-sm text-yc-neutral500 flex items-center gap-1 mb-1">
+          <span>ⓘ</span> 어떤 약을 추가할까요?
+        </p>
+        <MethodCard href="/medications/add?type=prescription" iconBg="bg-yc-green50"
+          icon={<AddIcon name="pill" className="text-yc-green700" />}
           title="처방약 · 일반약" desc="약봉투 촬영·QR·직접 입력" />
-        <MethodCard href="/medications/add?type=supplement" iconBg="bg-yc-green100"
+        <MethodCard href="/medications/add?type=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="flask" className="text-yc-green700" />}
           title="영양제 · 보조제" desc="이름 검색·라벨 촬영·직접 입력" />
+        <p className="text-xs text-yc-neutral400 text-center mt-3">
+          담아두면 복약 시간마다 알림으로 챙겨드려요
+        </p>
       </div>
     </div>
   )
@@ -65,20 +68,20 @@ function PrescriptionMethodScreen() {
     <div className="space-y-6 anim-scale-in">
       <StepHeader title="처방약 · 일반약" />
       <div className="space-y-3">
-        <MethodCard href="/medications/ocr" iconBg="bg-yc-blue500"
+        <MethodCard href="/medications/ocr" iconBg="bg-yc-green600"
           icon={<AddIcon name="camera" className="text-white" />}
           title="약봉투 촬영" desc="봉투 글씨를 사진으로 읽어요" badge="추천" />
-        <MethodCard href="/medications/ocr" iconBg="bg-yc-warning"
-          icon={<AddIcon name="qr" className="text-white" />}
+        <MethodCard href="/medications/ocr" iconBg="bg-yc-green50"
+          icon={<AddIcon name="qr" className="text-yc-green700" />}
           title="처방전 QR 스캔" desc="QR이 있으면 가장 정확해요" />
-        <MethodCard href="/medications/add?method=barcode&tab=otc" iconBg="bg-yc-green600"
-          icon={<AddIcon name="barcode" className="text-white" />}
+        <MethodCard href="/medications/add?method=barcode&tab=otc" iconBg="bg-yc-green50"
+          icon={<AddIcon name="barcode" className="text-yc-green700" />}
           title="바코드 스캔" desc="일반약 박스 바코드를 찍어 담아요" />
-        <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green100"
+        <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="약 이름·용법을 직접 적어요" />
-        <ComingSoonCard iconBg="bg-yc-green600"
-          icon={<AddIcon name="clipboard" className="text-white" />}
+        <ComingSoonCard iconBg="bg-yc-neutral100"
+          icon={<AddIcon name="clipboard" className="text-yc-neutral400" />}
           title="건강기록에서 불러오기" desc="최근 1년 투약내역 연동을 준비 중이에요" />
       </div>
       <p className="text-xs text-yc-neutral500 flex items-start gap-1.5">
@@ -95,17 +98,17 @@ function SupplementMethodScreen() {
     <div className="space-y-6 anim-scale-in">
       <StepHeader title="영양제 · 보조제" />
       <div className="space-y-3">
-        <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green100"
-          icon={<AddIcon name="search" className="text-yc-green700" />}
+        <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green600"
+          icon={<AddIcon name="search" className="text-white" />}
           title="이름으로 검색" desc="제품명으로 찾아 추가해요" badge="추천" />
-        <MethodCard href="/medications/ocr" iconBg="bg-yc-warningBg"
-          icon={<AddIcon name="camera" className="text-yc-warning" />}
+        <MethodCard href="/medications/ocr" iconBg="bg-yc-green50"
+          icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="설명서 · 라벨 촬영" desc="성분·섭취방법을 읽어와요" />
-        <MethodCard href="/medications/add?method=barcode&tab=supplement" iconBg="bg-yc-green600"
-          icon={<AddIcon name="barcode" className="text-white" />}
+        <MethodCard href="/medications/add?method=barcode&tab=supplement" iconBg="bg-yc-green50"
+          icon={<AddIcon name="barcode" className="text-yc-green700" />}
           title="바코드 스캔" desc="제품 박스 바코드를 찍어 담아요" />
-        <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-infoBg"
-          icon={<AddIcon name="pencil" className="text-yc-blue500" />}
+        <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green50"
+          icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="브랜드·복용 시간 적기" />
       </div>
     </div>
