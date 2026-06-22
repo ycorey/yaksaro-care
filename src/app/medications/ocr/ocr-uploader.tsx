@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, ArrowsClockwise, Check } from '@phosphor-icons/react'
+import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, ArrowsClockwise, Check, Lightbulb } from '@phosphor-icons/react'
 import { MEAL_SLOTS, defaultMealKeys } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 
@@ -67,6 +67,9 @@ type DrugInfo = {
 
 type State = 'idle' | 'uploading' | 'done'
 
+// OCR 진행 단계(체감용) — 서버가 단계를 스트리밍하지 않아 시간 기반으로 진행감을 보여준다.
+const OCR_STAGES = ['사진을 준비하고 있어요', '처방전 글자를 읽고 있어요', '약 정보를 정리하고 있어요']
+
 type RegularPharmacy = { id: string; name: string }
 
 type PharmacyResult = {
@@ -96,6 +99,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [pharmResults,     setPharmResults]     = useState<PharmacyResult[]>([])
   const [pharmSearching,   setPharmSearching]   = useState(false)
   const [pharmDropOpen,    setPharmDropOpen]    = useState(false)
+  const [stage,            setStage]            = useState(0)   // OCR 진행 단계(체감용)
   const fileRef    = useRef<HTMLInputElement>(null)
   const cameraRef  = useRef<HTMLInputElement>(null)
 
@@ -137,6 +141,14 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     }, 600)  // 600ms — 입력 즉시 저장 후 여유있게 검색
     return () => clearTimeout(t)
   }, [pharmSearch])
+
+  // 업로드 중 진행 단계 표시 — 시간 기반으로 자연스럽게 진행
+  useEffect(() => {
+    if (state !== 'uploading') { setStage(0); return }
+    const t1 = setTimeout(() => setStage(1), 1200)
+    const t2 = setTimeout(() => setStage(2), 4000)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [state])
 
   function selectPharmacy(p: PharmacyResult) {
     setPharmacy({ name: p.name, address: p.address, phone: p.phone, lat: p.lat, lng: p.lng })
@@ -289,6 +301,13 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             </div>
           )}
 
+          <div className="flex items-start gap-2 bg-yc-green50 border border-yc-green100 rounded-yc-md px-4 py-3">
+            <Lightbulb weight="fill" size={16} className="text-yc-green600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-yc-neutral600 leading-relaxed">
+              처방전 <span className="font-semibold text-yc-neutral800">전체가 화면에 가득 차게</span>, 밝은 곳에서 평평하게 펴고 찍으면 더 정확하게 읽어요.
+            </p>
+          </div>
+
           {/* 숨김 input — sr-only 클립 기법 (Samsung 브라우저 호환) */}
           <input
             ref={cameraRef}
@@ -345,9 +364,13 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <div className="text-center pt-4 pb-2">
             <CircleNotch size={48} weight="bold" className="text-yc-green600 mx-auto mb-4 animate-spin" />
             <p className="font-display text-xl text-yc-neutral900 leading-snug px-2">
-              처방전에서 안전하게<br />약 이름을 읽어오고 있습니다...
+              {OCR_STAGES[stage]}
             </p>
-            <p className="text-sm text-yc-neutral500 mt-2">CLOVA OCR → GPT 정제 처리 중</p>
+            <div className="flex items-center justify-center gap-1.5 mt-3" aria-hidden="true">
+              {OCR_STAGES.map((_, i) => (
+                <span key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stage ? 'w-6 bg-yc-green600' : 'w-1.5 bg-yc-neutral200'}`} />
+              ))}
+            </div>
           </div>
 
           {/* 스켈레톤 카드 × 4 */}

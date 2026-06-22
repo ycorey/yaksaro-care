@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Barcode, CircleNotch, MagnifyingGlass } from '@phosphor-icons/react'
+import { Barcode, CircleNotch, MagnifyingGlass, Flashlight } from '@phosphor-icons/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { DecodeHintType, BarcodeFormat } from '@zxing/library'
 import type { IScannerControls } from '@zxing/browser'
@@ -11,6 +11,10 @@ import { BackButton } from '../back-button'
 
 type TabType = 'otc' | 'supplement'
 type Phase = 'scanning' | 'looking-up' | 'form'
+
+// 네이티브 BarcodeDetector (안드로이드 Chrome 등) — 지원 시 ZXing보다 빠르고 정확
+type BarcodeDetectorLike = { detect: (src: CanvasImageSource) => Promise<Array<{ rawValue: string }>> }
+type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetectorLike
 
 // 1D 소매 코드(EAN/UPC) + 의약품 박스 GS1 DataMatrix(2D). DataMatrix 안의 AI(01)에
 // GTIN이 들어있어 1D와 동일하게 식별됨. (처방전 2D=EMR 비공개 포맷은 여전히 대상 아님)
@@ -52,13 +56,21 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
   const [formTab, setFormTab]   = useState<TabType>(initialTab)
   const [preset, setPreset]     = useState<Selected | null>(null)
 
+  const [torchOn, setTorchOn]       = useState(false)
+  const [torchAvail, setTorchAvail] = useState(false)
+
   const videoRef    = useRef<HTMLVideoElement | null>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
+  const streamRef   = useRef<MediaStream | null>(null)
+  const rafRef      = useRef<number>(0)
+  const trackRef    = useRef<MediaStreamTrack | null>(null)
   const handledRef  = useRef(false)   // 첫 디코딩만 처리(연속 콜백 가드)
 
   const stopCamera = useCallback(() => {
-    controlsRef.current?.stop()
-    controlsRef.current = null
+    controlsRef.current?.stop(); controlsRef.current = null
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0 }
+    streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
+    trackRef.current = null
   }, [])
 
   // 바코드 → 제품 조회 → 히트 prefill / 미스 검색 폴백
@@ -108,31 +120,73 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
     setPhase('form')
   }, [initialTab, stopCamera])
 
-  // 카메라 시작 — 스캐닝 단계에서만
+  // 카메라 시작 — 스캐닝 단계에서만. 네이티브 BarcodeDetector 지원 시 그것을(빠름+손전등),
+  // 아니면(iOS Safari 등) ZXing 폴백.
   useEffect(() => {
     if (phase !== 'scanning') return
     let cancelled = false
-    const reader = new BrowserMultiFormatReader(FORMAT_HINTS, { delayBetweenScanAttempts: 100 })
+    const VIDEO = { facingMode: { ideal: 'environment' as const }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    const BD = (window as unknown as { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector
 
     ;(async () => {
       try {
-        if (!videoRef.current) return
-        // 후면 카메라 우선 — 박스 바코드 스캔
-        const controls = await reader.decodeFromConstraints(
-          // 후면 카메라 + 고해상도 요청(초점 되는 주카메라 선택 유도 → 1D 인식률↑)
-          { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
-          videoRef.current,
-          (result) => { if (result) onDetected(result.getText()) },
-        )
-        if (cancelled) controls.stop()
-        else controlsRef.current = controls
+        const video = videoRef.current
+        if (!video) return
+
+        if (BD) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO })
+          if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+          streamRef.current = stream
+          video.srcObject = stream
+          await video.play().catch(() => {})
+          const track = stream.getVideoTracks()[0]
+          trackRef.current = track
+          const caps = track.getCapabilities?.() as unknown as { torch?: boolean } | undefined
+          if (caps?.torch) setTorchAvail(true)
+          const detector = new BD({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'data_matrix'] })
+          const tick = async () => {
+            if (cancelled) return
+            try {
+              const codes = await detector.detect(video)
+              if (codes && codes.length) { onDetected(codes[0].rawValue); return }
+            } catch { /* 프레임 디코드 실패는 무시하고 계속 */ }
+            rafRef.current = requestAnimationFrame(tick)
+          }
+          rafRef.current = requestAnimationFrame(tick)
+        } else {
+          // ZXing 폴백 (iOS Safari 등). 손전등은 미지원.
+          const reader = new BrowserMultiFormatReader(FORMAT_HINTS, { delayBetweenScanAttempts: 100 })
+          const controls = await reader.decodeFromConstraints(
+            { video: VIDEO }, video,
+            (result) => { if (result) onDetected(result.getText()) },
+          )
+          if (cancelled) controls.stop()
+          else controlsRef.current = controls
+        }
       } catch {
         if (!cancelled) setCamError('카메라를 열 수 없어요. 권한을 확인하거나 이름으로 검색해 주세요.')
       }
     })()
 
-    return () => { cancelled = true; controlsRef.current?.stop(); controlsRef.current = null }
+    return () => {
+      cancelled = true
+      controlsRef.current?.stop(); controlsRef.current = null
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0 }
+      streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
+      trackRef.current = null
+    }
   }, [phase, onDetected])
+
+  // 손전등 토글 (BarcodeDetector 경로 + 지원 기기)
+  async function toggleTorch() {
+    const track = trackRef.current
+    if (!track) return
+    const next = !torchOn
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next } as unknown as MediaTrackConstraintSet] })
+      setTorchOn(next)
+    } catch { /* 미지원 — 무시 */ }
+  }
 
   // ── 폼 단계: 기존 AddForm 재사용(히트면 prefill, 미스면 검색 모드) ──
   if (phase === 'form') {
@@ -181,6 +235,14 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
               </div>
             )}
           </div>
+
+          {torchAvail && (
+            <button type="button" onClick={toggleTorch}
+              className={`w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg text-base font-semibold transition-colors ${torchOn ? 'bg-yc-green600 text-white active:bg-yc-green700' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+              <Flashlight size={18} weight={torchOn ? 'fill' : 'bold'} />
+              {torchOn ? '손전등 끄기' : '손전등 켜기'}
+            </button>
+          )}
 
           <button type="button" onClick={skipToSearch}
             className="w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 text-base font-semibold active:bg-yc-neutral200 transition-colors">
