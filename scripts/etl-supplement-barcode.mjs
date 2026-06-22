@@ -29,7 +29,9 @@ const DRY   = process.argv.includes('--dry')
 const DELAY = 120  // ms, API 매너 (일일 한도 보호)
 
 // ── ⚠️ 데이터셋 스펙에 맞게 검증/수정할 상수 ─────────────────────────
-const API_KEY  = env['MFDS_BARCODE_KEY']
+// data.go.kr 계정 인증키는 1개를 여러 API가 공유(활용신청만 API별로). 전용 키가
+// 없으면 기존 식약처 키 재사용 — 단 바코드 데이터셋 "활용신청" 승인은 별도 필요.
+const API_KEY  = env['MFDS_BARCODE_KEY'] || env['MFDS_HEALTH_FOOD_KEY'] || env['MFDS_DRUG_LICENSE_KEY']
 const API_BASE = 'https://apis.data.go.kr/1471000/BrcdConnPrdtInfoService/getBrcdConnPrdtInfo' // 확인 필요
 const PARAM_NAME = 'prdlstNm'   // 제품명 검색 파라미터 (확인 필요)
 const FIELD_NAME = 'PRDLST_NM'  // 응답: 제품명 (확인 필요)
