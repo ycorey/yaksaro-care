@@ -31,7 +31,7 @@ export default function PharmacyPatientList({ patients }: { patients: PatientRow
                 className="flex items-center justify-between px-5 py-4 active:bg-yc-neutral50 transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-10 h-10 rounded-full bg-yc-green50 flex items-center justify-center text-yc-green700 font-display flex-shrink-0">
+                  <span className="w-10 h-10 rounded-full bg-yc-green50 flex items-center justify-center text-yc-green700 font-semibold flex-shrink-0">
                     {p.name.slice(0, 1)}
                   </span>
                   <span className="font-semibold text-yc-neutral900 truncate">{p.name}</span>

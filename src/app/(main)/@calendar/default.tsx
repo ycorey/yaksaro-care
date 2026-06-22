@@ -117,7 +117,7 @@ export default function CalendarPage() {
           >
             ‹
           </button>
-          <span className="font-display text-base text-yc-neutral900">
+          <span className="font-semibold text-base text-yc-neutral900">
             {year}년 {month}월
           </span>
           <button

@@ -309,7 +309,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <button
             type="button"
             onClick={() => cameraRef.current?.click()}
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md bg-yc-green600 text-white font-semibold active:bg-yc-green700 transition-colors"
           >
             <Camera weight="fill" size={20} /> 카메라 촬영
           </button>
@@ -317,7 +317,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md border border-yc-neutral300 bg-white text-yc-neutral700 font-display active:bg-yc-neutral100 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md border border-yc-neutral300 bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral100 transition-colors"
           >
             <Images size={20} /> 사진 선택
           </button>
@@ -331,7 +331,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             <button
               type="button"
               onClick={() => runOcr(file, file)}
-              className="mt-3 w-full h-12 rounded-yc-md bg-yc-green600 text-white text-base font-display active:bg-yc-green700 transition-colors"
+              className="mt-3 w-full h-12 rounded-yc-md bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors"
             >
               <span className="flex items-center justify-center gap-2"><ArrowsClockwise weight="bold" size={16} /> 같은 사진으로 다시 분석하기</span>
             </button>
@@ -464,9 +464,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => saveEdit(i)}
-                              className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-display active:opacity-90">저장</button>
+                              className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-semibold active:opacity-90">저장</button>
                             <button onClick={() => setEditIdx(null)}
-                              className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-display active:bg-yc-neutral100">취소</button>
+                              className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-semibold active:bg-yc-neutral100">취소</button>
                           </div>
                         </div>
                       ) : (
@@ -567,7 +567,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                     ? setPharmacy(emptyPharmacy())
                     : setPharmacy(emptyPharmacy(regularPharmacy.name))
                   }
-                  className={`w-full py-3 rounded-yc-md text-sm font-display transition-colors ${
+                  className={`w-full py-3 rounded-yc-md text-sm font-semibold transition-colors ${
                     pharmacy.name === regularPharmacy.name
                       ? 'bg-yc-green600 text-white'
                       : 'bg-yc-neutral50 text-yc-neutral700 border border-yc-neutral200 active:bg-yc-neutral100'

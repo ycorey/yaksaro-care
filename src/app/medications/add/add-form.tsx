@@ -48,7 +48,7 @@ function MealTimePicker({ value, onChange }: { value: string[]; onChange: (v: st
 // ── 버튼 스타일 상수 ──────────────────────────────────────────────────
 // 모든 선택·스테퍼·프리셋 버튼이 동일한 높이(h-12 = 48px)를 공유한다.
 const BTN_H = 'h-12'
-const BTN_BASE = `${BTN_H} flex items-center justify-center rounded-yc-md font-display text-sm transition-colors`
+const BTN_BASE = `${BTN_H} flex items-center justify-center rounded-yc-md font-semibold text-sm transition-colors`
 const BTN_ACTIVE   = `${BTN_BASE} bg-yc-green600 text-white`
 const BTN_INACTIVE = `${BTN_BASE} bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200`
 const BTN_STEPPER  = `${BTN_H} w-12 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-xl font-bold active:bg-yc-neutral200 flex-shrink-0`
@@ -249,7 +249,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
       {/* ── 카테고리 배지 (고정, 전환 없음) ── */}
       <div className="flex items-center gap-2 px-3 py-2 bg-yc-neutral100 rounded-yc-md w-fit">
         <span className="text-yc-neutral600">{icon}</span>
-        <span className="text-sm font-display text-yc-neutral700">{label}</span>
+        <span className="text-sm font-semibold text-yc-neutral700">{label}</span>
       </div>
 
       {/* 숨김 필드 */}
@@ -412,7 +412,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
 
       {/* ── 저장 버튼 ── */}
       <button type="submit" disabled={saving || !canSubmit}
-        className={`w-full ${BTN_H} rounded-yc-lg bg-yc-green600 text-white text-base font-display active:bg-yc-green700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors`}>
+        className={`w-full ${BTN_H} rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors`}>
         {saving ? '저장 중...' : '복약 목록에 추가'}
       </button>
     </form>

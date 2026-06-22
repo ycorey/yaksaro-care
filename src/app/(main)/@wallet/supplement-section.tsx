@@ -71,7 +71,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
             ))}
           </div>
           <div className="ml-1">
-            <p className="font-display text-base text-yc-green700">내가 챙기는 영양제</p>
+            <p className="font-semibold text-base text-yc-green700">내가 챙기는 영양제</p>
             <p className="text-xs text-yc-green600 mt-0.5">
               {meds.length > 0 ? `약 ${meds.length}종` : '등록된 영양제가 없어요'}
             </p>
@@ -119,7 +119,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
                   key={key}
                   onClick={() => toggle(key)}
                   aria-pressed={checks[key]}
-                  className={`w-full flex items-center justify-center gap-2 py-[18px] rounded-yc-lg text-base font-display transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 py-[18px] rounded-yc-lg text-base font-semibold transition-colors ${
                     checks[key]
                       ? 'bg-yc-green600 text-white'
                       : 'bg-yc-green100 text-yc-green700 active:opacity-90'

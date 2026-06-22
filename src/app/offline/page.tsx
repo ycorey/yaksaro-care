@@ -12,7 +12,7 @@ export default function OfflinePage() {
       </p>
       <a
         href="/home"
-        className="mt-2 inline-flex items-center justify-center h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700"
+        className="mt-2 inline-flex items-center justify-center h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-semibold active:bg-yc-green700"
       >
         다시 시도
       </a>

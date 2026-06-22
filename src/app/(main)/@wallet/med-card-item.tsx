@@ -268,11 +268,11 @@ export default function MedCardItem(p: MedCardItemProps) {
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={save} disabled={busy}
-                className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:opacity-90 disabled:opacity-50">
+                className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:opacity-90 disabled:opacity-50">
                 {busy ? '저장 중…' : '저장'}
               </button>
               <button onClick={() => setMode('view')} disabled={busy}
-                className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-display active:bg-yc-neutral100">
+                className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-semibold active:bg-yc-neutral100">
                 취소
               </button>
             </div>

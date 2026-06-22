@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
  * 스펙: README "Shared Components" / YCButton.
  */
 const ycButtonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 font-display rounded-yc-md transition-colors select-none disabled:opacity-50 disabled:pointer-events-none',
+  'inline-flex items-center justify-center gap-1.5 font-semibold rounded-yc-md transition-colors select-none disabled:opacity-50 disabled:pointer-events-none',
   {
     variants: {
       variant: {

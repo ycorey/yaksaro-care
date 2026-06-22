@@ -99,7 +99,7 @@ export default function LandingClient() {
             <button
               onClick={() => handleOAuthSignIn('google')}
               disabled={!!loading}
-              className="w-full flex items-center justify-center gap-2.5 py-[16px] rounded-yc-lg text-base font-display text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2.5 py-[16px] rounded-yc-lg text-base font-semibold text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
             >
               {loading === 'google'
                 ? <span className="animate-pulse">연결 중...</span>
@@ -136,7 +136,7 @@ export default function LandingClient() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-infoBg text-yc-infoText text-base font-display">
+                <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-infoBg text-yc-infoText text-base font-semibold">
                   <SunHorizon weight="fill" size={16} /> 아침 약 한번에 먹기
                 </button>
               </div>
@@ -158,7 +158,7 @@ export default function LandingClient() {
                   </li>
                 ))}
               </ul>
-              <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-green100 text-yc-green700 text-base font-display">
+              <button className="mt-4 w-full py-[14px] rounded-yc-lg bg-yc-green100 text-yc-green700 text-base font-semibold">
                 <SunHorizon weight="fill" size={16} /> 아침 영양제 한번에 먹기
               </button>
             </div>
@@ -167,7 +167,7 @@ export default function LandingClient() {
           {/* 💊 약국 일반약 — 칩 */}
           <div className="bg-white rounded-yc-xl border border-yc-neutral100 overflow-hidden">
             <div className="px-6 pt-5 pb-1">
-              <p className="font-display text-base text-yc-neutral500 flex items-center gap-1.5"><Pill weight="fill" size={16} /> 약국 일반약</p>
+              <p className="font-semibold text-base text-yc-neutral500 flex items-center gap-1.5"><Pill weight="fill" size={16} /> 약국 일반약</p>
               <p className="text-xs text-yc-neutral500 mt-0.5">상시 복용 중 아님 · 필요할 때 복용</p>
             </div>
             <div className="px-6 py-4 flex flex-wrap gap-2">

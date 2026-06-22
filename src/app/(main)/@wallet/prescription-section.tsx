@@ -121,7 +121,7 @@ function GroupMealButtons({ groupKey, mealTimes, initialChecks, onAnyChecked }: 
         const Icon = MEAL_ICONS[key]
         return (
         <button key={key} onClick={() => toggle(key)} aria-pressed={checks[key]}
-          className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-yc-lg text-base font-display transition-colors ${
+          className={`w-full flex items-center justify-center gap-2 py-[16px] rounded-yc-lg text-base font-semibold transition-colors ${
             checks[key] ? 'bg-yc-green600 text-white' : 'bg-yc-neutral50 text-yc-neutral700 active:opacity-90'
           }`}>
           <span><Icon weight="fill" size={18} /></span><span>{checks[key] ? <><Check weight="bold" size={14} className="inline mr-1" />{done}</> : label}</span>
@@ -224,7 +224,7 @@ function PrescriptionCard({
             {g.hospitalName}{g.prescribedAt ? ` · ${fmtDate(g.prescribedAt)}` : ''}
           </p>
           {/* 첫 약명 — 주인공 (실버 UX: 크게) */}
-          <p className="font-display text-[19px] text-yc-neutral900 leading-snug truncate">
+          <p className="font-bold text-[19px] text-yc-neutral900 leading-snug truncate">
             {g.meds[0]?.name}
             {g.meds.length > 1 && (
               <span className="text-sm font-semibold text-yc-neutral500"> 외 {g.meds.length - 1}종</span>

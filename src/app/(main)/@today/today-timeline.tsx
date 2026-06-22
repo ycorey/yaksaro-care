@@ -157,7 +157,7 @@ export default function TodayTimeline({
           <button
             type="button"
             onClick={() => check(overdue.meal)}
-            className="shrink-0 font-display text-sm px-4 py-3 rounded-yc-md bg-yc-warning text-white active:opacity-90 min-h-[52px]"
+            className="shrink-0 font-semibold text-sm px-4 py-3 rounded-yc-md bg-yc-warning text-white active:opacity-90 min-h-[52px]"
           >
             지금 먹기
           </button>
@@ -216,7 +216,7 @@ export default function TodayTimeline({
                     <button
                       type="button"
                       onClick={() => check(s.meal)}
-                      className={`mt-2 font-display text-sm px-4 rounded-yc-md min-h-[52px] w-full sm:w-auto sm:px-6 transition-colors ${
+                      className={`mt-2 font-semibold text-sm px-4 rounded-yc-md min-h-[52px] w-full sm:w-auto sm:px-6 transition-colors ${
                         isNext
                           ? 'bg-yc-green600 text-white active:bg-yc-green700'
                           : 'border border-yc-neutral200 text-yc-neutral600 active:bg-yc-neutral50'

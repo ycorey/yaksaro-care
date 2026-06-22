@@ -11,7 +11,7 @@ export function WalletHeaderActions() {
         <GearSix size={20} />
       </Link>
       <Link href="/medications/add"
-        className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-display active:bg-yc-green700">
+        className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700">
         <Plus size={18} /> 추가
       </Link>
     </div>

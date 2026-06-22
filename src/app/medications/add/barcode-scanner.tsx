@@ -158,7 +158,7 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
         <div className="space-y-4">
           <p className="text-sm text-yc-neutral600 bg-yc-warningBg rounded-yc-md px-4 py-3">{camError}</p>
           <button type="button" onClick={skipToSearch}
-            className="w-full h-12 rounded-yc-lg bg-yc-green600 text-white text-base font-display active:bg-yc-green700 transition-colors">
+            className="w-full h-12 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors">
             이름으로 검색하기
           </button>
         </div>
@@ -183,7 +183,7 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
           </div>
 
           <button type="button" onClick={skipToSearch}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 text-base font-display active:bg-yc-neutral200 transition-colors">
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 text-base font-semibold active:bg-yc-neutral200 transition-colors">
             <MagnifyingGlass size={18} weight="bold" />
             바코드 없이 이름으로 검색
           </button>

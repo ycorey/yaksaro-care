@@ -28,7 +28,7 @@ export function IssueStoreIdButton() {
     <button
       onClick={issue}
       disabled={busy}
-      className="inline-flex items-center gap-2 h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700 disabled:opacity-60"
+      className="inline-flex items-center gap-2 h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-semibold active:bg-yc-green700 disabled:opacity-60"
     >
       <QrCode weight="fill" size={18} /> {busy ? '만드는 중…' : '우리 약국 QR 만들기'}
     </button>
@@ -39,7 +39,7 @@ export function PrintButton() {
   return (
     <button
       onClick={() => window.print()}
-      className="inline-flex items-center gap-2 h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-display active:bg-yc-green700"
+      className="inline-flex items-center gap-2 h-12 px-6 rounded-yc-md bg-yc-green600 text-white font-semibold active:bg-yc-green700"
     >
       <Printer weight="fill" size={18} /> 안내문 인쇄하기
     </button>

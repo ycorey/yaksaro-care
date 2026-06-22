@@ -214,7 +214,7 @@ export default function SettingsClient({
             <button key={f.key} type="button" onClick={() => changeFontSize(f.key)}
               className={`flex-1 py-3.5 rounded-yc-lg text-sm transition-colors shadow-[var(--yc-shadow-sm)] ${
                 fontSize === f.key
-                  ? 'bg-yc-green600 text-white font-display'
+                  ? 'bg-yc-green600 text-white font-semibold'
                   : 'bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral50'
               }`}>
               {f.label}

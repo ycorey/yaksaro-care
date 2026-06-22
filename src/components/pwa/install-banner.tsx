@@ -83,13 +83,13 @@ export default function InstallBanner() {
          <DownloadSimple size={20} weight="fill" className="text-white" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-display text-sm text-yc-neutral900">약사로케어 앱 설치</p>
+        <p className="font-semibold text-sm text-yc-neutral900">약사로케어 앱 설치</p>
         {mode === 'kakao' ? (
           <>
             <p className="text-xs text-yc-neutral500 mt-0.5 leading-relaxed">앱 설치를 위해 외부 브라우저에서 열어주세요</p>
             {isAndroid() ? (
               <button onClick={openInChrome}
-                className="mt-2 text-xs font-display text-white bg-yc-green600 active:bg-yc-green700 px-3 py-1.5 rounded-yc-sm">
+                className="mt-2 text-xs font-semibold text-white bg-yc-green600 active:bg-yc-green700 px-3 py-1.5 rounded-yc-sm">
                 Chrome으로 열기
               </button>
             ) : (
@@ -106,7 +106,7 @@ export default function InstallBanner() {
           <>
             <p className="text-xs text-yc-neutral500 mt-0.5">홈 화면에 추가하면 앱처럼 빠르게 열려요</p>
             <button onClick={install}
-              className="mt-2 text-xs font-display text-white bg-yc-green600 active:bg-yc-green700 px-3 py-1.5 rounded-yc-sm">
+              className="mt-2 text-xs font-semibold text-white bg-yc-green600 active:bg-yc-green700 px-3 py-1.5 rounded-yc-sm">
               홈 화면에 추가
             </button>
           </>

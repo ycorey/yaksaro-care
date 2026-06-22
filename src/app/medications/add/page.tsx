@@ -30,7 +30,7 @@ function MethodCard({ href, iconBg, icon, title, desc, badge }: {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-display text-base text-yc-neutral900">{title}</p>
+          <p className="font-semibold text-base text-yc-neutral900">{title}</p>
           {badge && <span className="text-[10px] font-bold text-yc-green700 bg-yc-green100 px-2 py-0.5 rounded-full flex-shrink-0">{badge}</span>}
         </div>
         <p className="text-sm text-yc-neutral500 mt-0.5">{desc}</p>

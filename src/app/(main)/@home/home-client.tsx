@@ -141,7 +141,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconBg}`}>
               <Icon size={22} className={iconColor} weight={filled ? 'fill' : 'light'} />
             </div>
-            <p className="font-display text-[0.9375rem] text-yc-neutral900 leading-snug">{title}</p>
+            <p className="font-semibold text-[0.9375rem] text-yc-neutral900 leading-snug">{title}</p>
             {statKey === 'med' && medCount > 0 && (
               <p className="text-xs font-bold text-yc-green600 mt-2">약 {medCount}종</p>
             )}
