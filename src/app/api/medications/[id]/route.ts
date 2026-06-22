@@ -31,6 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     dose_amount?:   number | null
     doses_per_day?: number | null
     total_days?:    number | null
+    ended_at?:      string | null   // 복용 종료(YYYY-MM-DD) / 다시 복용(null)
     custom_name?:   string
     drug_id?:       string | null
     supplement_id?: string | null
@@ -45,6 +46,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('dose_amount'   in body) patch.dose_amount   = body.dose_amount
   if ('doses_per_day' in body) patch.doses_per_day = body.doses_per_day
   if ('total_days'    in body) patch.total_days    = body.total_days
+  // 복용 종료(ended_at 세팅) / 다시 복용(null) — 약지갑↔지난 약 이동
+  if ('ended_at'      in body) patch.ended_at      = body.ended_at
 
   // 자동완성으로 실제 약품/건기식을 선택하면 ID로 연결하고 custom_name 비움.
   // (CHECK 제약: drug_id OR supplement_id OR custom_name 중 하나는 필수)

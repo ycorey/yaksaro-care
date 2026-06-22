@@ -56,9 +56,10 @@ export default function MedCardItem(p: MedCardItemProps) {
   const [image, setImage] = useState<string | null>(p.initialImage)
   const [open, setOpen]   = useState(false)
 
-  const [mode, setMode]     = useState<'view' | 'edit' | 'confirmDelete'>('view')
+  const [mode, setMode]     = useState<'view' | 'edit' | 'confirmDelete' | 'confirmEnd'>('view')
   const [busy, setBusy]     = useState(false)
   const [deleted, setDeleted] = useState(false)
+  const [ended, setEnded]     = useState(false)
   const [name, setName]     = useState(p.name)
   const [amount, setAmount] = useState(p.doseAmount?.toString() ?? '')
   const [perDay, setPerDay] = useState(p.dosesPerDay?.toString() ?? '')
@@ -176,7 +177,28 @@ export default function MedCardItem(p: MedCardItemProps) {
     }
   }
 
-  if (deleted) return null
+  // 복용 종료 — 삭제(실수 제거)와 달리 '지난 약'에 기록을 남긴다(ended_at 세팅)
+  async function endMed() {
+    setBusy(true)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const res = await fetch(`/api/medications/${p.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ended_at: today }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success('지난 약으로 옮겼어요')
+      setEnded(true)
+      router.refresh()
+    } catch {
+      toast.error('처리 실패')
+      setBusy(false)
+      setMode('view')
+    }
+  }
+
+  if (deleted || ended) return null
 
   return (
     <div className="flex items-start gap-4">
@@ -321,10 +343,22 @@ export default function MedCardItem(p: MedCardItemProps) {
                 <button onClick={() => setMode('view')} disabled={busy}
                   className="text-sm text-yc-neutral500 px-4 min-h-[44px] rounded-yc-md active:bg-yc-neutral100">아니오</button>
               </div>
+            ) : mode === 'confirmEnd' ? (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="text-sm text-yc-neutral500">복용을 끝낼까요? (지난 약에 보관)</span>
+                <button onClick={endMed} disabled={busy}
+                  className="text-sm font-semibold text-yc-green700 px-4 min-h-[44px] rounded-yc-md bg-yc-green50 active:opacity-90 disabled:opacity-50">
+                  {busy ? '처리 중…' : '복용 종료'}
+                </button>
+                <button onClick={() => setMode('view')} disabled={busy}
+                  className="text-sm text-yc-neutral500 px-4 min-h-[44px] rounded-yc-md active:bg-yc-neutral100">아니오</button>
+              </div>
             ) : (
               <div className="flex gap-1 mt-2">
                 <button onClick={enterEdit} aria-label="수정"
                   className="text-sm text-yc-neutral500 active:text-yc-green600 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral50">수정</button>
+                <button onClick={() => setMode('confirmEnd')} aria-label="복용 종료"
+                  className="text-sm text-yc-neutral500 active:text-yc-green600 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral50">복용 종료</button>
                 <button onClick={() => setMode('confirmDelete')} aria-label="삭제"
                   className="text-sm text-yc-neutral500 active:text-yc-error px-3 min-h-[44px] rounded-yc-md active:bg-yc-errorBg">삭제</button>
               </div>

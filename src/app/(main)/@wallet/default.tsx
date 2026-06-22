@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { logger } from '@/lib/logger'
 
 import AppHeader from '@/components/app-header'
@@ -177,6 +178,12 @@ export default async function WalletPage() {
         <SectionHeader label="영양보조제" count={suppCount} showDot={false} />
         <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>
+
+      {/* ── 지난 약(복약 이력) ── */}
+      <Link href="/medications/history"
+        className="block text-center text-sm font-semibold text-yc-neutral500 active:text-yc-green600 py-3">
+        지난 약 보기 →
+      </Link>
     </div>
   )
 }
