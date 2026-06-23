@@ -5,6 +5,7 @@
     { "path": "/api/cron/medication-reminders?meal=afternoon", "schedule": "30 3 * * *" },
     { "path": "/api/cron/medication-reminders?meal=evening",   "schedule": "0 10 * * *" },
     { "path": "/api/cron/medication-reminders?meal=bedtime",   "schedule": "0 13 * * *" },
-    { "path": "/api/cron/sync-supplements", "schedule": "0 18 1 * *" }
+    { "path": "/api/cron/sync-supplements", "schedule": "0 18 1 * *" },
+    { "path": "/api/cron/refill-reminders", "schedule": "0 0 * * *" }
   ]
 }

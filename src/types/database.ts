@@ -877,6 +877,7 @@ export type Database = {
           pharmacy_phone: string | null
           prescribed_at: string | null
           raw_medicine_list: Json
+          refill_reminded_at: string | null
           user_id: string
         }
         Insert: {
@@ -894,6 +895,7 @@ export type Database = {
           pharmacy_phone?: string | null
           prescribed_at?: string | null
           raw_medicine_list?: Json
+          refill_reminded_at?: string | null
           user_id: string
         }
         Update: {
@@ -911,6 +913,7 @@ export type Database = {
           pharmacy_phone?: string | null
           prescribed_at?: string | null
           raw_medicine_list?: Json
+          refill_reminded_at?: string | null
           user_id?: string
         }
         Relationships: [
