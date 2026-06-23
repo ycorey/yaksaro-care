@@ -12,6 +12,8 @@ import SupplementSection from './supplement-section'
 import OtcSection from './otc-section'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import LifestyleSection from './lifestyle-section'
+import { getEstimatedDiseases, getLifestyleContent } from '@/lib/lifestyle-info/server'
 
 export default async function WalletPage() {
   const supabase = await createClient()
@@ -150,6 +152,10 @@ export default async function WalletPage() {
 
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
+  // 생활 관리 정보: 활성 멤버 약 → 질환 추정(확신만) → 질환별 콘텐츠(표시 직전 안전 게이트)
+  const lifestyleEstimates = await getEstimatedDiseases(supabase, user.id, active.id)
+  const lifestyleTips = await getLifestyleContent(supabase, lifestyleEstimates.map(e => e.disease))
+
   // 카테고리별 종수
   const rxCount   = rxRaws.length
   const otcCount  = otcRaws.length
@@ -188,6 +194,13 @@ export default async function WalletPage() {
         <SectionHeader label="영양보조제" count={suppCount} showDot={false} />
         <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>
+
+      {/* ── 섹션 4: 생활 관리 정보(근거 기반 일반 정보) ── */}
+      <LifestyleSection
+        estimates={lifestyleEstimates}
+        tips={lifestyleTips}
+        regularPharmacyPhone={regularPharmacyPhone}
+      />
 
       {/* ── 지난 약(복약 이력) ── */}
       <Link href="/medications/history"

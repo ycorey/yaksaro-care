@@ -16,6 +16,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      lifestyle_content: {
+        Row: {
+          body_ko: string
+          disease: string
+          sources: Json
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          body_ko: string
+          disease: string
+          sources?: Json
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          body_ko?: string
+          disease?: string
+          sources?: Json
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drug_ingredients: {
         Row: {
           amount: string | null

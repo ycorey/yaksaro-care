@@ -5,6 +5,7 @@ import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, type Icon
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import { useNowMinute } from '@/lib/use-now'
+import NotificationPrompt from '@/components/notification-prompt'
 
 function koreanDate() {
   const d = new Date()
@@ -52,9 +53,10 @@ interface Props {
   totalSlots:     number
   activeSlotKeys: string[]
   memberLabel?:   string | null
+  lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
   const now = useNowMinute()
 
@@ -86,6 +88,9 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
         )}
       </div>
+
+      {/* 복약 알림 허용 프롬프트 (권한 미설정 + 알림 켬일 때만 노출) */}
+      <NotificationPrompt />
 
       {/* 상태 알림 카드 → 오늘복약으로 이동 */}
       <Link href="/today" className="block active:scale-[0.99] transition-transform">
@@ -152,6 +157,18 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           </Link>
         ))}
       </div>
+
+      {/* 오늘의 건강 정보 훅 — 약지갑 생활 관리 정보로 연결(근거 기반 일반 정보) */}
+      {lifestyleHook && (
+        <Link href="/wallet"
+          className="block bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <p className="text-sm font-bold text-yc-green700">오늘의 건강 정보 · {lifestyleHook.disease} {lifestyleHook.topic}</p>
+            <span className="text-xs font-semibold text-yc-green700 flex-shrink-0">더보기 →</span>
+          </div>
+          <p className="text-sm text-yc-neutral800 leading-relaxed line-clamp-2 break-keep">{lifestyleHook.body_ko}</p>
+        </Link>
+      )}
     </div>
   )
 }

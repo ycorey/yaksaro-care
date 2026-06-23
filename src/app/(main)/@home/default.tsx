@@ -4,6 +4,7 @@ import HomeClient from './home-client'
 import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import { getEstimatedDiseases, getLifestyleContent } from '@/lib/lifestyle-info/server'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -43,6 +44,15 @@ export default async function HomePage() {
 
   const doneMeals = (checks ?? []).map(c => c.meal_time as string)
 
+  // 오늘의 건강 정보 훅 — 추정 질환 1개의 토픽 1개(약지갑 생활 관리 정보로 연결)
+  const estimates = await getEstimatedDiseases(supabase, user.id, active.id)
+  const firstDisease = estimates[0]?.disease
+  let lifestyleHook: { disease: string; topic: string; body_ko: string } | null = null
+  if (firstDisease) {
+    const tips = await getLifestyleContent(supabase, [firstDisease])
+    if (tips.length > 0) lifestyleHook = { disease: tips[0].disease, topic: tips[0].topic, body_ko: tips[0].body_ko }
+  }
+
   return (
     <div>
       <MemberSwitcher members={members} activeId={active.id} />
@@ -52,6 +62,7 @@ export default async function HomePage() {
         totalSlots={activeSlotKeys.length}
         activeSlotKeys={activeSlotKeys}
         memberLabel={active.is_self ? null : active.name}
+        lifestyleHook={lifestyleHook}
       />
     </div>
   )
