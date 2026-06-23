@@ -163,10 +163,11 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         <Link href="/wallet"
           className="block bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <p className="text-sm font-bold text-yc-green700">오늘의 건강 정보 · {lifestyleHook.disease} {lifestyleHook.topic}</p>
+            <p className="text-sm font-bold text-yc-green700">오늘의 건강 정보</p>
             <span className="text-xs font-semibold text-yc-green700 flex-shrink-0">더보기 →</span>
           </div>
-          <p className="text-sm text-yc-neutral800 leading-relaxed line-clamp-2 break-keep">{lifestyleHook.body_ko}</p>
+          {/* 홈 허브는 글래스 노출이라 병명 평문 노출 회피 — 일반화한 안내만(약지갑 안에서 상세) */}
+          <p className="text-sm text-yc-neutral800 leading-relaxed break-keep">약에 맞는 {lifestyleHook.topic} 등 생활 관리 정보를 확인해보세요.</p>
         </Link>
       )}
     </div>

@@ -39,6 +39,16 @@ export default function InstallBanner() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true
     if (standalone) return
 
+    // 홈에서 알림 허용 프롬프트가 뜰 상황(푸시 지원 + 권한 미설정 + 알림 미해제)이면
+    // 설치 배너는 양보해 동시 노출(busy 첫인상)을 막는다. 알림 처리 후 다음 방문에 노출.
+    try {
+      const pushPending =
+        'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window &&
+        Notification.permission === 'default' &&
+        localStorage.getItem('yaksaro_alarm_enabled') !== '0'
+      if (pushPending) return
+    } catch { /* 접근 불가 시 그대로 진행 */ }
+
     const dismissed = localStorage.getItem(DISMISS_KEY)
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_DAYS * 86400_000) return
 

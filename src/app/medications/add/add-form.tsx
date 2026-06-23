@@ -19,7 +19,7 @@ export type Selected =
 
 const TAB_LABELS: Record<TabType, { icon: React.ReactNode; label: string }> = {
   prescription: { icon: <Hospital weight="fill" size={15} />, label: '처방의약품' },
-  otc:          { icon: <Pill     weight="fill" size={15} />, label: '약국 일반약' },
+  otc:          { icon: <Pill     weight="fill" size={15} />, label: '일반의약품' },
   supplement:   { icon: <Flask    weight="fill" size={15} />, label: '영양제'      },
 }
 

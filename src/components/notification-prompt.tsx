@@ -57,20 +57,22 @@ export default function NotificationPrompt() {
   }
 
   return (
-    <div className="flex items-start gap-3 bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4">
-      <div className="w-10 h-10 rounded-yc-md bg-yc-green600 flex items-center justify-center flex-shrink-0">
-        <BellRinging size={20} weight="fill" className="text-white" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-yc-neutral900">복약 시간 알림 받기</p>
-        <p className="text-xs text-yc-neutral500 mt-0.5 leading-relaxed">끼니마다 약을 챙기도록 알려드려요. 알림을 허용해 주세요.</p>
-        <button onClick={enable} disabled={busy}
-          className="mt-2 text-xs font-semibold text-white bg-yc-green600 active:bg-yc-green700 px-3 py-1.5 rounded-yc-sm disabled:opacity-50">
-          {busy ? '설정 중…' : '알림 허용하기'}
+    <div className="bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4">
+      <div className="flex items-start gap-3">
+        <div className="w-11 h-11 rounded-yc-md bg-yc-green600 flex items-center justify-center flex-shrink-0">
+          <BellRinging size={22} weight="fill" className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-base text-yc-neutral900">복약 시간 알림 받기</p>
+          <p className="text-sm text-yc-neutral500 mt-0.5 leading-relaxed">끼니마다 약을 챙기도록 알려드려요.</p>
+        </div>
+        <button onClick={dismiss} className="w-10 h-10 -mr-2 -mt-1 flex items-center justify-center text-yc-neutral400 active:text-yc-neutral600 flex-shrink-0" aria-label="닫기">
+          <X size={18} />
         </button>
       </div>
-      <button onClick={dismiss} className="text-yc-neutral400 active:text-yc-neutral600 flex-shrink-0 mt-0.5" aria-label="닫기">
-        <X size={16} />
+      <button onClick={enable} disabled={busy}
+        className="mt-3 w-full h-12 rounded-yc-lg text-base font-semibold text-white bg-yc-green600 active:bg-yc-green700 disabled:opacity-50">
+        {busy ? '설정 중…' : '알림 허용하기'}
       </button>
     </div>
   )

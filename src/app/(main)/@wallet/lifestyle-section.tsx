@@ -44,12 +44,12 @@ export default function LifestyleSection({
               <span className="text-sm font-bold text-yc-green700">{disease} 관리에 도움되는 정보</span>
             </div>
             {/* 약/질환군 주어 — 개인 진단 아님 */}
-            <p className="text-sm text-yc-neutral600 leading-relaxed">{diseaseGroupLead(disease)}</p>
+            <p className="text-base text-yc-neutral600 leading-relaxed break-keep">{diseaseGroupLead(disease)}</p>
 
             {list.map((tip) => (
               <YCCard key={tip.topic} variant="brand" className="px-5 py-4 space-y-2">
                 <p className="text-sm font-bold text-yc-green700">{tip.topic}</p>
-                <p className="text-sm text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
+                <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
                 {tip.sources.length > 0 && (
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
                     {tip.sources.slice(0, 3).map((s, i) => (
@@ -74,8 +74,11 @@ export default function LifestyleSection({
               {regularPharmacyPhone && (
                 <a
                   href={`tel:${regularPharmacyPhone.replace(/[^0-9]/g, '')}`}
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-yc-green700 bg-yc-green100 active:opacity-80 rounded-yc-md px-3 py-2"
+                  className="mt-2 inline-flex items-center gap-2 h-11 px-4 text-sm font-semibold text-yc-green700 bg-yc-green100 active:opacity-80 rounded-yc-md"
                 >
+                  <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+                    <path d="M222.37 158.46l-47.11-21.11-.13-.06a16 16 0 0 0-15.17 1.4 8.12 8.12 0 0 0-.75.56L134.87 160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16 16 0 0 0 1.32-15.06l-.06-.14-21.12-47.12A16 16 0 0 0 80.6 16 56.13 56.13 0 0 0 24 72c0 79.4 64.6 144 144 144a56.13 56.13 0 0 0 56-56.6 16 16 0 0 0-9.63-13.94Z" />
+                  </svg>
                   단골약사님께 전화하기
                 </a>
               )}

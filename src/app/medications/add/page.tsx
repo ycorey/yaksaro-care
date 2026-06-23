@@ -55,7 +55,7 @@ function TypeSelectScreen({ member }: { member: Member }) {
         </p>
         <MethodCard href="/medications/add?type=prescription" iconBg="bg-yc-green50"
           icon={<AddIcon name="pill" className="text-yc-green700" />}
-          title="처방약 · 일반약" desc="약봉투 촬영·QR·직접 입력" />
+          title="처방약 · 일반약" desc="처방전 스캔·직접 입력" />
         <MethodCard href="/medications/add?type=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="flask" className="text-yc-green700" />}
           title="영양제 · 보조제" desc="이름 검색·라벨 촬영·직접 입력" />
@@ -75,13 +75,7 @@ function PrescriptionMethodScreen({ member }: { member: Member }) {
       <div className="space-y-3">
         <MethodCard href="/medications/ocr" iconBg="bg-yc-green600"
           icon={<AddIcon name="camera" className="text-white" />}
-          title="약봉투 촬영" desc="봉투 글씨를 사진으로 읽어요" badge="추천" />
-        <MethodCard href="/medications/ocr" iconBg="bg-yc-green50"
-          icon={<AddIcon name="qr" className="text-yc-green700" />}
-          title="처방전 QR 스캔" desc="QR이 있으면 가장 정확해요" />
-        <MethodCard href="/medications/add?method=barcode&tab=otc" iconBg="bg-yc-green50"
-          icon={<AddIcon name="barcode" className="text-yc-green700" />}
-          title="바코드 스캔" desc="일반약 박스 바코드를 찍어 담아요" />
+          title="처방전 스캔" desc="처방전을 사진으로 찍어 읽어요" badge="추천" />
         <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="약 이름·용법을 직접 적어요" />
@@ -122,11 +116,24 @@ function SupplementMethodScreen({ member }: { member: Member }) {
 
 // ── Screen 3: 폼 (직접 입력) ─────────────────────────────────────────
 function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc' | 'supplement'; member: Member }) {
-  const title = initialTab === 'supplement' ? '영양제 · 보조제' : '처방약 · 일반약'
+  const title = initialTab === 'supplement' ? '영양제 · 보조제'
+    : initialTab === 'otc' ? '일반의약품'
+    : '처방약 · 일반약'
 
   return (
     <div className="space-y-5 anim-scale-in">
       <StepHeader title={title} member={member} />
+      {/* 일반의약품 추가칸: 바코드 스캔으로 빠르게 담기 */}
+      {initialTab === 'otc' && (
+        <Link href="/medications/add?method=barcode&tab=otc"
+          className="flex items-center gap-3 bg-yc-green600 rounded-yc-xl px-5 py-4 active:bg-yc-green700 transition-colors">
+          <AddIcon name="barcode" className="text-white" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-base text-white">바코드로 스캔</p>
+            <p className="text-sm text-white/80 mt-0.5">일반약 박스 바코드를 찍어 빠르게 담아요</p>
+          </div>
+        </Link>
+      )}
       <AddForm initialTab={initialTab} />
     </div>
   )

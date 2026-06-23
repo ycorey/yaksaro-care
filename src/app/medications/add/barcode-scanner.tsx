@@ -229,7 +229,7 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
   if (phase === 'form') {
     return (
       <div className="space-y-5 anim-scale-in">
-        <StepHeader title={formTab === 'supplement' ? '영양제 · 보조제' : '약국 일반약'} member={member} />
+        <StepHeader title={formTab === 'supplement' ? '영양제 · 보조제' : '일반의약품'} member={member} />
         {preset && (
           <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
             바코드로 제품을 찾았어요. 확인하고 추가해 주세요.
