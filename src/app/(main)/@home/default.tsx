@@ -5,6 +5,7 @@ import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 import { getEstimatedDiseases, getLifestyleContent } from '@/lib/lifestyle-info/server'
+import { getRefillSoon } from '@/lib/refill'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -53,6 +54,12 @@ export default async function HomePage() {
     if (tips.length > 0) lifestyleHook = { disease: tips[0].disease, topic: tips[0].topic, body_ko: tips[0].body_ko }
   }
 
+  // 곧 떨어지는 약 — 가장 시급한 1건 + 건수
+  const refillSoon = await getRefillSoon(supabase, user.id, active.id)
+  const refillHook = refillSoon[0]
+    ? { label: refillSoon[0].label, dDay: refillSoon[0].dDay, count: refillSoon.length }
+    : null
+
   return (
     <div>
       <MemberSwitcher members={members} activeId={active.id} />
@@ -63,6 +70,7 @@ export default async function HomePage() {
         activeSlotKeys={activeSlotKeys}
         memberLabel={active.is_self ? null : active.name}
         lifestyleHook={lifestyleHook}
+        refillHook={refillHook}
       />
     </div>
   )

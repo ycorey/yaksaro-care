@@ -14,6 +14,8 @@ import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 import LifestyleSection from './lifestyle-section'
 import { getEstimatedDiseases, getLifestyleContent } from '@/lib/lifestyle-info/server'
+import RefillCard from '@/components/refill-card'
+import { getRefillSoon } from '@/lib/refill'
 
 export default async function WalletPage() {
   const supabase = await createClient()
@@ -156,6 +158,9 @@ export default async function WalletPage() {
   const lifestyleEstimates = await getEstimatedDiseases(supabase, user.id, active.id)
   const lifestyleTips = await getLifestyleContent(supabase, lifestyleEstimates.map(e => e.disease))
 
+  // 곧 떨어지는 약(28일+ 처방약, 만료 5일 이내) 리필 알림
+  const refillItems = await getRefillSoon(supabase, user.id, active.id)
+
   // 카테고리별 종수
   const rxCount   = rxRaws.length
   const otcCount  = otcRaws.length
@@ -176,6 +181,9 @@ export default async function WalletPage() {
           <WalletHeaderActions />
         </div>
       </div>
+
+      {/* ── 리필 알림: 곧 떨어지는 처방약 ── */}
+      <RefillCard items={refillItems} />
 
       {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">

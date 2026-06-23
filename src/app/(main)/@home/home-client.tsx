@@ -54,9 +54,10 @@ interface Props {
   activeSlotKeys: string[]
   memberLabel?:   string | null
   lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
+  refillHook?:    { label: string; dDay: number; count: number } | null
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
   const now = useNowMinute()
 
@@ -88,6 +89,20 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
         )}
       </div>
+
+      {/* 곧 떨어지는 약 — 리필·재방문 알림(가장 시급) */}
+      {refillHook && (
+        <Link href="/wallet"
+          className="block bg-yc-warningBg border border-yc-warning/30 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-white bg-yc-warning rounded-full px-2 py-0.5">{refillHook.dDay === 0 ? '오늘' : `D-${refillHook.dDay}`}</span>
+            <span className="text-sm font-bold text-yc-warningText">곧 떨어지는 약</span>
+          </div>
+          <p className="text-sm text-yc-neutral800 break-keep">
+            {refillHook.label}{refillHook.count > 1 ? ` 외 ${refillHook.count - 1}건` : ''} · 재방문·재처방을 미리 챙겨보세요.
+          </p>
+        </Link>
+      )}
 
       {/* 복약 알림 허용 프롬프트 (권한 미설정 + 알림 켬일 때만 노출) */}
       <NotificationPrompt />
