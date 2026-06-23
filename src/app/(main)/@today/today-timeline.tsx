@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useNowMinute } from '@/lib/use-now'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
@@ -63,16 +64,10 @@ export default function TodayTimeline({
   const router = useRouter()
   const [slots, setSlots] = useState<SlotState[]>(initialSlots)
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
-  const [now, setNow] = useState<Date | null>(null)
+  // 1분 단위 갱신 → 배너/다음 슬롯 재계산
+  const now = useNowMinute()
   const [justChecked, setJustChecked] = useState<Meal | null>(null)  // 방금 체크 — pop/flash용
   const [celebrate, setCelebrate] = useState(false)                  // 전체완료 축하 오버레이
-
-  // 1분마다 현재 시각 갱신 → 배너/다음 슬롯 재계산
-  useEffect(() => {
-    setNow(new Date())
-    const id = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(id)
-  }, [])
 
   const cur = now ? nowMinutes(now) : -1
 

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS supplement_interaction_shadow_logs (
 ALTER TABLE supplement_interaction_shadow_logs ENABLE ROW LEVEL SECURITY;
 
 -- 본인 로그만 조회 가능. INSERT는 service_role(admin client)만.
+-- CREATE POLICY엔 IF NOT EXISTS가 없어 재실행 시 42710 → drop 후 생성(idempotent).
+DROP POLICY IF EXISTS "supp_shadow_logs_select" ON supplement_interaction_shadow_logs;
 CREATE POLICY "supp_shadow_logs_select" ON supplement_interaction_shadow_logs
   FOR SELECT USING (auth.uid() = user_id);
 

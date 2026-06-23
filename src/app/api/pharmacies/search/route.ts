@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { XMLParser } from 'fast-xml-parser'
 import { createClient } from '@/lib/supabase/server'
 
 export type PharmacyResult = {
@@ -9,17 +10,22 @@ export type PharmacyResult = {
   lng:     number | null
 }
 
-// data.go.kr XML 응답 파싱 — <item> 블록에서 필드 추출
+// data.go.kr XML 응답 파싱 — pubmed.ts와 동일하게 fast-xml-parser 사용으로 통일.
+// 값은 문자열로 유지(보험코드·좌표 형 변환은 호출부에서 직접).
+const parser = new XMLParser({ ignoreAttributes: true, parseTagValue: false })
+
 function parseXmlItems(xml: string): Record<string, string>[] {
-  const items: Record<string, string>[] = []
-  for (const match of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
-    const item: Record<string, string> = {}
-    for (const field of match[1].matchAll(/<(\w+)>([^<]*)<\/\1>/g)) {
-      item[field[1]] = field[2].trim()
+  const parsed = parser.parse(xml) as { response?: { body?: { items?: { item?: unknown } } } }
+  const item = parsed?.response?.body?.items?.item
+  if (!item) return []
+  const arr = Array.isArray(item) ? item : [item]
+  return arr.map((it) => {
+    const rec: Record<string, string> = {}
+    for (const [k, v] of Object.entries(it as Record<string, unknown>)) {
+      rec[k] = v == null ? '' : String(v).trim()
     }
-    items.push(item)
-  }
-  return items
+    return rec
+  })
 }
 
 // 건강보험심사평가원_약국정보서비스 (getParmacyBasisList)

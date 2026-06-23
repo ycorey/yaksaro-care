@@ -8,6 +8,8 @@ import { DecodeHintType, BarcodeFormat } from '@zxing/library'
 import type { IScannerControls } from '@zxing/browser'
 import AddForm, { type Selected } from './add-form'
 import { BackButton } from '../back-button'
+import MemberContextBadge from '@/components/member-context-badge'
+import type { Member } from '@/lib/member'
 
 type TabType = 'otc' | 'supplement'
 type Phase = 'scanning' | 'looking-up' | 'form'
@@ -40,16 +42,19 @@ function normalizeBarcode(raw: string): string {
   return raw.replace(/\D/g, '')
 }
 
-function StepHeader({ title }: { title: string }) {
+function StepHeader({ title, member }: { title: string; member?: Member }) {
   return (
-    <div className="flex items-center gap-3 pt-1">
-      <BackButton />
-      <h1 className="font-display text-xl text-yc-neutral900">{title}</h1>
+    <div className="pt-1 space-y-2">
+      <div className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="font-display text-xl text-yc-neutral900">{title}</h1>
+      </div>
+      {member && <MemberContextBadge member={member} />}
     </div>
   )
 }
 
-export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) {
+export default function BarcodeAddFlow({ initialTab, member }: { initialTab: TabType; member?: Member }) {
   const [phase, setPhase]       = useState<Phase>('scanning')
   const [camError, setCamError] = useState<string | null>(null)
   // 폼에 넘길 결과: 히트면 preset(prefill), 미스/직접검색이면 null(검색 모드)
@@ -192,7 +197,7 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
   if (phase === 'form') {
     return (
       <div className="space-y-5 anim-scale-in">
-        <StepHeader title={formTab === 'supplement' ? '영양제 · 보조제' : '약국 일반약'} />
+        <StepHeader title={formTab === 'supplement' ? '영양제 · 보조제' : '약국 일반약'} member={member} />
         {preset && (
           <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
             바코드로 제품을 찾았어요. 확인하고 추가해 주세요.
@@ -206,7 +211,7 @@ export default function BarcodeAddFlow({ initialTab }: { initialTab: TabType }) 
   // ── 스캐닝 / 조회 단계 ──
   return (
     <div className="space-y-5 anim-scale-in">
-      <StepHeader title="바코드 스캔" />
+      <StepHeader title="바코드 스캔" member={member} />
 
       {camError ? (
         <div className="space-y-4">

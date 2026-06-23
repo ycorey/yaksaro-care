@@ -165,7 +165,8 @@
   /* Accent */
   --color-yc-lime300:  #D9F25C;   /* 배지·색종이 */
   /* Secondary */
-  --color-yc-blue500:  #4A8FCC;   /* 처방약 아이콘/텍스트 */
+  --color-yc-blue500:  #4A8FCC;   /* 처방약 아이콘(장식) */
+  --color-yc-blue700:  #2E6CA6;   /* 처방약 식별 텍스트 — WCAG AA(흰배경 ~5:1) */
   --color-yc-warning:  #E8A817;   /* 주의·지연 (앰버) */
   --color-yc-error:    #C9423F;   /* 삭제·오류 */
   /* Neutrals (웜 그린틴트) */

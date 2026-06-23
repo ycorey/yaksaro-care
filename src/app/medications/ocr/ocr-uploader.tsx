@@ -142,9 +142,10 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     return () => clearTimeout(t)
   }, [pharmSearch])
 
-  // 업로드 중 진행 단계 표시 — 시간 기반으로 자연스럽게 진행
+  // 업로드 중 진행 단계 표시 — 시간 기반으로 자연스럽게 진행.
+  // stage 리셋(0)은 업로드 시작 지점(runOcr)에서 수행 → effect 내 동기 setState 회피.
   useEffect(() => {
-    if (state !== 'uploading') { setStage(0); return }
+    if (state !== 'uploading') return
     const t1 = setTimeout(() => setStage(1), 1200)
     const t2 = setTimeout(() => setStage(2), 4000)
     return () => { clearTimeout(t1); clearTimeout(t2) }
@@ -172,6 +173,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
 
   // file: 1차 압축본, original: 413 시 더 강하게 재압축할 원본
   const runOcr = async (file: File, original: File) => {
+    setStage(0)
     setState('uploading')
     setError(null)
     try {
@@ -401,7 +403,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <p className="text-sm text-yc-warning mt-1">처방전이 잘 보이는 사진으로 다시 시도해보세요.</p>
           <button
             onClick={() => { setState('idle'); setPreview(null); setFile(null) }}
-            className="mt-3 text-sm text-yc-blue500 font-medium"
+            className="mt-3 text-sm text-yc-green700 font-medium"
           >
             다시 촬영
           </button>
@@ -487,7 +489,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => saveEdit(i)}
-                              className="flex-1 h-10 rounded-yc-md bg-yc-blue500 text-white text-sm font-semibold active:opacity-90">저장</button>
+                              className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:opacity-90">저장</button>
                             <button onClick={() => setEditIdx(null)}
                               className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-semibold active:bg-yc-neutral100">취소</button>
                           </div>
@@ -512,7 +514,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                               <p className="text-sm text-yc-neutral500 mt-0.5">({med.ingredient})</p>
                             )}
                             {dosage ? (
-                              <p className="text-sm font-medium text-yc-blue500 mt-2">{dosage}</p>
+                              <p className="text-sm font-medium text-yc-neutral700 mt-2">{dosage}</p>
                             ) : (
                               <p className="text-sm font-medium text-yc-warning mt-2">용법 미인식 — 수정에서 입력</p>
                             )}
@@ -555,7 +557,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                       onClick={() => toggleMealTime(i, s.meal)}
                                       className={`flex items-center justify-center gap-1 min-h-[48px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                                         active
-                                          ? 'bg-yc-blue500 text-white'
+                                          ? 'bg-yc-green600 text-white'
                                           : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'
                                       }`}
                                     >
@@ -567,7 +569,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             </div>
                             {/* 수정·삭제 */}
                             <div className="flex gap-3 mt-2.5">
-                              <button onClick={() => startEdit(i, med)} className="text-sm text-yc-blue500 font-medium active:opacity-70">수정</button>
+                              <button onClick={() => startEdit(i, med)} className="text-sm text-yc-green700 font-medium active:opacity-70">수정</button>
                               <button onClick={() => deleteMed(i)} className="text-sm text-yc-error font-medium active:opacity-70">삭제</button>
                             </div>
                           </div>

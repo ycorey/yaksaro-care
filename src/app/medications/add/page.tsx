@@ -7,13 +7,18 @@ import BarcodeAddFlow from './barcode-scanner'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
 import { BackButton } from '../back-button'
+import { getActiveMember, type Member } from '@/lib/active-member'
+import MemberContextBadge from '@/components/member-context-badge'
 
-// 공통: 뒤로가기 + 제목 헤더
-function StepHeader({ title }: { title: string }) {
+// 공통: 뒤로가기 + 제목 헤더 (+ 활성 멤버 배지 — 누구에게 추가 중인지 항상 노출)
+function StepHeader({ title, member }: { title: string; member?: Member }) {
   return (
-    <div className="flex items-center gap-3 pt-1">
-      <BackButton />
-      <h1 className="font-display text-xl text-yc-neutral900">{title}</h1>
+    <div className="pt-1 space-y-2">
+      <div className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="font-display text-xl text-yc-neutral900">{title}</h1>
+      </div>
+      {member && <MemberContextBadge member={member} />}
     </div>
   )
 }
@@ -40,10 +45,10 @@ function MethodCard({ href, iconBg, icon, title, desc, badge }: {
 }
 
 // ── Screen 1: 타입 선택 ──────────────────────────────────────────────
-function TypeSelectScreen() {
+function TypeSelectScreen({ member }: { member: Member }) {
   return (
     <div className="space-y-6 anim-scale-in">
-      <StepHeader title="약 추가" />
+      <StepHeader title="약 추가" member={member} />
       <div className="flex flex-col justify-center gap-3 min-h-[55vh]">
         <p className="text-sm text-yc-neutral500 flex items-center gap-1 mb-1">
           <span>ⓘ</span> 어떤 약을 추가할까요?
@@ -54,7 +59,7 @@ function TypeSelectScreen() {
         <MethodCard href="/medications/add?type=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="flask" className="text-yc-green700" />}
           title="영양제 · 보조제" desc="이름 검색·라벨 촬영·직접 입력" />
-        <p className="text-xs text-yc-neutral400 text-center mt-3">
+        <p className="text-xs text-yc-neutral500 text-center mt-3">
           담아두면 복약 시간마다 알림으로 챙겨드려요
         </p>
       </div>
@@ -63,10 +68,10 @@ function TypeSelectScreen() {
 }
 
 // ── Screen 2: 처방약·일반약 방법 선택 ──────────────────────────────
-function PrescriptionMethodScreen() {
+function PrescriptionMethodScreen({ member }: { member: Member }) {
   return (
     <div className="space-y-6 anim-scale-in">
-      <StepHeader title="처방약 · 일반약" />
+      <StepHeader title="처방약 · 일반약" member={member} />
       <div className="space-y-3">
         <MethodCard href="/medications/ocr" iconBg="bg-yc-green600"
           icon={<AddIcon name="camera" className="text-white" />}
@@ -93,10 +98,10 @@ function PrescriptionMethodScreen() {
 }
 
 // ── Screen 2b: 영양제·보조제 방법 선택 ──────────────────────────────
-function SupplementMethodScreen() {
+function SupplementMethodScreen({ member }: { member: Member }) {
   return (
     <div className="space-y-6 anim-scale-in">
-      <StepHeader title="영양제 · 보조제" />
+      <StepHeader title="영양제 · 보조제" member={member} />
       <div className="space-y-3">
         <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green600"
           icon={<AddIcon name="search" className="text-white" />}
@@ -116,12 +121,12 @@ function SupplementMethodScreen() {
 }
 
 // ── Screen 3: 폼 (직접 입력) ─────────────────────────────────────────
-function FormScreen({ initialTab }: { initialTab: 'prescription' | 'otc' | 'supplement' }) {
+function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc' | 'supplement'; member: Member }) {
   const title = initialTab === 'supplement' ? '영양제 · 보조제' : '처방약 · 일반약'
 
   return (
     <div className="space-y-5 anim-scale-in">
-      <StepHeader title={title} />
+      <StepHeader title={title} member={member} />
       <AddForm initialTab={initialTab} />
     </div>
   )
@@ -138,24 +143,25 @@ export default async function AddMedicationPage({
   if (!user) redirect('/login')
 
   const { tab, type, method } = await searchParams
+  const { active } = await getActiveMember(supabase, user.id)
 
   // Screen 2c: 바코드 스캔 (일반약/영양제 — 진입 카테고리를 폴백 탭으로 사용)
   if (method === 'barcode') {
-    return <BarcodeAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} />
+    return <BarcodeAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
   }
 
   // Screen 2a: 처방약·일반약 방법 선택
-  if (type === 'prescription') return <PrescriptionMethodScreen />
+  if (type === 'prescription') return <PrescriptionMethodScreen member={active} />
 
   // Screen 2b: 영양제·보조제 방법 선택
-  if (type === 'supplement') return <SupplementMethodScreen />
+  if (type === 'supplement') return <SupplementMethodScreen member={active} />
 
   // Screen 3: 직접 입력 폼
   if (tab) {
     const initialTab = tab === 'supplement' ? 'supplement' : tab === 'otc' ? 'otc' : 'prescription'
-    return <FormScreen initialTab={initialTab} />
+    return <FormScreen initialTab={initialTab} member={active} />
   }
 
   // Screen 1: 타입 선택 (기본)
-  return <TypeSelectScreen />
+  return <TypeSelectScreen member={active} />
 }

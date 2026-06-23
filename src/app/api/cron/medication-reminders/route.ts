@@ -56,23 +56,41 @@ export async function GET(req: NextRequest) {
       .map((p) => p.id as string),
   )
 
-  // 3) 이 끼니를 이미 체크한 사용자
+  // 멤버 인식: 체크/활성 복약을 (user_id, member_id) 쌍 단위로 집계.
+  // 한 계정이 여러 가족 멤버 약을 관리하므로, '본인'이 체크해도 '어머니'가 미체크면 알림해야 한다.
+  const pairKey = (u: string, m: string | null) => `${u}:${m ?? ''}`
+
+  // 3) 이 끼니를 이미 체크한 (사용자, 멤버) 쌍
   const { data: checked } = await admin
     .from('medication_schedules')
-    .select('user_id')
+    .select('user_id, member_id')
     .eq('check_date', day).eq('meal_time', meal).eq('is_checked', true)
     .in('user_id', pushUsers)
-  const checkedSet = new Set((checked ?? []).map((c) => c.user_id as string))
+  const checkedPairs = new Set((checked ?? []).map((c) => pairKey(c.user_id as string, c.member_id as string | null)))
 
-  // 4) 활성 복약이 있는 사용자
+  // 4) 활성 복약이 있는 (사용자, 멤버) 쌍 → 사용자별 활성 멤버 집합
   const { data: active } = await admin
     .from('user_medications')
-    .select('user_id')
+    .select('user_id, member_id')
     .in('user_id', pushUsers)
     .is('deleted_at', null).is('ended_at', null)
-  const activeSet = new Set((active ?? []).map((m) => m.user_id as string))
+  const activeMembersByUser = new Map<string, Set<string | null>>()
+  for (const m of active ?? []) {
+    const u = m.user_id as string
+    if (!activeMembersByUser.has(u)) activeMembersByUser.set(u, new Set())
+    activeMembersByUser.get(u)!.add(m.member_id as string | null)
+  }
 
-  const targets = pushUsers.filter((u) => allowedSet.has(u) && activeSet.has(u) && !checkedSet.has(u))
+  // 알림 대상: 알림 켜짐 + 활성 멤버 중 이 끼니를 아직 체크 안 한 멤버가 1명 이상
+  const targets = pushUsers.filter((u) => {
+    if (!allowedSet.has(u)) return false
+    const members = activeMembersByUser.get(u)
+    if (!members || members.size === 0) return false
+    for (const mem of members) {
+      if (!checkedPairs.has(pairKey(u, mem))) return true
+    }
+    return false
+  })
 
   let sent = 0
   await Promise.allSettled(

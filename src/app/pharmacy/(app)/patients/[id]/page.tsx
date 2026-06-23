@@ -43,7 +43,7 @@ function Card({ m }: { m: MedRow }) {
           {m.ingredient && <span className="text-sm font-normal text-yc-neutral500 ml-1">({m.ingredient})</span>}
         </p>
         {sub && <p className="text-sm text-yc-neutral500 mt-0.5">{sub}</p>}
-        {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
+        {dosage && <p className="text-sm text-yc-neutral700 mt-0.5 font-semibold">{dosage}</p>}
         {m.has_interaction_warning && (
           <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
             <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다

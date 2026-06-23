@@ -8,6 +8,13 @@ import { logger } from '@/lib/logger'
 import { analyzeInteraction } from './index'
 import type { AnalyzeResult } from './types'
 
+// 캐시 역직렬화 시 최소 shape 검증 — 손상/구버전 캐시를 신뢰하지 않고 재분석으로 폴백.
+function isAnalyzeResult(v: unknown): v is AnalyzeResult {
+  if (!v || typeof v !== 'object') return false
+  const r = v as Partial<AnalyzeResult>
+  return typeof r.status === 'string' && Array.isArray(r.interactions)
+}
+
 export async function analyzeInteractionCached(
   admin: SupabaseClient<Database>,
   supplementName: string,
@@ -24,8 +31,8 @@ export async function analyzeInteractionCached(
     .eq('supplement_input', sKey)
     .eq('drug_input', dKey)
     .maybeSingle()
-  if (hit?.result) {
-    return { result: hit.result as unknown as AnalyzeResult, cached: true }
+  if (hit?.result && isAnalyzeResult(hit.result)) {
+    return { result: hit.result, cached: true }
   }
 
   // 2) 미스 → 분석

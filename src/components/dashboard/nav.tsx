@@ -103,6 +103,7 @@ export default function DashboardNav({ user, profile }: Props) {
               aria-label={label}
             >
               <Icon
+                size={24}
                 weight={active ? 'fill' : 'light'}
                 color={active ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral500)'}
               />

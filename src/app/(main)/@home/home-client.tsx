@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
+import { useNowMinute } from '@/lib/use-now'
 
 function koreanDate() {
   const d = new Date()
@@ -51,17 +51,12 @@ interface Props {
   doneMeals:      string[]
   totalSlots:     number
   activeSlotKeys: string[]
+  memberLabel?:   string | null
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
-  const [now, setNow] = useState<Date | null>(null)
-
-  useEffect(() => {
-    setNow(new Date())
-    const t = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(t)
-  }, [])
+  const now = useNowMinute()
 
   const doneCount = doneMeals.length
   const doneKeys  = doneMeals
@@ -85,8 +80,11 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
       <div>
         <p className="text-sm text-yc-neutral500">{now ? koreanDate() : ' '}</p>
         <h1 className="font-display text-[1.625rem] text-yc-neutral900 mt-0.5">
-          {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후에요' : '좋은 저녁이에요') : ' '}
+          {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요') : ' '}
         </h1>
+        {memberLabel && (
+          <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
+        )}
       </div>
 
       {/* 상태 알림 카드 → 오늘복약으로 이동 */}

@@ -51,6 +51,7 @@ export default async function HomePage() {
         doneMeals={doneMeals}
         totalSlots={activeSlotKeys.length}
         activeSlotKeys={activeSlotKeys}
+        memberLabel={active.is_self ? null : active.name}
       />
     </div>
   )
