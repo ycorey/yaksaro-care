@@ -44,10 +44,11 @@ export async function GET(request: Request) {
   if (!key) return NextResponse.json([])
 
   try {
+    // yadmNm은 약국명 부분일치(contains). 후보를 넉넉히(20) 받아 관련도순 정렬 후 상위 10건.
     const url = new URL('https://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList')
     url.searchParams.set('serviceKey', key)
     url.searchParams.set('pageNo',     '1')
-    url.searchParams.set('numOfRows',  '10')
+    url.searchParams.set('numOfRows',  '20')
     url.searchParams.set('yadmNm',     q)
 
     const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) })
@@ -55,6 +56,16 @@ export async function GET(request: Request) {
 
     const text  = await res.text()
     const items = parseXmlItems(text)
+
+    // 관련도 등급: 정확명(0) > 접두 일치(1) > 부분 일치(2). 공백 무시 비교.
+    const nq = q.replace(/\s+/g, '')
+    const rank = (name: string) => {
+      const n = name.replace(/\s+/g, '')
+      if (n === nq) return 0
+      if (n.startsWith(nq)) return 1
+      if (n.includes(nq)) return 2
+      return 3
+    }
 
     const results: PharmacyResult[] = items
       .map(item => ({
@@ -65,6 +76,9 @@ export async function GET(request: Request) {
         lng:     item.XPos   ? parseFloat(item.XPos) : null,
       }))
       .filter(r => r.name)
+      // 같은 등급이면 이름이 짧을수록(질의에 가까울수록) 위로
+      .sort((a, b) => rank(a.name) - rank(b.name) || a.name.length - b.name.length)
+      .slice(0, 10)
 
     return NextResponse.json(results)
   } catch {
