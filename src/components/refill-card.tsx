@@ -1,7 +1,9 @@
-// [STEP A] 곧 떨어지는 약 리필·재방문 알림 카드. 표시 전용. 넛지(정보형)이며 처방 지시 아님.
+// [STEP A/C] 곧 떨어지는 약 리필·재방문 알림 카드. 넛지(정보형)이며 처방 지시 아님.
+// B2B 단골약국 연결 시 '미리 준비 요청' 원탭(STEP C) 노출.
 import type { RefillItem } from '@/lib/refill'
+import RefillRequestButton from './refill-request-button'
 
-export default function RefillCard({ items }: { items: RefillItem[] }) {
+export default function RefillCard({ items, hasB2BPharmacy = false }: { items: RefillItem[]; hasB2BPharmacy?: boolean }) {
   if (items.length === 0) return null
   return (
     <div className="bg-yc-warningBg border border-yc-warning/30 rounded-yc-xl px-5 py-4 space-y-3">
@@ -19,6 +21,11 @@ export default function RefillCard({ items }: { items: RefillItem[] }) {
               {it.medNames.slice(0, 2).join(', ')}
               {it.medNames.length > 2 ? ` 외 ${it.medNames.length - 2}종` : ''} · {it.expiryLabel}까지
             </p>
+            {hasB2BPharmacy && (
+              <div className="pt-1.5">
+                <RefillRequestButton medNames={it.medNames} />
+              </div>
+            )}
           </div>
         ))}
       </div>

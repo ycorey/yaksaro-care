@@ -37,7 +37,7 @@ export default async function WalletPage() {
       .order('created_at', { ascending: false }),
     supabase
       .from('profiles')
-      .select('regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
+      .select('regular_pharmacy_id, regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
       .eq('id', user.id)
       .single(),
     supabase
@@ -57,6 +57,7 @@ export default async function WalletPage() {
   if (medsError) logger.error('wallet', 'meds query error', medsError.message)
 
   const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? profile?.regular_pharmacy_phone ?? null
+  const hasB2BPharmacy = !!profile?.regular_pharmacy_id
 
   const activeMeds = meds ?? []
 
@@ -182,8 +183,8 @@ export default async function WalletPage() {
         </div>
       </div>
 
-      {/* ── 리필 알림: 곧 떨어지는 처방약 ── */}
-      <RefillCard items={refillItems} />
+      {/* ── 리필 알림: 곧 떨어지는 처방약 (B2B면 미리 준비 요청) ── */}
+      <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} />
 
       {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">
