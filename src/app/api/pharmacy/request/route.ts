@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendPushToUser } from '@/lib/push'
 
 // 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
 const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
@@ -48,6 +50,19 @@ export async function POST(request: Request) {
     .select('id, type, note, status, created_at')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // 약국 owner(약사)에게 새 요청 푸시 — PII/임상정보 없이 알림만 (fire-and-forget)
+  void (async () => {
+    try {
+      const admin = createAdminClient()
+      const { data: ph } = await admin.from('pharmacies').select('owner_id').eq('id', profile.regular_pharmacy_id!).single()
+      if (ph?.owner_id) {
+        await sendPushToUser(ph.owner_id as string, {
+          title: '새 환자 요청', body: '단골 환자가 요청을 보냈어요.', url: '/pharmacy',
+        })
+      }
+    } catch { /* 알림 실패는 무시 */ }
+  })()
 
   return NextResponse.json({ request: data })
 }

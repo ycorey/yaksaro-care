@@ -4,6 +4,7 @@ import Link from 'next/link'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
+import PharmacistNotify from './pharmacist-notify'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -83,6 +84,9 @@ export default async function PharmacyHome() {
           내 약 목록 공개에 동의한 단골 환자 {rows.length}명 · 읽기 전용
         </p>
       </div>
+
+      {/* 새 요청 알림 켜기(약사 푸시) */}
+      <PharmacistNotify />
 
       {/* 환자 요청함 (예약·콜백·문의 — 비임상) */}
       <PharmacyRequestInbox initial={inboxRows} />

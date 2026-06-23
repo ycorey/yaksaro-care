@@ -27,29 +27,37 @@ const STATUS: Record<PharmacyRequestRow['status'], { label: string; cls: string 
 }
 
 export default function PharmacyRequest({
-  pharmacyName, defaultPhone, initialRequests,
+  pharmacyName, defaultPhone, initialRequests, walletMeds = [],
 }: {
   pharmacyName: string; defaultPhone: string | null; initialRequests: PharmacyRequestRow[]
+  walletMeds?: { id: string; name: string }[]
 }) {
   const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
   const [open, setOpen]   = useState<ReqType | null>(null)
   const [note, setNote]   = useState('')
   const [phone, setPhone] = useState(defaultPhone ?? '')
+  const [meds, setMeds]   = useState<Set<string>>(new Set())
   const [busy, setBusy]   = useState(false)
 
   function selectType(t: ReqType) {
     setOpen(prev => prev === t ? null : t)
-    setNote(''); setPhone(defaultPhone ?? '')
+    setNote(''); setPhone(defaultPhone ?? ''); setMeds(new Set())
+  }
+  function toggleMed(name: string) {
+    setMeds(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n })
   }
 
   async function send() {
     if (!open) return
     setBusy(true)
     try {
+      // 조제 미리 준비: 선택한 약 목록(텍스트)을 메모에 첨부 — 처방전 이미지 전송 아님(저장 0)
+      const medList = open === 'dispense_prep' && meds.size > 0 ? `[준비 약] ${[...meds].join(', ')}` : ''
+      const finalNote = [medList, note.trim()].filter(Boolean).join(' · ')
       const res = await fetch('/api/pharmacy/request', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: open, note, contact_phone: phone }),
+        body: JSON.stringify({ type: open, note: finalNote, contact_phone: phone }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -93,6 +101,19 @@ export default function PharmacyRequest({
             </button>
             {open === key && (
               <div className="mt-2 space-y-2 px-1">
+                {key === 'dispense_prep' && walletMeds.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-yc-neutral500">준비할 약을 골라 알려요 (선택 · 처방전 사진 아님)</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {walletMeds.map(m => (
+                        <button key={m.id} type="button" onClick={() => toggleMed(m.name)}
+                          className={`text-xs px-3 py-2 rounded-full border transition-colors ${meds.has(m.name) ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <input value={note} onChange={e => setNote(e.target.value)} maxLength={300}
                   placeholder="메모 (선택 · 예: 오후 5시쯤 갈게요)"
                   className="w-full h-11 px-3 border border-yc-neutral200 rounded-yc-md text-sm focus:outline-none focus:border-yc-green600" />
