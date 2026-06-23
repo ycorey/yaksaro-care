@@ -1,0 +1,71 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+// 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
+const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
+
+export async function GET() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  const { data } = await supabase
+    .from('pharmacy_requests')
+    .select('id, type, note, status, created_at, responded_at')
+    .eq('patient_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  return NextResponse.json({ requests: data ?? [] })
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  const body = await request.json().catch(() => ({})) as { type?: string; note?: string; contact_phone?: string }
+  if (!body.type || !TYPES.includes(body.type as typeof TYPES[number])) {
+    return NextResponse.json({ error: '요청 유형이 올바르지 않아요' }, { status: 400 })
+  }
+
+  // 단골약국(QR/B2B) 확인 — 텍스트 등록만 있으면 받을 약사가 없음
+  const { data: profile } = await supabase
+    .from('profiles').select('regular_pharmacy_id').eq('id', user.id).single()
+  if (!profile?.regular_pharmacy_id) {
+    return NextResponse.json({ error: 'QR로 연결된 단골약국이 없어요' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
+    .from('pharmacy_requests')
+    .insert({
+      patient_id:    user.id,
+      pharmacy_id:   profile.regular_pharmacy_id,
+      type:          body.type,
+      note:          (body.note ?? '').toString().trim().slice(0, 300) || null,
+      contact_phone: (body.contact_phone ?? '').toString().trim().slice(0, 30) || null,
+    })
+    .select('id, type, note, status, created_at')
+    .single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ request: data })
+}
+
+// 환자 요청 취소 (open인 본인 요청만)
+export async function PATCH(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  const { id } = await request.json().catch(() => ({})) as { id?: string }
+  if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 })
+
+  const { error } = await supabase
+    .from('pharmacy_requests')
+    .update({ status: 'canceled' })
+    .eq('id', id).eq('patient_id', user.id).eq('status', 'open')
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}

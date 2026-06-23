@@ -40,6 +40,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pharmacy_requests: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          id: string
+          member_id: string | null
+          note: string | null
+          patient_id: string
+          pharmacy_id: string
+          responded_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_id: string
+          pharmacy_id: string
+          responded_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_id?: string
+          pharmacy_id?: string
+          responded_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       drug_ingredients: {
         Row: {
           amount: string | null

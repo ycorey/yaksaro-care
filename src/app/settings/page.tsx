@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SettingsClient from './settings-client'
+import PharmacyRequest, { type PharmacyRequestRow } from './pharmacy-request'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -10,13 +11,25 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, consent_health, consent_pharmacist_view, font_size, alarm_enabled, alarm_times, regular_pharmacy_id, regular_pharmacy_name, regular_pharmacy:pharmacies!regular_pharmacy_id(name)')
+    .select('full_name, role, phone, consent_health, consent_pharmacist_view, font_size, alarm_enabled, alarm_times, regular_pharmacy_id, regular_pharmacy_name, regular_pharmacy:pharmacies!regular_pharmacy_id(name)')
     .eq('id', user.id)
     .single()
 
   // QR(B2B) 연결 약국명 우선, 없으면 검색 등록한 자유텍스트
   const regularPharmacyName = profile?.regular_pharmacy?.name ?? profile?.regular_pharmacy_name ?? null
   const hasB2BPharmacy = !!profile?.regular_pharmacy_id
+
+  // B2B 단골약국이 연결된 경우에만 비임상 요청 채널 노출 + 보낸 요청 로드
+  let pharmacyRequests: PharmacyRequestRow[] = []
+  if (hasB2BPharmacy) {
+    const { data } = await supabase
+      .from('pharmacy_requests')
+      .select('id, type, note, status, created_at')
+      .eq('patient_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    pharmacyRequests = (data ?? []) as PharmacyRequestRow[]
+  }
 
   return (
     <div className="space-y-6">
@@ -41,6 +54,17 @@ export default async function SettingsPage() {
         initialAlarmEnabled={profile?.alarm_enabled !== false}
         initialAlarmTimes={(profile?.alarm_times as Record<string, boolean> | null) ?? {}}
       />
+
+      {hasB2BPharmacy && regularPharmacyName && (
+        <section>
+          <p className="text-sm font-semibold text-yc-neutral600 mb-3">단골약국에 요청</p>
+          <PharmacyRequest
+            pharmacyName={regularPharmacyName}
+            defaultPhone={profile?.phone ?? null}
+            initialRequests={pharmacyRequests}
+          />
+        </section>
+      )}
     </div>
   )
 }
