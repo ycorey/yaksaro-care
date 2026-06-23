@@ -613,7 +613,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                     setPharmSearch(v)
                   }}
                   onBlur={() => setTimeout(() => setPharmDropOpen(false), 150)}
-                  placeholder="약국 이름 직접 입력 또는 검색…"
+                  placeholder="약국 이름·지역 검색 (예: 강서구 온누리)"
                   className="w-full border border-yc-neutral200 rounded-yc-md px-3 py-2.5 text-sm text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:border-yc-green600"
                 />
                 {pharmSearching && (

@@ -90,7 +90,7 @@ export default function PharmacyLink({ initialName }: { initialName: string | nu
             <input
               value={query}
               onChange={e => onQuery(e.target.value)}
-              placeholder="약국 이름으로 검색 (예: 온누리)"
+              placeholder="약국 이름·지역으로 검색 (예: 강서구 온누리)"
               autoComplete="off"
               className="w-full h-11 pl-9 pr-9 border border-yc-neutral200 rounded-yc-md text-sm focus:outline-none focus:border-yc-green600"
             />
@@ -103,7 +103,7 @@ export default function PharmacyLink({ initialName }: { initialName: string | nu
           </div>
           {loading && <p className="text-xs text-yc-neutral500 px-1">검색 중…</p>}
           {results && results.length === 0 && !loading && (
-            <p className="text-xs text-yc-neutral500 px-1">검색 결과가 없어요. 약국 이름을 정확히 입력해보세요.</p>
+            <p className="text-xs text-yc-neutral500 px-1">검색 결과가 없어요. 지역+이름으로 입력해보세요 (예: 강서구 온누리).</p>
           )}
           {results && results.length > 0 && (
             <div className="border border-yc-neutral200 rounded-yc-md overflow-hidden divide-y divide-yc-neutral100 max-h-64 overflow-y-auto">
