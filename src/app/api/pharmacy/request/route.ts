@@ -73,20 +73,30 @@ export async function POST(request: Request) {
   return NextResponse.json({ request: data })
 }
 
-// 환자 요청 취소 (open인 본인 요청만)
+// 환자 응답 — ack('확인했어요' 1탭) 또는 cancel(취소). 자유 입력 없음(채팅화 방지).
 export async function PATCH(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  const { id } = await request.json().catch(() => ({})) as { id?: string }
+  const { id, action } = await request.json().catch(() => ({})) as { id?: string; action?: 'ack' | 'cancel' }
   if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 })
 
+  if (action === 'ack') {
+    // 약사 회신(replied_at 존재)을 환자가 확인 — patient_ack_at만 기록
+    const { error } = await supabase
+      .from('pharmacy_requests')
+      .update({ patient_ack_at: new Date().toISOString() })
+      .eq('id', id).eq('patient_id', user.id).not('replied_at', 'is', null)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // 취소(기본·하위호환) — open/acknowledged 본인 요청
   const { error } = await supabase
     .from('pharmacy_requests')
     .update({ status: 'canceled' })
-    .eq('id', id).eq('patient_id', user.id).eq('status', 'open')
+    .eq('id', id).eq('patient_id', user.id).in('status', ['open', 'acknowledged'])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
   return NextResponse.json({ ok: true })
 }
