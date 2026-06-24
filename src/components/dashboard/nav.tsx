@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import {
-  House, Wallet, Heart, CalendarBlank, PaperPlaneTilt,
+  House, Wallet, Heart, PaperPlaneTilt,
   Camera, PlusCircle, User as UserIcon, SignOut,
   type Icon,
 } from '@phosphor-icons/react'
@@ -15,7 +15,6 @@ const tabItems: { href: string; label: string; Icon: Icon }[] = [
   { href: '/home',     label: '홈',      Icon: House },
   { href: '/wallet',   label: '약지갑',  Icon: Wallet },
   { href: '/today',    label: '오늘복약', Icon: Heart },
-  { href: '/calendar', label: '캘린더',  Icon: CalendarBlank },
   { href: '/share',    label: '전달',    Icon: PaperPlaneTilt },
 ]
 
@@ -23,7 +22,6 @@ const sideItems: { href: string; label: string; Icon: Icon }[] = [
   { href: '/home',             label: '홈',           Icon: House },
   { href: '/wallet',           label: '약 지갑',      Icon: Wallet },
   { href: '/today',            label: '오늘 복약',    Icon: Heart },
-  { href: '/calendar',         label: '캘린더',       Icon: CalendarBlank },
   { href: '/share',            label: '약 목록 전달', Icon: PaperPlaneTilt },
   { href: '/medications/ocr',  label: '처방전',       Icon: Camera },
   { href: '/medications/add',  label: '약 추가',      Icon: PlusCircle },
@@ -99,7 +97,7 @@ export default function DashboardNav({ user, profile }: Props) {
           const active = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'))
           return (
             <Link key={href} href={href}
-              className="w-1/5 flex flex-col items-center justify-center gap-1 active:opacity-70 transition-opacity"
+              className="w-1/4 flex flex-col items-center justify-center gap-1 active:opacity-70 transition-opacity"
               aria-label={label}
             >
               <Icon
