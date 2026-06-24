@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-export type PatientRow = { id: string; name: string; medCount: number }
+export type PatientRow = { id: string; name: string; medCount: number; hasRequest?: boolean }
 
 export default function PharmacyPatientList({ patients }: { patients: PatientRow[] }) {
   const [q, setQ] = useState('')
@@ -37,6 +37,9 @@ export default function PharmacyPatientList({ patients }: { patients: PatientRow
                   <span className="font-semibold text-yc-neutral900 truncate">{p.name}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {p.hasRequest && (
+                    <span className="text-xs font-bold text-white bg-yc-green600 rounded-full px-2 py-0.5">요청</span>
+                  )}
                   <span className="text-sm text-yc-neutral500">약 {p.medCount}종</span>
                   <span className="text-yc-neutral300">›</span>
                 </div>

@@ -5,6 +5,7 @@ import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
 import PharmacistNotify from './pharmacist-notify'
+import DashboardPoll from './dashboard-poll'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -12,12 +13,20 @@ export default async function PharmacyHome() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/pharmacy/login')
 
-  // 동의한 단골 환자 (RLS: profiles_pharmacist_view가 이 약사의 동의 환자만 노출)
-  const { data: patients } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('consent_pharmacist_view', true)
-    .neq('id', user.id)
+  // patients 쿼리와 reqs 쿼리는 상호 무관 — 동시 실행
+  const [{ data: patients }, { data: reqs }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('consent_pharmacist_view', true)
+      .neq('id', user.id)
+      .order('full_name', { ascending: true }),
+    supabase
+      .from('pharmacy_requests')
+      .select('id, type, note, contact_phone, status, created_at, patient_id, member_id, reply_text, replied_at, patient_ack_at')
+      .order('created_at', { ascending: false })
+      .limit(30),
+  ])
 
   const ids = (patients ?? []).map(p => p.id as string)
 
@@ -53,18 +62,21 @@ export default async function PharmacyHome() {
     }
   }
 
+  // 미처리 요청 환자 ID 집합 (배지·부제 표기용)
+  const pendingIds = new Set(
+    (reqs ?? [])
+      .filter(r => r.status === 'open' || r.status === 'acknowledged')
+      .map(r => r.patient_id as string)
+  )
+
   const rows: PatientRow[] = (patients ?? []).map(p => ({
     id: p.id as string,
     name: (p.full_name as string | null) ?? '이름 미등록',
     medCount: countByUser.get(p.id as string) ?? 0,
+    hasRequest: pendingIds.has(p.id as string),
   }))
 
-  // 환자 요청함 (RLS가 자기 약국 요청만 허용). 환자명은 동의 환자만 보임(없으면 '환자' + 번호).
-  const { data: reqs } = await supabase
-    .from('pharmacy_requests')
-    .select('id, type, note, contact_phone, status, created_at, patient_id, member_id')
-    .order('created_at', { ascending: false })
-    .limit(30)
+  // 환자 요청함 — reqPats는 reqs에 의존하므로 직렬
   const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
   const { data: reqPats } = reqPatientIds.length > 0
     ? await supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
@@ -76,22 +88,31 @@ export default async function PharmacyHome() {
     patientName: nameById.get(r.patient_id as string) ?? null,
     // 가족 요청 여부만 표기(가족 이름·약명은 노출 안 함 — 약사는 전화로 확인)
     isFamily: !!r.member_id,
+    replyText: r.reply_text,
+    repliedAt: r.replied_at,
+    patientAckAt: r.patient_ack_at,
   }))
+
+  const pendingCount = pendingIds.size
 
   return (
     <div className="space-y-5">
+      <DashboardPoll />
+
       <div>
         <h1 className="font-display text-2xl text-yc-neutral900">단골 환자 복약 현황</h1>
         <p className="text-sm text-yc-neutral500 mt-1">
-          내 약 목록 공개에 동의한 단골 환자 {rows.length}명 · 읽기 전용
+          {pendingCount > 0
+            ? `처리할 요청 ${pendingCount}건 · 단골 환자 ${rows.length}명`
+            : `내 약 목록 공개에 동의한 단골 환자 ${rows.length}명 · 읽기 전용`}
         </p>
       </div>
 
+      {/* 환자 요청함 (예약·콜백·문의 — 비임상) — 최상단 */}
+      <PharmacyRequestInbox initial={inboxRows} />
+
       {/* 새 요청 알림 켜기(약사 푸시) */}
       <PharmacistNotify />
-
-      {/* 환자 요청함 (예약·콜백·문의 — 비임상) */}
-      <PharmacyRequestInbox initial={inboxRows} />
 
       {/* 약국 QR — 환자 단골 연결 진입점 */}
       <Link
@@ -110,7 +131,7 @@ export default async function PharmacyHome() {
         <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
-          <p className="text-sm text-yc-neutral500">환자가 설정에서 “단골 약사에게 공개”를 켜면 여기에 표시돼요</p>
+          <p className="text-sm text-yc-neutral500">환자가 설정에서 &ldquo;단골 약사에게 공개&rdquo;를 켜면 여기에 표시돼요</p>
         </div>
       ) : (
         <PharmacyPatientList patients={rows} />

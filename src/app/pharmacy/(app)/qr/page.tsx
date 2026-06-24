@@ -31,7 +31,7 @@ export default async function PharmacyQrPage() {
   return (
     <div className="space-y-6">
       <div className="print:hidden">
-        <Link href="/pharmacy" className="text-sm text-yc-green600 font-medium">‹ 환자 목록으로</Link>
+        <Link href="/pharmacy" className="text-sm text-yc-green600 font-medium">‹ 대시보드로</Link>
         <h1 className="font-display text-2xl text-yc-neutral900 mt-2">우리 약국 QR</h1>
         <p className="text-sm text-yc-neutral500 mt-1">
           환자가 스캔하면 {pharmacy.name}의 단골로 연결돼요

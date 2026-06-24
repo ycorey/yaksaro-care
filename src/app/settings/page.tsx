@@ -27,7 +27,7 @@ export default async function SettingsPage() {
     const { active } = await getActiveMember(supabase, user.id)
     const [{ data: reqs }, { data: meds }] = await Promise.all([
       supabase.from('pharmacy_requests')
-        .select('id, type, note, status, created_at')
+        .select('id, type, note, status, created_at, reply_text, replied_at, patient_ack_at')
         .eq('patient_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20),

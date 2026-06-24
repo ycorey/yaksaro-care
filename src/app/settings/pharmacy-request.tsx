@@ -9,6 +9,7 @@ type ReqType = 'callback' | 'dispense_prep' | 'pickup' | 'consult_booking' | 'st
 export type PharmacyRequestRow = {
   id: string; type: ReqType; note: string | null
   status: 'open' | 'acknowledged' | 'done' | 'canceled'; created_at: string
+  reply_text?: string | null; replied_at?: string | null; patient_ack_at?: string | null
 }
 
 const TYPES: { key: ReqType; label: string; desc: string; Icon: typeof Phone }[] = [
@@ -19,6 +20,14 @@ const TYPES: { key: ReqType; label: string; desc: string; Icon: typeof Phone }[]
   { key: 'stock_inquiry',   label: '재고 문의',      desc: '약이 있는지 확인해 주세요',     Icon: MagnifyingGlass },
 ]
 const LABEL: Record<ReqType, string> = Object.fromEntries(TYPES.map(t => [t.key, t.label])) as Record<ReqType, string>
+
+function timeAgo(iso: string) {
+  const d = new Date(iso).getTime(); const m = Math.floor((Date.now() - d) / 60000)
+  if (m < 1) return '방금'
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60); if (h < 24) return `${h}시간 전`
+  return `${Math.floor(h / 24)}일 전`
+}
 const STATUS: Record<PharmacyRequestRow['status'], { label: string; cls: string }> = {
   open:         { label: '접수됨',    cls: 'bg-yc-green100 text-yc-green700' },
   acknowledged: { label: '약국 확인',  cls: 'bg-yc-infoBg text-yc-infoText' },
@@ -83,6 +92,19 @@ export default function PharmacyRequest({
     } catch { toast.error('취소 실패') } finally { setBusy(false) }
   }
 
+  async function ack(id: string) {
+    setBusy(true)
+    try {
+      const res = await fetch('/api/pharmacy/request', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'ack' }),
+      })
+      if (!res.ok) throw new Error()
+      setRequests(r => r.map(x => x.id === id ? { ...x, patient_ack_at: new Date().toISOString() } : x))
+      toast.success('확인했어요')
+    } catch { toast.error('실패했어요') } finally { setBusy(false) }
+  }
+
   return (
     <div className="bg-white rounded-yc-lg px-5 py-4 shadow-[var(--yc-shadow-sm)] space-y-3">
       <p className="text-sm font-semibold text-yc-neutral900">{pharmacyName}에 요청</p>
@@ -138,18 +160,35 @@ export default function PharmacyRequest({
       {requests.length > 0 && (
         <div className="pt-1 space-y-2 border-t border-yc-neutral100">
           <p className="text-xs font-semibold text-yc-neutral500 pt-2">보낸 요청</p>
-          {requests.slice(0, 6).map(r => (
-            <div key={r.id} className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-sm text-yc-neutral800 truncate">{LABEL[r.type]}{r.note ? ` · ${r.note}` : ''}</p>
+          {requests.filter((r, i) => i < 6 || (!!r.reply_text && !r.patient_ack_at)).map(r => (
+            <div key={r.id} className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm text-yc-neutral800 truncate">{LABEL[r.type]}{r.note ? ` · ${r.note}` : ''}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
+                  {(r.status === 'open' || r.status === 'acknowledged') && !r.patient_ack_at && (
+                    <button onClick={() => cancel(r.id)} disabled={busy}
+                      className="text-xs text-yc-neutral500 active:text-yc-error disabled:opacity-50">취소</button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
-                {r.status === 'open' && (
-                  <button onClick={() => cancel(r.id)} disabled={busy}
-                    className="text-xs text-yc-neutral500 active:text-yc-error disabled:opacity-50">취소</button>
-                )}
-              </div>
+              {/* 약사 답(자유 텍스트) + 확인 1탭 */}
+              {r.reply_text && (
+                <div className="rounded-yc-md bg-yc-green50 px-3 py-2 space-y-1.5">
+                  <p className="text-sm text-yc-neutral800 break-keep">💬 {r.reply_text}</p>
+                  {r.replied_at && <p className="text-xs text-yc-neutral500">{timeAgo(r.replied_at)}</p>}
+                  {r.patient_ack_at ? (
+                    <p className="text-xs text-yc-green700 font-semibold">확인함</p>
+                  ) : (
+                    <button onClick={() => ack(r.id)} disabled={busy}
+                      className="min-h-[44px] px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">
+                      확인했어요
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

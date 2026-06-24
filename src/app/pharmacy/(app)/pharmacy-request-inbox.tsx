@@ -8,6 +8,7 @@ type ReqStatus = 'open' | 'acknowledged' | 'done' | 'canceled'
 export type InboxRow = {
   id: string; type: string; note: string | null; contact_phone: string | null
   status: ReqStatus; created_at: string; patientName: string | null; isFamily?: boolean
+  replyText?: string | null; repliedAt?: string | null; patientAckAt?: string | null
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -32,6 +33,26 @@ function timeAgo(iso: string) {
 export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] }) {
   const [rows, setRows] = useState(initial)
   const [busy, setBusy] = useState<string | null>(null)
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({})
+  const [replying, setReplying] = useState<string | null>(null)
+
+  async function sendReply(id: string) {
+    const text = (replyDraft[id] ?? '').trim()
+    if (!text) return
+    setReplying(id)
+    try {
+      const res = await fetch('/api/pharmacy/request/reply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, text }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(d.error)
+      setRows(r => r.map(x => x.id === id ? { ...x, replyText: text, repliedAt: new Date().toISOString(), status: 'acknowledged' } : x))
+      setReplyDraft(s => ({ ...s, [id]: '' }))
+      toast.success('환자에게 답을 보냈어요')
+    } catch (e) { toast.error(e instanceof Error && e.message ? e.message : '전송 실패') }
+    finally { setReplying(null) }
+  }
 
   async function setStatus(id: string, status: 'acknowledged' | 'done') {
     setBusy(id)
@@ -49,8 +70,6 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
   const active = rows.filter(r => r.status === 'open' || r.status === 'acknowledged')
   const recent = rows.filter(r => r.status === 'done' || r.status === 'canceled').slice(0, 5)
 
-  if (rows.length === 0) return null
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -60,7 +79,9 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
         )}
       </div>
 
-      {active.length === 0 ? (
+      {rows.length === 0 ? (
+        <p className="text-sm text-yc-neutral500">아직 받은 요청이 없어요.</p>
+      ) : active.length === 0 ? (
         <p className="text-sm text-yc-neutral500">새 요청이 없어요.</p>
       ) : active.map(r => (
         <div key={r.id} className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-4 py-3 space-y-2">
@@ -74,6 +95,33 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
             {' · '}{timeAgo(r.created_at)}
           </p>
           {r.note && <p className="text-sm text-yc-neutral700 break-keep">{r.note}</p>}
+          {/* 약사 회신(자유 텍스트) — 없으면 입력, 있으면 표시 */}
+          {r.replyText ? (
+            <div className="rounded-yc-md bg-yc-green50 px-3 py-2">
+              <p className="text-sm text-yc-neutral800 break-keep">{r.replyText}</p>
+              <p className="text-xs text-yc-neutral500 mt-1">
+                {r.patientAckAt ? '환자 확인함' : '답 보냄'}{r.repliedAt ? ` · ${timeAgo(r.repliedAt)}` : ''}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <textarea
+                value={replyDraft[r.id] ?? ''}
+                onChange={e => setReplyDraft(s => ({ ...s, [r.id]: e.target.value }))}
+                onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') sendReply(r.id) }}
+                maxLength={300} rows={2}
+                placeholder="예약·재고·픽업 안내를 적어주세요 (예: 오후 3시 이후 픽업 가능)"
+                aria-label="환자에게 보낼 안내"
+                className="w-full px-3 py-2 border border-yc-neutral200 rounded-yc-md text-sm focus:outline-none focus:border-yc-green600 resize-none"
+              />
+              <p className="text-xs text-yc-neutral400 text-right">{(replyDraft[r.id] ?? '').length}/300</p>
+              <button onClick={() => sendReply(r.id)} disabled={replying === r.id || !(replyDraft[r.id] ?? '').trim()}
+                className="min-h-[48px] px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">
+                답 보내기
+              </button>
+              <p className="text-xs text-yc-neutral400">예약·물류 안내용 — 복약 상담은 전화·대면으로</p>
+            </div>
+          )}
           <div className="flex items-center gap-2 pt-0.5">
             {r.contact_phone && (
               <a href={`tel:${r.contact_phone.replace(/[^0-9]/g, '')}`}

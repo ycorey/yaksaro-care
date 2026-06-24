@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('pharmacy_requests')
-    .select('id, type, note, status, created_at, responded_at')
+    .select('id, type, note, status, created_at, responded_at, reply_text, replied_at, patient_ack_at')
     .eq('patient_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20)
@@ -37,6 +37,20 @@ export async function POST(request: Request) {
     .from('profiles').select('regular_pharmacy_id').eq('id', user.id).single()
   if (!profile?.regular_pharmacy_id) {
     return NextResponse.json({ error: 'QR로 연결된 단골약국이 없어요' }, { status: 400 })
+  }
+
+  // 요청 폭주 방지 — (patient, pharmacy)당 미처리 요청 10건 이상이면 거부
+  const { count } = await supabase
+    .from('pharmacy_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('patient_id', user.id)
+    .eq('pharmacy_id', profile.regular_pharmacy_id)
+    .in('status', ['open', 'acknowledged'])
+  if ((count ?? 0) >= 10) {
+    return NextResponse.json(
+      { error: '처리 대기 중인 요청이 많아요. 잠시 후 다시 시도해주세요' },
+      { status: 400 },
+    )
   }
 
   // 활성 멤버 기록 — 가족 요청이면 member_id 세팅(약사 요청함에 '가족'으로 표기). 본인이면 null.
@@ -73,20 +87,30 @@ export async function POST(request: Request) {
   return NextResponse.json({ request: data })
 }
 
-// 환자 요청 취소 (open인 본인 요청만)
+// 환자 응답 — ack('확인했어요' 1탭) 또는 cancel(취소). 자유 입력 없음(채팅화 방지).
 export async function PATCH(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  const { id } = await request.json().catch(() => ({})) as { id?: string }
+  const { id, action } = await request.json().catch(() => ({})) as { id?: string; action?: 'ack' | 'cancel' }
   if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 })
 
+  if (action === 'ack') {
+    // 약사 회신(replied_at 존재)을 환자가 확인 — patient_ack_at만 기록
+    const { error } = await supabase
+      .from('pharmacy_requests')
+      .update({ patient_ack_at: new Date().toISOString() })
+      .eq('id', id).eq('patient_id', user.id).not('replied_at', 'is', null)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // 취소(기본·하위호환) — open/acknowledged 본인 요청
   const { error } = await supabase
     .from('pharmacy_requests')
     .update({ status: 'canceled' })
-    .eq('id', id).eq('patient_id', user.id).eq('status', 'open')
+    .eq('id', id).eq('patient_id', user.id).in('status', ['open', 'acknowledged'])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
   return NextResponse.json({ ok: true })
 }
