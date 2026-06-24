@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SectionHeader } from '@/components/yc/section-header'
+import PatientNoteCard from '../../patient-note-card'
 import { YCCard } from '@/components/yc/yc-card'
 import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
 
@@ -101,6 +102,22 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         .order('created_at', { ascending: false })
     : { data: null }
 
+  // 약국 비공개 메모(특이사항) 로드 — 약사 본인 약국 기준. RLS가 동의·소유 게이트.
+  const { data: myPharmacy } = await supabase
+    .from('pharmacies').select('id').eq('owner_id', user.id).maybeSingle()
+  let noteText = ''
+  let noteUpdatedAt: string | null = null
+  if (myPharmacy?.id) {
+    const { data: noteRow } = await supabase
+      .from('pharmacy_patient_notes')
+      .select('note, updated_at')
+      .eq('pharmacy_id', myPharmacy.id)
+      .eq('patient_id', id)
+      .maybeSingle()
+    noteText = noteRow?.note ?? ''
+    noteUpdatedAt = noteRow?.updated_at ?? null
+  }
+
   // 접근 불가(미동의/동의철회/타약국) — RLS가 데이터를 비움
   if (!patient && (!meds || meds.length === 0)) {
     return (
@@ -127,6 +144,8 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         <h1 className="font-display text-2xl text-yc-neutral900 mt-2">{patient?.full_name ?? '환자'}</h1>
         <p className="text-sm text-yc-neutral500 mt-0.5">현재 복용 중인 약 {rows.length}종 · 읽기 전용</p>
       </div>
+
+      <PatientNoteCard patientId={id} initialNote={noteText} initialUpdatedAt={noteUpdatedAt} />
 
       {(rx.length + otc.length) > 0 && (
         <div className="space-y-3">

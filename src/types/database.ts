@@ -40,6 +40,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pharmacy_patient_notes: {
+        Row: {
+          pharmacy_id: string
+          patient_id: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          pharmacy_id: string
+          patient_id: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          pharmacy_id?: string
+          patient_id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pharmacy_requests: {
         Row: {
           contact_phone: string | null
