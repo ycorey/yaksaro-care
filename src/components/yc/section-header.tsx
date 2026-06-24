@@ -25,7 +25,7 @@ export function SectionHeader({
       <span className="text-sm font-bold text-yc-neutral600">
         {label}
         {typeof count === 'number' && count > 0 && (
-          <span className="ml-1 font-normal text-yc-neutral400">({count}종)</span>
+          <span className="ml-1 font-normal text-yc-neutral500">({count}종)</span>
         )}
       </span>
     </div>

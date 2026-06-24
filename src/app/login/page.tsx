@@ -88,7 +88,7 @@ function LoginContent() {
             <Pill weight="fill" size={64} className="text-yc-green600" />
           </div>
           <h1 className="font-display text-3xl text-yc-neutral900">약사로 케어</h1>
-          <p className="text-base text-yc-neutral400 mt-2 font-semibold">나의 복약 주치의</p>
+          <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 복약 주치의</p>
         </div>
 
         {/* 에러 메시지 */}
@@ -169,7 +169,7 @@ function LoginContent() {
         </div>
 
         {/* 약관 동의 안내 */}
-        <p className="mt-8 text-center text-xs text-yc-neutral400 leading-relaxed px-2">
+        <p className="mt-8 text-center text-xs text-yc-neutral500 leading-relaxed px-2">
           시작하면{' '}
           <Link href="/privacy" className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
           {' '}및{' '}

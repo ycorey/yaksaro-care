@@ -12,6 +12,11 @@ import SupplementSection from './supplement-section'
 import OtcSection from './otc-section'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import LifestyleSection from './lifestyle-section'
+import { getLifestyleContent } from '@/lib/lifestyle-info/server'
+import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
+import RefillCard from '@/components/refill-card'
+import { computeRefillSoon } from '@/lib/refill'
 
 export default async function WalletPage() {
   const supabase = await createClient()
@@ -25,7 +30,7 @@ export default async function WalletPage() {
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -33,7 +38,7 @@ export default async function WalletPage() {
       .order('created_at', { ascending: false }),
     supabase
       .from('profiles')
-      .select('regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
+      .select('regular_pharmacy_id, regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(phone)')
       .eq('id', user.id)
       .single(),
     supabase
@@ -53,6 +58,7 @@ export default async function WalletPage() {
   if (medsError) logger.error('wallet', 'meds query error', medsError.message)
 
   const regularPharmacyPhone = profile?.regular_pharmacy?.phone ?? profile?.regular_pharmacy_phone ?? null
+  const hasB2BPharmacy = !!profile?.regular_pharmacy_id
 
   const activeMeds = meds ?? []
 
@@ -150,6 +156,13 @@ export default async function WalletPage() {
 
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
+  // 생활 관리 정보: 메인 meds 재사용 → 질환 추정(확신만, in-memory) → 질환별 콘텐츠(표시 직전 안전 게이트)
+  const lifestyleEstimates = estimateDiseases(rowsToMedInputs(activeMeds)).filter(e => e.confidence === 'high')
+  const lifestyleTips = await getLifestyleContent(supabase, lifestyleEstimates.map(e => e.disease))
+
+  // 곧 떨어지는 약(28일+ 처방약, 만료 5일 이내) 리필 알림 — 메인 meds 재사용(추가 쿼리 없음)
+  const refillItems = computeRefillSoon(activeMeds)
+
   // 카테고리별 종수
   const rxCount   = rxRaws.length
   const otcCount  = otcRaws.length
@@ -171,6 +184,9 @@ export default async function WalletPage() {
         </div>
       </div>
 
+      {/* ── 리필 알림: 곧 떨어지는 처방약 (B2B면 미리 준비 요청) ── */}
+      <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} isSelfMember={active.is_self} />
+
       {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">
         <SectionHeader label="처방의약품" count={rxCount} showDot={false} />
@@ -188,6 +204,13 @@ export default async function WalletPage() {
         <SectionHeader label="영양보조제" count={suppCount} showDot={false} />
         <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>
+
+      {/* ── 섹션 4: 생활 관리 정보(근거 기반 일반 정보) ── */}
+      <LifestyleSection
+        estimates={lifestyleEstimates}
+        tips={lifestyleTips}
+        regularPharmacyPhone={regularPharmacyPhone}
+      />
 
       {/* ── 지난 약(복약 이력) ── */}
       <Link href="/medications/history"

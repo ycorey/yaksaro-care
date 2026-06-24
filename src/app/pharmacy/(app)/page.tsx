@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
+import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
+import PharmacistNotify from './pharmacist-notify'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -57,6 +59,25 @@ export default async function PharmacyHome() {
     medCount: countByUser.get(p.id as string) ?? 0,
   }))
 
+  // 환자 요청함 (RLS가 자기 약국 요청만 허용). 환자명은 동의 환자만 보임(없으면 '환자' + 번호).
+  const { data: reqs } = await supabase
+    .from('pharmacy_requests')
+    .select('id, type, note, contact_phone, status, created_at, patient_id, member_id')
+    .order('created_at', { ascending: false })
+    .limit(30)
+  const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
+  const { data: reqPats } = reqPatientIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
+    : { data: [] as { id: string; full_name: string | null }[] }
+  const nameById = new Map((reqPats ?? []).map(p => [p.id as string, (p.full_name as string | null)]))
+  const inboxRows: InboxRow[] = (reqs ?? []).map(r => ({
+    id: r.id, type: r.type, note: r.note, contact_phone: r.contact_phone,
+    status: r.status as InboxRow['status'], created_at: r.created_at,
+    patientName: nameById.get(r.patient_id as string) ?? null,
+    // 가족 요청 여부만 표기(가족 이름·약명은 노출 안 함 — 약사는 전화로 확인)
+    isFamily: !!r.member_id,
+  }))
+
   return (
     <div className="space-y-5">
       <div>
@@ -65,6 +86,12 @@ export default async function PharmacyHome() {
           내 약 목록 공개에 동의한 단골 환자 {rows.length}명 · 읽기 전용
         </p>
       </div>
+
+      {/* 새 요청 알림 켜기(약사 푸시) */}
+      <PharmacistNotify />
+
+      {/* 환자 요청함 (예약·콜백·문의 — 비임상) */}
+      <PharmacyRequestInbox initial={inboxRows} />
 
       {/* 약국 QR — 환자 단골 연결 진입점 */}
       <Link

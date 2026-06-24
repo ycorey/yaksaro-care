@@ -4,6 +4,9 @@ import HomeClient from './home-client'
 import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import { getLifestyleContent } from '@/lib/lifestyle-info/server'
+import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
+import { computeRefillSoon } from '@/lib/refill'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -17,7 +20,7 @@ export default async function HomePage() {
   const [{ data: meds }, { data: checks }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, meal_times, doses_per_day')
+      .select('id, meal_times, doses_per_day, total_days, ingredient, custom_name, prescription_id, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -43,6 +46,21 @@ export default async function HomePage() {
 
   const doneMeals = (checks ?? []).map(c => c.meal_time as string)
 
+  // 오늘의 건강 정보 훅 — 메인 meds 재사용해 추정(확신만, in-memory). 토픽 1개만 DB 조회.
+  const estimates = estimateDiseases(rowsToMedInputs(meds ?? [])).filter(e => e.confidence === 'high')
+  const firstDisease = estimates[0]?.disease
+  let lifestyleHook: { disease: string; topic: string; body_ko: string } | null = null
+  if (firstDisease) {
+    const tips = await getLifestyleContent(supabase, [firstDisease])
+    if (tips.length > 0) lifestyleHook = { disease: tips[0].disease, topic: tips[0].topic, body_ko: tips[0].body_ko }
+  }
+
+  // 곧 떨어지는 약 — 메인 meds 재사용(추가 쿼리 없음). 가장 시급한 1건 + 건수
+  const refillSoon = computeRefillSoon(meds ?? [])
+  const refillHook = refillSoon[0]
+    ? { label: refillSoon[0].label, dDay: refillSoon[0].dDay, count: refillSoon.length }
+    : null
+
   return (
     <div>
       <MemberSwitcher members={members} activeId={active.id} />
@@ -51,6 +69,9 @@ export default async function HomePage() {
         doneMeals={doneMeals}
         totalSlots={activeSlotKeys.length}
         activeSlotKeys={activeSlotKeys}
+        memberLabel={active.is_self ? null : active.name}
+        lifestyleHook={lifestyleHook}
+        refillHook={refillHook}
       />
     </div>
   )

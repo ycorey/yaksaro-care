@@ -250,7 +250,7 @@ export default function SettingsClient({
       {/* ── 시간대별 알림 ── */}
       <section className="anim-page" style={{ animationDelay: '100ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">시간대별 알림</p>
-        <div className="bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)]">
+        <div className={`bg-white rounded-yc-lg px-5 shadow-[var(--yc-shadow-sm)] transition-opacity ${!alarmEnabled ? 'opacity-50' : ''}`}>
           {ALARM_TIMES.map(({ key, label }) => (
             <Row key={key}>
               <span className="text-sm font-medium text-yc-neutral900">{label}</span>
@@ -258,10 +258,17 @@ export default function SettingsClient({
             </Row>
           ))}
         </div>
-        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
-          <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
-          알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
-        </p>
+        {!alarmEnabled ? (
+          <p className="text-xs text-yc-warningText mt-2 flex items-start gap-1">
+            <span className="flex-shrink-0 mt-0.5">ⓘ</span>
+            위 <span className="font-semibold">복약 시간 알림</span>을 먼저 켜면 끼니별로 조절할 수 있어요.
+          </p>
+        ) : (
+          <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
+            <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
+            알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
+          </p>
+        )}
       </section>
 
       {/* ── 단골 약사에게 공개 ── */}

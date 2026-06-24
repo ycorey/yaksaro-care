@@ -50,7 +50,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
             </div>
             <button
               onClick={closeModal}
-              className="text-base font-bold text-yc-blue500 px-4 py-2.5 rounded-yc-md active:bg-yc-neutral100"
+              className="text-base font-bold text-yc-neutral600 px-4 py-2.5 rounded-yc-md active:bg-yc-neutral100"
             >
               <span className="flex items-center gap-1">닫기 <X weight="bold" size={14} /></span>
             </button>
@@ -61,7 +61,7 @@ export default function DoctorView({ data }: { data: DoctorData }) {
             {/* 1. 병원 처방약 전체 */}
             {data.prescriptionGroups.length > 0 && (
               <section>
-                <p className="text-xs font-black text-yc-blue500 uppercase tracking-[0.15em] mb-6 pb-3 border-b-2 border-yc-blue500/20">
+                <p className="text-xs font-black text-yc-blue700 uppercase tracking-[0.15em] mb-6 pb-3 border-b-2 border-yc-blue500/20">
                   1. 현재 복용 중인 병원 처방약 전체 목록
                 </p>
                 {data.prescriptionGroups.map((g, gi) => (

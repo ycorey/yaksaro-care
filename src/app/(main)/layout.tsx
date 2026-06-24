@@ -30,7 +30,9 @@ export default async function MainLayout({
   return (
     <div className="bg-[#EFEBE2]">
       <DashboardNav user={user} profile={profile} />
-      <TabPager home={home} wallet={wallet} today={today} calendar={calendar} share={share} />
+      <main>
+        <TabPager home={home} wallet={wallet} today={today} calendar={calendar} share={share} />
+      </main>
     </div>
   )
 }

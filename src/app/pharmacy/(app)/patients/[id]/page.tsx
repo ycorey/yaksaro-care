@@ -43,7 +43,7 @@ function Card({ m }: { m: MedRow }) {
           {m.ingredient && <span className="text-sm font-normal text-yc-neutral500 ml-1">({m.ingredient})</span>}
         </p>
         {sub && <p className="text-sm text-yc-neutral500 mt-0.5">{sub}</p>}
-        {dosage && <p className="text-sm text-yc-blue500 mt-0.5 font-semibold">{dosage}</p>}
+        {dosage && <p className="text-sm text-yc-neutral700 mt-0.5 font-semibold">{dosage}</p>}
         {m.has_interaction_warning && (
           <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
             <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다
@@ -86,14 +86,17 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
   const selfMemberId = selfMember?.id ?? null
 
-  const { data: meds } = await supabase
-    .from('user_medications')
-    .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
-    .eq('user_id', id)
-    .eq('member_id', selfMemberId ?? '')
-    .is('deleted_at', null)
-    .is('ended_at', null)
-    .order('created_at', { ascending: false })
+  // self 멤버가 없으면 빈 uuid('')로 쿼리하지 않음(Postgres 22P02 방지) — 빈 결과로 처리
+  const { data: meds } = selfMemberId
+    ? await supabase
+        .from('user_medications')
+        .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
+        .eq('user_id', id)
+        .eq('member_id', selfMemberId)
+        .is('deleted_at', null)
+        .is('ended_at', null)
+        .order('created_at', { ascending: false })
+    : { data: null }
 
   // 접근 불가(미동의/동의철회/타약국) — RLS가 데이터를 비움
   if (!patient && (!meds || meds.length === 0)) {

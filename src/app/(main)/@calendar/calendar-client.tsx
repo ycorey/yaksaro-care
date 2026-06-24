@@ -136,7 +136,7 @@ export default function CalendarClient() {
             <div
               key={d}
               className={`text-center text-[11px] font-medium pb-1 ${
-                i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-blue500' : 'text-yc-neutral400'
+                i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-blue700' : 'text-yc-neutral500'
               }`}
             >
               {d}
@@ -174,7 +174,7 @@ export default function CalendarClient() {
                         : dow === 0
                         ? 'text-yc-error'
                         : dow === 6
-                        ? 'text-yc-blue500'
+                        ? 'text-yc-blue700'
                         : 'text-yc-neutral800'
                     }`}
                   >
@@ -209,7 +209,7 @@ export default function CalendarClient() {
       {/* 이번 달 요약 */}
       {!loading && Object.keys(days).length > 0 && (
         <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 anim-page" style={{ animationDelay: '80ms' }}>
-          <p className="text-xs font-bold text-yc-neutral400 uppercase tracking-widest mb-3">
+          <p className="text-xs font-bold text-yc-neutral500 uppercase tracking-widest mb-3">
             {month}월 복약 요약
           </p>
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -222,7 +222,7 @@ export default function CalendarClient() {
               <p className="text-xs text-yc-neutral500 mt-0.5">부분 복용</p>
             </div>
             <div>
-              <p className="font-display text-2xl text-yc-neutral400">{missDays}</p>
+              <p className="font-display text-2xl text-yc-neutral500">{missDays}</p>
               <p className="text-xs text-yc-neutral500 mt-0.5">거름</p>
             </div>
           </div>

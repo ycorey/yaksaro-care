@@ -19,7 +19,7 @@ export type Selected =
 
 const TAB_LABELS: Record<TabType, { icon: React.ReactNode; label: string }> = {
   prescription: { icon: <Hospital weight="fill" size={15} />, label: '처방의약품' },
-  otc:          { icon: <Pill     weight="fill" size={15} />, label: '약국 일반약' },
+  otc:          { icon: <Pill     weight="fill" size={15} />, label: '일반의약품' },
   supplement:   { icon: <Flask    weight="fill" size={15} />, label: '영양제'      },
 }
 
@@ -75,7 +75,7 @@ function Stepper({
     <div className="flex items-center gap-3">
       <button type="button" onClick={dec} className={BTN_STEPPER}>−</button>
       <span className={`flex-1 ${BTN_H} flex items-center justify-center text-lg font-bold text-yc-neutral900 bg-yc-neutral50 rounded-yc-md`}>
-        {value != null ? `${value}${unit}` : <span className="text-yc-neutral400 text-base font-normal">미입력</span>}
+        {value != null ? `${value}${unit}` : <span className="text-yc-neutral500 text-base font-normal">미입력</span>}
       </span>
       <button type="button" onClick={inc} className={BTN_STEPPER}>+</button>
     </div>
@@ -182,7 +182,7 @@ function DrugSearch({
               {onCustom && query && (
                 <div className="border-t border-yc-neutral100 px-4 py-3">
                   <button type="button" onClick={() => { onCustom(query); setQuery(''); setOpen(false) }}
-                    className="text-xs text-yc-neutral400 hover:text-yc-green600">
+                    className="text-xs text-yc-neutral500 hover:text-yc-green600">
                     목록에 없음 — &quot;{query}&quot; 직접 추가
                   </button>
                 </div>
@@ -293,7 +293,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
 
           {/* 1회 투약량 — 스테퍼 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">1회 투약량 <span className="font-normal text-yc-neutral400">(정·캡슐·포 수)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">1회 투약량 <span className="font-normal text-yc-neutral500">(정·캡슐·포 수)</span></p>
             <Stepper value={doseAmount} onChange={setDoseAmount} min={0.5} step={0.5} max={10} />
           </div>
 
@@ -331,17 +331,17 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
 
           {/* 복용 시간대 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
 
           {/* 병원명 · 진료과 */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">발급 병원 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">발급 병원 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <input name="hospital_name" type="text" placeholder="예: 서울내과의원" className={INPUT} />
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">진료과 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">진료과 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <input name="department" type="text" placeholder="예: 내과, 정형외과" className={INPUT} />
           </div>
         </div>
@@ -359,12 +359,12 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">용량 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">용량 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <input name="dose" type="text" placeholder="예: 500mg, 1정, 2캡슐" className={INPUT} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 횟수 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 횟수 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <select name="frequency" className={`${INPUT} bg-white`}>
               <option value="">선택 안 함</option>
               {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
@@ -372,7 +372,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
         </div>
@@ -390,12 +390,12 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">용량/복용량 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">용량/복용량 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <input name="dose" type="text" placeholder="예: 1정, 2캡슐, 1포" className={INPUT} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 빈도 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 빈도 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <select name="frequency" className={`${INPUT} bg-white`}>
               <option value="">선택 안 함</option>
               {FREQUENCIES.map(f => <option key={f} value={f}>{f}</option>)}
@@ -403,12 +403,12 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 시작일 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시작일 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <input name="started_at" type="date" className={INPUT} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral400">(선택)</span></p>
+            <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
           </div>
         </div>

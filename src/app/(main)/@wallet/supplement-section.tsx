@@ -35,13 +35,10 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
     activeMeals.forEach(m => { init[m.key] = !!serverChecks[m.key] })
     return init
   })
-  const [anyChecked, setAnyChecked] = useState(() => activeMeals.some(m => !!serverChecks[m.key]))
-
   const toggle = useCallback((meal: string) => {
     setChecks(prev => {
       const next = { ...prev, [meal]: !prev[meal] }
       haptic()
-      setAnyChecked(Object.values(next).some(Boolean))
       void fetch('/api/meal-checks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

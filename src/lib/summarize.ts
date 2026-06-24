@@ -10,10 +10,11 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { PubmedResult } from '@/lib/pubmed'
 import { logger } from '@/lib/logger'
+import { LIFESTYLE_SAFETY_SYSTEM } from '@/lib/lifestyle-info/safety-frame'
 
 const MODEL = 'claude-sonnet-4-6'
 
-export type EvidenceContext = 'interaction' | 'blog'
+export type EvidenceContext = 'interaction' | 'blog' | 'lifestyle'
 
 export type PaperSummary = { pmid: string; summary_ko: string }
 export type EvidenceSummary = { overall_ko: string; items: PaperSummary[] }
@@ -40,6 +41,8 @@ const SUMMARY_SCHEMA = {
 } as const
 
 function buildSystemPrompt(context: EvidenceContext): string {
+  // 생활습관 정보는 규제 안전 프레임(개인 진단·지시·복약지시 금지)을 시스템 지시로 강제한다.
+  if (context === 'lifestyle') return LIFESTYLE_SAFETY_SYSTEM
   const audience =
     context === 'interaction'
       ? '약사·임상 관점에서 약물 상호작용 판단에 참고할 핵심을 짚는다.'

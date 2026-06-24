@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
+import { useNowMinute } from '@/lib/use-now'
+import NotificationPrompt from '@/components/notification-prompt'
 
 function koreanDate() {
   const d = new Date()
@@ -51,17 +52,14 @@ interface Props {
   doneMeals:      string[]
   totalSlots:     number
   activeSlotKeys: string[]
+  memberLabel?:   string | null
+  lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
+  refillHook?:    { label: string; dDay: number; count: number } | null
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
-  const [now, setNow] = useState<Date | null>(null)
-
-  useEffect(() => {
-    setNow(new Date())
-    const t = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(t)
-  }, [])
+  const now = useNowMinute()
 
   const doneCount = doneMeals.length
   const doneKeys  = doneMeals
@@ -85,9 +83,29 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
       <div>
         <p className="text-sm text-yc-neutral500">{now ? koreanDate() : ' '}</p>
         <h1 className="font-display text-[1.625rem] text-yc-neutral900 mt-0.5">
-          {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후에요' : '좋은 저녁이에요') : ' '}
+          {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요') : ' '}
         </h1>
+        {memberLabel && (
+          <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
+        )}
       </div>
+
+      {/* 곧 떨어지는 약 — 리필·재방문 알림(가장 시급) */}
+      {refillHook && (
+        <Link href="/wallet"
+          className="block bg-yc-warningBg border border-yc-warning/30 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-white bg-yc-warning rounded-full px-2 py-0.5">{refillHook.dDay === 0 ? '오늘' : `D-${refillHook.dDay}`}</span>
+            <span className="text-sm font-bold text-yc-warningText">곧 떨어지는 약</span>
+          </div>
+          <p className="text-sm text-yc-neutral800 break-keep">
+            {refillHook.label}{refillHook.count > 1 ? ` 외 ${refillHook.count - 1}건` : ''} · 재방문·재처방을 미리 챙겨보세요.
+          </p>
+        </Link>
+      )}
+
+      {/* 복약 알림 허용 프롬프트 (권한 미설정 + 알림 켬일 때만 노출) */}
+      <NotificationPrompt />
 
       {/* 상태 알림 카드 → 오늘복약으로 이동 */}
       <Link href="/today" className="block active:scale-[0.99] transition-transform">
@@ -154,6 +172,19 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           </Link>
         ))}
       </div>
+
+      {/* 오늘의 건강 정보 훅 — 약지갑 생활 관리 정보로 연결. 리필(시급) 있으면 넛지 중복 방지로 생략 */}
+      {lifestyleHook && !refillHook && (
+        <Link href="/wallet"
+          className="block bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <p className="text-sm font-bold text-yc-green700">오늘의 건강 정보</p>
+            <span className="text-xs font-semibold text-yc-green700 flex-shrink-0">더보기 →</span>
+          </div>
+          {/* 홈 허브는 글래스 노출이라 병명 평문 노출 회피 — 일반화한 안내만(약지갑 안에서 상세) */}
+          <p className="text-sm text-yc-neutral800 leading-relaxed break-keep">약에 맞는 {lifestyleHook.topic} 등 생활 관리 정보를 확인해보세요.</p>
+        </Link>
+      )}
     </div>
   )
 }

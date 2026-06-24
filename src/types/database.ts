@@ -16,6 +16,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      lifestyle_content: {
+        Row: {
+          body_ko: string
+          disease: string
+          sources: Json
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          body_ko: string
+          disease: string
+          sources?: Json
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          body_ko?: string
+          disease?: string
+          sources?: Json
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pharmacy_requests: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          id: string
+          member_id: string | null
+          note: string | null
+          patient_id: string
+          pharmacy_id: string
+          responded_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_id: string
+          pharmacy_id: string
+          responded_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_id?: string
+          pharmacy_id?: string
+          responded_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       drug_ingredients: {
         Row: {
           amount: string | null
@@ -814,6 +877,7 @@ export type Database = {
           pharmacy_phone: string | null
           prescribed_at: string | null
           raw_medicine_list: Json
+          refill_reminded_at: string | null
           user_id: string
         }
         Insert: {
@@ -831,6 +895,7 @@ export type Database = {
           pharmacy_phone?: string | null
           prescribed_at?: string | null
           raw_medicine_list?: Json
+          refill_reminded_at?: string | null
           user_id: string
         }
         Update: {
@@ -848,6 +913,7 @@ export type Database = {
           pharmacy_phone?: string | null
           prescribed_at?: string | null
           raw_medicine_list?: Json
+          refill_reminded_at?: string | null
           user_id?: string
         }
         Relationships: [
