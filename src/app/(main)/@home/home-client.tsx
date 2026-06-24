@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, type Icon } from '@phosphor-icons/react'
+import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, Storefront, Phone, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import { useNowMinute } from '@/lib/use-now'
@@ -55,9 +55,10 @@ interface Props {
   memberLabel?:   string | null
   lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
   refillHook?:    { label: string; dDay: number; count: number } | null
+  regularPharmacy?: { name: string | null; phone: string | null }
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook, regularPharmacy }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
   const now = useNowMinute()
 
@@ -172,6 +173,47 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           </Link>
         ))}
       </div>
+
+      {/* 단골약국 — 등록돼 있으면 (전화 가능 시) 탭하여 전화, 아니면 등록 안내 */}
+      {regularPharmacy?.name ? (
+        regularPharmacy.phone ? (
+          <a href={`tel:${regularPharmacy.phone}`}
+            className="flex items-center gap-3 bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:scale-[0.99] transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-yc-green50 flex items-center justify-center flex-shrink-0">
+              <Storefront size={24} className="text-yc-green600" weight="fill" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
+              <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
+            </div>
+            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+              <Phone size={16} weight="fill" /> 전화
+            </span>
+          </a>
+        ) : (
+          <Link href="/settings"
+            className="flex items-center gap-3 bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:scale-[0.99] transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-yc-green50 flex items-center justify-center flex-shrink-0">
+              <Storefront size={24} className="text-yc-green600" weight="fill" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
+              <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
+            </div>
+          </Link>
+        )
+      ) : (
+        <Link href="/settings"
+          className="flex items-center gap-3 bg-yc-green50 rounded-yc-xl border border-yc-green100 px-5 py-4 active:scale-[0.99] transition-transform">
+          <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+            <Storefront size={24} className="text-yc-green600" weight="fill" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-yc-neutral900">단골약국 등록하기</p>
+            <p className="text-xs text-yc-neutral500 mt-0.5">우리 약국과 연결해 더 편하게 챙겨요</p>
+          </div>
+        </Link>
+      )}
 
       {/* 오늘의 건강 정보 훅 — 약지갑 생활 관리 정보로 연결. 리필(시급) 있으면 넛지 중복 방지로 생략 */}
       {lifestyleHook && !refillHook && (
