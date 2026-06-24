@@ -47,8 +47,11 @@ export type Database = {
           id: string
           member_id: string | null
           note: string | null
+          patient_ack_at: string | null
           patient_id: string
           pharmacy_id: string
+          replied_at: string | null
+          reply_text: string | null
           responded_at: string | null
           status: string
           type: string
@@ -59,8 +62,11 @@ export type Database = {
           id?: string
           member_id?: string | null
           note?: string | null
+          patient_ack_at?: string | null
           patient_id: string
           pharmacy_id: string
+          replied_at?: string | null
+          reply_text?: string | null
           responded_at?: string | null
           status?: string
           type: string
@@ -71,8 +77,11 @@ export type Database = {
           id?: string
           member_id?: string | null
           note?: string | null
+          patient_ack_at?: string | null
           patient_id?: string
           pharmacy_id?: string
+          replied_at?: string | null
+          reply_text?: string | null
           responded_at?: string | null
           status?: string
           type?: string
