@@ -100,7 +100,7 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
             <div className="rounded-yc-md bg-yc-green50 px-3 py-2">
               <p className="text-sm text-yc-neutral800 break-keep">{r.replyText}</p>
               <p className="text-xs text-yc-neutral500 mt-1">
-                {r.patientAckAt ? '환자 확인함' : '답 보냄'}
+                {r.patientAckAt ? '환자 확인함' : '답 보냄'}{r.repliedAt ? ` · ${timeAgo(r.repliedAt)}` : ''}
               </p>
             </div>
           ) : (
@@ -110,6 +110,7 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
                 onChange={e => setReplyDraft(s => ({ ...s, [r.id]: e.target.value }))}
                 maxLength={300} rows={2}
                 placeholder="예약·재고·픽업 안내를 적어주세요 (예: 오후 3시 이후 픽업 가능)"
+                aria-label="환자에게 보낼 안내"
                 className="w-full px-3 py-2 border border-yc-neutral200 rounded-yc-md text-sm focus:outline-none focus:border-yc-green600 resize-none"
               />
               <button onClick={() => sendReply(r.id)} disabled={replying === r.id || !(replyDraft[r.id] ?? '').trim()}

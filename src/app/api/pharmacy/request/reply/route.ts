@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     .from('pharmacy_requests')
     .update({ reply_text: msg, replied_at: new Date().toISOString() })
     .eq('id', id)
+    .in('status', ['open', 'acknowledged'])
     .select('patient_id')
     .single()
   if (error || !data) return NextResponse.json({ error: error?.message ?? '대상 없음' }, { status: 500 })

@@ -20,6 +20,14 @@ const TYPES: { key: ReqType; label: string; desc: string; Icon: typeof Phone }[]
   { key: 'stock_inquiry',   label: '재고 문의',      desc: '약이 있는지 확인해 주세요',     Icon: MagnifyingGlass },
 ]
 const LABEL: Record<ReqType, string> = Object.fromEntries(TYPES.map(t => [t.key, t.label])) as Record<ReqType, string>
+
+function timeAgo(iso: string) {
+  const d = new Date(iso).getTime(); const m = Math.floor((Date.now() - d) / 60000)
+  if (m < 1) return '방금'
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60); if (h < 24) return `${h}시간 전`
+  return `${Math.floor(h / 24)}일 전`
+}
 const STATUS: Record<PharmacyRequestRow['status'], { label: string; cls: string }> = {
   open:         { label: '접수됨',    cls: 'bg-yc-green100 text-yc-green700' },
   acknowledged: { label: '약국 확인',  cls: 'bg-yc-infoBg text-yc-infoText' },
@@ -152,7 +160,7 @@ export default function PharmacyRequest({
       {requests.length > 0 && (
         <div className="pt-1 space-y-2 border-t border-yc-neutral100">
           <p className="text-xs font-semibold text-yc-neutral500 pt-2">보낸 요청</p>
-          {requests.slice(0, 6).map(r => (
+          {requests.filter((r, i) => i < 6 || (!!r.reply_text && !r.patient_ack_at)).map(r => (
             <div key={r.id} className="space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -160,7 +168,7 @@ export default function PharmacyRequest({
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
-                  {(r.status === 'open' || r.status === 'acknowledged') && (
+                  {(r.status === 'open' || r.status === 'acknowledged') && !r.patient_ack_at && (
                     <button onClick={() => cancel(r.id)} disabled={busy}
                       className="text-xs text-yc-neutral500 active:text-yc-error disabled:opacity-50">취소</button>
                   )}
@@ -170,6 +178,7 @@ export default function PharmacyRequest({
               {r.reply_text && (
                 <div className="rounded-yc-md bg-yc-green50 px-3 py-2 space-y-1.5">
                   <p className="text-sm text-yc-neutral800 break-keep">💬 {r.reply_text}</p>
+                  {r.replied_at && <p className="text-xs text-yc-neutral500">{timeAgo(r.replied_at)}</p>}
                   {r.patient_ack_at ? (
                     <p className="text-xs text-yc-green700 font-semibold">확인함</p>
                   ) : (
