@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const [{ data: meds }, { data: checks }] = await Promise.all([
+  const [{ data: meds }, { data: checks }, { data: profile }] = await Promise.all([
     supabase
       .from('user_medications')
       .select('id, meal_times, doses_per_day, total_days, ingredient, custom_name, prescription_id, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
@@ -32,7 +32,18 @@ export default async function HomePage() {
       .eq('member_id', active.id)
       .eq('check_date', todayStr)
       .eq('is_checked', true),
+    supabase
+      .from('profiles')
+      .select('regular_pharmacy_name, regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(name, phone)')
+      .eq('id', user.id)
+      .single(),
   ])
+
+  // 단골약국 (계정 소유자 기준, 멤버 무관) — QR 연결 약국 우선, 없으면 자유텍스트
+  const regularPharmacy = {
+    name:  profile?.regular_pharmacy?.name  ?? profile?.regular_pharmacy_name  ?? null,
+    phone: profile?.regular_pharmacy?.phone ?? profile?.regular_pharmacy_phone ?? null,
+  }
 
   // 활성 슬롯 도출 — 미지정 약은 복용횟수 기반 기본 슬롯 폴백 (/today와 동일 규칙)
   const activeMealSet = new Set<string>()
@@ -72,6 +83,7 @@ export default async function HomePage() {
         memberLabel={active.is_self ? null : active.name}
         lifestyleHook={lifestyleHook}
         refillHook={refillHook}
+        regularPharmacy={regularPharmacy}
       />
     </div>
   )

@@ -17,6 +17,7 @@ import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
+import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
   const supabase = await createClient()
@@ -156,6 +157,19 @@ export default async function WalletPage() {
 
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
+  // 의사·약사 보여주기(제시 모드)용 데이터 — 약지갑 데이터 재사용
+  const doctorDosage = (m: MedCard) => [
+    m.doseAmount  ? `1회 ${m.doseAmount}` : null,
+    m.dosesPerDay ? `하루 ${m.dosesPerDay}회` : null,
+  ].filter(Boolean).join(' · ')
+  const doctorData: DoctorData = {
+    prescriptionGroups: prescriptionGroups.length > 0
+      ? prescriptionGroups.map(g => ({ hospitalName: g.hospitalName, meds: g.meds.map(m => ({ name: m.name, dosage: doctorDosage(m) })) }))
+      : [],
+    supplements: supplementCards.map(m => ({ name: m.name, dosage: doctorDosage(m) })),
+    otc:         otcCards.map(m => ({ name: m.name, dosage: doctorDosage(m) })),
+  }
+
   // 생활 관리 정보: 메인 meds 재사용 → 질환 추정(확신만, in-memory) → 질환별 콘텐츠(표시 직전 안전 게이트)
   const lifestyleEstimates = estimateDiseases(rowsToMedInputs(activeMeds)).filter(e => e.confidence === 'high')
   const lifestyleTips = await getLifestyleContent(supabase, lifestyleEstimates.map(e => e.disease))
@@ -183,6 +197,9 @@ export default async function WalletPage() {
           <WalletHeaderActions />
         </div>
       </div>
+
+      {/* ── 의사·약사에게 보여주기 (제시 모드 — /share 통합) ── */}
+      {activeMeds.length > 0 && <DoctorView data={doctorData} />}
 
       {/* ── 리필 알림: 곧 떨어지는 처방약 (B2B면 미리 준비 요청) ── */}
       <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} isSelfMember={active.is_self} />
