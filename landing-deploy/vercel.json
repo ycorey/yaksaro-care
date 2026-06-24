@@ -1,4 +1,12 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "www.yaksaro.co.kr" }],
+      "destination": "https://yaksaro.co.kr/$1",
+      "permanent": true
+    }
+  ]
 }
