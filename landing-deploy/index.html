@@ -225,6 +225,10 @@
   }
   .su-form button:hover { transform:translateY(-2px); filter:brightness(1.04); }
   .su-note { margin-top:18px; font-weight:500; font-size:14.5px; color:rgba(250,250,245,0.55); }
+  .su-note a { color:rgba(217,242,92,0.92); text-decoration:underline; text-underline-offset:2px; }
+  .ft-bottom a { color:rgba(250,250,245,0.78); text-decoration:none; }
+  .ft-bottom a:hover { color:var(--lime); }
+  .ft-legal { display:flex; gap:14px; flex-wrap:wrap; }
   .su-ok { margin-top:18px; font-weight:700; font-size:16px; color:var(--lime); min-height:24px; }
   .su-split { margin-top:46px; padding-top:34px; border-top:1px solid rgba(250,250,245,0.16); display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; font-weight:500; font-size:16px; color:rgba(250,250,245,0.7); }
   .su-split a { font-weight:700; color:var(--lime); border-bottom:1px solid rgba(217,242,92,0.4); }
@@ -467,7 +471,7 @@
       <button type="submit">알림 신청</button>
     </form>
     <div class="su-ok" id="suOk"></div>
-    <div class="su-note reveal">신청하신 메일은 출시 알림 용도로만 사용됩니다.</div>
+    <div class="su-note reveal">신청 시 이메일이 출시 알림 목적으로 수집·이용되며, 서버 특성상 국외(싱가포르)에 보관됩니다. 자세한 내용은 <a href="/privacy">개인정보처리방침</a>을 확인해 주세요.</div>
     <div class="su-split reveal">
       <span>약국을 운영하고 계신가요?</span>
       <a href="mailto:admin@yaksaro.co.kr?subject=약사로 케어 약국 도입 문의" data-contact-link>약국 도입 문의하기 →</a>
@@ -499,12 +503,13 @@
           <h4>문의</h4>
           <a href="#signup">출시 알림 신청</a>
           <a href="mailto:admin@yaksaro.co.kr?subject=약사로 케어 약국 도입 문의" data-contact-link>약국 도입 문의</a>
-          <span>yaksaro.co.kr</span>
+          <span data-contact-email>admin@yaksaro.co.kr</span>
         </div>
       </div>
     </div>
     <div class="ft-bottom">
       <span>© 2026 약사로. All rights reserved.</span>
+      <span class="ft-legal"><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a></span>
       <span class="disclaimer">약사로 케어는 복약 관리를 돕는 도구로, 의료기기가 아닙니다. 복약·처방에 관한 판단은 반드시 의사·약사와 상담하시기 바랍니다.</span>
     </div>
   </div>
