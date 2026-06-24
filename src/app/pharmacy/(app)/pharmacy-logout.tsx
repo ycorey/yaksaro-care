@@ -10,7 +10,7 @@ export default function PharmacyLogout() {
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    try { localStorage.clear() } catch {}
+    try { localStorage.removeItem('yc_rx_notif_dismissed') } catch {}
     try { document.cookie = 'pending_pharmacy_id=; Max-Age=0; path=/' } catch {}
     router.push('/pharmacy/login')
     router.refresh()

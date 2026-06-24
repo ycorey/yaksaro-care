@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('pharmacy_requests')
-    .select('id, type, note, status, created_at, responded_at')
+    .select('id, type, note, status, created_at, responded_at, reply_text, replied_at, patient_ack_at')
     .eq('patient_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20)
@@ -37,6 +37,20 @@ export async function POST(request: Request) {
     .from('profiles').select('regular_pharmacy_id').eq('id', user.id).single()
   if (!profile?.regular_pharmacy_id) {
     return NextResponse.json({ error: 'QR로 연결된 단골약국이 없어요' }, { status: 400 })
+  }
+
+  // 요청 폭주 방지 — (patient, pharmacy)당 미처리 요청 10건 이상이면 거부
+  const { count } = await supabase
+    .from('pharmacy_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('patient_id', user.id)
+    .eq('pharmacy_id', profile.regular_pharmacy_id)
+    .in('status', ['open', 'acknowledged'])
+  if ((count ?? 0) >= 10) {
+    return NextResponse.json(
+      { error: '처리 대기 중인 요청이 많아요. 잠시 후 다시 시도해주세요' },
+      { status: 400 },
+    )
   }
 
   // 활성 멤버 기록 — 가족 요청이면 member_id 세팅(약사 요청함에 '가족'으로 표기). 본인이면 null.

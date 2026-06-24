@@ -20,18 +20,16 @@ export async function POST(request: Request) {
     )
   }
 
-  // 회신 기록 — RLS(preq_pharmacist_update)가 자기 약국 요청만 허용
+  // 회신 기록 + status 승격(open→acknowledged)을 단일 update로 원자 처리
+  // RLS(preq_pharmacist_update)가 자기 약국 요청만 허용. 038 트리거가 컬럼 무결성 보장.
   const { data, error } = await supabase
     .from('pharmacy_requests')
-    .update({ reply_text: msg, replied_at: new Date().toISOString() })
+    .update({ reply_text: msg, replied_at: new Date().toISOString(), status: 'acknowledged' })
     .eq('id', id)
     .in('status', ['open', 'acknowledged'])
     .select('patient_id')
     .single()
   if (error || !data) return NextResponse.json({ error: error?.message ?? '대상 없음' }, { status: 500 })
-
-  // open이면 acknowledged로 승격(별도 가드 업데이트 — done/canceled는 안 건드림)
-  await supabase.from('pharmacy_requests').update({ status: 'acknowledged' }).eq('id', id).eq('status', 'open')
 
   // 환자에게 푸시 (fire-and-forget)
   void sendPushToUser(data.patient_id as string, {
