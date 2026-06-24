@@ -86,14 +86,17 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
   const selfMemberId = selfMember?.id ?? null
 
-  const { data: meds } = await supabase
-    .from('user_medications')
-    .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
-    .eq('user_id', id)
-    .eq('member_id', selfMemberId ?? '')
-    .is('deleted_at', null)
-    .is('ended_at', null)
-    .order('created_at', { ascending: false })
+  // self 멤버가 없으면 빈 uuid('')로 쿼리하지 않음(Postgres 22P02 방지) — 빈 결과로 처리
+  const { data: meds } = selfMemberId
+    ? await supabase
+        .from('user_medications')
+        .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
+        .eq('user_id', id)
+        .eq('member_id', selfMemberId)
+        .is('deleted_at', null)
+        .is('ended_at', null)
+        .order('created_at', { ascending: false })
+    : { data: null }
 
   // 접근 불가(미동의/동의철회/타약국) — RLS가 데이터를 비움
   if (!patient && (!meds || meds.length === 0)) {

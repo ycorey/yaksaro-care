@@ -17,28 +17,24 @@ export type RefillItem = {
 
 type Presc = { id?: string; prescribed_at?: string | null; duration_days?: number | null; hospital_name?: string | null }
 
-export async function getRefillSoon(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  memberId: string,
-): Promise<RefillItem[]> {
-  const { data: meds } = await supabase
-    .from('user_medications')
-    .select('total_days, custom_name, drug:drugs(item_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
-    .eq('user_id', userId)
-    .eq('member_id', memberId)
-    .is('deleted_at', null)
-    .is('ended_at', null)
-    .not('prescription_id', 'is', null)
+type RefillMedRow = {
+  total_days?: number | null
+  custom_name?: string | null
+  drug?: { item_name?: string | null } | null
+  prescription?: Presc | null
+}
 
+// 이미 조회된 처방약 행 → 리필 대상(순수 함수, 추가 쿼리 없음).
+// 약지갑·홈이 메인 meds 쿼리 결과를 재사용한다. 처방 없는 약(영양제·일반약)은 자동 제외.
+export function computeRefillSoon(meds: RefillMedRow[]): RefillItem[] {
   // 처방전별 그룹
   const groups = new Map<string, { presc: Presc; totalDays: number[]; medNames: string[] }>()
-  for (const m of meds ?? []) {
-    const p = (m.prescription as Presc | null)
+  for (const m of meds) {
+    const p = m.prescription ?? null
     if (!p?.id || !p.prescribed_at) continue
     const g = groups.get(p.id) ?? { presc: p, totalDays: [], medNames: [] }
     g.totalDays.push(m.total_days ?? 0)
-    const name = (m.drug as { item_name?: string } | null)?.item_name ?? m.custom_name
+    const name = m.drug?.item_name ?? m.custom_name
     if (name) g.medNames.push(name)
     groups.set(p.id, g)
   }
@@ -61,4 +57,22 @@ export async function getRefillSoon(
     })
   }
   return items.sort((a, b) => a.dDay - b.dDay)
+}
+
+// DB 래퍼 — 단독 조회가 필요한 호출처용. 화면(약지갑/홈)은 메인 meds를 재사용해 computeRefillSoon 직접 호출.
+export async function getRefillSoon(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  memberId: string,
+): Promise<RefillItem[]> {
+  const { data: meds } = await supabase
+    .from('user_medications')
+    .select('total_days, custom_name, drug:drugs(item_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
+    .eq('user_id', userId)
+    .eq('member_id', memberId)
+    .is('deleted_at', null)
+    .is('ended_at', null)
+    .not('prescription_id', 'is', null)
+
+  return computeRefillSoon((meds ?? []) as RefillMedRow[])
 }

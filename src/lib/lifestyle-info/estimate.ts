@@ -23,6 +23,21 @@ export function medIngredientText(parts: (string | null | undefined)[]): string 
   return parts.filter(Boolean).join(' ')
 }
 
+// 이미 조회된 user_medications 행 → MedInput[] (순수 변환, 추가 쿼리 없음).
+// 약지갑·홈이 메인 meds 쿼리 결과를 재사용해 질환 추정용 입력을 만든다.
+type MedRowForEstimate = {
+  custom_name?: string | null
+  ingredient?: string | null
+  drug?: { item_name?: string | null; ingredient_name?: string | null } | null
+}
+export function rowsToMedInputs(rows: MedRowForEstimate[]): MedInput[] {
+  return rows.map((m) => ({
+    label: m.drug?.item_name ?? m.custom_name ?? '약',
+    // 영문 성분(drugs.ingredient_name) + 한글 약명 + 저장 성분 + 직접입력명
+    ingredientText: medIngredientText([m.drug?.ingredient_name, m.drug?.item_name, m.ingredient, m.custom_name]),
+  }))
+}
+
 export function estimateDiseases(meds: MedInput[]): DiseaseEstimate[] {
   const acc = new Map<Disease, {
     meds: Set<string>; ings: Set<string>; hasConfident: boolean; hasAmbiguous: boolean

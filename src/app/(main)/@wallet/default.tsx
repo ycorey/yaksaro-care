@@ -13,9 +13,10 @@ import OtcSection from './otc-section'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 import LifestyleSection from './lifestyle-section'
-import { getEstimatedDiseases, getLifestyleContent } from '@/lib/lifestyle-info/server'
+import { getLifestyleContent } from '@/lib/lifestyle-info/server'
+import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import RefillCard from '@/components/refill-card'
-import { getRefillSoon } from '@/lib/refill'
+import { computeRefillSoon } from '@/lib/refill'
 
 export default async function WalletPage() {
   const supabase = await createClient()
@@ -29,7 +30,7 @@ export default async function WalletPage() {
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq), supplement:supplements(product_name), prescription:user_prescriptions(pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -155,12 +156,12 @@ export default async function WalletPage() {
 
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
-  // 생활 관리 정보: 활성 멤버 약 → 질환 추정(확신만) → 질환별 콘텐츠(표시 직전 안전 게이트)
-  const lifestyleEstimates = await getEstimatedDiseases(supabase, user.id, active.id)
+  // 생활 관리 정보: 메인 meds 재사용 → 질환 추정(확신만, in-memory) → 질환별 콘텐츠(표시 직전 안전 게이트)
+  const lifestyleEstimates = estimateDiseases(rowsToMedInputs(activeMeds)).filter(e => e.confidence === 'high')
   const lifestyleTips = await getLifestyleContent(supabase, lifestyleEstimates.map(e => e.disease))
 
-  // 곧 떨어지는 약(28일+ 처방약, 만료 5일 이내) 리필 알림
-  const refillItems = await getRefillSoon(supabase, user.id, active.id)
+  // 곧 떨어지는 약(28일+ 처방약, 만료 5일 이내) 리필 알림 — 메인 meds 재사용(추가 쿼리 없음)
+  const refillItems = computeRefillSoon(activeMeds)
 
   // 카테고리별 종수
   const rxCount   = rxRaws.length
@@ -184,7 +185,7 @@ export default async function WalletPage() {
       </div>
 
       {/* ── 리필 알림: 곧 떨어지는 처방약 (B2B면 미리 준비 요청) ── */}
-      <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} />
+      <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} isSelfMember={active.is_self} />
 
       {/* ── 섹션 1: 처방의약품 ── */}
       <div className="space-y-3">

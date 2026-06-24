@@ -48,5 +48,4 @@ export const INGREDIENT_RULES: IngredientRule[] = [
   { match: 'pitavastatin', disease: '고지혈증' }, { match: '피타바스타틴',   disease: '고지혈증' },
   { match: 'ezetimibe',    disease: '고지혈증' }, { match: '에제티미브',     disease: '고지혈증' },
   { match: 'fenofibrate',  disease: '고지혈증' }, { match: '페노피브레이트', disease: '고지혈증' },
-  { match: 'rosuvastatin', disease: '고지혈증' },
 ]

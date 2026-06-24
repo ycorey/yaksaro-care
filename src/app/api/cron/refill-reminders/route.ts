@@ -78,7 +78,8 @@ export async function GET(req: NextRequest) {
         : `처방약이 ${minDDay}일 후 떨어져요. 재방문·재처방을 챙겨보세요.`
     const n = await sendPushToUser(userId, { title: '곧 약이 떨어져요 💊', body, url: '/wallet' })
     sent += n
-    remindedIds.push(...ids)
+    // 실제 전송된 경우에만 알림 완료 마킹 — 0건(만료/실패 구독)이면 다음 cron에서 재시도
+    if (n > 0) remindedIds.push(...ids)
   }))
 
   if (remindedIds.length > 0) {
