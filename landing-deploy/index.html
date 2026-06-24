@@ -242,6 +242,18 @@
   .ft-bottom { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; padding-top:30px; border-top:1px solid rgba(250,250,245,0.12); font-weight:400; font-size:13.5px; color:rgba(250,250,245,0.42); line-height:1.6; }
   .ft-bottom .disclaimer { max-width:560px; }
 
+  /* ---------- AUDIENCE (환자용/약국용) ---------- */
+  .aud-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
+  @media(max-width:760px){ .aud-grid{ grid-template-columns:1fr; } }
+  .aud-card { text-decoration:none; color:inherit; cursor:pointer; }
+  .aud-link {
+    align-self:flex-start; margin-top:26px; display:inline-flex; align-items:center; gap:8px;
+    font-weight:800; font-size:15.5px; color:var(--green);
+  }
+  .aud-link svg { width:18px; height:18px; transition:transform .2s; }
+  .aud-card:hover .aud-link svg { transform:translateX(4px); }
+  .eco-card.feature .aud-link { color:var(--lime); }
+
   /* ---------- REVEAL ---------- */
   @media (prefers-reduced-motion: no-preference) {
     .reveal { opacity:0; transform:translateY(26px); transition:opacity .7s cubic-bezier(.19,1,.22,1), transform .7s cubic-bezier(.19,1,.22,1); }
@@ -270,6 +282,8 @@
     <div class="nav-links">
       <a href="#ecosystem">서비스</a>
       <a href="#care">약사로 케어</a>
+      <a href="/patient">환자용</a>
+      <a href="/pharmacy">약국용</a>
       <a href="#signup" class="nav-cta">출시 알림 받기</a>
     </div>
   </div>
@@ -409,6 +423,41 @@
   </div>
 </section>
 
+<!-- ====== AUDIENCE (환자용/약국용) ====== -->
+<section class="sec" id="audience">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-tag">누구를 위한 서비스인가요</span>
+      <h2 class="sec-title">환자도, 약국도<br>약사로 케어로 이어집니다</h2>
+      <p class="sec-desc">어느 쪽이신가요? 상황에 맞는 페이지에서 더 자세히 살펴보세요.</p>
+    </div>
+    <div class="aud-grid">
+      <a href="/patient" class="eco-card aud-card reveal">
+        <div class="eco-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0E6E54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="eco-kicker">환자 · 보호자</div>
+        <div class="eco-name">내 약, 부모님 약 챙기기</div>
+        <p class="eco-desc">흩어진 처방을 한 곳에 담아두는 디지털 약 지갑. 끼니마다 복약 알림과 달력으로, 멀리 사는 부모님 약까지 함께 챙길 수 있어요.</p>
+        <span class="aud-link">환자용 페이지 보기
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+      <a href="/pharmacy" class="eco-card feature aud-card reveal">
+        <div class="eco-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D9F25C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div class="eco-kicker">약국 운영자</div>
+        <div class="eco-name">우리 약국, 단골을 잇다</div>
+        <p class="eco-desc">QR 한 장으로 단골 환자와 연결되고, 환자가 동의한 복약 정보를 한 화면에서 읽기 전용으로 확인하세요. 처방 그 이후에도 상담을 이어갑니다.</p>
+        <span class="aud-link">약국용 페이지 보기
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- ====== SIGNUP ====== -->
 <section class="sec signup" id="signup">
   <div class="glow"></div>
@@ -443,6 +492,8 @@
         <div class="ft-col">
           <h4>서비스</h4>
           <a href="#care">약사로 케어</a>
+          <a href="/patient">환자·보호자용</a>
+          <a href="/pharmacy">약국 도입</a>
           <a href="#ecosystem">약사로 구인구직</a>
           <a href="#ecosystem">약사로 셀렉트</a>
         </div>
