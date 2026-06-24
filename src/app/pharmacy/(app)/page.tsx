@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
 import PharmacistNotify from './pharmacist-notify'
 import DashboardPoll from './dashboard-poll'
+import { YCCard } from '@/components/yc/yc-card'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -108,36 +110,44 @@ export default async function PharmacyHome() {
         </p>
       </div>
 
-      {/* 환자 요청함 (예약·콜백·문의 — 비임상) — 최상단 */}
-      <PharmacyRequestInbox initial={inboxRows} />
-
-      {/* 새 요청 알림 켜기(약사 푸시) */}
-      <PharmacistNotify />
-
-      {/* 약국 QR — 환자 단골 연결 진입점 */}
-      <Link
-        href="/pharmacy/qr"
-        className="flex items-center gap-3 bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:bg-yc-neutral50"
-      >
-        <PharmacyQrIcon />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-yc-neutral900">우리 약국 QR 만들기 · 인쇄</p>
-          <p className="text-xs text-yc-neutral500 mt-0.5">환자가 스캔하면 자동으로 단골 연결돼요</p>
+      {/* 데스크톱 2컬럼: 좌=알림+요청함, 우=환자목록+QR */}
+      <div className="space-y-5 lg:grid lg:grid-cols-[minmax(340px,420px)_1fr] lg:gap-6 lg:space-y-0">
+        {/* 좌 컬럼 — 새 요청 알림 + 요청함 */}
+        <div className="space-y-5">
+          {/* 새 요청 알림 켜기(약사 푸시) */}
+          <PharmacistNotify />
+          {/* 환자 요청함 (예약·콜백·문의 — 비임상) */}
+          <PharmacyRequestInbox initial={inboxRows} />
         </div>
-        <span className="text-yc-neutral400">›</span>
-      </Link>
 
-      {rows.length === 0 ? (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
-          <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
-          <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
-          <p className="text-sm text-yc-neutral500">환자가 설정에서 &ldquo;단골 약사에게 공개&rdquo;를 켜면 여기에 표시돼요</p>
+        {/* 우 컬럼 — 환자목록 + QR(하단) */}
+        <div className="space-y-5">
+          {rows.length === 0 ? (
+            <YCCard radius="lg" className="py-12 text-center px-6">
+              <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
+              <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
+              <p className="text-sm text-yc-neutral500">환자가 설정에서 &ldquo;단골 약사에게 공개&rdquo;를 켜면 여기에 표시돼요</p>
+            </YCCard>
+          ) : (
+            <PharmacyPatientList patients={rows} />
+          )}
+
+          {/* 약국 QR — 환자 단골 연결 진입점 (우 컬럼 하단) */}
+          <Link
+            href="/pharmacy/qr"
+            className="flex items-center gap-3 bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:bg-yc-neutral50"
+          >
+            <PharmacyQrIcon />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-yc-neutral900">우리 약국 QR 만들기 · 인쇄</p>
+              <p className="text-xs text-yc-neutral500 mt-0.5">환자가 스캔하면 자동으로 단골 연결돼요</p>
+            </div>
+            <CaretRight size={16} className="text-yc-neutral400" />
+          </Link>
         </div>
-      ) : (
-        <PharmacyPatientList patients={rows} />
-      )}
+      </div>
 
-      <p className="text-xs text-yc-neutral500 leading-relaxed pt-2">
+      <p className="text-xs text-yc-neutral500 leading-relaxed border-t border-yc-neutral100 pt-4 mt-8">
         이 화면은 환자가 동의한 복약 정보를 <b>읽기 전용</b>으로 보여주는 참고 도구입니다.
         진단·처방 변경·복약 중단 등 의학적 판단을 대체하지 않습니다.
       </p>

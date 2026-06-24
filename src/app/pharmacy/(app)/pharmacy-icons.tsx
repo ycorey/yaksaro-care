@@ -1,9 +1,9 @@
 'use client'
 
-import { Hospital, QrCode } from '@phosphor-icons/react'
+import { UsersThree, QrCode } from '@phosphor-icons/react'
 
 export function PharmacyEmptyIcon() {
-  return <Hospital weight="light" size={48} className="text-yc-neutral300" />
+  return <UsersThree weight="regular" size={48} className="text-yc-neutral300" />
 }
 
 export function PharmacyQrIcon() {

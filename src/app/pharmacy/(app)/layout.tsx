@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { LogoMark, LogoWordmark } from '@/components/yc/logo'
+import { PharmacistBadge } from '@/components/yc/pharmacist-badge'
 import PharmacyLogout from './pharmacy-logout'
 
 // 약사 전용 영역 — role 가드는 미들웨어(proxy)가 1차로, 여기서 2차 방어.
@@ -26,10 +27,10 @@ export default async function PharmacyLayout({ children }: { children: React.Rea
           <Link href="/pharmacy" className="flex items-center gap-2">
             <LogoMark size={24} />
             <LogoWordmark className="text-base" />
-            <span className="ml-1 text-[11px] font-bold text-yc-green700 bg-yc-green50 px-2 py-0.5 rounded-full">약사</span>
+            <PharmacistBadge />
           </Link>
           <div className="flex items-center gap-3">
-            {pharmacyName && <span className="hidden sm:block text-sm text-yc-neutral500">{pharmacyName}</span>}
+            {pharmacyName && <span className="hidden md:block text-sm text-yc-neutral500">{pharmacyName}</span>}
             <PharmacyLogout />
           </div>
         </div>

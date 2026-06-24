@@ -47,7 +47,7 @@ export default function PharmacistNotify() {
   }
 
   return (
-    <div className="bg-yc-green50 border border-yc-green100 rounded-yc-lg px-5 py-4">
+    <div className="bg-white border border-yc-green100 rounded-yc-lg px-5 py-4">
       <div className="flex items-start gap-3">
         <div className="w-11 h-11 rounded-yc-md bg-yc-green600 flex items-center justify-center flex-shrink-0">
           <BellRinging size={22} weight="fill" className="text-white" />

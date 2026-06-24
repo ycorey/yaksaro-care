@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { LogoMark, LogoWordmark } from '@/components/yc/logo'
+import { PharmacistBadge } from '@/components/yc/pharmacist-badge'
 
 export default function PharmacyLoginPage() {
   const [email, setEmail] = useState('')
@@ -52,12 +53,10 @@ export default function PharmacyLoginPage() {
         <div className="flex items-center justify-center gap-2 mb-8">
           <LogoMark size={32} />
           <LogoWordmark className="text-xl" />
-          <span className="ml-1 text-[11px] font-bold text-yc-green700 bg-yc-green50 px-2 py-0.5 rounded-full">
-            약사
-          </span>
+          <PharmacistBadge />
         </div>
 
-        <div className="bg-white rounded-2xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-8">
+        <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] p-6">
           <h1 className="font-display text-2xl text-yc-neutral900 mb-1">약국 로그인</h1>
           <p className="text-sm text-yc-neutral500 mb-7">
             단골 환자 복약 현황을 조회하는 약사 전용 화면입니다.
@@ -77,7 +76,7 @@ export default function PharmacyLoginPage() {
                 autoFocus
                 required
                 placeholder="pharmacy@example.com"
-                className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green400 focus:border-transparent"
+                className="w-full h-12 px-4 rounded-yc-md border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
               />
             </div>
 
@@ -93,12 +92,12 @@ export default function PharmacyLoginPage() {
                 autoComplete="current-password"
                 required
                 placeholder="••••••••"
-                className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green400 focus:border-transparent"
+                className="w-full h-12 px-4 rounded-yc-md border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
               />
             </div>
 
             {error && (
-              <div className="bg-yc-errorBg border border-yc-error/20 rounded-xl px-4 py-3 text-sm text-yc-error">
+              <div className="bg-yc-errorBg border border-yc-error/20 rounded-yc-md px-4 py-3 text-sm text-yc-error">
                 {error}
               </div>
             )}
@@ -106,7 +105,7 @@ export default function PharmacyLoginPage() {
             <button
               type="submit"
               disabled={loading || !email.trim() || !password}
-              className="w-full h-14 rounded-2xl bg-yc-green600 text-white font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-transform"
+              className="w-full h-14 rounded-yc-lg bg-yc-green600 text-white font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-transform"
             >
               {loading ? '로그인 중…' : '로그인'}
             </button>
