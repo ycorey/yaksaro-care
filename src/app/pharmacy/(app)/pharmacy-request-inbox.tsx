@@ -7,7 +7,7 @@ import { Phone } from '@phosphor-icons/react'
 type ReqStatus = 'open' | 'acknowledged' | 'done' | 'canceled'
 export type InboxRow = {
   id: string; type: string; note: string | null; contact_phone: string | null
-  status: ReqStatus; created_at: string; patientName: string | null
+  status: ReqStatus; created_at: string; patientName: string | null; isFamily?: boolean
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -69,7 +69,9 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
           </div>
           <p className="text-xs text-yc-neutral500">
-            {r.patientName ?? '환자'} · {timeAgo(r.created_at)}
+            {r.patientName ?? '환자'}
+            {r.isFamily && <span className="ml-1 text-yc-neutral400">· 가족</span>}
+            {' · '}{timeAgo(r.created_at)}
           </p>
           {r.note && <p className="text-sm text-yc-neutral700 break-keep">{r.note}</p>}
           <div className="flex items-center gap-2 pt-0.5">

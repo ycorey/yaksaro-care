@@ -3,7 +3,7 @@
 import type { RefillItem } from '@/lib/refill'
 import RefillRequestButton from './refill-request-button'
 
-export default function RefillCard({ items, hasB2BPharmacy = false }: { items: RefillItem[]; hasB2BPharmacy?: boolean }) {
+export default function RefillCard({ items, hasB2BPharmacy = false, isSelfMember = true }: { items: RefillItem[]; hasB2BPharmacy?: boolean; isSelfMember?: boolean }) {
   if (items.length === 0) return null
   return (
     <div className="bg-yc-warningBg border border-yc-warning/30 rounded-yc-xl px-5 py-4 space-y-3">
@@ -23,7 +23,8 @@ export default function RefillCard({ items, hasB2BPharmacy = false }: { items: R
             </p>
             {hasB2BPharmacy && (
               <div className="pt-1.5">
-                <RefillRequestButton medNames={it.medNames} />
+                {/* 가족 멤버 활성 시 약명 비첨부(RLS 가족 격리와 일관 — 약사에 약명 우회 노출 차단) */}
+                <RefillRequestButton medNames={isSelfMember ? it.medNames : []} />
               </div>
             )}
           </div>

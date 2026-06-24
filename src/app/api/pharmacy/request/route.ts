@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
+import { getActiveMember } from '@/lib/active-member'
 
 // 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
 const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
@@ -38,11 +39,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'QR로 연결된 단골약국이 없어요' }, { status: 400 })
   }
 
+  // 활성 멤버 기록 — 가족 요청이면 member_id 세팅(약사 요청함에 '가족'으로 표기). 본인이면 null.
+  const { active } = await getActiveMember(supabase, user.id)
+  const memberId = active.is_self ? null : active.id
+
   const { data, error } = await supabase
     .from('pharmacy_requests')
     .insert({
       patient_id:    user.id,
       pharmacy_id:   profile.regular_pharmacy_id,
+      member_id:     memberId,
       type:          body.type,
       note:          (body.note ?? '').toString().trim().slice(0, 300) || null,
       contact_phone: (body.contact_phone ?? '').toString().trim().slice(0, 30) || null,

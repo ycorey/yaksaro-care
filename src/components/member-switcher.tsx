@@ -15,6 +15,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const [newRelation, setNewRelation] = useState('')
+  const [consent, setConsent] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -27,13 +28,13 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
   }
 
   function resetForms() {
-    setAdding(false); setNewName(''); setNewRelation('')
+    setAdding(false); setNewName(''); setNewRelation(''); setConsent(false)
     setEditingId(null); setEditName(''); setConfirmDeleteId(null)
   }
 
   async function addMember() {
     const name = newName.trim()
-    if (!name) return
+    if (!name || !consent) return
     setBusy(true)
     try {
       const res = await fetch('/api/members', {
@@ -173,10 +174,18 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                   onKeyDown={e => { if (e.key === 'Enter') addMember() }}
                   placeholder="관계 (선택 · 예: 부모·자녀·배우자)"
                   className="w-full px-3 h-10 rounded-yc-sm border border-yc-neutral200 text-sm focus:outline-none focus:border-yc-green600" />
+                {/* 가족(제3자) 건강정보 저장 동의 고지 — 개인정보보호법 민감정보 */}
+                <label className="flex items-start gap-2 px-1 py-1 cursor-pointer">
+                  <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                    className="mt-0.5 w-5 h-5 accent-yc-green600 flex-shrink-0" />
+                  <span className="text-xs text-yc-neutral600 leading-relaxed">
+                    본인의 동의를 받았으며, 미성년·피보호자는 보호자로서 약을 관리합니다.
+                  </span>
+                </label>
                 <div className="flex items-center gap-2">
-                  <button onClick={addMember} disabled={busy || !newName.trim()}
+                  <button onClick={addMember} disabled={busy || !newName.trim() || !consent}
                     className="flex-1 h-10 rounded-yc-sm bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">추가</button>
-                  <button onClick={() => { setAdding(false); setNewName(''); setNewRelation('') }}
+                  <button onClick={() => { setAdding(false); setNewName(''); setNewRelation(''); setConsent(false) }}
                     className="px-4 h-10 rounded-yc-sm bg-white border border-yc-neutral200 text-yc-neutral600 text-sm active:bg-yc-neutral100">취소</button>
                 </div>
               </div>
