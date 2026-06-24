@@ -13,5 +13,5 @@ export function InteractionWarningIcon() {
 }
 
 export function LockEmptyIcon() {
-  return <Lock weight="light" size={48} className="text-yc-neutral300" />
+  return <Lock weight="regular" size={48} className="text-yc-neutral300" />
 }

@@ -127,16 +127,16 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
           <div className="flex items-center gap-2 pt-0.5">
             {r.contact_phone && (
               <a href={`tel:${r.contact_phone.replace(/[^0-9]/g, '')}`}
-                className="inline-flex items-center gap-1.5 h-10 px-3 rounded-yc-md bg-yc-green100 text-yc-green700 text-sm font-semibold active:opacity-80">
+                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-yc-md bg-yc-green100 text-yc-green700 text-sm font-semibold active:opacity-80">
                 <Phone weight="fill" size={15} /> 전화
               </a>
             )}
             {r.status === 'open' && (
               <button onClick={() => setStatus(r.id, 'acknowledged')} disabled={busy === r.id}
-                className="h-10 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">확인</button>
+                className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">확인</button>
             )}
             <button onClick={() => setStatus(r.id, 'done')} disabled={busy === r.id}
-              className="h-10 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">완료</button>
+              className="h-11 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">완료</button>
           </div>
         </YCCard>
       ))}
@@ -144,6 +144,7 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
       {recent.length > 0 && (
         <div className="text-sm">
           <button
+            type="button"
             onClick={() => setShowRecent(s => !s)}
             className="flex items-center gap-1 text-yc-neutral500 py-1 cursor-pointer"
             aria-expanded={showRecent}

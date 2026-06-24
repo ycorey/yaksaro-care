@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
 import PharmacistNotify from './pharmacist-notify'
 import DashboardPoll from './dashboard-poll'
+import { YCCard } from '@/components/yc/yc-card'
 
 // 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
@@ -121,11 +123,11 @@ export default async function PharmacyHome() {
         {/* 우 컬럼 — 환자목록 + QR(하단) */}
         <div className="space-y-5">
           {rows.length === 0 ? (
-            <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
+            <YCCard radius="lg" className="py-12 text-center px-6">
               <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
               <p className="text-base font-semibold text-yc-neutral700 mb-1">아직 공개한 단골 환자가 없어요</p>
               <p className="text-sm text-yc-neutral500">환자가 설정에서 &ldquo;단골 약사에게 공개&rdquo;를 켜면 여기에 표시돼요</p>
-            </div>
+            </YCCard>
           ) : (
             <PharmacyPatientList patients={rows} />
           )}
@@ -140,7 +142,7 @@ export default async function PharmacyHome() {
               <p className="text-sm font-semibold text-yc-neutral900">우리 약국 QR 만들기 · 인쇄</p>
               <p className="text-xs text-yc-neutral500 mt-0.5">환자가 스캔하면 자동으로 단골 연결돼요</p>
             </div>
-            <span className="text-yc-neutral400">›</span>
+            <CaretRight size={16} className="text-yc-neutral400" />
           </Link>
         </div>
       </div>
