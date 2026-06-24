@@ -74,6 +74,7 @@ export default function PharmacyLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="username"
+                autoFocus
                 required
                 placeholder="pharmacy@example.com"
                 className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green400 focus:border-transparent"
