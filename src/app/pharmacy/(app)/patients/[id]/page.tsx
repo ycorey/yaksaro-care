@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SectionHeader } from '@/components/yc/section-header'
+import { YCCard } from '@/components/yc/yc-card'
 import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
@@ -38,7 +39,7 @@ function Card({ m }: { m: MedRow }) {
           : <MedThumbnailIcon isSupplement={!!m.supplement} />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-lg font-bold text-yc-neutral900 leading-snug">
+        <p className="text-base font-semibold text-yc-neutral900 leading-snug">
           {name}
           {m.ingredient && <span className="text-sm font-normal text-yc-neutral500 ml-1">({m.ingredient})</span>}
         </p>
@@ -56,9 +57,11 @@ function Card({ m }: { m: MedRow }) {
 
 function Group({ rows }: { rows: MedRow[] }) {
   return (
-    <ul className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
-      {rows.map(m => <li key={m.id}><Card m={m} /></li>)}
-    </ul>
+    <YCCard radius="lg" className="overflow-hidden">
+      <ul className="divide-y divide-yc-neutral100">
+        {rows.map(m => <li key={m.id}><Card m={m} /></li>)}
+      </ul>
+    </YCCard>
   )
 }
 
@@ -103,11 +106,11 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
     return (
       <div className="space-y-5">
         <Link href="/pharmacy" className="text-sm text-yc-green600 font-medium">‹ 목록으로</Link>
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
+        <YCCard radius="lg" className="py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><LockEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">볼 수 없는 환자예요</p>
           <p className="text-sm text-yc-neutral500">동의가 해제되었거나 내 단골 환자가 아니에요</p>
-        </div>
+        </YCCard>
       </div>
     )
   }
@@ -141,12 +144,12 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
       )}
 
       {rows.length === 0 && (
-        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-10 text-center">
+        <YCCard radius="lg" className="py-10 text-center">
           <p className="text-sm text-yc-neutral500">등록된 복약이 없어요</p>
-        </div>
+        </YCCard>
       )}
 
-      <p className="text-xs text-yc-neutral500 leading-relaxed">
+      <p className="text-xs text-yc-neutral500 leading-relaxed border-t border-yc-neutral100 pt-4 mt-8">
         환자 동의 하에 제공되는 <b>읽기 전용</b> 참고 정보입니다. 복약 중단·처방 변경 등은
         의·약사의 직접 판단에 따르세요.
       </p>

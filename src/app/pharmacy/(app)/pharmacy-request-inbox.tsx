@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Phone } from '@phosphor-icons/react'
+import { CaretDown, Phone } from '@phosphor-icons/react'
+import { YCCard } from '@/components/yc/yc-card'
 
 type ReqStatus = 'open' | 'acknowledged' | 'done' | 'canceled'
 export type InboxRow = {
@@ -35,6 +36,7 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
   const [busy, setBusy] = useState<string | null>(null)
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({})
   const [replying, setReplying] = useState<string | null>(null)
+  const [showRecent, setShowRecent] = useState(false)
 
   async function sendReply(id: string) {
     const text = (replyDraft[id] ?? '').trim()
@@ -73,9 +75,9 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <h2 className="text-base font-bold text-yc-neutral900">환자 요청</h2>
+        <h2 className="text-lg font-bold text-yc-neutral900">환자 요청</h2>
         {active.length > 0 && (
-          <span className="text-xs font-bold text-white bg-yc-green600 rounded-full px-2 py-0.5">{active.length}</span>
+          <span className="text-xs font-bold text-white bg-yc-green600 rounded-yc-sm px-2 py-0.5">{active.length}</span>
         )}
       </div>
 
@@ -84,10 +86,10 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
       ) : active.length === 0 ? (
         <p className="text-sm text-yc-neutral500">새 요청이 없어요.</p>
       ) : active.map(r => (
-        <div key={r.id} className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-4 py-3 space-y-2">
+        <YCCard key={r.id} radius="lg" className="px-4 py-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-bold text-yc-neutral900">{TYPE_LABEL[r.type] ?? '요청'}</p>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-yc-sm ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
           </div>
           <p className="text-xs text-yc-neutral500">
             {r.patientName ?? '환자'}
@@ -136,21 +138,33 @@ export default function PharmacyRequestInbox({ initial }: { initial: InboxRow[] 
             <button onClick={() => setStatus(r.id, 'done')} disabled={busy === r.id}
               className="h-10 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">완료</button>
           </div>
-        </div>
+        </YCCard>
       ))}
 
       {recent.length > 0 && (
-        <details className="text-sm">
-          <summary className="text-yc-neutral500 cursor-pointer py-1">최근 처리 {recent.length}건</summary>
-          <div className="space-y-1.5 pt-1">
-            {recent.map(r => (
-              <div key={r.id} className="flex items-center justify-between gap-2 px-1">
-                <span className="text-yc-neutral600 truncate">{TYPE_LABEL[r.type] ?? '요청'}{r.note ? ` · ${r.note}` : ''}</span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
-              </div>
-            ))}
-          </div>
-        </details>
+        <div className="text-sm">
+          <button
+            onClick={() => setShowRecent(s => !s)}
+            className="flex items-center gap-1 text-yc-neutral500 py-1 cursor-pointer"
+            aria-expanded={showRecent}
+          >
+            최근 처리 {recent.length}건
+            <CaretDown
+              size={14}
+              className={`transition-transform duration-200 ${showRecent ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {showRecent && (
+            <div className="space-y-1.5 pt-1">
+              {recent.map(r => (
+                <div key={r.id} className="flex items-center justify-between gap-2 px-1">
+                  <span className="text-yc-neutral600 truncate">{TYPE_LABEL[r.type] ?? '요청'}{r.note ? ` · ${r.note}` : ''}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-yc-sm flex-shrink-0 ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
