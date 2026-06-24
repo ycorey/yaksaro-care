@@ -115,11 +115,11 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                       onKeyDown={e => { if (e.key === 'Enter') renameMember(m.id) }}
                       className="flex-1 min-w-0 px-2.5 h-9 rounded-yc-sm border border-yc-neutral200 text-sm focus:outline-none focus:border-yc-green600" />
                     <button onClick={() => renameMember(m.id)} disabled={busy} aria-label="저장"
-                      className="w-11 h-11 flex items-center justify-center rounded-yc-sm bg-yc-green600 text-white active:bg-yc-green700 disabled:opacity-50">
+                      className="w-12 h-12 flex items-center justify-center rounded-yc-sm bg-yc-green600 text-white active:bg-yc-green700 disabled:opacity-50">
                       <Check weight="bold" size={16} />
                     </button>
                     <button onClick={() => { setEditingId(null); setEditName('') }} aria-label="취소"
-                      className="w-11 h-11 flex items-center justify-center rounded-yc-sm bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
+                      className="w-12 h-12 flex items-center justify-center rounded-yc-sm bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
                       <X weight="bold" size={16} />
                     </button>
                   </div>
@@ -148,12 +148,12 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                       <div className="flex items-center pr-2 gap-0.5">
                         <button onClick={() => { setEditingId(m.id); setEditName(m.name); setConfirmDeleteId(null) }}
                           aria-label={`${m.name} 이름 수정`}
-                          className="w-11 h-11 flex items-center justify-center rounded-yc-sm text-yc-neutral500 active:bg-yc-neutral100">
+                          className="w-12 h-12 flex items-center justify-center rounded-yc-sm text-yc-neutral500 active:bg-yc-neutral100">
                           <PencilSimple size={16} />
                         </button>
                         <button onClick={() => { setConfirmDeleteId(m.id); setEditingId(null) }}
                           aria-label={`${m.name} 삭제`}
-                          className="w-11 h-11 flex items-center justify-center rounded-yc-sm text-yc-error active:bg-yc-errorBg">
+                          className="w-12 h-12 flex items-center justify-center rounded-yc-sm text-yc-error active:bg-yc-errorBg">
                           <Trash size={16} />
                         </button>
                       </div>
@@ -184,9 +184,9 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                 </label>
                 <div className="flex items-center gap-2">
                   <button onClick={addMember} disabled={busy || !newName.trim() || !consent}
-                    className="flex-1 h-10 rounded-yc-sm bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">추가</button>
+                    className="flex-1 h-12 rounded-yc-sm bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 disabled:opacity-50">추가</button>
                   <button onClick={() => { setAdding(false); setNewName(''); setNewRelation(''); setConsent(false) }}
-                    className="px-4 h-10 rounded-yc-sm bg-white border border-yc-neutral200 text-yc-neutral600 text-sm active:bg-yc-neutral100">취소</button>
+                    className="px-4 h-12 rounded-yc-sm bg-white border border-yc-neutral200 text-yc-neutral600 text-base active:bg-yc-neutral100">취소</button>
                 </div>
               </div>
             ) : (

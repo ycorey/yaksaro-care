@@ -25,12 +25,12 @@ export default function RefillRequestButton({ medNames }: { medNames: string[] }
     } finally { setBusy(false) }
   }
 
-  if (sent) return <p className="text-xs font-semibold text-yc-green700">✓ 단골약국에 요청했어요</p>
+  if (sent) return <p className="text-sm font-semibold text-yc-green700">✓ 단골약국에 요청했어요</p>
 
   return (
     <button onClick={send} disabled={busy}
-      className="inline-flex items-center gap-1.5 h-10 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">
-      <Package weight="fill" size={15} /> 단골약국에 미리 준비 요청
+      className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-yc-md bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 disabled:opacity-50">
+      <Package weight="fill" size={17} /> 단골약국에 미리 준비 요청
     </button>
   )
 }

@@ -173,8 +173,8 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         ))}
       </div>
 
-      {/* 오늘의 건강 정보 훅 — 약지갑 생활 관리 정보로 연결(근거 기반 일반 정보) */}
-      {lifestyleHook && (
+      {/* 오늘의 건강 정보 훅 — 약지갑 생활 관리 정보로 연결. 리필(시급) 있으면 넛지 중복 방지로 생략 */}
+      {lifestyleHook && !refillHook && (
         <Link href="/wallet"
           className="block bg-yc-green50 border border-yc-green100 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
           <div className="flex items-center justify-between gap-2 mb-1.5">
