@@ -9,6 +9,7 @@
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { searchPubmed, type PubmedResult } from '@/lib/pubmed'
 import { summarizeForKorean, type EvidenceContext } from '@/lib/summarize'
 import { logger } from '@/lib/logger'
@@ -27,6 +28,11 @@ function normalizeQuery(query: string): string {
 }
 
 export async function POST(request: Request) {
+  // 인증 게이트 — PubMed + Claude 유료 호출/캐시 쓰기 전에 로그인 사용자만 허용(비용 남용 방지)
+  const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
   let body: { query?: unknown; context?: unknown }
   try {
     body = await request.json()
