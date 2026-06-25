@@ -15,13 +15,12 @@ function todayKST(): string {
  * 복약 리마인더 cron — 끼니별로 호출(?meal=morning|afternoon|evening|bedtime).
  * 푸시 구독한 사용자 중 ① 활성 복약이 있고 ② 이 끼니를 아직 체크하지 않았고
  * ③ 알림 설정(profiles.alarm_enabled + alarm_times[meal])을 켜둔 사람에게 전송.
- * 인증: Authorization: Bearer <CRON_SECRET> 또는 ?key=<CRON_SECRET>.
+ * 인증: Authorization: Bearer <CRON_SECRET> (헤더 전용 — 쿼리스트링은 로그/Referer 노출되어 금지).
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   const auth = req.headers.get('authorization')?.replace('Bearer ', '')
-  const keyParam = req.nextUrl.searchParams.get('key')
-  if (!secret || (auth !== secret && keyParam !== secret)) {
+  if (!secret || auth !== secret) {
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 

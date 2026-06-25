@@ -11,13 +11,12 @@ const MIN_DURATION_DAYS = 28
 /**
  * 리필·재방문 리마인더 cron — 일 1회. 28일+ 처방약 중 만료가 LEAD일 이내인 처방을
  * 알림 켠·푸시 구독한 사용자에게 1회 발송(처방전당 refill_reminded_at으로 중복 방지).
- * 인증: Authorization: Bearer <CRON_SECRET> 또는 ?key=<CRON_SECRET>.
+ * 인증: Authorization: Bearer <CRON_SECRET> (헤더 전용 — 쿼리스트링은 로그/Referer 노출되어 금지).
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   const auth = req.headers.get('authorization')?.replace('Bearer ', '')
-  const keyParam = req.nextUrl.searchParams.get('key')
-  if (!secret || (auth !== secret && keyParam !== secret)) {
+  if (!secret || auth !== secret) {
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 

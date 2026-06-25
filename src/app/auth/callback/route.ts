@@ -6,7 +6,9 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin: rawOrigin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/home'
+  // 오픈 리다이렉트 방지: 같은 호스트 내부 경로(/foo)만 허용. //evil.com·절대URL은 거부.
+  const rawNext = searchParams.get('next') ?? '/home'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/home'
 
   // dev 서버가 0.0.0.0으로 호스팅되면 origin이 접속 불가 주소가 된다.
   // 요청 헤더의 host(브라우저가 실제 접속한 주소)로 리다이렉트 기준을 잡는다.

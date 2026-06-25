@@ -350,6 +350,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'image_too_large', max_mb: 4 }, { status: 413 })
   }
 
+  // 이미지 타입만 허용 — CLOVA OCR 쿼터 낭비/비이미지 업로드 차단
+  const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
+  if (!ALLOWED_TYPES.has(file.type)) {
+    return NextResponse.json({ error: 'unsupported_type', allowed: [...ALLOWED_TYPES] }, { status: 415 })
+  }
+
   const bytes = await file.arrayBuffer()
   const mime  = file.type || 'image/jpeg'
   const ext   = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
