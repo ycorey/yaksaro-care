@@ -56,7 +56,8 @@ function StepHeader({ title, member }: { title: string; member?: Member }) {
 
 export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabType; member?: Member }) {
   const [phase, setPhase]       = useState<Phase>('capture')
-  const [query, setQuery]       = useState('')   // OCR로 뽑은 제품명(검색창 prefill)
+  const [query, setQuery]       = useState('')   // 선택된 제품명(검색창 prefill)
+  const [candidates, setCandidates] = useState<string[]>([])  // OCR 후보 1~3개
   const [preview, setPreview]   = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const cameraRef = useRef<HTMLInputElement | null>(null)  // 촬영(capture=environment)
@@ -88,6 +89,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
       const names: string[] = Array.isArray(data?.names) ? data.names : []
 
       if (names.length > 0) {
+        setCandidates(names)
         setQuery(names[0])
         toast.success('제품명을 읽었어요. 검색 결과에서 골라 주세요.')
       } else {
@@ -116,7 +118,21 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
             박스에서 <b>&quot;{query}&quot;</b>를 읽었어요. 검색 결과에서 맞는 제품을 골라 주세요.
           </p>
         )}
-        <AddForm initialTab={initialTab} initialQuery={query || undefined} />
+        {candidates.length > 1 && (
+          <div className="space-y-1.5">
+            <p className="text-xs text-yc-neutral500">다른 이름으로 읽혔다면 눌러서 바꿔요</p>
+            <div className="flex flex-wrap gap-1.5">
+              {candidates.map(c => (
+                <button key={c} type="button" onClick={() => setQuery(c)}
+                  className={`text-sm px-3 py-2 rounded-full border transition-colors ${c === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* query 변경(후보 전환) 시 AddForm을 리마운트해 검색창을 새 이름으로 다시 채움 */}
+        <AddForm key={query} initialTab={initialTab} initialQuery={query || undefined} />
       </div>
     )
   }

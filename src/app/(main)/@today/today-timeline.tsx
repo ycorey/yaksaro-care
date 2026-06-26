@@ -156,15 +156,21 @@ export default function TodayTimeline({
     celebrateAllDone()
     window.setTimeout(() => setCelebrate(false), 2800)
     try {
-      await Promise.all(pending.map(meal =>
+      const results = await Promise.all(pending.map(meal =>
         fetch('/api/meal-checks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ meal_time: meal, is_checked: true }),
-        })
+        }).then(r => r.ok).catch(() => false)
       ))
-      router.refresh()  // 다른 탭(홈·캘린더) 동기화
+      if (results.some(ok => !ok)) {
+        // 일부 실패 → 낙관적 체크를 되돌리고 서버 상태로 재동기화 (부분 저장 오인 방지)
+        setSlots(prev => prev.map(s => pending.includes(s.meal) ? { ...s, checked: false, checkedAt: null } : s))
+        toast.error('일부 저장에 실패했어요. 다시 시도해 주세요.')
+      }
+      router.refresh()  // 다른 탭(홈·캘린더) 동기화 + 서버 상태 확정
     } catch {
+      setSlots(prev => prev.map(s => pending.includes(s.meal) ? { ...s, checked: false, checkedAt: null } : s))
       toast.error('복약 저장에 실패했어요. 다시 시도해 주세요.')
     }
   }
@@ -202,6 +208,12 @@ export default function TodayTimeline({
           <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-lg font-semibold text-yc-neutral900 mb-1">복용 중인 약이 없어요</p>
           <p className="text-sm text-yc-neutral500">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
+        </div>
+      ) : slots.length === 0 ? (
+        <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
+          <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
+          <p className="text-lg font-semibold text-yc-neutral900 mb-1">오늘 정해진 복약이 없어요</p>
+          <p className="text-sm text-yc-neutral500">필요시·다른 요일 약은 약 지갑에서 확인할 수 있어요</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger'
 // 박스 사진 → 제품명 후보 추출 전용. 처방전 OCR(/api/ocr)과 달리 EDI·용법·표 파싱을
 // 하지 않고 DB에도 저장하지 않는다. 반환한 이름으로 프론트가 /api/drugs/search 를 돌려
 // 사용자가 정확한 품목을 고르게 한다(custom_name 회피 → DUR·상호작용 엔진 투입 가능).
-export const maxDuration = 30
+export const maxDuration = 60   // CLOVA(30s)+GPT(20s) 합산 여유 — 강제종료 전 폴백 보장
 export const runtime = 'nodejs'
 
 const BOX_PROMPT = `다음은 일반의약품 또는 건강기능식품 "제품 박스"를 OCR로 읽은 텍스트야. 여기서 사람이 검색할 만한 제품명(상품명) 후보를 가장 그럴듯한 순서로 1~3개 뽑아줘.
