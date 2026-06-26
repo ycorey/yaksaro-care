@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
-import CalendarClient from '../@calendar/calendar-client'
 import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
@@ -94,12 +93,6 @@ export default async function TodayPage() {
     <div>
       <MemberSwitcher members={members} activeId={active.id} />
       <TodayTimeline initialSlots={slots} hasMeds={medTotal > 0} />
-
-      {/* ── 이번 달 복약 현황 (캘린더 통합 — 달력 + 복약내역) ── */}
-      <section className="mt-10 pt-8 border-t border-yc-neutral100">
-        <h2 className="font-display text-lg text-yc-neutral900 mb-3">이번 달 복약 현황</h2>
-        <CalendarClient />
-      </section>
     </div>
   )
 }
