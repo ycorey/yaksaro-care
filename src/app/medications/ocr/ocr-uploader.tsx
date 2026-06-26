@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, ArrowsClockwise, Check, Lightbulb } from '@phosphor-icons/react'
+import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront, CheckCircle, Lock, ArrowsClockwise, Check, Lightbulb, Plus, Sliders } from '@phosphor-icons/react'
 import { MEAL_SLOTS, defaultMealKeys } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
+import MedNameSearch, { type DrugPick } from './med-name-search'
 
 type Medicine = {
   name:          string
@@ -14,7 +15,13 @@ type Medicine = {
   doses_per_day: number | null
   days:          number | null
   meal_times:    string[]
+  drug_id?:      string | null   // 검색-교체 시 부착되는 정식 품목 식별자 (DB drugs.id)
+  item_seq?:     string | null   // 허가정보 품목기준코드 (source='api' 교체분)
+  unit?:         string | null   // 단위 (정/캡슐/포 등)
 }
+
+// 1회 투약량 단위 — 검수 시 약사/사용자가 선택
+const DOSE_UNITS = ['정', '캡슐', '포', 'mL', '방울', '패치', '회', '단위'] as const
 
 type OcrResult = {
   prescription_id: string | null
@@ -90,7 +97,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [state,            setState]            = useState<State>('idle')
   const [result,           setResult]           = useState<OcrResult | null>(null)
   const [editIdx,          setEditIdx]          = useState<number | null>(null)  // 수정 중인 약 인덱스
-  const [edit,             setEdit]             = useState<{ name: string; dose_amount: string; doses_per_day: string; days: string }>({ name: '', dose_amount: '', doses_per_day: '', days: '' })
+  const [edit,             setEdit]             = useState<{ name: string; ingredient: string; unit: string; dose_amount: string; doses_per_day: string; days: string; drug_id: string | null; item_seq: string | null }>({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null })
+  const [nameSearchOpen,   setNameSearchOpen]   = useState(false)  // 수정 중 약품명 검색-교체 패널
+  const [proMode,          setProMode]          = useState(false)  // 전문가 상세 모드(약사 검수용)
   const [saving,           setSaving]           = useState(false)
   const [error,            setError]            = useState<string | null>(null)
   const [info,             setInfo]             = useState<Record<number, DrugInfo>>({})
@@ -209,12 +218,28 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   // 수정 시작 — 현재 약 값으로 폼 채우기
   function startEdit(i: number, m: Medicine) {
     setEditIdx(i)
+    setNameSearchOpen(false)
     setEdit({
       name:          m.name,
+      ingredient:    m.ingredient ?? '',
+      unit:          m.unit ?? '',
       dose_amount:   m.dose_amount?.toString()   ?? '',
       doses_per_day: m.doses_per_day?.toString() ?? '',
       days:          m.days?.toString()          ?? '',
+      drug_id:       m.drug_id  ?? null,
+      item_seq:      m.item_seq ?? null,
     })
+  }
+
+  // 약품명 검색-교체 — 정식 품목으로 바꾸고 식별자(drug_id/item_seq) 부착
+  function pickDrug(p: DrugPick) {
+    setEdit(prev => ({
+      ...prev,
+      name:     p.name,
+      drug_id:  p.drug_id,
+      item_seq: p.item_seq,
+    }))
+    setNameSearchOpen(false)
   }
 
   // 수정 저장 — result.medicines[i]에 반영(빈칸은 null)
@@ -223,11 +248,33 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     const num = (s: string) => { const n = Number(s); return s.trim() !== '' && Number.isFinite(n) ? n : null }
     const next = result.medicines.map((m, idx) =>
       idx === i
-        ? { ...m, name: edit.name.trim() || m.name, dose_amount: num(edit.dose_amount), doses_per_day: num(edit.doses_per_day), days: num(edit.days) }
+        ? {
+            ...m,
+            name:          edit.name.trim() || m.name,
+            ingredient:    edit.ingredient.trim() || null,
+            unit:          edit.unit || null,
+            dose_amount:   num(edit.dose_amount),
+            doses_per_day: num(edit.doses_per_day),
+            days:          num(edit.days),
+            drug_id:       edit.drug_id,
+            item_seq:      edit.item_seq,
+          }
         : m
     )
     setResult({ ...result, medicines: next })
     setEditIdx(null)
+  }
+
+  // 누락된 약 수동 추가 — 빈 카드 생성 후 바로 수정 모드(검색)로 진입
+  function addBlankMed() {
+    if (!result) return
+    const blank: Medicine = { name: '새 약 (검색해 추가)', ingredient: null, edi_code: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [], drug_id: null, item_seq: null, unit: null }
+    const next = [...result.medicines, blank]
+    setResult({ ...result, medicines: next })
+    const newIdx = next.length - 1
+    setEditIdx(newIdx)
+    setNameSearchOpen(true)
+    setEdit({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null })
   }
 
   // 삭제 — 목록에서 제거
@@ -262,6 +309,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         doses_per_day: m.doses_per_day,
         days:          m.days,
         meal_times:    m.meal_times ?? [],
+        drug_id:       m.drug_id ?? null,   // 검색-교체로 부착된 정식 식별자(있으면 우선 매칭)
+        item_seq:      m.item_seq ?? null,
+        unit:          m.unit ?? null,      // 단위 → dose 텍스트로 저장
       }))
       const res = await fetch('/api/medications/bulk', {
         method: 'POST',
@@ -444,14 +494,17 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                 <p className="text-xs font-bold text-yc-neutral500 uppercase tracking-widest">
                   <span className="inline-flex items-center gap-1"><Pill weight="fill" size={13} /> 추출된 약품 목록 ({result.medicines.length}종)</span>
                 </p>
-                <p className="text-xs text-yc-neutral500">눌러서 수정·삭제</p>
+                <button type="button" onClick={() => setProMode(o => !o)}
+                  className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${proMode ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'}`}>
+                  <Sliders weight="fill" size={12} /> 전문가 상세
+                </button>
               </div>
 
               <div className="space-y-3">
                 {result.medicines.map((med, i) => {
                   const di     = info[i]
                   const dosage = [
-                    med.dose_amount   ? `1회 ${med.dose_amount}` : null,
+                    med.dose_amount   ? `1회 ${med.dose_amount}${med.unit ?? ''}` : null,
                     med.doses_per_day ? `1일 ${med.doses_per_day}회` : null,
                     med.days          ? `${med.days}일분` : null,
                   ].filter(Boolean).join(' · ')
@@ -463,12 +516,28 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                         /* ── 수정 모드 ── */
                         <div className="space-y-3">
                           <div>
-                            <label className="text-xs text-yc-neutral500">약 이름</label>
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs text-yc-neutral500">약 이름</label>
+                              <button type="button" onClick={() => setNameSearchOpen(o => !o)}
+                                className="text-xs font-semibold text-yc-green700 active:opacity-70">
+                                {nameSearchOpen ? '검색 닫기' : '검색으로 교체'}
+                              </button>
+                            </div>
                             <input
                               value={edit.name}
-                              onChange={e => setEdit(p => ({ ...p, name: e.target.value }))}
+                              onChange={e => setEdit(p => ({ ...p, name: e.target.value, drug_id: null, item_seq: null }))}
                               className="w-full border border-yc-neutral300 rounded-yc-md px-3 py-2 text-base font-bold mt-0.5"
                             />
+                            {edit.drug_id || edit.item_seq ? (
+                              <p className="text-xs text-yc-green700 mt-1 flex items-center gap-1"><Check weight="bold" size={12} /> 정식 품목으로 매칭됨</p>
+                            ) : (
+                              <p className="text-xs text-yc-neutral400 mt-1">검색으로 교체하면 정확히 매칭돼요</p>
+                            )}
+                            {nameSearchOpen && (
+                              <div className="mt-2">
+                                <MedNameSearch initial={edit.name} onPick={pickDrug} onCancel={() => setNameSearchOpen(false)} />
+                              </div>
+                            )}
                           </div>
                           <div className="flex gap-2">
                             <label className="flex-1 text-xs text-yc-neutral500">1회량
@@ -476,6 +545,15 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                 inputMode="decimal" placeholder="예: 1"
                                 className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
                             </label>
+                            <label className="flex-1 text-xs text-yc-neutral500">단위
+                              <select value={edit.unit} onChange={e => setEdit(p => ({ ...p, unit: e.target.value }))}
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5 bg-white h-[34px]">
+                                <option value="">선택</option>
+                                {DOSE_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                              </select>
+                            </label>
+                          </div>
+                          <div className="flex gap-2">
                             <label className="flex-1 text-xs text-yc-neutral500">1일 횟수
                               <input value={edit.doses_per_day} onChange={e => setEdit(p => ({ ...p, doses_per_day: e.target.value }))}
                                 inputMode="numeric" placeholder="예: 3"
@@ -487,6 +565,14 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                 className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
                             </label>
                           </div>
+                          {/* 전문가 상세 모드: 성분명까지 검수 */}
+                          {proMode && (
+                            <label className="block text-xs text-yc-neutral500">성분명
+                              <input value={edit.ingredient} onChange={e => setEdit(p => ({ ...p, ingredient: e.target.value }))}
+                                placeholder="예: 아세트아미노펜"
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                            </label>
+                          )}
                           <div className="flex gap-2">
                             <button onClick={() => saveEdit(i)}
                               className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:opacity-90">저장</button>
@@ -579,6 +665,12 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   )
                 })}
               </div>
+
+              {/* 누락된 약 수동 추가 */}
+              <button type="button" onClick={addBlankMed}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 h-12 rounded-yc-md border border-dashed border-yc-green600/50 text-yc-green700 text-sm font-semibold active:bg-yc-green50 transition-colors">
+                <Plus weight="bold" size={16} /> 약 직접 추가
+              </button>
             </div>
 
             {/* 조제 약국 검색 */}

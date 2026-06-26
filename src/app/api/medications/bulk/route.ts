@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { logDurShadow } from '@/lib/dur-shadow'
 import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   const { active } = await getActiveMember(supabase, user.id)
 
   const body = await request.json() as {
-    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[] }[]
+    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[]; drug_id?: string | null; item_seq?: string | null; unit?: string | null }[]
     names?: string[]
     prescription_id:  string | null
     pharmacy_name?:   string | null
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   // 신규: 용법 포함 medicines[] / 구버전: names[] 모두 지원
   const items = Array.isArray(body.medicines) && body.medicines.length > 0
     ? body.medicines
-    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [] as string[] }))
+    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [] as string[], drug_id: null, item_seq: null, unit: null }))
 
   if (items.length === 0) {
     return NextResponse.json({ error: '약품명 없음' }, { status: 400 })
@@ -38,10 +39,31 @@ export async function POST(request: Request) {
   // drugs 매칭: EDI 보험코드 → edi_code 컬럼 ilike(콤마 다중코드 대응) → 이름 ilike 폴백
   const rows = await Promise.all(
     items.map(async (m) => {
-      const ediCode = m.edi_code?.replace(/\D/g, '') || null
       let drugRow: { id: string } | null = null
 
-      if (ediCode) {
+      // 0) 검수에서 검색-교체로 부착된 정식 식별자 최우선 (drug_id → item_seq)
+      if (m.drug_id) {
+        const { data } = await supabase.from('drugs').select('id')
+          .eq('id', m.drug_id).eq('is_canceled', false).maybeSingle()
+        drugRow = data
+      }
+      if (!drugRow && m.item_seq) {
+        const { data: bySeq } = await supabase.from('drugs').select('id')
+          .eq('item_seq', m.item_seq).maybeSingle()
+        if (bySeq) {
+          drugRow = bySeq
+        } else {
+          // 허가정보(api) 결과 → drugs에 upsert 후 UUID 확보 (addMedication과 동일 패턴)
+          const admin = createAdminClient()
+          const { data: up } = await admin.from('drugs')
+            .upsert({ item_seq: m.item_seq, item_name: m.name }, { onConflict: 'item_seq' })
+            .select('id').single()
+          drugRow = up ?? null
+        }
+      }
+
+      const ediCode = m.edi_code?.replace(/\D/g, '') || null
+      if (!drugRow && ediCode) {
         // 콤마 경계 매칭 — 9자리 코드가 더 긴 코드의 부분문자열로 오매칭되는 것 방지
         // (ediCode는 숫자만 — 콤마 포함 like 패턴은 PostgREST 규칙대로 큰따옴표로 감싼다)
         const { data } = await supabase.from('drugs').select('id')
@@ -74,6 +96,7 @@ export async function POST(request: Request) {
         supplement_id:   null,
         custom_name:     data ? null : m.name,
         ingredient:      m.ingredient    ?? null,
+        dose:            m.unit          ?? null,   // 단위(정/캡슐/포 등) — 검수에서 선택
         dose_amount:     m.dose_amount   ?? null,
         doses_per_day:   m.doses_per_day ?? null,
         total_days:      m.days          ?? null,
