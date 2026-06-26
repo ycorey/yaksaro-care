@@ -18,10 +18,13 @@ type Medicine = {
   drug_id?:      string | null   // 검색-교체 시 부착되는 정식 품목 식별자 (DB drugs.id)
   item_seq?:     string | null   // 허가정보 품목기준코드 (source='api' 교체분)
   unit?:         string | null   // 단위 (정/캡슐/포 등)
+  schedule_type?: 'daily' | 'prn' | 'weekly'  // 복용 방식
+  dow?:          number[]        // weekly 요일 (0=일~6=토)
 }
 
 // 1회 투약량 단위 — 검수 시 약사/사용자가 선택
 const DOSE_UNITS = ['정', '캡슐', '포', 'mL', '방울', '패치', '회', '단위'] as const
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 type OcrResult = {
   prescription_id: string | null
@@ -121,7 +124,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [state,            setState]            = useState<State>('idle')
   const [result,           setResult]           = useState<OcrResult | null>(null)
   const [editIdx,          setEditIdx]          = useState<number | null>(null)  // 수정 중인 약 인덱스
-  const [edit,             setEdit]             = useState<{ name: string; ingredient: string; unit: string; dose_amount: string; doses_per_day: string; days: string; drug_id: string | null; item_seq: string | null }>({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null })
+  const [edit,             setEdit]             = useState<{ name: string; ingredient: string; unit: string; dose_amount: string; doses_per_day: string; days: string; drug_id: string | null; item_seq: string | null; scheduleType: 'daily' | 'prn' | 'weekly'; dow: number[] }>({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null, scheduleType: 'daily', dow: [] })
   const [nameSearchOpen,   setNameSearchOpen]   = useState(false)  // 수정 중 약품명 검색-교체 패널
   const [proMode,          setProMode]          = useState(false)  // 전문가 상세 모드(약사 검수용)
   const [saving,           setSaving]           = useState(false)
@@ -262,6 +265,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         medicines: (data.medicines ?? []).map((m: Omit<Medicine, 'meal_times'>) => ({
           ...m,
           meal_times: defaultMealKeys(m.doses_per_day ?? 0),
+          schedule_type: 'daily' as const,
+          dow: [] as number[],
         })),
       })
       setState('done')
@@ -285,6 +290,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       days:          m.days?.toString()          ?? '',
       drug_id:       m.drug_id  ?? null,
       item_seq:      m.item_seq ?? null,
+      scheduleType:  m.schedule_type ?? 'daily',
+      dow:           m.dow ?? [],
     })
   }
 
@@ -315,6 +322,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             days:          num(edit.days),
             drug_id:       edit.drug_id,
             item_seq:      edit.item_seq,
+            schedule_type: edit.scheduleType,
+            dow:           edit.scheduleType === 'weekly' ? edit.dow : [],
           }
         : m
     )
@@ -325,13 +334,13 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   // 누락된 약 수동 추가 — 빈 카드 생성 후 바로 수정 모드(검색)로 진입
   function addBlankMed() {
     if (!result) return
-    const blank: Medicine = { name: '새 약 (검색해 추가)', ingredient: null, edi_code: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [], drug_id: null, item_seq: null, unit: null }
+    const blank: Medicine = { name: '새 약 (검색해 추가)', ingredient: null, edi_code: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [], drug_id: null, item_seq: null, unit: null, schedule_type: 'daily', dow: [] }
     const next = [...result.medicines, blank]
     setResult({ ...result, medicines: next })
     const newIdx = next.length - 1
     setEditIdx(newIdx)
     setNameSearchOpen(true)
-    setEdit({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null })
+    setEdit({ name: '', ingredient: '', unit: '', dose_amount: '', doses_per_day: '', days: '', drug_id: null, item_seq: null, scheduleType: 'daily', dow: [] })
   }
 
   // 삭제 — 목록에서 제거
@@ -369,6 +378,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         drug_id:       m.drug_id ?? null,   // 검색-교체로 부착된 정식 식별자(있으면 우선 매칭)
         item_seq:      m.item_seq ?? null,
         unit:          m.unit ?? null,      // 단위 → dose 텍스트로 저장
+        schedule_type: m.schedule_type ?? 'daily',
+        dow:           m.dow ?? [],
       }))
       const res = await fetch('/api/medications/bulk', {
         method: 'POST',
@@ -652,6 +663,38 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                 inputMode="numeric" placeholder="예: 5"
                                 className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5" />
                             </label>
+                          </div>
+                          {/* 복용 방식 — 매일/필요시/매주 */}
+                          <div className="space-y-1.5">
+                            <p className="text-xs text-yc-neutral500">복용 방식</p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {([['daily', '매일'], ['prn', '필요시'], ['weekly', '매주']] as const).map(([v, label]) => (
+                                <button key={v} type="button" onClick={() => setEdit(p => ({ ...p, scheduleType: v }))}
+                                  className={`h-11 rounded-yc-md text-sm font-semibold transition-colors ${edit.scheduleType === v ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            {edit.scheduleType === 'weekly' && (
+                              <div className="grid grid-cols-7 gap-1">
+                                {WEEKDAYS.map((w, di) => {
+                                  const on = edit.dow.includes(di)
+                                  return (
+                                    <button key={di} type="button"
+                                      onClick={() => setEdit(p => ({ ...p, dow: on ? p.dow.filter(d => d !== di) : [...p.dow, di] }))}
+                                      className={`h-10 rounded-yc-md text-sm font-semibold transition-colors ${on ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+                                      {w}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                            {edit.scheduleType === 'weekly' && edit.dow.length === 0 && (
+                              <p className="text-xs text-yc-warning">요일을 1개 이상 선택하세요</p>
+                            )}
+                            {edit.scheduleType === 'prn' && (
+                              <p className="text-xs text-yc-neutral500">필요시 — 알림·오늘 복약 제외, 약 지갑에만</p>
+                            )}
                           </div>
                           {/* 전문가 상세 모드: 성분명까지 검수 */}
                           {proMode && (

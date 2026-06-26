@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const { active } = await getActiveMember(supabase, user.id)
 
   const body = await request.json() as {
-    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[]; drug_id?: string | null; item_seq?: string | null; unit?: string | null }[]
+    medicines?: { name: string; edi_code?: string | null; ingredient?: string | null; dose_amount?: number | null; doses_per_day?: number | null; days?: number | null; meal_times?: string[]; drug_id?: string | null; item_seq?: string | null; unit?: string | null; schedule_type?: string | null; dow?: number[] | null }[]
     names?: string[]
     prescription_id:  string | null
     pharmacy_name?:   string | null
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   // 신규: 용법 포함 medicines[] / 구버전: names[] 모두 지원
   const items = Array.isArray(body.medicines) && body.medicines.length > 0
     ? body.medicines
-    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [] as string[], drug_id: null, item_seq: null, unit: null }))
+    : (body.names ?? []).map(name => ({ name, edi_code: null, ingredient: null, dose_amount: null, doses_per_day: null, days: null, meal_times: [] as string[], drug_id: null, item_seq: null, unit: null, schedule_type: null, dow: null }))
 
   if (items.length === 0) {
     return NextResponse.json({ error: '약품명 없음' }, { status: 400 })
@@ -89,6 +89,11 @@ export async function POST(request: Request) {
       }
       const data = drugRow
 
+      // 복용 방식 — 매주인데 요일 비면 약이 어디에도 안 떠 daily 폴백(폼 가드와 동일 방어)
+      let schedType = (m.schedule_type === 'prn' || m.schedule_type === 'weekly') ? m.schedule_type : 'daily'
+      const validDow = (m.dow ?? []).filter(n => Number.isInteger(n) && n >= 0 && n <= 6)
+      if (schedType === 'weekly' && validDow.length === 0) schedType = 'daily'
+
       return {
         user_id:         user.id,
         member_id:       active.id,
@@ -101,6 +106,8 @@ export async function POST(request: Request) {
         doses_per_day:   m.doses_per_day ?? null,
         total_days:      m.days          ?? null,
         meal_times:      m.meal_times    ?? [],
+        schedule_type:   schedType,
+        dow:             schedType === 'weekly' ? validDow : null,
         started_at:      today,
         source:          'ocr' as const,
         prescription_id: prescription_id ?? null,
