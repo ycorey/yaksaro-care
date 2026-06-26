@@ -35,12 +35,16 @@ export default async function TodayPage() {
       .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
-      .select('meal_times, doses_per_day')
+      .select('meal_times, doses_per_day, custom_name, drug:drugs(item_name), supplement:supplements(product_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
       .is('ended_at', null),
   ])
+
+  // 조인 임베드는 1:1이라도 타입상 배열일 수 있어 단건 추출 헬퍼로 정규화
+  const one = <T,>(v: T | T[] | null | undefined): T | null =>
+    Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
 
   // 슬롯별 현재 체크 상태
   const checked: Record<Meal, boolean> = { morning: false, afternoon: false, evening: false, bedtime: false }
@@ -61,14 +65,16 @@ export default async function TodayPage() {
   // meal_times 기반 슬롯별 약 수 산출 — 미지정 약은 복용횟수 기반 기본 슬롯에 폴백
   // (어떤 약도 화면에서 사라지지 않도록, 모든 약이 최소 1개 슬롯에 배정된다)
   const slotCounts: Record<Meal, number> = { morning: 0, afternoon: 0, evening: 0, bedtime: 0 }
+  const slotNames: Record<Meal, string[]> = { morning: [], afternoon: [], evening: [], bedtime: [] }
   const medTotal = medsData?.length ?? 0
 
   for (const med of medsData ?? []) {
+    const name = one(med.drug)?.item_name ?? one(med.supplement)?.product_name ?? med.custom_name ?? '약'
     const times = med.meal_times && med.meal_times.length > 0
       ? med.meal_times
       : defaultMealKeys(med.doses_per_day ?? 0)
     for (const mt of times) {
-      if (mt in slotCounts) slotCounts[mt as Meal]++
+      if (mt in slotCounts) { slotCounts[mt as Meal]++; slotNames[mt as Meal].push(name) }
     }
   }
 
@@ -79,6 +85,7 @@ export default async function TodayPage() {
       label:     s.label,
       time:      s.time,
       medCount:  slotCounts[s.meal],
+      names:     slotNames[s.meal],
       checked:   checked[s.meal],
       checkedAt: checked[s.meal] ? checkedAt[s.meal] : null,
     }))

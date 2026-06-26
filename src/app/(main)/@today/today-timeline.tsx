@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
-import { Pill, HandsClapping, Check } from '@phosphor-icons/react'
+import { Pill, HandsClapping, Check, CaretDown } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 export type { Meal } from '@/lib/meal-slots'
@@ -17,6 +17,7 @@ export interface SlotState {
   label: string
   time: string        // 'HH:MM'
   medCount: number
+  names: string[]     // 이 끼니에 먹는 약 이름들 (펼쳐보기)
   checked: boolean
   checkedAt: string | null  // ISO timestamp of last check, or null
 }
@@ -68,6 +69,15 @@ export default function TodayTimeline({
   const now = useNowMinute()
   const [justChecked, setJustChecked] = useState<Meal | null>(null)  // 방금 체크 — pop/flash용
   const [celebrate, setCelebrate] = useState(false)                  // 전체완료 축하 오버레이
+  const [expanded, setExpanded] = useState<Set<Meal>>(new Set())     // 끼니별 약 이름 펼침
+
+  function toggleExpand(meal: Meal) {
+    setExpanded(prev => {
+      const n = new Set(prev)
+      if (n.has(meal)) n.delete(meal); else n.add(meal)
+      return n
+    })
+  }
 
   const cur = now ? nowMinutes(now) : -1
 
@@ -135,6 +145,32 @@ export default function TodayTimeline({
     persist(meal, false)
   }
 
+  // 오늘 미체크 끼니를 한 번에 전부 복용 처리 (몰아서 챙기는 경우)
+  async function checkAll() {
+    const pending = slots.filter(s => !s.checked).map(s => s.meal)
+    if (pending.length === 0) return
+    haptic()
+    const nowIso = new Date().toISOString()
+    setSlots(prev => prev.map(s => s.checked ? s : { ...s, checked: true, checkedAt: nowIso }))
+    setCelebrate(true)
+    celebrateAllDone()
+    window.setTimeout(() => setCelebrate(false), 2800)
+    try {
+      await Promise.all(pending.map(meal =>
+        fetch('/api/meal-checks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meal_time: meal, is_checked: true }),
+        })
+      ))
+      router.refresh()  // 다른 탭(홈·캘린더) 동기화
+    } catch {
+      toast.error('복약 저장에 실패했어요. 다시 시도해 주세요.')
+    }
+  }
+
+  const pendingCount = slots.filter(s => !s.checked).length
+
   return (
     <div className="space-y-6">
       <AppHeader />
@@ -168,7 +204,18 @@ export default function TodayTimeline({
           <p className="text-sm text-yc-neutral500">처방전을 등록하면 오늘 복약을 챙겨드려요</p>
         </div>
       ) : (
-        <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
+        <div className="space-y-3">
+          {/* 전체 한 번에 복용 — 미체크 끼니 2개 이상일 때 (몰아서 챙기기) */}
+          {pendingCount >= 2 && (
+            <button
+              type="button"
+              onClick={checkAll}
+              className="w-full min-h-[52px] rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Check weight="bold" size={18} /> 오늘 약 전부 한 번에 복용 ({pendingCount}끼니)
+            </button>
+          )}
+          <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
           {slots.map((s, i) => {
             const isNext = nextMeal === s.meal && !s.checked
             return (
@@ -198,7 +245,23 @@ export default function TodayTimeline({
 
                 {/* 오른쪽 본문 */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-yc-neutral900">약 {s.medCount}개</p>
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(s.meal)}
+                    className="flex items-center gap-1 text-base font-semibold text-yc-neutral900 active:opacity-70"
+                  >
+                    약 {s.medCount}개
+                    <CaretDown weight="bold" size={14} className={`text-yc-neutral400 transition-transform ${expanded.has(s.meal) ? 'rotate-180' : ''}`} />
+                  </button>
+                  {expanded.has(s.meal) && s.names.length > 0 && (
+                    <ul className="mt-1.5 space-y-1">
+                      {s.names.map((n, ni) => (
+                        <li key={ni} className="text-sm text-yc-neutral600 flex items-center gap-1.5 break-keep">
+                          <Pill weight="fill" size={11} className="text-yc-blue500/60 flex-shrink-0" /> {n}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   {s.checked ? (
                     <button
@@ -226,6 +289,7 @@ export default function TodayTimeline({
               </div>
             )
           })}
+          </div>
         </div>
       )}
 
