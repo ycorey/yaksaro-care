@@ -54,6 +54,30 @@ function compressImage(file: Blob, maxDim: number, quality: number): Promise<Blo
   })
 }
 
+// Canvas로 이미지 회전 — 옆으로/거꾸로 찍힌 처방전을 인식 전에 바로잡기
+function rotateImage(file: Blob, deg: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new window.Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const swap = deg % 180 !== 0
+      const w = img.width, h = img.height
+      const canvas = document.createElement('canvas')
+      canvas.width  = swap ? h : w
+      canvas.height = swap ? w : h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas')); return }
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate((deg * Math.PI) / 180)
+      ctx.drawImage(img, -w / 2, -h / 2)
+      canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/jpeg', 0.92)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img load')) }
+    img.src = url
+  })
+}
+
 function postOcr(f: Blob): Promise<Response> {
   const fd = new FormData()
   fd.append('image', new File([f], 'prescription.jpg', { type: 'image/jpeg' }))
@@ -72,7 +96,7 @@ type DrugInfo = {
   efcy?:      string | null
 }
 
-type State = 'idle' | 'uploading' | 'done'
+type State = 'idle' | 'confirm' | 'uploading' | 'done'
 
 // OCR 진행 단계(체감용) — 서버가 단계를 스트리밍하지 않아 시간 기반으로 진행감을 보여준다.
 const OCR_STAGES = ['사진을 준비하고 있어요', '처방전 글자를 읽고 있어요', '약 정보를 정리하고 있어요']
@@ -109,6 +133,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [pharmSearching,   setPharmSearching]   = useState(false)
   const [pharmDropOpen,    setPharmDropOpen]    = useState(false)
   const [stage,            setStage]            = useState(0)   // OCR 진행 단계(체감용)
+  const [pendingFile,      setPendingFile]      = useState<File | null>(null)  // 확인 단계의 원본(회전 반영)
+  const [rotating,         setRotating]         = useState(false)
   const fileRef    = useRef<HTMLInputElement>(null)
   const cameraRef  = useRef<HTMLInputElement>(null)
 
@@ -166,18 +192,49 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     setPharmDropOpen(false)
   }
 
-  // 파일 선택 즉시 압축 → OCR 추출까지 자동 진행
-  const onFile = async (f: File) => {
+  // 파일 선택 → 곧바로 인식하지 않고 "이 사진으로 할까요?" 확인 단계로 (자동 OCR 방지)
+  const onFile = (f: File) => {
     setResult(null)
     setError(null)
     setEditIdx(null)
     setPharmacy(emptyPharmacy(regularPharmacy?.name))
-    let blob: Blob = f
-    try { blob = await compressImage(f, 1600, 0.8) } catch {}
+    setPendingFile(f)
+    setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(f) })
+    setState('confirm')
+  }
+
+  // 확인 단계에서 "인식 시작" — 압축 후 OCR 실행 (회전이 반영된 pendingFile 사용)
+  const startRecognition = async () => {
+    if (!pendingFile) return
+    let blob: Blob = pendingFile
+    try { blob = await compressImage(pendingFile, 1600, 0.8) } catch {}
     const file = new File([blob], 'prescription.jpg', { type: 'image/jpeg' })
     setFile(file)
-    setPreview(URL.createObjectURL(file))
-    runOcr(file, f)
+    runOcr(file, pendingFile)
+  }
+
+  // 확인 단계 회전 — 옆으로 찍힌 처방전 바로잡기
+  const rotatePending = async () => {
+    if (!pendingFile || rotating) return
+    setRotating(true)
+    try {
+      const rotated = await rotateImage(pendingFile, 90)
+      const rf = new File([rotated], 'prescription.jpg', { type: 'image/jpeg' })
+      setPendingFile(rf)
+      setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(rf) })
+    } catch {
+      /* 회전 실패는 무시 — 원본 그대로 진행 가능 */
+    } finally {
+      setRotating(false)
+    }
+  }
+
+  // 확인 단계 취소 → 처음(촬영 선택)으로
+  const cancelConfirm = () => {
+    setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    setPendingFile(null)
+    setFile(null)
+    setState('idle')
   }
 
   // file: 1차 압축본, original: 413 시 더 강하게 재압축할 원본
@@ -392,6 +449,37 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           >
             <Images size={20} /> 사진 선택
           </button>
+        </div>
+      )}
+
+      {/* ── 촬영 후 확인 단계 (인식 전 미리보기) ── */}
+      {state === 'confirm' && preview && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+          <div className="sticky top-0 bg-black/80 px-5 py-3.5 text-center">
+            <p className="text-white font-display text-lg">이 사진으로 인식할까요?</p>
+            <p className="text-white/60 text-xs mt-0.5">글자가 흐리거나 잘렸으면 다시 찍어 주세요</p>
+          </div>
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt="처방전 미리보기" className="max-w-full max-h-full object-contain rounded-yc-md" />
+          </div>
+          <div className="flex justify-center pb-3">
+            <button type="button" onClick={rotatePending} disabled={rotating}
+              className="w-14 h-14 rounded-full bg-yc-green600 text-white flex items-center justify-center active:bg-yc-green700 disabled:opacity-50 shadow-[var(--yc-shadow-lg)]"
+              aria-label="사진 회전">
+              <ArrowsClockwise weight="bold" size={24} className={rotating ? 'animate-spin' : ''} />
+            </button>
+          </div>
+          <div className="bg-white px-5 pt-4 flex gap-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+            <button type="button" onClick={cancelConfirm}
+              className="flex-1 h-14 rounded-yc-lg border border-yc-neutral300 bg-white text-yc-neutral700 text-base font-semibold active:bg-yc-neutral100 transition-colors">
+              취소
+            </button>
+            <button type="button" onClick={startRecognition}
+              className="flex-[2] h-14 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center gap-2">
+              <Camera weight="fill" size={18} /> 인식 시작
+            </button>
+          </div>
         </div>
       )}
 
