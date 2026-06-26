@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Wallet, Heart, PaperPlaneTilt, GearSix, Check, Storefront, Phone, type Icon } from '@phosphor-icons/react'
+import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, Storefront, Phone, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import { useNowMinute } from '@/lib/use-now'
@@ -43,6 +43,7 @@ const GRID_ITEMS: {
 }[] = [
   { href: '/wallet',   Icon: Wallet,         iconColor: 'text-yc-green600',   iconBg: 'bg-yc-green50',    title: '내 약지갑',        statKey: 'med' },
   { href: '/today',    Icon: Heart,          iconColor: 'text-yc-green600',   iconBg: 'bg-yc-green50',    title: '오늘 복약',        statKey: 'today', filled: true },
+  { href: '/calendar', Icon: CalendarBlank,  iconColor: 'text-yc-neutral500', iconBg: 'bg-yc-neutral100', title: '복약 캘린더',      statKey: null },
   { href: '/share',    Icon: PaperPlaneTilt, iconColor: 'text-yc-neutral500', iconBg: 'bg-yc-neutral100', title: '의사·약사 보여주기', statKey: null },
 ]
 

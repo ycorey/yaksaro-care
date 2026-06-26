@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
  *  · 각 패널은 세로 독립 스크롤(스크롤 위치 보존). 가로는 우리가, 세로는 브라우저가 처리(touch-action: pan-y).
  *  · displayIndex로 트랙 위치를 관리 → 드래그/스냅/탭클릭(URL변화)이 매끄럽게 합쳐진다.
  */
-const TABS = ['/home', '/wallet', '/today', '/share'] as const
+const TABS = ['/home', '/wallet', '/today', '/calendar', '/share'] as const
 
 function indexOf(pathname: string): number {
   const i = TABS.findIndex(t => pathname === t || pathname.startsWith(t + '/'))
@@ -20,14 +20,15 @@ type Props = {
   home: ReactNode
   wallet: ReactNode
   today: ReactNode
+  calendar: ReactNode
   share: ReactNode
 }
 
-export default function TabPager({ home, wallet, today, share }: Props) {
+export default function TabPager({ home, wallet, today, calendar, share }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const activeIndex = indexOf(pathname)
-  const panels = [home, wallet, today, share]
+  const panels = [home, wallet, today, calendar, share]
 
   const [displayIndex, setDisplayIndex] = useState(activeIndex)
   const [dragX, setDragX] = useState(0)
