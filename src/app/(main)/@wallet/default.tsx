@@ -17,6 +17,7 @@ import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
+import { weekdayLabels } from '@/lib/med-schedule'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
@@ -31,7 +32,7 @@ export default async function WalletPage() {
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, schedule_type, dow, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -67,6 +68,13 @@ export default async function WalletPage() {
   const rxRaws   = activeMeds.filter(m => !!m.prescription_id && !m.supplement)
   const otcRaws  = activeMeds.filter(m => !m.prescription_id  && !m.supplement)
 
+  // 복용 방식 배지 라벨 (필요시 / 매주 월·목). daily면 null.
+  function scheduleLabelOf(type: string | null | undefined, dow: number[] | null | undefined): string | null {
+    if (type === 'prn') return '필요시'
+    if (type === 'weekly') { const w = weekdayLabels(dow); return w ? `매주 ${w}` : '매주' }
+    return null
+  }
+
   function toCard(med: typeof activeMeds[number]): MedCard {
     const drug = med.drug
     const supp = med.supplement
@@ -83,6 +91,7 @@ export default async function WalletPage() {
       dosesPerDay:           med.doses_per_day ?? null,
       totalDays:             med.total_days ?? null,
       mealTimes:             med.meal_times ?? [],
+      scheduleLabel:         scheduleLabelOf(med.schedule_type, med.dow),
       hasInteractionWarning: !!(med.has_interaction_warning),
     }
   }

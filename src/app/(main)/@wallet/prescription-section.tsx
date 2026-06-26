@@ -23,6 +23,7 @@ export type MedCard = {
   dosesPerDay:           number | null
   totalDays:             number | null
   mealTimes:             string[]
+  scheduleLabel:         string | null
   hasInteractionWarning: boolean
 }
 
@@ -286,6 +287,7 @@ function PrescriptionCard({
                   isSupplement={med.isSupplement} isCustom={med.isCustom}
                   initialImage={med.imageUrl} itemSeq={med.itemSeq}
                   doseAmount={med.doseAmount} dosesPerDay={med.dosesPerDay} totalDays={med.totalDays}
+                  scheduleLabel={med.scheduleLabel}
                 />
               </li>
             ))}

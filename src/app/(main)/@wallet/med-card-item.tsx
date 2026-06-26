@@ -39,6 +39,7 @@ export type MedCardItemProps = {
   doseAmount:    number | null
   dosesPerDay:   number | null
   totalDays:     number | null
+  scheduleLabel?: string | null  // '필요시' · '매주 월·목' (daily면 없음)
 }
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
@@ -306,7 +307,14 @@ export default function MedCardItem(p: MedCardItemProps) {
               {p.ingredient && <span className="text-base font-normal text-yc-neutral500 ml-1">({p.ingredient})</span>}
             </p>
             {p.sub && <p className="text-sm text-yc-neutral500 mt-0.5">{p.sub}</p>}
-            {dosage && <p className="text-sm text-yc-neutral600 mt-0.5 font-semibold">{dosage}</p>}
+            {(dosage || p.scheduleLabel) && (
+              <p className="text-sm text-yc-neutral600 mt-0.5 font-semibold flex items-center gap-1.5 flex-wrap">
+                {dosage && <span>{dosage}</span>}
+                {p.scheduleLabel && (
+                  <span className="text-xs font-semibold text-yc-green700 bg-yc-green50 rounded-full px-2 py-0.5">{p.scheduleLabel}</span>
+                )}
+              </p>
+            )}
 
             {/* 분류 배지 */}
             {info?.found && (info.category || info.classType) && (

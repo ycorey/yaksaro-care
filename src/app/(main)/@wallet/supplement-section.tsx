@@ -101,6 +101,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
                     doseAmount={med.doseAmount}
                     dosesPerDay={med.dosesPerDay}
                     totalDays={med.totalDays}
+                    scheduleLabel={med.scheduleLabel}
                   />
                 </li>
               ))}
