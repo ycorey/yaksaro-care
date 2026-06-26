@@ -55,6 +55,9 @@ function ScheduleField({ type, dow, onType, onDow }: {
           })}
         </div>
       )}
+      {type === 'weekly' && dow.length === 0 && (
+        <p className="text-xs text-yc-warning">복용 요일을 1개 이상 선택하세요. (선택 안 하면 오늘 복약·알림에 표시되지 않아요)</p>
+      )}
       {type === 'prn' && (
         <p className="text-xs text-yc-neutral500">필요할 때만 복용 — 알림·오늘 복약에는 표시되지 않고 약 지갑에만 담겨요.</p>
       )}
@@ -269,7 +272,8 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
     }
   }
 
-  const canSubmit = !!selected
+  // 매주인데 요일 미선택이면 약이 어디에도 안 떠 → 저장 차단
+  const canSubmit = !!selected && !(scheduleType === 'weekly' && dow.length === 0)
 
   async function handleSubmit(formData: FormData) {
     setSaving(true)

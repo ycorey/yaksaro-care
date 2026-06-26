@@ -25,10 +25,12 @@ export async function addMedication(formData: FormData) {
   const frequency    = (formData.get('frequency')      as string | null) || null
   const startedAt    = (formData.get('started_at')     as string | null) || null
   const mealTimes    = formData.getAll('meal_times') as string[]
-  const scheduleType = ((formData.get('schedule_type') as string | null) || 'daily') as 'daily' | 'prn' | 'weekly'
-  const dow = scheduleType === 'weekly'
+  let scheduleType = ((formData.get('schedule_type') as string | null) || 'daily') as 'daily' | 'prn' | 'weekly'
+  let dow: number[] | null = scheduleType === 'weekly'
     ? (formData.getAll('dow') as string[]).map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6)
     : null
+  // 방어: 매주인데 요일이 비면 약이 어디에도 안 뜨므로 daily로 폴백
+  if (scheduleType === 'weekly' && (!dow || dow.length === 0)) { scheduleType = 'daily'; dow = null }
 
   // API 결과 약품(item_seq만 있고 drug_id 없음) → drugs 테이블에 upsert 후 UUID 획득
   let resolvedDrugId = drugId

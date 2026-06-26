@@ -57,7 +57,8 @@ function StepHeader({ title, member }: { title: string; member?: Member }) {
 export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabType; member?: Member }) {
   const [phase, setPhase]       = useState<Phase>('capture')
   const [query, setQuery]       = useState('')   // OCR로 뽑은 제품명(검색창 prefill)
-  const fileRef = useRef<HTMLInputElement | null>(null)
+  const cameraRef = useRef<HTMLInputElement | null>(null)  // 촬영(capture=environment)
+  const albumRef  = useRef<HTMLInputElement | null>(null)  // 앨범(capture 없음 → 갤러리)
 
   async function handleFile(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -109,7 +110,9 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     <div className="space-y-6 anim-scale-in">
       <StepHeader title="박스 사진으로 찾기" member={member} />
 
-      <input ref={fileRef} type="file" accept="image/*" capture="environment"
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment"
+        onChange={handleFile} className="hidden" />
+      <input ref={albumRef} type="file" accept="image/*"
         onChange={handleFile} className="hidden" />
 
       <div className="flex flex-col justify-center gap-4 min-h-[45vh]">
@@ -124,7 +127,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
           </div>
         ) : (
           <>
-            <button type="button" onClick={() => fileRef.current?.click()}
+            <button type="button" onClick={() => cameraRef.current?.click()}
               className="flex items-center gap-4 bg-yc-green600 rounded-yc-xl px-5 py-5 active:bg-yc-green700 transition-colors">
               <div className="w-12 h-12 rounded-yc-lg bg-white/15 flex items-center justify-center flex-shrink-0">
                 <Camera size={24} weight="fill" className="text-white" />
@@ -135,7 +138,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
               </div>
             </button>
 
-            <button type="button" onClick={() => fileRef.current?.click()}
+            <button type="button" onClick={() => albumRef.current?.click()}
               className="flex items-center gap-4 bg-white rounded-yc-xl border border-yc-neutral100 px-5 py-5 shadow-[var(--yc-shadow-sm)] active:bg-yc-neutral50 transition-colors">
               <div className="w-12 h-12 rounded-yc-lg bg-yc-green50 flex items-center justify-center flex-shrink-0">
                 <Images size={24} weight="fill" className="text-yc-green700" />
