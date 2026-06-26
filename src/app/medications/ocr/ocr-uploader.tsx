@@ -631,11 +631,11 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             <label className="flex-1 text-xs text-yc-neutral500">1회량
                               <input value={edit.dose_amount} onChange={e => setEdit(p => ({ ...p, dose_amount: e.target.value }))}
                                 inputMode="decimal" placeholder="예: 1"
-                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5" />
                             </label>
                             <label className="flex-1 text-xs text-yc-neutral500">단위
                               <select value={edit.unit} onChange={e => setEdit(p => ({ ...p, unit: e.target.value }))}
-                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5 bg-white h-[34px]">
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5 bg-white h-12">
                                 <option value="">선택</option>
                                 {DOSE_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                               </select>
@@ -645,12 +645,12 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             <label className="flex-1 text-xs text-yc-neutral500">1일 횟수
                               <input value={edit.doses_per_day} onChange={e => setEdit(p => ({ ...p, doses_per_day: e.target.value }))}
                                 inputMode="numeric" placeholder="예: 3"
-                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5" />
                             </label>
                             <label className="flex-1 text-xs text-yc-neutral500">총 일수
                               <input value={edit.days} onChange={e => setEdit(p => ({ ...p, days: e.target.value }))}
                                 inputMode="numeric" placeholder="예: 5"
-                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5" />
                             </label>
                           </div>
                           {/* 전문가 상세 모드: 성분명까지 검수 */}
@@ -658,7 +658,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             <label className="block text-xs text-yc-neutral500">성분명
                               <input value={edit.ingredient} onChange={e => setEdit(p => ({ ...p, ingredient: e.target.value }))}
                                 placeholder="예: 아세트아미노펜"
-                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-1.5 text-sm mt-0.5" />
+                                className="w-full border border-yc-neutral300 rounded-yc-md px-2 py-3 text-sm mt-0.5" />
                             </label>
                           )}
                           <div className="flex gap-2">
@@ -743,8 +743,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             </div>
                             {/* 수정·삭제 */}
                             <div className="flex gap-3 mt-2.5">
-                              <button onClick={() => startEdit(i, med)} className="text-sm text-yc-green700 font-medium active:opacity-70">수정</button>
-                              <button onClick={() => deleteMed(i)} className="text-sm text-yc-error font-medium active:opacity-70">삭제</button>
+                              <button onClick={() => startEdit(i, med)} className="text-sm text-yc-green700 font-medium active:opacity-70 min-h-[44px] px-3 rounded-yc-md inline-flex items-center">수정</button>
+                              <button onClick={() => deleteMed(i)} className="text-sm text-yc-error font-medium active:opacity-70 min-h-[44px] px-3 rounded-yc-md inline-flex items-center">삭제</button>
                             </div>
                           </div>
                         </div>

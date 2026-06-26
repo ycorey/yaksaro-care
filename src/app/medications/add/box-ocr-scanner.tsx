@@ -9,7 +9,7 @@ import MemberContextBadge from '@/components/member-context-badge'
 import type { Member } from '@/lib/member'
 
 type TabType = 'otc' | 'supplement'
-type Phase = 'capture' | 'reading' | 'form'
+type Phase = 'capture' | 'confirm' | 'reading' | 'form'
 
 // Canvas 다운스케일+JPEG 압축 — 전송량/비용 절감 + 413 방지 (ocr-uploader와 동일 패턴)
 function compressImage(file: Blob, maxDim: number, quality: number): Promise<Blob> {
@@ -57,21 +57,31 @@ function StepHeader({ title, member }: { title: string; member?: Member }) {
 export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabType; member?: Member }) {
   const [phase, setPhase]       = useState<Phase>('capture')
   const [query, setQuery]       = useState('')   // OCR로 뽑은 제품명(검색창 prefill)
+  const [preview, setPreview]   = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const cameraRef = useRef<HTMLInputElement | null>(null)  // 촬영(capture=environment)
   const albumRef  = useRef<HTMLInputElement | null>(null)  // 앨범(capture 없음 → 갤러리)
 
-  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
+  // 파일 선택 → 곧바로 인식하지 않고 "이 사진으로 찾을까요?" 확인 단계로 (처방전 OCR과 일관)
+  function handleFile(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     e.target.value = ''  // 같은 파일 재선택 허용
     if (!f) return
     if (!f.type.startsWith('image/')) { toast.error('이미지 파일을 선택해 주세요.'); return }
+    setPendingFile(f)
+    setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(f) })
+    setPhase('confirm')
+  }
 
+  // 확인 단계에서 "이 사진으로 찾기" → 압축 후 제품명 OCR
+  async function runRecognition() {
+    if (!pendingFile) return
     setPhase('reading')
     try {
-      let blob: Blob = await compressImage(f, 1600, 0.8)
+      let blob: Blob = await compressImage(pendingFile, 1600, 0.8)
       let res = await postProduct(blob)
       if (res.status === 413) {                       // 너무 크면 더 줄여 재시도
-        blob = await compressImage(f, 1100, 0.6)
+        blob = await compressImage(pendingFile, 1100, 0.6)
         res = await postProduct(blob)
       }
       const data  = await res.json().catch(() => ({}))
@@ -90,6 +100,12 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     }
   }
 
+  function cancelConfirm() {
+    setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    setPendingFile(null)
+    setPhase('capture')
+  }
+
   // ── 폼 단계: OCR로 뽑은 이름을 검색창에 prefill → 사용자가 정확한 품목 선택 ──
   if (phase === 'form') {
     return (
@@ -101,6 +117,30 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
           </p>
         )}
         <AddForm initialTab={initialTab} initialQuery={query || undefined} />
+      </div>
+    )
+  }
+
+  // ── 확인 단계: 찍은/고른 사진을 인식 전에 검토 (처방전 OCR과 일관) ──
+  if (phase === 'confirm' && preview) {
+    return (
+      <div className="space-y-5 anim-scale-in">
+        <StepHeader title="박스 사진으로 찾기" member={member} />
+        <p className="text-sm text-yc-neutral600 break-keep">제품 이름이 잘 보이나요? 흐리거나 잘렸으면 다시 찍어 주세요.</p>
+        <div className="rounded-yc-lg overflow-hidden bg-yc-neutral100 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="박스 미리보기" className="max-h-[55vh] w-full object-contain" />
+        </div>
+        <div className="flex gap-3">
+          <button type="button" onClick={cancelConfirm}
+            className="flex-1 h-14 rounded-yc-lg border border-yc-neutral300 bg-white text-yc-neutral700 text-base font-semibold active:bg-yc-neutral100 transition-colors">
+            다시 선택
+          </button>
+          <button type="button" onClick={runRecognition}
+            className="flex-[2] h-14 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center gap-2">
+            <Camera weight="fill" size={18} /> 이 사진으로 찾기
+          </button>
+        </div>
       </div>
     )
   }
