@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
 import BarcodeAddFlow from './barcode-scanner'
+import BoxOcrAddFlow from './box-ocr-scanner'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
 import { BackButton } from '../back-button'
@@ -76,6 +77,9 @@ function PrescriptionMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/ocr" iconBg="bg-yc-green600"
           icon={<AddIcon name="camera" className="text-white" />}
           title="처방전 스캔" desc="처방전을 사진으로 찍어 읽어요" badge="추천" />
+        <MethodCard href="/medications/add?method=photo&tab=otc" iconBg="bg-yc-green50"
+          icon={<AddIcon name="camera" className="text-yc-green700" />}
+          title="박스 사진으로 찾기" desc="일반약 박스를 찍어 이름으로 찾아요" />
         <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="약 이름·용법을 직접 적어요" />
@@ -103,6 +107,9 @@ function SupplementMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/ocr" iconBg="bg-yc-green50"
           icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="설명서 · 라벨 촬영" desc="성분·섭취방법을 읽어와요" />
+        <MethodCard href="/medications/add?method=photo&tab=supplement" iconBg="bg-yc-green50"
+          icon={<AddIcon name="camera" className="text-yc-green700" />}
+          title="박스 사진으로 찾기" desc="영양제 박스를 찍어 이름으로 찾아요" />
         <MethodCard href="/medications/add?method=barcode&tab=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="barcode" className="text-yc-green700" />}
           title="바코드 스캔" desc="제품 박스 바코드를 찍어 담아요" />
@@ -155,6 +162,11 @@ export default async function AddMedicationPage({
   // Screen 2c: 바코드 스캔 (일반약/영양제 — 진입 카테고리를 폴백 탭으로 사용)
   if (method === 'barcode') {
     return <BarcodeAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
+  }
+
+  // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (바코드 미커버 OTC·건기식 대응)
+  if (method === 'photo') {
+    return <BoxOcrAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
   }
 
   // Screen 2a: 처방약·일반약 방법 선택

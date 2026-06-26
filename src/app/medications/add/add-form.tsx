@@ -84,7 +84,7 @@ function Stepper({
 
 // ── 약품 검색 드롭다운 ────────────────────────────────────────────────
 function DrugSearch({
-  mode, otcOnly = false, selected, onSelect, onClear, onCustom,
+  mode, otcOnly = false, selected, onSelect, onClear, onCustom, initialQuery = '',
 }: {
   mode: 'drug' | 'supplement'
   otcOnly?: boolean
@@ -92,8 +92,9 @@ function DrugSearch({
   onSelect: (hit: DrugHit | SuppHit, kind: 'drug' | 'supplement') => void
   onClear: () => void
   onCustom?: (name: string) => void
+  initialQuery?: string
 }) {
-  const [query, setQuery]     = useState('')
+  const [query, setQuery]     = useState(initialQuery)
   const [results, setResults] = useState<{ drugs: DrugHit[]; supplements: SuppHit[] } | null>(null)
   const [open, setOpen]       = useState(false)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -206,7 +207,7 @@ function DrugSearch({
 }
 
 // ── 메인 폼 ──────────────────────────────────────────────────────────
-export default function AddForm({ initialTab, initialSelected = null }: { initialTab: TabType; initialSelected?: Selected | null }) {
+export default function AddForm({ initialTab, initialSelected = null, initialQuery = '' }: { initialTab: TabType; initialSelected?: Selected | null; initialQuery?: string }) {
   const tab = initialTab  // 진입 탭에 고정 (변경 없음)
   const [selected, setSelected] = useState<Selected | null>(initialSelected)
   const [saving, setSaving]     = useState(false)
@@ -354,7 +355,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
         <div className="space-y-5">
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">약 이름 *</p>
-            <DrugSearch mode="drug" otcOnly selected={selected}
+            <DrugSearch mode="drug" otcOnly selected={selected} initialQuery={initialQuery}
               onSelect={handleDrugSelect} onClear={clearSelected} onCustom={n => setSelected({ type: 'custom', name: n })} />
           </div>
 
@@ -385,7 +386,7 @@ export default function AddForm({ initialTab, initialSelected = null }: { initia
         <div className="space-y-5">
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">영양제 이름 *</p>
-            <DrugSearch mode="supplement" selected={selected}
+            <DrugSearch mode="supplement" selected={selected} initialQuery={initialQuery}
               onSelect={handleDrugSelect} onClear={clearSelected} />
           </div>
 
