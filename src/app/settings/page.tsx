@@ -2,8 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SettingsClient from './settings-client'
-import PharmacyRequest, { type PharmacyRequestRow } from './pharmacy-request'
-import { getActiveMember } from '@/lib/active-member'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -17,33 +15,9 @@ export default async function SettingsPage() {
     .single()
 
   // QR(B2B) 연결 약국명 우선, 없으면 검색 등록한 자유텍스트
+  // (단골약국 '요청 보내기' 채널은 홈 단골약국 카드 → /medications/pharmacy-request 로 이동됨)
   const regularPharmacyName = profile?.regular_pharmacy?.name ?? profile?.regular_pharmacy_name ?? null
   const hasB2BPharmacy = !!profile?.regular_pharmacy_id
-
-  // B2B 단골약국이 연결된 경우에만 비임상 요청 채널 노출 + 보낸 요청·약 목록(첨부용) 로드
-  let pharmacyRequests: PharmacyRequestRow[] = []
-  let walletMeds: { id: string; name: string }[] = []
-  if (hasB2BPharmacy) {
-    const { active } = await getActiveMember(supabase, user.id)
-    const [{ data: reqs }, { data: meds }] = await Promise.all([
-      supabase.from('pharmacy_requests')
-        .select('id, type, note, status, created_at, reply_text, replied_at, patient_ack_at')
-        .eq('patient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase.from('user_medications')
-        .select('id, custom_name, drug:drugs(item_name), supplement:supplements(product_name)')
-        .eq('user_id', user.id).eq('member_id', active.id)
-        .is('deleted_at', null).is('ended_at', null),
-    ])
-    pharmacyRequests = (reqs ?? []) as PharmacyRequestRow[]
-    walletMeds = (meds ?? []).map(m => ({
-      id: m.id,
-      name: (m.drug as { item_name?: string } | null)?.item_name
-        ?? (m.supplement as { product_name?: string } | null)?.product_name
-        ?? m.custom_name ?? '약',
-    }))
-  }
 
   return (
     <div className="space-y-6">
@@ -68,18 +42,6 @@ export default async function SettingsPage() {
         initialAlarmEnabled={profile?.alarm_enabled !== false}
         initialAlarmTimes={(profile?.alarm_times as Record<string, boolean> | null) ?? {}}
       />
-
-      {hasB2BPharmacy && regularPharmacyName && (
-        <section>
-          <p className="text-sm font-semibold text-yc-neutral600 mb-3">단골약국에 요청</p>
-          <PharmacyRequest
-            pharmacyName={regularPharmacyName}
-            defaultPhone={profile?.phone ?? null}
-            initialRequests={pharmacyRequests}
-            walletMeds={walletMeds}
-          />
-        </section>
-      )}
     </div>
   )
 }

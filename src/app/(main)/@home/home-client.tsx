@@ -55,7 +55,7 @@ interface Props {
   memberLabel?:   string | null
   lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
   refillHook?:    { label: string; dDay: number; count: number } | null
-  regularPharmacy?: { name: string | null; phone: string | null }
+  regularPharmacy?: { name: string | null; phone: string | null; isB2B?: boolean }
 }
 
 export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook, regularPharmacy }: Props) {
@@ -174,9 +174,23 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         ))}
       </div>
 
-      {/* 단골약국 — 등록돼 있으면 (전화 가능 시) 탭하여 전화, 아니면 등록 안내 */}
+      {/* 단골약국 — B2B(QR) 연결이면 탭하여 요청 보내기, 전화만 있으면 전화, 아니면 등록 안내 */}
       {regularPharmacy?.name ? (
-        regularPharmacy.phone ? (
+        regularPharmacy.isB2B ? (
+          <Link href="/medications/pharmacy-request"
+            className="flex items-center gap-3 bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:scale-[0.99] transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-yc-green50 flex items-center justify-center flex-shrink-0">
+              <Storefront size={24} className="text-yc-green600" weight="fill" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
+              <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
+            </div>
+            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+              <PaperPlaneTilt size={16} weight="fill" /> 요청
+            </span>
+          </Link>
+        ) : regularPharmacy.phone ? (
           <a href={`tel:${regularPharmacy.phone}`}
             className="flex items-center gap-3 bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:scale-[0.99] transition-transform">
             <div className="w-11 h-11 rounded-xl bg-yc-green50 flex items-center justify-center flex-shrink-0">

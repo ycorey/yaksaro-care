@@ -35,7 +35,7 @@ export default async function HomePage() {
       .eq('is_checked', true),
     supabase
       .from('profiles')
-      .select('regular_pharmacy_name, regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(name, phone)')
+      .select('regular_pharmacy_id, regular_pharmacy_name, regular_pharmacy_phone, regular_pharmacy:pharmacies!regular_pharmacy_id(name, phone)')
       .eq('id', user.id)
       .single(),
   ])
@@ -44,6 +44,7 @@ export default async function HomePage() {
   const regularPharmacy = {
     name:  profile?.regular_pharmacy?.name  ?? profile?.regular_pharmacy_name  ?? null,
     phone: profile?.regular_pharmacy?.phone ?? profile?.regular_pharmacy_phone ?? null,
+    isB2B: !!profile?.regular_pharmacy_id,   // QR 연결 약국이면 요청 채널 가능
   }
 
   // 활성 슬롯 도출 — 미지정 약은 복용횟수 기반 기본 슬롯 폴백 (/today와 동일 규칙)
