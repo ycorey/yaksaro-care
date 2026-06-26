@@ -410,7 +410,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       {(state === 'idle') && (
         <div className="space-y-3">
           {preview ? (
-            <div className="border-2 border-dashed border-yc-blue500/30 rounded-yc-lg p-4 text-center bg-yc-infoBg/30">
+            <div className="border-2 border-dashed border-yc-green600/30 rounded-yc-lg p-4 text-center bg-yc-green50/30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="처방전 미리보기" className="max-h-60 mx-auto rounded-yc-md object-contain" />
             </div>
@@ -714,11 +714,11 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                       ) : (
                         /* ── 보기 모드 ── */
                         <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
+                          <div className="w-12 h-12 rounded-full bg-yc-green50 overflow-hidden flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
                             {di?.found && di.imageUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img loading="lazy" decoding="async" src={di.imageUrl} alt={med.name} className="w-full h-full object-cover" />
-                            ) : <Pill weight="fill" size={20} className="text-yc-blue500 opacity-60" />}
+                            ) : <Pill weight="fill" size={20} className="text-yc-green600 opacity-60" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             {med.edi_code && (
@@ -746,7 +746,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                                 {(di.category || di.classType) && (
                                   <div className="flex flex-wrap gap-1.5">
                                     {di.category && (
-                                      <span className="text-xs bg-yc-infoBg text-yc-infoText rounded-full px-2.5 py-0.5">{di.category}</span>
+                                      <span className="text-xs bg-yc-green50 text-yc-green700 rounded-full px-2.5 py-0.5">{di.category}</span>
                                     )}
                                     {di.classType && (
                                       <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{di.classType}</span>
@@ -853,7 +853,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                       >
                         <p className="text-sm font-semibold text-yc-neutral900">{p.name}</p>
                         <p className="text-xs text-yc-neutral500 mt-0.5">{p.address}</p>
-                        {p.phone && <p className="text-xs text-yc-blue500 mt-0.5 flex items-center gap-0.5"><Phone weight="fill" size={11} /> {p.phone}</p>}
+                        {p.phone && <p className="text-xs text-yc-green600 mt-0.5 flex items-center gap-0.5"><Phone weight="fill" size={11} /> {p.phone}</p>}
                       </button>
                     ))}
                   </div>
@@ -861,9 +861,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
               </div>
 
               {(pharmacy.address || pharmacy.phone) && (
-                <div className="bg-yc-infoBg rounded-yc-md px-3 py-2.5 space-y-0.5">
-                  {pharmacy.address && <p className="text-xs text-yc-infoText flex items-center gap-0.5"><MapPin weight="fill" size={11} /> {pharmacy.address}</p>}
-                  {pharmacy.phone   && <p className="text-xs text-yc-infoText flex items-center gap-0.5"><Phone weight="fill" size={11} /> {pharmacy.phone}</p>}
+                <div className="bg-yc-green50 rounded-yc-md px-3 py-2.5 space-y-0.5">
+                  {pharmacy.address && <p className="text-xs text-yc-green700 flex items-center gap-0.5"><MapPin weight="fill" size={11} /> {pharmacy.address}</p>}
+                  {pharmacy.phone   && <p className="text-xs text-yc-green700 flex items-center gap-0.5"><Phone weight="fill" size={11} /> {pharmacy.phone}</p>}
                 </div>
               )}
             </div>
