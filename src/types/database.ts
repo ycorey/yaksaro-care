@@ -794,6 +794,7 @@ export type Database = {
           dose: string | null
           dose_amount: number | null
           doses_per_day: number | null
+          dow: number[] | null
           drug_id: string | null
           ended_at: string | null
           frequency: string | null
@@ -803,6 +804,7 @@ export type Database = {
           meal_times: string[] | null
           member_id: string | null
           prescription_id: string | null
+          schedule_type: string
           source: string
           started_at: string | null
           supplement_id: string | null
@@ -816,6 +818,7 @@ export type Database = {
           dose?: string | null
           dose_amount?: number | null
           doses_per_day?: number | null
+          dow?: number[] | null
           drug_id?: string | null
           ended_at?: string | null
           frequency?: string | null
@@ -825,6 +828,7 @@ export type Database = {
           meal_times?: string[] | null
           member_id?: string | null
           prescription_id?: string | null
+          schedule_type?: string
           source?: string
           started_at?: string | null
           supplement_id?: string | null
@@ -838,6 +842,7 @@ export type Database = {
           dose?: string | null
           dose_amount?: number | null
           doses_per_day?: number | null
+          dow?: number[] | null
           drug_id?: string | null
           ended_at?: string | null
           frequency?: string | null
@@ -847,6 +852,7 @@ export type Database = {
           meal_times?: string[] | null
           member_id?: string | null
           prescription_id?: string | null
+          schedule_type?: string
           source?: string
           started_at?: string | null
           supplement_id?: string | null

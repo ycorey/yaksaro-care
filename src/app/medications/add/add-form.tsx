@@ -25,6 +25,42 @@ const TAB_LABELS: Record<TabType, { icon: React.ReactNode; label: string }> = {
 
 const DAY_PRESETS = [3, 5, 7, 14, 30]
 const FREQUENCIES = ['하루 1회', '하루 2회', '하루 3회', '하루 4회', '필요시(PRN)', '격일 1회', '주 1회']
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+
+type SchedType = 'daily' | 'prn' | 'weekly'
+
+// 복용 방식 선택 — 매일/필요시/매주(요일). 임상 스케줄 프리셋(가벼운 버전).
+function ScheduleField({ type, dow, onType, onDow }: {
+  type: SchedType; dow: number[]; onType: (t: SchedType) => void; onDow: (d: number[]) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-yc-neutral700">복용 방식</p>
+      <div className="grid grid-cols-3 gap-2">
+        {([['daily', '매일'], ['prn', '필요시'], ['weekly', '매주']] as const).map(([v, label]) => (
+          <button key={v} type="button" onClick={() => onType(v)} className={type === v ? BTN_ACTIVE : BTN_INACTIVE}>{label}</button>
+        ))}
+      </div>
+      {type === 'weekly' && (
+        <div className="grid grid-cols-7 gap-1.5">
+          {WEEKDAYS.map((w, i) => {
+            const on = dow.includes(i)
+            return (
+              <button key={i} type="button"
+                onClick={() => onDow(on ? dow.filter(d => d !== i) : [...dow, i])}
+                className={`h-11 rounded-yc-md text-sm font-semibold transition-colors ${on ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+                {w}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {type === 'prn' && (
+        <p className="text-xs text-yc-neutral500">필요할 때만 복용 — 알림·오늘 복약에는 표시되지 않고 약 지갑에만 담겨요.</p>
+      )}
+    </div>
+  )
+}
 
 function MealTimePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   return (
@@ -217,6 +253,8 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
   const [dosesPerDay, setDosesPerDay] = useState<number | null>(null)
   const [totalDays,   setTotalDays]   = useState<number | null>(null)
   const [mealTimes,   setMealTimes]   = useState<string[]>([])
+  const [scheduleType, setScheduleType] = useState<SchedType>('daily')
+  const [dow,         setDow]         = useState<number[]>([])
 
   function clearSelected() { setSelected(null) }
 
@@ -274,6 +312,8 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
         </>
       )}
       {mealTimes.map(mt => <input key={mt} type="hidden" name="meal_times" value={mt} />)}
+      <input type="hidden" name="schedule_type" value={scheduleType} />
+      {scheduleType === 'weekly' && dow.map(d => <input key={d} type="hidden" name="dow" value={d} />)}
 
       {/* ═══════════════════════════════════════════════════════════════
           처방의약품 탭
@@ -331,6 +371,7 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
           </div>
 
           {/* 복용 시간대 */}
+          <ScheduleField type={scheduleType} dow={dow} onType={setScheduleType} onDow={setDow} />
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
@@ -372,6 +413,7 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
             </select>
           </div>
 
+          <ScheduleField type={scheduleType} dow={dow} onType={setScheduleType} onDow={setDow} />
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />
@@ -408,6 +450,7 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
             <input name="started_at" type="date" className={INPUT} />
           </div>
 
+          <ScheduleField type={scheduleType} dow={dow} onType={setScheduleType} onDow={setDow} />
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">복용 시간대 <span className="font-normal text-yc-neutral500">(선택)</span></p>
             <MealTimePicker value={mealTimes} onChange={setMealTimes} />

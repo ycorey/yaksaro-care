@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
 import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 
@@ -34,7 +35,7 @@ export default async function TodayPage() {
       .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
-      .select('meal_times, doses_per_day, custom_name, drug:drugs(item_name), supplement:supplements(product_name)')
+      .select('meal_times, doses_per_day, schedule_type, dow, custom_name, drug:drugs(item_name), supplement:supplements(product_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -67,7 +68,10 @@ export default async function TodayPage() {
   const slotNames: Record<Meal, string[]> = { morning: [], afternoon: [], evening: [], bedtime: [] }
   const medTotal = medsData?.length ?? 0
 
+  const wd = kstWeekday()
   for (const med of medsData ?? []) {
+    // prn(필요시)·요일 미해당 weekly는 오늘 일정에서 제외 (약지갑에는 그대로 노출)
+    if (!isScheduledOnWeekday(med, wd)) continue
     const name = one(med.drug)?.item_name ?? one(med.supplement)?.product_name ?? med.custom_name ?? '약'
     const times = med.meal_times && med.meal_times.length > 0
       ? med.meal_times

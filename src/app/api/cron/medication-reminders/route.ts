@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { MEAL_LABELS, MEAL_TIMES, isMeal } from '@/lib/meal-slots'
+import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -70,11 +71,14 @@ export async function GET(req: NextRequest) {
   // 4) 활성 복약이 있는 (사용자, 멤버) 쌍 → 사용자별 활성 멤버 집합
   const { data: active } = await admin
     .from('user_medications')
-    .select('user_id, member_id')
+    .select('user_id, member_id, schedule_type, dow')
     .in('user_id', pushUsers)
     .is('deleted_at', null).is('ended_at', null)
+  // prn(필요시)·오늘 요일 미해당 weekly는 알림 대상에서 제외
+  const wd = kstWeekday()
   const activeMembersByUser = new Map<string, Set<string | null>>()
   for (const m of active ?? []) {
+    if (!isScheduledOnWeekday(m, wd)) continue
     const u = m.user_id as string
     if (!activeMembersByUser.has(u)) activeMembersByUser.set(u, new Set())
     activeMembersByUser.get(u)!.add(m.member_id as string | null)

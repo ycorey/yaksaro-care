@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HomeClient from './home-client'
 import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
+import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 import { getLifestyleContent } from '@/lib/lifestyle-info/server'
@@ -20,7 +21,7 @@ export default async function HomePage() {
   const [{ data: meds }, { data: checks }, { data: profile }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, meal_times, doses_per_day, total_days, ingredient, custom_name, prescription_id, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
+      .select('id, meal_times, doses_per_day, schedule_type, dow, total_days, ingredient, custom_name, prescription_id, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -47,7 +48,9 @@ export default async function HomePage() {
 
   // 활성 슬롯 도출 — 미지정 약은 복용횟수 기반 기본 슬롯 폴백 (/today와 동일 규칙)
   const activeMealSet = new Set<string>()
+  const wd = kstWeekday()
   for (const med of meds ?? []) {
+    if (!isScheduledOnWeekday(med, wd)) continue   // prn·요일 미해당 weekly 제외
     const times = med.meal_times && med.meal_times.length > 0
       ? med.meal_times
       : defaultMealKeys(med.doses_per_day ?? 0)
