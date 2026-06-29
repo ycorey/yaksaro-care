@@ -9,7 +9,16 @@ import type { Disease } from './disease-map'
 
 export type { DiseaseEstimate }
 
-export type LifestyleSource = { pmid: string; url: string; title: string }
+import type { EvidenceGrade } from '@/lib/evidence-grade'
+
+export type LifestyleSource = {
+  pmid: string
+  url: string
+  title: string
+  // 등급은 콘텐츠 생성 시점(gen-lifestyle-content.mjs)에 채워진다. 기존 행은 없을 수 있어 선택적.
+  grade?: EvidenceGrade
+  gradeLabel?: string
+}
 export type LifestyleTip = { disease: string; topic: string; body_ko: string; sources: LifestyleSource[] }
 
 // 활성 멤버 약 → 질환 추정(확신 high만; 모호/저신뢰는 표시 생략).

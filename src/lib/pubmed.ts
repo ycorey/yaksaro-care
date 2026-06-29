@@ -17,6 +17,8 @@ export type PubmedResult = {
   year: string
   abstract: string
   url: string
+  /** NLM이 큐레이션한 출판 유형 태그(예: "Meta-Analysis", "Randomized Controlled Trial"). 등급 판정에 사용. */
+  publicationTypes: string[]
 }
 
 const parser = new XMLParser({
@@ -103,6 +105,13 @@ async function fetchAbstracts(pmids: string[]): Promise<PubmedResult[]> {
     const pubDate =
       ((journal.JournalIssue as Record<string, unknown>)?.PubDate as Record<string, unknown>) ?? {}
 
+    // PublicationTypeList > PublicationType (단일/배열, 각 노드는 {#text,@_UI} 또는 문자열)
+    const ptList = (article.PublicationTypeList ?? {}) as Record<string, unknown>
+    const rawPt = ptList.PublicationType
+    const publicationTypes = (rawPt == null ? [] : Array.isArray(rawPt) ? rawPt : [rawPt])
+      .map((t) => textOf(t).trim())
+      .filter(Boolean)
+
     const pmid = textOf(citation.PMID).trim()
     return {
       pmid,
@@ -111,6 +120,7 @@ async function fetchAbstracts(pmids: string[]): Promise<PubmedResult[]> {
       year: textOf(pubDate.Year || pubDate.MedlineDate).trim(),
       abstract: abstractOf(article.Abstract),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+      publicationTypes,
     }
   })
 }

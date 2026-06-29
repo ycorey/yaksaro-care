@@ -47,9 +47,30 @@ const passesSafety = (t) => !!t && !!t.trim() && !FORBIDDEN.some(re => re.test(t
 const EUTILS = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 const withKey = (u) => env['NCBI_API_KEY'] ? `${u}&api_key=${encodeURIComponent(env['NCBI_API_KEY'])}` : u
 
-async function searchPubmed(query, retmax = 4) {
+// 근거 등급 판정 — canonical: src/lib/evidence-grade.ts (gradeArticle). 여기는 .mjs 사본.
+const isCochrane = (j) => /cochrane database (of )?syst/i.test(j) || /cochrane/i.test(j)
+function gradeArticle(pts, journal) {
+  const t = pts.map((x) => x.toLowerCase())
+  const has = (x) => t.includes(x)
+  const any = (a) => a.some((x) => t.includes(x))
+  if (isCochrane(journal)) return { grade: 'A', label: 'A · Cochrane 체계적 고찰' }
+  if (has('meta-analysis')) return { grade: 'A', label: 'A · 메타분석' }
+  if (has('systematic review')) return { grade: 'A', label: 'A · 체계적 문헌고찰' }
+  if (any(['randomized controlled trial']) && has('multicenter study')) return { grade: 'A', label: 'A · 다기관 RCT' }
+  if (any(['randomized controlled trial'])) return { grade: 'B', label: 'B · 무작위대조시험(RCT)' }
+  if (any(['controlled clinical trial', 'pragmatic clinical trial', 'equivalence trial', 'clinical trial, phase iii', 'clinical trial, phase iv'])) return { grade: 'B', label: 'B · 대조 임상시험' }
+  if (any(['observational study', 'cohort studies', 'case-control studies', 'comparative study'])) return { grade: 'C', label: 'C · 관찰/비교 연구' }
+  if (has('review')) return { grade: 'C', label: 'C · 종설' }
+  return { grade: 'C', label: 'C · 기타' }
+}
+const GRADE_RANK = { A: 0, B: 1, C: 2 }
+// 품질필터: 동물실험·초록없음·비영문 제외(정확도↑). canonical: evidence-grade.ts qualityFilters.
+const QUALITY = 'humans[mesh] AND hasabstract AND english[lang]'
+
+async function searchPubmed(query, retmax = 5) {
   try {
-    const sr = await fetch(withKey(`${EUTILS}/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&retmax=${retmax}&term=${encodeURIComponent(query)}`), { signal: AbortSignal.timeout(8000) })
+    const term = `(${query}) AND ${QUALITY}`
+    const sr = await fetch(withKey(`${EUTILS}/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&retmax=${retmax}&term=${encodeURIComponent(term)}`), { signal: AbortSignal.timeout(8000) })
     const ids = (await sr.json())?.esearchresult?.idlist ?? []
     if (!ids.length) return []
     const fr = await fetch(withKey(`${EUTILS}/efetch.fcgi?db=pubmed&rettype=abstract&retmode=xml&id=${ids.join(',')}`), { signal: AbortSignal.timeout(10000) })
@@ -59,9 +80,17 @@ async function searchPubmed(query, retmax = 4) {
       const b = m[1]
       const pmid = (b.match(/<PMID[^>]*>(\d+)<\/PMID>/) || [])[1] || ''
       const title = ((b.match(/<ArticleTitle>([\s\S]*?)<\/ArticleTitle>/) || [])[1] || '').replace(/<[^>]+>/g, '').trim()
+      const journal = ((b.match(/<Journal>[\s\S]*?<Title>([\s\S]*?)<\/Title>/) || [])[1] || '').replace(/<[^>]+>/g, '').trim()
+      const year = ((b.match(/<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/) || [])[1] || '').trim()
       const abstract = [...b.matchAll(/<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/g)].map(x => x[1].replace(/<[^>]+>/g, '')).join(' ').trim()
-      if (pmid) out.push({ pmid, title, abstract, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` })
+      const pts = [...b.matchAll(/<PublicationType[^>]*>([\s\S]*?)<\/PublicationType>/g)].map(x => x[1].replace(/<[^>]+>/g, '').trim()).filter(Boolean)
+      if (pmid) {
+        const g = gradeArticle(pts, journal)
+        out.push({ pmid, title, abstract, year, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, grade: g.grade, gradeLabel: g.label })
+      }
     }
+    // 등급 우선(A→B→C), 같은 등급은 최신순 — 더 신뢰도 높은 근거를 앞에 둔다.
+    out.sort((a, b) => GRADE_RANK[a.grade] - GRADE_RANK[b.grade] || Number(b.year || 0) - Number(a.year || 0))
     return out
   } catch { return [] }
 }
@@ -102,7 +131,7 @@ for (const { disease, topics } of PLAN) {
     if (!papers.length) { console.log(`  ⏭  ${disease}/${topic} — 논문 0건, 건너뜀`); skipped++; continue }
     const body = await writeBody(disease, topic, papers)
     if (!passesSafety(body)) { console.log(`  🚫 ${disease}/${topic} — 안전 프리체크 실패, 폐기`); skipped++; continue }
-    const sources = papers.map(p => ({ pmid: p.pmid, url: p.url, title: p.title }))
+    const sources = papers.map(p => ({ pmid: p.pmid, url: p.url, title: p.title, grade: p.grade, gradeLabel: p.gradeLabel }))
     console.log(`  ✅ ${disease}/${topic} (${papers.length}편) — ${body.slice(0, 50)}…`)
     if (!DRY) {
       const { error } = await supabase.from('lifestyle_content')

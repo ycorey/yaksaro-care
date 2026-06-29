@@ -4,6 +4,7 @@
 
 import { YCCard } from '@/components/yc/yc-card'
 import { SectionHeader } from '@/components/yc/section-header'
+import { EvidenceGradeBadge } from '@/components/yc/evidence-grade-badge'
 import { CONSULT_CLOSING, diseaseGroupLead } from '@/lib/lifestyle-info/safety-frame'
 import type { DiseaseEstimate, LifestyleTip } from '@/lib/lifestyle-info/server'
 
@@ -51,17 +52,19 @@ export default function LifestyleSection({
                 <p className="text-sm font-bold text-yc-green700">{tip.topic}</p>
                 <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
                 {tip.sources.length > 0 && (
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5">
                     {tip.sources.slice(0, 3).map((s, i) => (
-                      <a
-                        key={s.pmid || i}
-                        href={s.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-medium text-yc-green700 underline underline-offset-2 active:opacity-70"
-                      >
-                        근거 {i + 1} ↗
-                      </a>
+                      <span key={s.pmid || i} className="inline-flex items-center gap-1">
+                        {s.grade && <EvidenceGradeBadge grade={s.grade} label={s.gradeLabel} />}
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-yc-green700 underline underline-offset-2 active:opacity-70"
+                        >
+                          근거 {i + 1} ↗
+                        </a>
+                      </span>
                     ))}
                   </div>
                 )}
