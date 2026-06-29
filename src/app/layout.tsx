@@ -27,6 +27,9 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+  verification: {
+    other: { 'naver-site-verification': '7edb341d97aadc0bb2d2c07170822768fc4b997b' },
+  },
 }
 
 export const viewport: Viewport = {
