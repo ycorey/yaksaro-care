@@ -57,3 +57,7 @@ dur-etl-cron.log
 _dur_csv_tmp/
 .etl-dur-csv-checkpoint.json
 .etl-drugs-license-checkpoint.json
+
+# E2E 임시 산출물 (세션 토큰·스크린샷 — 커밋 금지)
+e2e/.auth/
+e2e/.artifacts/
