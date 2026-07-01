@@ -32,7 +32,31 @@
       "PowerShell(claude doctor *)",
       "PowerShell(npx chrome-devtools-mcp@1.1.1 --version 2>&1 | Out-String; exit 0)",
       "PowerShell($output = & \"C:\\\\Users\\\\main\\\\AppData\\\\Roaming\\\\npm\\\\claude.cmd\" \"doctor\" 2>&1; $output | ForEach-Object { $_.ToString\\(\\) })",
-      "Bash(dir \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\scripts\\\\etl-drugs-license*\")"
+      "Bash(dir \"C:\\\\Users\\\\main\\\\yaksaro-care\\\\scripts\\\\etl-drugs-license*\")",
+      "WebSearch",
+      "WebFetch(domain:map.dailypharm.com)",
+      "WebFetch(domain:introduce.opndoctor.com)",
+      "mcp__claude_ai_Supermetrics_Marketing_Analytics__data_source_discovery",
+      "Bash(echo \"=== AUTHENTICATED \\(연결됨\\) ===\")",
+      "Bash(grep -B6 'authentication_status: AUTHENTICATED' C:/Users/main/.claude/projects/C--Users-main-yaksaro-care/2247cd93-de87-4e6b-ac5c-fd5df7c28f22/tool-results/toolu_01Jt8L9ghTwLcqzuxGWTyDd1.txt)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000 --max-time 5)",
+      "Bash(node scripts/fetch-evidence.mjs \"magnesium supplementation deficiency health\" blog)",
+      "WebFetch(domain:drtemplar.co.kr)",
+      "WebFetch(domain:www.yaksaro.co.kr)",
+      "Bash([ -d \"$SRC\" ])",
+      "Bash(cp -r /c/Users/main/yaksaro-care/landing-deploy/.vercel /c/Users/main/yaksaro-care-landing-wt/landing-deploy/.vercel)",
+      "Bash(grep -vE \"^\\\\.omc$|^nul$\")",
+      "Bash(command -v vercel)",
+      "Bash(vercel --version)",
+      "Bash(python -m pip install --quiet python-docx)",
+      "Bash(python -c \"import docx; print\\('python-docx OK', docx.__version__\\)\")",
+      "Bash(python unit_kor.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python build_all.py)",
+      "mcp__claude_ai_Google_Calendar__list_events",
+      "mcp__claude_ai_Google_Calendar__create_event",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
