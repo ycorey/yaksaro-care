@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { type Meal, ALL_MEALS, isMeal } from '@/lib/meal-slots'
+import { getActiveMember } from '@/lib/active-member'
 
 const TOTAL = ALL_MEALS.length // 4 (아침/점심/저녁/자기 전)
 
@@ -52,13 +53,23 @@ export async function GET(request: Request) {
   const startDate = `${year}-${pad2(month)}-01`
   const endDate = `${year}-${pad2(month)}-${pad2(lastDayOfMonth(year, month))}`
 
-  const { data, error } = await supabase
+  // 활성 멤버로 스코프 — 가족 멤버의 체크로그가 합산되지 않도록 (오늘복약·약지갑과 정합).
+  // 본인(self)은 멤버 기능 도입 이전의 legacy 로그(member_id=null)도 포함해 과거 이력을 보존.
+  const { active } = await getActiveMember(supabase, user.id)
+
+  let logsQuery = supabase
     .from('medication_check_logs')
     .select('check_date, meal_time, is_checked, logged_at')
     .eq('user_id', user.id)
     .gte('check_date', startDate)
     .lte('check_date', endDate)
     .order('logged_at', { ascending: true })
+
+  logsQuery = active.is_self
+    ? logsQuery.or(`member_id.eq.${active.id},member_id.is.null`)
+    : logsQuery.eq('member_id', active.id)
+
+  const { data, error } = await logsQuery
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

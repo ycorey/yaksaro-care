@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Phone, MapPin, Trash, Check, Plus, CaretRight } from '@phosphor-icons/react'
 import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { type ScheduleType } from '@/lib/med-schedule'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 import { logger } from '@/lib/logger'
 import MedCardItem from './med-card-item'
@@ -24,6 +25,7 @@ export type MedCard = {
   totalDays:             number | null
   mealTimes:             string[]
   scheduleLabel:         string | null
+  scheduleType:          ScheduleType
   hasInteractionWarning: boolean
 }
 
@@ -150,11 +152,15 @@ function PrescriptionCard({
   const [busyDel, setBusyDel]         = useState(false)
   const [deleted, setDeleted]         = useState(false)
 
-  // 그룹 내 복용 시간 합집합 — 없으면 dosesPerDay 기반 기본값
-  const mealTimesUnion = [...new Set(g.meds.flatMap(m => m.mealTimes ?? []))]
+  // 그룹 내 복용 시간 합집합 — PRN(필요시)은 오늘복약·알림에서 제외되므로 끼니 버튼 대상에서도 뺀다.
+  // (전부 PRN인 그룹은 끼니 버튼 자체를 띄우지 않음)
+  const scheduledMeds = g.meds.filter(m => m.scheduleType !== 'prn')
+  const mealTimesUnion = [...new Set(scheduledMeds.flatMap(m => m.mealTimes ?? []))]
   const effectiveMealTimes = mealTimesUnion.length > 0
     ? mealTimesUnion
-    : defaultMealKeys(Math.max(0, ...g.meds.map(m => m.dosesPerDay ?? 0)) || 3)
+    : scheduledMeds.length > 0
+      ? defaultMealKeys(Math.max(0, ...scheduledMeds.map(m => m.dosesPerDay ?? 0)) || 3)
+      : []
 
   const [isChecked, setIsChecked] = useState(
     () => effectiveMealTimes.some(m => !!serverChecks[m])
@@ -293,8 +299,10 @@ function PrescriptionCard({
             ))}
           </ul>
 
-          {/* 복약 체크 버튼 */}
-          <GroupMealButtons groupKey={g.key} mealTimes={effectiveMealTimes} initialChecks={serverChecks} onAnyChecked={handleMealChecked} />
+          {/* 복약 체크 버튼 — 전부 필요시(PRN)인 처방은 끼니 버튼 생략 */}
+          {effectiveMealTimes.length > 0 && (
+            <GroupMealButtons groupKey={g.key} mealTimes={effectiveMealTimes} initialChecks={serverChecks} onAnyChecked={handleMealChecked} />
+          )}
 
           {/* 일괄 삭제 */}
           {g.meds.length > 1 && (

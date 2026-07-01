@@ -321,6 +321,21 @@
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
 
+/* ── 복약 리포트 인쇄 / PDF 저장 격리 ──────────────────────────────────
+ * window.print() 호출 시 #yc-print-area 밖(앱 UI·탭바·오버레이)을 전부 숨기고
+ * 리포트만 A4에 흐르게 한다. .print\:hidden(=display:none)은 visibility보다 우선. */
+@media print {
+  body * { visibility: hidden; }
+  #yc-print-area, #yc-print-area * { visibility: visible; }
+  #yc-print-area {
+    position: absolute; inset: 0; width: 100%;
+    padding: 0; margin: 0; background: #fff;
+  }
+  /* 인쇄에는 색을 그대로 (배경 강조/배지) */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { margin: 14mm; }
+}
+
 /* ── PWA 런치 스플래시 ─────────────────────────────────────────────
  * 그린 화면 → ㄹ 마크가 선을 그리며 등장 → 워드마크 상승 → 전체 페이드아웃.
  * 네이티브 스플래시(manifest background/theme)에서 자연스럽게 이어진다. */

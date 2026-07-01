@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Pill, Hospital, Flask } from '@phosphor-icons/react'
 import DoctorView, { type DoctorData } from './doctor-view'
+import ReportView, { type AdherenceSummary } from './report-view'
 import AppHeader from '@/components/app-header'
 
 interface Med {
@@ -16,9 +17,12 @@ interface Med {
 interface Props {
   meds: Med[]
   doctorData: DoctorData
+  adherence: AdherenceSummary
+  memberName: string
+  generatedAt: string
 }
 
-export default function ShareClient({ meds, doctorData }: Props) {
+export default function ShareClient({ meds, doctorData, adherence, memberName, generatedAt }: Props) {
   const rx   = meds.filter(m => m.type === 'rx')
   const supp = meds.filter(m => m.type === 'supp')
   const otc  = meds.filter(m => m.type === 'otc')
@@ -33,6 +37,11 @@ export default function ShareClient({ meds, doctorData }: Props) {
 
       {/* 핵심 CTA */}
       <DoctorView data={doctorData} />
+
+      {/* 복약 리포트 — PDF 저장·인쇄 (복약 기록 포함, 데이터 내보내기) */}
+      {meds.length > 0 && (
+        <ReportView data={doctorData} adherence={adherence} memberName={memberName} generatedAt={generatedAt} />
+      )}
 
       {meds.length === 0 ? (
         <div className="bg-white rounded-yc-xl border border-yc-neutral100 p-10 text-center shadow-[var(--yc-shadow-sm)]">

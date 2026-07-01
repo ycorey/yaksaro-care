@@ -186,7 +186,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
               <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
               <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
             </div>
-            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+            <span className="flex items-center gap-1 px-3 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
               <PaperPlaneTilt size={16} weight="fill" /> 요청
             </span>
           </Link>
@@ -200,7 +200,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
               <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
               <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
             </div>
-            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+            <span className="flex items-center gap-1 px-3 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
               <Phone size={16} weight="fill" /> 전화
             </span>
           </a>

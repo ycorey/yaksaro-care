@@ -145,6 +145,24 @@ export default function TodayTimeline({
     persist(meal, false)
   }
 
+  // 일괄복용 되돌리기 — 방금 한 번에 체크한 끼니들을 미체크로 복원 (실수 탭 복구)
+  async function undoCheckAll(meals: Meal[]) {
+    haptic()
+    setSlots(prev => prev.map(s => meals.includes(s.meal) ? { ...s, checked: false, checkedAt: null } : s))
+    try {
+      await Promise.all(meals.map(meal =>
+        fetch('/api/meal-checks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meal_time: meal, is_checked: false }),
+        })
+      ))
+      router.refresh()
+    } catch {
+      toast.error('되돌리기에 실패했어요. 다시 시도해 주세요.')
+    }
+  }
+
   // 오늘 미체크 끼니를 한 번에 전부 복용 처리 (몰아서 챙기는 경우)
   async function checkAll() {
     const pending = slots.filter(s => !s.checked).map(s => s.meal)
@@ -167,6 +185,11 @@ export default function TodayTimeline({
         // 일부 실패 → 낙관적 체크를 되돌리고 서버 상태로 재동기화 (부분 저장 오인 방지)
         setSlots(prev => prev.map(s => pending.includes(s.meal) ? { ...s, checked: false, checkedAt: null } : s))
         toast.error('일부 저장에 실패했어요. 다시 시도해 주세요.')
+      } else {
+        // 전부 성공 → 실수로 눌렀을 때 한 번에 되돌릴 수 있는 액션 제공
+        toast.success(`${pending.length}끼니를 복용 처리했어요`, {
+          action: { label: '되돌리기', onClick: () => undoCheckAll(pending) },
+        })
       }
       router.refresh()  // 다른 탭(홈·캘린더) 동기화 + 서버 상태 확정
     } catch {

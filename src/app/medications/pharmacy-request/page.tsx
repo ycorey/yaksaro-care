@@ -45,8 +45,8 @@ export default async function PharmacyRequestPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 pt-1">
-        <Link href="/home"
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 active:bg-yc-neutral50">
+        <Link href="/home" aria-label="뒤로가기"
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 text-lg active:bg-yc-neutral50">
           ←
         </Link>
         <h1 className="font-display text-xl text-yc-neutral900">단골약국에 요청</h1>

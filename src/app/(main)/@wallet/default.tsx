@@ -17,7 +17,7 @@ import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
-import { weekdayLabels } from '@/lib/med-schedule'
+import { weekdayLabels, type ScheduleType } from '@/lib/med-schedule'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
@@ -92,6 +92,7 @@ export default async function WalletPage() {
       totalDays:             med.total_days ?? null,
       mealTimes:             med.meal_times ?? [],
       scheduleLabel:         scheduleLabelOf(med.schedule_type, med.dow),
+      scheduleType:          (med.schedule_type as ScheduleType | null) ?? 'daily',
       hasInteractionWarning: !!(med.has_interaction_warning),
     }
   }
