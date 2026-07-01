@@ -327,8 +327,10 @@
 @media print {
   body * { visibility: hidden; }
   #yc-print-area, #yc-print-area * { visibility: visible; }
+  /* top/left/width만 고정하고 height는 콘텐츠 기반(auto) — inset:0로 높이를 뷰포트에
+   * 묶으면 Chrome이 여러 페이지 리포트를 1페이지로 잘라냄. 높이를 흐르게 둬 페이지 넘김 허용. */
   #yc-print-area {
-    position: absolute; inset: 0; width: 100%;
+    position: absolute; top: 0; left: 0; width: 100%;
     padding: 0; margin: 0; background: #fff;
   }
   /* 인쇄에는 색을 그대로 (배경 강조/배지) */
