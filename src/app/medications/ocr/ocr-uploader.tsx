@@ -206,6 +206,23 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     setState('confirm')
   }
 
+  // 박스 OCR에서 약봉투로 판단돼 넘어온 사진을 픽업 → 확인 단계로 (재촬영 없이 이어받음)
+  useEffect(() => {
+    let dataUrl: string | null = null
+    try { dataUrl = sessionStorage.getItem('yc_rx_handoff') } catch {}
+    if (!dataUrl) return
+    try { sessionStorage.removeItem('yc_rx_handoff') } catch {}
+    const src = dataUrl
+    const t = setTimeout(async () => {
+      try {
+        const blob = await (await fetch(src)).blob()
+        onFile(new File([blob], 'medbag.jpg', { type: 'image/jpeg' }))
+      } catch { /* 픽업 실패 → 사용자가 직접 촬영 */ }
+    }, 0)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // 확인 단계에서 "인식 시작" — 압축 후 OCR 실행 (회전이 반영된 pendingFile 사용)
   const startRecognition = async () => {
     if (!pendingFile) return
@@ -884,6 +901,29 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                     확인 완료 — 내 약 지갑에 저장하기 ({result.medicines.length}종)
                   </span>}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 0건 인식 폴백 (검증 모달 조건 미달 시 빈 화면 방지) ── */}
+      {state === 'done' && result && result.medicines.length === 0 && (
+        <div className="fixed inset-0 z-[100] bg-white overflow-y-auto flex flex-col items-center justify-center px-8 text-center gap-4">
+          <Camera size={48} weight="light" className="text-yc-neutral300" />
+          <div>
+            <p className="font-display text-lg text-yc-neutral900">약을 읽지 못했어요</p>
+            <p className="text-sm text-yc-neutral500 mt-1.5 leading-relaxed break-keep">
+              글자가 잘 보이게 밝은 곳에서 평평하게 펴고 다시 찍어 주세요.
+            </p>
+          </div>
+          <div className="w-full max-w-xs space-y-2.5 pt-2">
+            <button type="button" onClick={() => { setResult(null); setState('idle') }}
+              className="w-full h-12 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors">
+              다시 촬영
+            </button>
+            <a href="/medications/add?tab=prescription"
+              className="block w-full h-12 leading-[3rem] rounded-yc-lg border border-yc-neutral300 bg-white text-yc-neutral700 text-base font-semibold active:bg-yc-neutral100 transition-colors">
+              직접 입력하기
+            </a>
           </div>
         </div>
       )}

@@ -54,6 +54,18 @@ function isValidOpenAiKey(key: string | undefined): boolean {
   return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
 }
 
+// 약봉투/조제 라벨 감지 — 조제 특유 신호가 2개 이상이면 처방전 검증 플로우(약별 확인·수정)로
+// 유도한다. 단일 OTC 박스(성분·효능 위주)는 이 신호가 거의 없어 오탐이 낮다.
+const RX_SIGNALS: RegExp[] = [
+  /조제/, /복용/, /처방/, /약국/,
+  /(1일|하루)\s*\d+\s*[회번]/,   // 1일 3회
+  /\d+\s*일\s*분/,                // 5일분
+  /식후|식전|취침\s*전|자기\s*전|아침|점심|저녁/,
+]
+function looksLikePrescription(rawText: string): boolean {
+  return RX_SIGNALS.filter(re => re.test(rawText)).length >= 2
+}
+
 // GPT 미사용 폴백: 한글이 포함되고 단위/숫자 위주가 아닌 라인을 길이순으로 후보화.
 const UNIT_RE = /(mg|밀리그람|밀리그램|그람|그램|\bg\b|ml|밀리리터|정|캡슐|캅셀|포|환|개입|일분|함량|성분|효능|효과|용법|제조|판매|유통기한|건강기능식품|일반의약품)/i
 function pickNamesHeuristic(rawText: string): string[] {
@@ -123,11 +135,11 @@ export async function POST(request: Request) {
 
   try {
     const rawText = await runClovaOcr(bytes, mime, ext)
-    if (!rawText) return NextResponse.json({ names: [] })
+    if (!rawText) return NextResponse.json({ names: [], isPrescription: false })
     const names = await extractNamesWithGpt(rawText)
-    return NextResponse.json({ names })
+    return NextResponse.json({ names, isPrescription: looksLikePrescription(rawText) })
   } catch (e) {
     logger.error('OCR', '박스 인식 오류', e)
-    return NextResponse.json({ names: [], error: 'ocr_failed' }, { status: 200 })
+    return NextResponse.json({ names: [], isPrescription: false, error: 'ocr_failed' }, { status: 200 })
   }
 }

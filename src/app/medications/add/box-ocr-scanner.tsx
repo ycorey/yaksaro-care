@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent } from 'react'
 import { toast } from 'sonner'
-import { Camera, Images, CircleNotch } from '@phosphor-icons/react'
+import { Camera, Images, CircleNotch, FileText } from '@phosphor-icons/react'
 import AddForm from './add-form'
 import { BackButton } from '../back-button'
 import MemberContextBadge from '@/components/member-context-badge'
@@ -42,6 +42,18 @@ function postProduct(f: Blob): Promise<Response> {
   return fetch('/api/ocr/product', { method: 'POST', body: fd, signal: AbortSignal.timeout(40_000) })
 }
 
+// 처방전 검증 플로우로 넘길 사진을 세션에 임시 보관하는 키 (ocr-uploader가 마운트 시 픽업)
+const RX_HANDOFF_KEY = 'yc_rx_handoff'
+
+function blobToDataUrl(b: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result as string)
+    r.onerror = () => reject(new Error('read'))
+    r.readAsDataURL(b)
+  })
+}
+
 function StepHeader({ title, member }: { title: string; member?: Member }) {
   return (
     <div className="pt-1 space-y-2">
@@ -60,6 +72,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
   const [candidates, setCandidates] = useState<string[]>([])  // OCR 후보 1~3개
   const [preview, setPreview]   = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [looksRx, setLooksRx]   = useState(false)  // 약봉투/조제 라벨로 감지됨 → 처방전 플로우 유도
   const cameraRef = useRef<HTMLInputElement | null>(null)  // 촬영(capture=environment)
   const albumRef  = useRef<HTMLInputElement | null>(null)  // 앨범(capture 없음 → 갤러리)
 
@@ -87,8 +100,12 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
       }
       const data  = await res.json().catch(() => ({}))
       const names: string[] = Array.isArray(data?.names) ? data.names : []
+      setLooksRx(!!data?.isPrescription)
 
-      if (names.length > 0) {
+      if (data?.isPrescription) {
+        // 약봉투/조제 라벨 — 이름 검색으로 처리하기엔 여러 약이라, 처방전 검증 플로우로 유도
+        toast.success('여러 약이 적힌 약봉투 같아요.')
+      } else if (names.length > 0) {
         setCandidates(names)
         setQuery(names[0])
         toast.success('제품명을 읽었어요. 검색 결과에서 골라 주세요.')
@@ -102,6 +119,17 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     }
   }
 
+  // 약봉투로 판단되면 찍은 사진을 세션에 넘기고 처방전 검증 플로우로 이동(재촬영 없이 이어받음)
+  async function handoffToPrescription() {
+    if (pendingFile) {
+      try {
+        const blob = await compressImage(pendingFile, 1400, 0.72)
+        sessionStorage.setItem(RX_HANDOFF_KEY, await blobToDataUrl(blob))
+      } catch { /* 용량초과 등 → 이미지 없이 이동(그쪽에서 재촬영) */ }
+    }
+    window.location.href = '/medications/ocr'
+  }
+
   function cancelConfirm() {
     setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
     setPendingFile(null)
@@ -113,6 +141,20 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     return (
       <div className="space-y-5 anim-scale-in">
         <StepHeader title={initialTab === 'supplement' ? '영양제 · 보조제' : '일반의약품'} member={member} />
+        {looksRx && (
+          <div className="rounded-yc-xl border border-yc-green200 bg-yc-green50 px-5 py-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <FileText weight="fill" size={20} className="text-yc-green700 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-yc-neutral800 leading-relaxed break-keep">
+                여러 약이 적힌 <b>약봉투·처방전</b> 같아요. 처방전으로 읽으면 <b>약마다 확인·수정</b>하고 한 번에 담을 수 있어요.
+              </p>
+            </div>
+            <button type="button" onClick={handoffToPrescription}
+              className="w-full h-12 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors">
+              처방전으로 정확히 읽기
+            </button>
+          </div>
+        )}
         {query && (
           <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
             박스에서 <b>&quot;{query}&quot;</b>를 읽었어요. 검색 결과에서 맞는 제품을 골라 주세요.
