@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
-import BarcodeAddFlow from './barcode-scanner'
 import BoxOcrAddFlow from './box-ocr-scanner'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
@@ -110,9 +109,6 @@ function SupplementMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/add?method=photo&tab=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="박스 사진으로 찾기" desc="영양제 박스를 찍어 이름으로 찾아요" />
-        <MethodCard href="/medications/add?method=barcode&tab=supplement" iconBg="bg-yc-green50"
-          icon={<AddIcon name="barcode" className="text-yc-green700" />}
-          title="바코드 스캔" desc="제품 박스 바코드를 찍어 담아요" />
         <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="브랜드·복용 시간 적기" />
@@ -130,14 +126,14 @@ function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc'
   return (
     <div className="space-y-5 anim-scale-in">
       <StepHeader title={title} member={member} />
-      {/* 일반의약품 추가칸: 바코드 스캔으로 빠르게 담기 */}
+      {/* 일반의약품 추가칸: 박스 사진 OCR로 빠르게 담기 (바코드→OCR 전환) */}
       {initialTab === 'otc' && (
-        <Link href="/medications/add?method=barcode&tab=otc"
+        <Link href="/medications/add?method=photo&tab=otc"
           className="flex items-center gap-3 bg-yc-green600 rounded-yc-xl px-5 py-4 active:bg-yc-green700 transition-colors">
-          <AddIcon name="barcode" className="text-white" />
+          <AddIcon name="camera" className="text-white" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-base text-white">바코드로 스캔</p>
-            <p className="text-sm text-white/80 mt-0.5">일반약 박스 바코드를 찍어 빠르게 담아요</p>
+            <p className="font-semibold text-base text-white">박스 사진으로 찾기</p>
+            <p className="text-sm text-white/80 mt-0.5">일반약 박스를 찍으면 이름을 읽어 담아요</p>
           </div>
         </Link>
       )}
@@ -159,12 +155,7 @@ export default async function AddMedicationPage({
   const { tab, type, method } = await searchParams
   const { active } = await getActiveMember(supabase, user.id)
 
-  // Screen 2c: 바코드 스캔 (일반약/영양제 — 진입 카테고리를 폴백 탭으로 사용)
-  if (method === 'barcode') {
-    return <BarcodeAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
-  }
-
-  // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (바코드 미커버 OTC·건기식 대응)
+  // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (일반약·건기식 모두 OCR로 통일. 바코드는 v2 보류)
   if (method === 'photo') {
     return <BoxOcrAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
   }
