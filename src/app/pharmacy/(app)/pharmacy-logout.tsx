@@ -1,19 +1,17 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 // 약사 헤더용 컴팩트 로그아웃 (퍼지 시퀀스 동일)
 export default function PharmacyLogout() {
-  const router = useRouter()
-
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     try { localStorage.removeItem('yc_rx_notif_dismissed') } catch {}
     try { document.cookie = 'pending_pharmacy_id=; Max-Age=0; path=/' } catch {}
-    router.push('/pharmacy/login')
-    router.refresh()
+    // 하드 내비게이션 — 로그인과 동일 패턴. 소프트 이동(router.push)은 쿠키 삭제와 경쟁해
+    // 프록시가 잔여 세션을 보고 role null→'/home'(고객용)으로 튕길 수 있음.
+    window.location.href = '/pharmacy/login'
   }
 
   return (
