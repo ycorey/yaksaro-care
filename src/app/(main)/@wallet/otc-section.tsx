@@ -68,7 +68,7 @@ export default function OtcSection({
               <button
                 onClick={() => deleteMed(med.id)}
                 disabled={deletingId === med.id}
-                className="text-yc-neutral500 active:text-yc-error ml-1 text-lg leading-none disabled:opacity-50"
+                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-yc-neutral500 active:text-yc-error text-lg leading-none disabled:opacity-50"
                 aria-label={`${med.name} 삭제`}
               >
                 ×

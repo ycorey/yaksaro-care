@@ -97,7 +97,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
   return (
     <div className="relative">
       <button onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-yc-neutral100 active:bg-yc-neutral200 text-sm font-semibold text-yc-neutral700">
+        className="flex items-center gap-1.5 px-3.5 h-10 rounded-full bg-yc-neutral100 active:bg-yc-neutral200 text-sm font-semibold text-yc-neutral700">
         <Users weight="fill" size={15} className="text-yc-green700" />
         {active?.name ?? '본인'}
         <CaretDown size={13} weight="bold" className="text-yc-neutral400" />
@@ -113,7 +113,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                   <div className="flex items-center gap-2 px-3 py-2.5">
                     <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') renameMember(m.id) }}
-                      className="flex-1 min-w-0 px-2.5 h-9 rounded-yc-sm border border-yc-neutral200 text-sm focus:outline-none focus:border-yc-green600" />
+                      className="flex-1 min-w-0 px-2.5 h-11 rounded-yc-sm border border-yc-neutral200 text-sm focus:outline-none focus:border-yc-green600" />
                     <button onClick={() => renameMember(m.id)} disabled={busy} aria-label="저장"
                       className="w-12 h-12 flex items-center justify-center rounded-yc-sm bg-yc-green600 text-white active:bg-yc-green700 disabled:opacity-50">
                       <Check weight="bold" size={16} />
@@ -129,9 +129,9 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                     <span className="text-sm text-yc-neutral700">약·기록도 함께 삭제돼요. 삭제할까요?</span>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button onClick={() => deleteMember(m.id)} disabled={busy}
-                        className="px-3 h-9 rounded-yc-sm bg-yc-error text-white text-sm font-semibold active:opacity-90 disabled:opacity-50">삭제</button>
+                        className="px-3.5 h-11 rounded-yc-sm bg-yc-error text-white text-sm font-semibold active:opacity-90 disabled:opacity-50">삭제</button>
                       <button onClick={() => setConfirmDeleteId(null)}
-                        className="px-3 h-9 rounded-yc-sm bg-white border border-yc-neutral200 text-yc-neutral600 text-sm active:bg-yc-neutral100">취소</button>
+                        className="px-3.5 h-11 rounded-yc-sm bg-white border border-yc-neutral200 text-yc-neutral600 text-sm active:bg-yc-neutral100">취소</button>
                     </div>
                   </div>
                 ) : (

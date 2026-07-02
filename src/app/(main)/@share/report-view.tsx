@@ -108,11 +108,15 @@ export default function ReportView({
 
             {/* 복약 순응도 */}
             <section>
-              <p className="text-xs font-black text-yc-green700 uppercase tracking-[0.15em] mb-4">최근 {adherence.periodDays}일 복약 기록</p>
+              <p className="text-xs font-black text-yc-green700 uppercase tracking-[0.15em] mb-1.5">최근 {adherence.periodDays}일 복약 기록</p>
+              {/* 미기록 ≠ 미복약 — 의사가 실순응률로 오독하지 않도록 분모 성격을 명시 */}
+              <p className="text-xs text-yc-neutral500 mb-4">
+                앱에 직접 기록한 날 기준이에요. 기록하지 않은 날의 복약 여부는 포함되지 않아요.
+              </p>
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <Stat label="기록한 날" value={`${adherence.recordedDays}일`} />
+                <Stat label={`기록한 날 (${adherence.periodDays}일 중)`} value={`${adherence.recordedDays}일`} />
                 <Stat label="총 복약 체크" value={`${adherence.checkedSlots}회`} />
-                <Stat label="하루 평균" value={`${avgPerDay}회`} />
+                <Stat label="기록일 하루 평균" value={`${avgPerDay}회`} />
               </div>
               <div className="flex flex-wrap gap-1">
                 {adherence.perDay.map(d => (

@@ -61,8 +61,8 @@ export default function ShareClient({ meds, doctorData, adherence, memberName, g
               {rx.map(m => (
                 <div key={m.id} className="px-4 py-3 border-b border-yc-neutral100 last:border-0">
                   <p className="font-semibold text-yc-neutral900">{m.name}</p>
-                  {m.ingredient && <p className="text-xs text-yc-neutral500">({m.ingredient})</p>}
-                  {m.dosage && <p className="text-xs text-yc-neutral500 mt-0.5">{m.dosage}</p>}
+                  {m.ingredient && <p className="text-sm text-yc-neutral500">({m.ingredient})</p>}
+                  {m.dosage && <p className="text-sm text-yc-neutral500 mt-0.5">{m.dosage}</p>}
                 </div>
               ))}
             </div>
@@ -76,7 +76,7 @@ export default function ShareClient({ meds, doctorData, adherence, memberName, g
               {supp.map(m => (
                 <div key={m.id} className="px-4 py-3 border-b border-yc-neutral100 last:border-0">
                   <p className="font-semibold text-yc-neutral900">{m.name}</p>
-                  {m.dosage && <p className="text-xs text-yc-green600 mt-0.5">{m.dosage}</p>}
+                  {m.dosage && <p className="text-sm text-yc-green600 mt-0.5">{m.dosage}</p>}
                 </div>
               ))}
             </div>
@@ -90,7 +90,7 @@ export default function ShareClient({ meds, doctorData, adherence, memberName, g
               {otc.map(m => (
                 <div key={m.id} className="px-4 py-3 border-b border-yc-neutral100 last:border-0">
                   <p className="font-semibold text-yc-neutral900">{m.name}</p>
-                  {m.dosage && <p className="text-xs text-yc-neutral500 mt-0.5">{m.dosage}</p>}
+                  {m.dosage && <p className="text-sm text-yc-neutral500 mt-0.5">{m.dosage}</p>}
                 </div>
               ))}
             </div>

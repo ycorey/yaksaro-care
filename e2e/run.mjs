@@ -43,7 +43,7 @@ try {
   check('리포트 #yc-print-area 표시', await printArea.isVisible())
   check('리포트 헤더 "님의 복약 기록"', await page.getByText(/님의 복약 기록/).isVisible())
   check('최근 30일 순응도 섹션', await page.getByText('최근 30일 복약 기록').isVisible())
-  check('순응도 통계 "기록한 날"', await page.getByText('기록한 날', { exact: true }).isVisible())
+  check('순응도 통계 "기록한 날 (30일 중)"', await page.getByText(/기록한 날 \(\d+일 중\)/).isVisible())
   await shot(page, 'share-report.png')
 
   // 3) 인쇄 미디어 격리(:has) — 리포트에서만 격리, 타 페이지는 안 숨김

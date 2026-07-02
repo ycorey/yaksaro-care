@@ -87,7 +87,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요') : ' '}
         </h1>
         {memberLabel && (
-          <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
+          <p className="text-base font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
         )}
       </div>
 

@@ -81,11 +81,13 @@ export async function POST(request: Request) {
         drugRow = exact
       }
       if (!drugRow) {
-        const { data } = await supabase.from('drugs').select('id')
+        // 부분 일치는 후보가 유일할 때만 채택 — 동일계열·타함량 약을 무근거로
+        // 첫 행에 부착하는 오매칭 방지 (여러 건이면 custom_name으로 남기는 게 안전)
+        const { data: parts } = await supabase.from('drugs').select('id')
           .ilike('item_name', `%${m.name}%`)
           .eq('is_canceled', false)
-          .limit(1).maybeSingle()
-        drugRow = data
+          .limit(2)
+        if (parts && parts.length === 1) drugRow = parts[0]
       }
       const data = drugRow
 
