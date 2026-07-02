@@ -22,7 +22,8 @@ export default async function PharmacyHome() {
       .select('id, full_name')
       .eq('consent_pharmacist_view', true)
       .neq('id', user.id)
-      .order('full_name', { ascending: true }),
+      .order('full_name', { ascending: true })
+      .limit(200),
     supabase
       .from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, patient_id, member_id, reply_text, replied_at, patient_ack_at')

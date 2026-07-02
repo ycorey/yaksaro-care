@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { type Meal, ALL_MEALS, isMeal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
+import { applyMemberScope } from '@/lib/member'
 
 const TOTAL = ALL_MEALS.length // 4 (아침/점심/저녁/자기 전)
 
@@ -65,9 +66,7 @@ export async function GET(request: Request) {
     .lte('check_date', endDate)
     .order('logged_at', { ascending: true })
 
-  logsQuery = active.is_self
-    ? logsQuery.or(`member_id.eq.${active.id},member_id.is.null`)
-    : logsQuery.eq('member_id', active.id)
+  logsQuery = applyMemberScope(logsQuery, active)
 
   const { data, error } = await logsQuery
 

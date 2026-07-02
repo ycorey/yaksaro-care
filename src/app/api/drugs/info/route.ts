@@ -136,7 +136,8 @@ export async function GET(request: Request) {
       admin.from('drugs')
         .update({ image_url: lic.BIG_PRDT_IMG_URL })
         .eq('item_seq', String(lic.ITEM_SEQ))
-        .then(() => {})
+        .then(() => {}, () => {}) // 비동기 reject도 흡수 — try는 동기 throw만 잡는다
+
     } catch { /* 캐시는 best-effort */ }
   }
 
