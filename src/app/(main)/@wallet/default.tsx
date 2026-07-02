@@ -194,11 +194,11 @@ export default async function WalletPage() {
 
   return (
     <div className="space-y-8 pb-6">
-      <MemberSwitcher members={members} activeId={active.id} />
       <PharmacyToast />
 
       {/* ── 헤더 ── */}
       <AppHeader actions={<WalletHeaderActions />} />
+      <MemberSwitcher members={members} activeId={active.id} />
       <div className="flex items-center justify-between pt-1">
         <div>
           <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>
