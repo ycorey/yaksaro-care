@@ -295,7 +295,7 @@ export default function TodayTimeline({
                     <ul className="mt-1.5 space-y-1">
                       {s.names.map((n, ni) => (
                         <li key={ni} className="text-sm text-yc-neutral600 flex items-center gap-1.5 break-keep">
-                          <Pill weight="fill" size={11} className="text-yc-blue500/60 flex-shrink-0" /> {n}
+                          <Pill weight="fill" size={11} className="text-yc-neutral400 flex-shrink-0" /> {n}
                         </li>
                       ))}
                     </ul>
@@ -339,7 +339,7 @@ export default function TodayTimeline({
         </div>
       )}
 
-      <p className="text-xs text-yc-neutral500 text-center pb-36 leading-relaxed">
+      <p className="text-xs text-yc-neutral500 text-center pb-4 leading-relaxed">
         복약 정보 기록·참고 서비스 · 의학적 진단·처방을 대체하지 않습니다.
       </p>
 
