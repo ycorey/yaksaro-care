@@ -87,7 +87,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요') : ' '}
         </h1>
         {memberLabel && (
-          <p className="text-sm font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
+          <p className="text-base font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
         )}
       </div>
 
@@ -186,7 +186,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
               <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
               <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
             </div>
-            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+            <span className="flex items-center gap-1 px-3 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
               <PaperPlaneTilt size={16} weight="fill" /> 요청
             </span>
           </Link>
@@ -200,7 +200,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
               <p className="text-xs font-semibold text-yc-neutral500">단골약국</p>
               <p className="font-semibold text-yc-neutral900 truncate">{regularPharmacy.name}</p>
             </div>
-            <span className="flex items-center gap-1 px-3 h-9 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
+            <span className="flex items-center gap-1 px-3 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold flex-shrink-0">
               <Phone size={16} weight="fill" /> 전화
             </span>
           </a>

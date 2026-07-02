@@ -594,8 +594,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                   <span className="inline-flex items-center gap-1"><Pill weight="fill" size={13} /> 추출된 약품 목록 ({result.medicines.length}종)</span>
                 </p>
                 <button type="button" onClick={() => setProMode(o => !o)}
-                  className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${proMode ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'}`}>
-                  <Sliders weight="fill" size={12} /> 전문가 상세
+                  aria-pressed={proMode}
+                  className={`inline-flex items-center gap-1 min-h-[36px] text-xs font-semibold px-3 rounded-full transition-colors ${proMode ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200'}`}>
+                  <Sliders weight="fill" size={12} /> {proMode ? '성분명까지 표시 중' : '전문가 상세'}
                 </button>
               </div>
 

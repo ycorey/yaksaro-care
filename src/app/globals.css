@@ -321,6 +321,26 @@
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
 
+/* ── 복약 리포트 인쇄 / PDF 저장 격리 ──────────────────────────────────
+ * window.print() 호출 시 #yc-print-area 밖(앱 UI·탭바·오버레이)을 전부 숨기고
+ * 리포트만 A4에 흐르게 한다. .print\:hidden(=display:none)은 visibility보다 우선. */
+@media print {
+  /* 복약 리포트 인쇄 격리 — #yc-print-area가 존재하는 문서에서만(:has) 적용한다.
+   * 그래야 자체 print 스타일을 쓰는 다른 페이지(예: 약국 QR 포스터 인쇄)를 백지로
+   * 만들지 않는다. body * { visibility:hidden } 을 전역으로 두면 그 페이지가 잘림. */
+  body:has(#yc-print-area) * { visibility: hidden; }
+  body:has(#yc-print-area) #yc-print-area,
+  body:has(#yc-print-area) #yc-print-area * { visibility: visible; }
+  /* top/left/width만 고정하고 height는 콘텐츠 기반(auto) — 높이를 뷰포트에 묶으면
+   * Chrome이 여러 페이지 리포트를 1페이지로 자름. 여백은 @page(전역) 대신 컨테이너
+   * 패딩으로 줘서 다른 페이지의 인쇄 여백을 바꾸지 않는다. */
+  #yc-print-area {
+    position: absolute; top: 0; left: 0; width: 100%;
+    margin: 0; padding: 12mm; background: #fff;
+  }
+  #yc-print-area * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 /* ── PWA 런치 스플래시 ─────────────────────────────────────────────
  * 그린 화면 → ㄹ 마크가 선을 그리며 등장 → 워드마크 상승 → 전체 페이드아웃.
  * 네이티브 스플래시(manifest background/theme)에서 자연스럽게 이어진다. */

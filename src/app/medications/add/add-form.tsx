@@ -48,7 +48,7 @@ function ScheduleField({ type, dow, onType, onDow }: {
             return (
               <button key={i} type="button"
                 onClick={() => onDow(on ? dow.filter(d => d !== i) : [...dow, i])}
-                className={`h-11 rounded-yc-md text-sm font-semibold transition-colors ${on ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+                className={`h-12 rounded-yc-md text-sm font-semibold transition-colors ${on ? 'bg-yc-green600 text-white' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
                 {w}
               </button>
             )

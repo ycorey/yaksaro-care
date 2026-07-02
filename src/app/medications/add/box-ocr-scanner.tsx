@@ -206,7 +206,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
             </button>
 
             <button type="button" onClick={() => setPhase('form')}
-              className="text-sm text-yc-neutral500 underline mt-1">
+              className="min-h-[44px] w-full flex items-center justify-center text-sm font-medium text-yc-neutral600 underline mt-1 active:opacity-70">
               사진 없이 이름으로 검색
             </button>
           </>

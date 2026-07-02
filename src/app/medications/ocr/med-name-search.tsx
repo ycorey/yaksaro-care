@@ -60,7 +60,7 @@ export default function MedNameSearch({ initial = '', onPick, onCancel }: {
           onChange={e => setQuery(e.target.value)}
           autoFocus
           placeholder="정확한 약 이름으로 검색 (예: 타이레놀정500)"
-          className="w-full border border-yc-neutral300 rounded-yc-md pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-yc-green600"
+          className="w-full border border-yc-neutral300 rounded-yc-md pl-9 pr-3 py-3 text-sm focus:outline-none focus:border-yc-green600"
         />
         {loading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-yc-neutral400">검색 중…</span>}
       </div>

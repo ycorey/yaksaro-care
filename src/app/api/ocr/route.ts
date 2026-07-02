@@ -393,25 +393,30 @@ export async function POST(request: Request) {
   const names   = parsed.medicines.map(m => m.name)
   const maxDays = parsed.medicines.reduce((mx, m) => (m.days && m.days > mx ? m.days : mx), 0) || null
 
-  // 4. user_prescriptions에 저장 — 본인 행 insert이므로 user 토큰 + RLS로 충분
-  const { data: prescription } = await supabase
-    .from('user_prescriptions')
-    .insert({
-      user_id:           user.id,
-      member_id:         active.id,
-      raw_medicine_list: names,
-      duration_days:     maxDays,
-      pharmacy_name:     parsed.pharmacy_name,
-      hospital_name:     parsed.hospital_name,
-      institution_code:  parsed.institution_code,
-      department:        parsed.department,
-      prescribed_at:     new Date().toISOString().split('T')[0],
-    })
-    .select('id')
-    .single()
+  // 4. user_prescriptions에 저장 — 본인 행 insert이므로 user 토큰 + RLS로 충분.
+  // 0건 추출(하드실패 포함)이면 행을 만들지 않는다 — UI가 재촬영만 안내하므로 orphan 처방행 방지.
+  let prescriptionId: string | null = null
+  if (parsed.medicines.length > 0) {
+    const { data: prescription } = await supabase
+      .from('user_prescriptions')
+      .insert({
+        user_id:           user.id,
+        member_id:         active.id,
+        raw_medicine_list: names,
+        duration_days:     maxDays,
+        pharmacy_name:     parsed.pharmacy_name,
+        hospital_name:     parsed.hospital_name,
+        institution_code:  parsed.institution_code,
+        department:        parsed.department,
+        prescribed_at:     new Date().toISOString().split('T')[0],
+      })
+      .select('id')
+      .single()
+    prescriptionId = prescription?.id ?? null
+  }
 
   return NextResponse.json({
-    prescription_id: prescription?.id ?? null,
+    prescription_id: prescriptionId,
     medicines:       parsed.medicines,
     pharmacy_name:   parsed.pharmacy_name,
   })
