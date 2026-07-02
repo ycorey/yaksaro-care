@@ -54,10 +54,33 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
     for (const t of TABS) router.prefetch(t)
   }, [router])
 
+  // 최초 1회 스와이프 힌트 — 트랙을 살짝 밀었다 되돌려 "옆으로 넘길 수 있음"을 알린다.
+  // 터치 기기에서만, localStorage 플래그로 재노출 방지. 키프레임이 translateX(0) 기준이라 index 0에서만.
+  const [hint, setHint] = useState(false)
+  useEffect(() => {
+    let showId: ReturnType<typeof setTimeout> | undefined
+    let hideId: ReturnType<typeof setTimeout> | undefined
+    try {
+      if (!window.matchMedia('(pointer: coarse)').matches) return
+      if (localStorage.getItem('yc_swipe_hint')) return
+      localStorage.setItem('yc_swipe_hint', '1')
+      showId = setTimeout(() => setHint(true), 400)
+      hideId = setTimeout(() => setHint(false), 2200)
+    } catch { /* localStorage 접근 불가(시크릿 등) — 힌트 생략 */ }
+    return () => { clearTimeout(showId); clearTimeout(hideId) }
+  }, [])
+
+  // 좌측 엣지는 브라우저 뒤로가기 스와이프에 양보 (iOS 엣지 제스처 충돌 방지)
+  const EDGE_DEADZONE = 24
+
   function onTouchStart(e: React.TouchEvent) {
+    if (hint) setHint(false) // 힌트 재생 중 터치 → 즉시 원위치
     if (e.touches.length !== 1) { gesture.current = null; return }
-    const w = viewportRef.current?.clientWidth ?? window.innerWidth
     const t = e.touches[0]
+    if (t.clientX < EDGE_DEADZONE) { gesture.current = null; return }
+    // 가로 스크롤 UI(칩 슬라이더 등)는 data-pager-ignore 조상 지정으로 페이저 제스처에서 제외
+    if ((e.target as HTMLElement).closest?.('[data-pager-ignore]')) { gesture.current = null; return }
+    const w = viewportRef.current?.clientWidth ?? window.innerWidth
     gesture.current = { x: t.clientX, y: t.clientY, w, axis: null, lastX: t.clientX, lastT: Date.now(), vx: 0 }
   }
 
@@ -127,7 +150,7 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="flex h-full" style={trackStyle}>
+      <div className={`flex h-full ${hint && displayIndex === 0 && !dragging ? 'anim-swipe-hint' : ''}`} style={trackStyle}>
         {panels.map((panel, i) => (
           <div
             key={TABS[i]}
@@ -136,6 +159,22 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
           >
             <div className="max-w-[430px] mx-auto px-4 pt-5 pb-28">{panel}</div>
           </div>
+        ))}
+      </div>
+
+      {/* 페이지 도트 — 현재 위치 + "옆으로 넘길 수 있음" 표시(장식). 조작은 하단 탭바가 담당 */}
+      <div
+        aria-hidden
+        className="md:hidden pointer-events-none fixed left-0 right-0 z-40 flex justify-center gap-1.5"
+        style={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+      >
+        {TABS.map((t, i) => (
+          <span
+            key={t}
+            className={`rounded-full transition-colors duration-300 ${
+              i === displayIndex ? 'w-4 h-1.5 bg-yc-green600' : 'w-1.5 h-1.5 bg-yc-neutral300'
+            }`}
+          />
         ))}
       </div>
     </div>

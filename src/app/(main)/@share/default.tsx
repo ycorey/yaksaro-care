@@ -4,6 +4,7 @@ import ShareClient from './share-client'
 import type { DoctorData } from './doctor-view'
 import type { AdherenceSummary } from './report-view'
 import { getActiveMember } from '@/lib/active-member'
+import { applyMemberScope } from '@/lib/member'
 import { isMeal } from '@/lib/meal-slots'
 import MemberSwitcher from '@/components/member-switcher'
 
@@ -71,9 +72,7 @@ export default async function SharePage() {
     .gte('check_date', utcDate(startMs))
     .lte('check_date', utcDate(endMs))
     .order('logged_at', { ascending: true })
-  logQ = active.is_self
-    ? logQ.or(`member_id.eq.${active.id},member_id.is.null`)
-    : logQ.eq('member_id', active.id)
+  logQ = applyMemberScope(logQ, active)
   const { data: logs } = await logQ
 
   // 로그는 append-only → (날짜, meal)별 최신 상태로 압축(logged_at 오름차순이라 나중 행이 최신)

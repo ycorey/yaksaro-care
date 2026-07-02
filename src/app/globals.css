@@ -299,6 +299,14 @@
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* 탭 페이저 첫 진입 힌트 — 트랙을 살짝 밀었다 되돌려 "옆으로 넘김"을 알림.
+ * 0%·100%가 translateX(0)이라 첫 탭(index 0)에서만 적용해야 트랙 위치와 충돌하지 않는다. */
+@keyframes ycSwipeHint {
+  0%   { transform: translateX(0); }
+  35%  { transform: translateX(-10px); }
+  55%  { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
+}
 
 /* 화면 전환 3종: backwards fill — 애니메이션 종료 후 transform을 남기지 않아야
  * 하위 position:fixed(하단 탭바 등)가 뷰포트 기준으로 고정된다. (both는 transform 잔류)
@@ -316,6 +324,7 @@
 .anim-scan          { animation: ycScan         1.6s  ease-in-out infinite; }
 .anim-check-pop     { animation: ycCheckPop     600ms ease; }
 .anim-checked-flash { animation: ycCheckedFlash 360ms ease both; }
+.anim-swipe-hint    { animation: ycSwipeHint    800ms cubic-bezier(0.4,0,0.2,1) 700ms backwards; }
 
 /* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
