@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Pill, Warning, Phone, Plus } from '@phosphor-icons/react'
+import { Pill, Warning, Phone, Plus, X } from '@phosphor-icons/react'
 import { type MedCard } from './prescription-section'
 
 export default function OtcSection({
@@ -68,10 +68,10 @@ export default function OtcSection({
               <button
                 onClick={() => deleteMed(med.id)}
                 disabled={deletingId === med.id}
-                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-yc-neutral500 active:text-yc-error text-lg leading-none disabled:opacity-50"
+                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-yc-neutral500 active:text-yc-error disabled:opacity-50"
                 aria-label={`${med.name} 삭제`}
               >
-                ×
+                <X size={16} />
               </button>
             </div>
           ))}

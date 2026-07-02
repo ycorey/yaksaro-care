@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import AppHeader from '@/components/app-header'
 import MemberSwitcher from '@/components/member-switcher'
 import type { Member } from '@/lib/member'
-import { CalendarBlank, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
+import { CalendarBlank, CaretLeft, CaretRight, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
 
 type DayStatus = 'full' | 'partial' | 'miss'
 type DaySummary = { done: number; status: DayStatus }
@@ -118,7 +118,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
             aria-label="이전 달"
             className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
           >
-            ‹
+            <CaretLeft weight="bold" size={18} />
           </button>
           <span className="font-semibold text-base text-yc-neutral900">
             {year}년 {month}월
@@ -129,7 +129,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
             aria-label="다음 달"
             className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
           >
-            ›
+            <CaretRight weight="bold" size={18} />
           </button>
         </div>
 
@@ -258,7 +258,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
         </div>
       )}
 
-      <div className="pb-36" />
+      <div className="pb-4" />
     </div>
   )
 }
