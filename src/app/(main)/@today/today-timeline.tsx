@@ -264,10 +264,10 @@ export default function TodayTimeline({
                 } ${isNext ? 'border-l-4 border-yc-green600 bg-yc-green50/40' : ''}`}
                 style={{ animationDelay: `${i * 80}ms` }}
               >
-                {/* 시간 라벨 — 무채 텍스트만 (강조는 '다음' 슬롯 그린 한 곳) */}
-                <div className="w-12 shrink-0 pt-0.5">
-                  <p className="text-xs text-yc-neutral500 leading-tight">{s.time}</p>
-                  <p className="text-sm font-bold text-yc-neutral700 mt-0.5">{s.label}</p>
+                {/* 시간 라벨 — 무채 텍스트만 (강조는 '다음' 슬롯 그린 한 곳). 핵심 시간 정보라 실버 기준 상향 */}
+                <div className="w-14 shrink-0 pt-0.5">
+                  <p className="text-sm text-yc-neutral500 leading-tight">{s.time}</p>
+                  <p className="text-base font-bold text-yc-neutral700 mt-0.5">{s.label}</p>
                 </div>
 
                 {/* 타임라인 노드 — 완료=green 채움, 다음=흰+green 보더+글로우, 대기=neutral200 */}

@@ -4,6 +4,7 @@ import type React from 'react'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/app-header'
 import MemberSwitcher from '@/components/member-switcher'
+import MemberContextBar from '@/components/member-context-bar'
 import type { Member } from '@/lib/member'
 import { CalendarBlank, CaretLeft, CaretRight, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
 
@@ -41,6 +42,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
   const loading = loadedKey !== monthKey
 
   const todayStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
+  const activeMember = members.find(m => m.id === activeId)
 
   useEffect(() => {
     let active = true
@@ -108,6 +110,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
     <div className="space-y-6">
       <AppHeader />
       <MemberSwitcher members={members} activeId={activeId} />
+      {activeMember && <MemberContextBar active={activeMember} />}
       <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더</h1>
 
       {/* 월 네비게이션 */}
