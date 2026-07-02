@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import { useNowMinute } from '@/lib/use-now'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
@@ -58,9 +58,11 @@ function fmtElapsed(minutes: number): string {
 export default function TodayTimeline({
   initialSlots,
   hasMeds,
+  memberSwitcher,
 }: {
   initialSlots: SlotState[]
   hasMeds: boolean
+  memberSwitcher?: ReactNode
 }) {
   const router = useRouter()
   const [slots, setSlots] = useState<SlotState[]>(initialSlots)
@@ -203,6 +205,7 @@ export default function TodayTimeline({
   return (
     <div className="space-y-6">
       <AppHeader />
+      {memberSwitcher}
       <h1 className="font-display text-2xl text-yc-neutral900">오늘 복약</h1>
 
       {/* 지연 알림 배너 (기능상 유지) */}
@@ -314,7 +317,7 @@ export default function TodayTimeline({
                       className={`mt-2 font-semibold text-sm px-4 rounded-yc-md min-h-[52px] w-full sm:w-auto sm:px-6 transition-colors ${
                         isNext
                           ? 'bg-yc-green600 text-white active:bg-yc-green700'
-                          : 'border border-yc-neutral200 text-yc-neutral600 active:bg-yc-neutral50'
+                          : 'border border-yc-neutral300 text-yc-neutral700 active:bg-yc-neutral50'
                       }`}
                     >
                       지금 먹기

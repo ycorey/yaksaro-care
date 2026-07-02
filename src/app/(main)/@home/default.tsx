@@ -78,8 +78,8 @@ export default async function HomePage() {
 
   return (
     <div>
-      <MemberSwitcher members={members} activeId={active.id} />
       <HomeClient
+        memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
         medCount={meds?.length ?? 0}
         doneMeals={doneMeals}
         totalSlots={activeSlotKeys.length}

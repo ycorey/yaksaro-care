@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Wallet, Heart, CalendarBlank, PaperPlaneTilt, GearSix, Check, Storefront, Phone, type Icon } from '@phosphor-icons/react'
 import AppHeader from '@/components/app-header'
@@ -56,9 +57,10 @@ interface Props {
   lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
   refillHook?:    { label: string; dDay: number; count: number } | null
   regularPharmacy?: { name: string | null; phone: string | null; isB2B?: boolean }
+  memberSwitcher?:  ReactNode
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook, regularPharmacy }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook, regularPharmacy, memberSwitcher }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
   const now = useNowMinute()
 
@@ -79,6 +81,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
           </Link>
         }
       />
+      {memberSwitcher}
 
       {/* 날짜 + 인사말 */}
       <div>

@@ -104,8 +104,8 @@ export default async function SharePage() {
 
   return (
     <div>
-      <MemberSwitcher members={members} activeId={active.id} />
       <ShareClient
+        memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
         meds={items}
         doctorData={doctorData}
         adherence={adherence}

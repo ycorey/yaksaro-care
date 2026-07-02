@@ -7,13 +7,15 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  const body = await request.json().catch(() => ({})) as { name?: string; relation?: string | null }
+  const body = await request.json().catch(() => ({})) as { name?: string; relation?: string | null; consent?: boolean }
   const name = (body.name ?? '').trim()
   if (!name) return NextResponse.json({ error: '이름이 필요해요' }, { status: 400 })
+  // 가족(제3자) 건강정보 저장은 동의 확인 필수 — 시각은 서버가 기록(감사 근거)
+  if (body.consent !== true) return NextResponse.json({ error: '동의 확인이 필요해요' }, { status: 400 })
 
   const { data, error } = await supabase
     .from('members')
-    .insert({ owner_id: user.id, name, relation: body.relation?.toString().trim() || null, is_self: false })
+    .insert({ owner_id: user.id, name, relation: body.relation?.toString().trim() || null, is_self: false, consent_at: new Date().toISOString() })
     .select('id, name, relation, is_self')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -394,6 +394,7 @@ export type Database = {
       }
       members: {
         Row: {
+          consent_at: string | null
           created_at: string | null
           id: string
           is_self: boolean
@@ -402,6 +403,7 @@ export type Database = {
           relation: string | null
         }
         Insert: {
+          consent_at?: string | null
           created_at?: string | null
           id?: string
           is_self?: boolean
@@ -410,6 +412,7 @@ export type Database = {
           relation?: string | null
         }
         Update: {
+          consent_at?: string | null
           created_at?: string | null
           id?: string
           is_self?: boolean

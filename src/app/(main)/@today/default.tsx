@@ -94,9 +94,10 @@ export default async function TodayPage() {
     }))
 
   return (
-    <div>
-      <MemberSwitcher members={members} activeId={active.id} />
-      <TodayTimeline initialSlots={slots} hasMeds={medTotal > 0} />
-    </div>
+    <TodayTimeline
+      initialSlots={slots}
+      hasMeds={medTotal > 0}
+      memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
+    />
   )
 }

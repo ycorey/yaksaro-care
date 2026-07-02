@@ -3,6 +3,8 @@
 import type React from 'react'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/app-header'
+import MemberSwitcher from '@/components/member-switcher'
+import type { Member } from '@/lib/member'
 import { CalendarBlank, Fire, HandsClapping, Lightning, Leaf, Heart } from '@phosphor-icons/react'
 
 type DayStatus = 'full' | 'partial' | 'miss'
@@ -28,14 +30,14 @@ function StatusDot({ status }: { status: DayStatus | undefined }) {
   return <span className="block w-1.5 h-1.5 rounded-full border border-yc-neutral300" />
 }
 
-export default function CalendarClient() {
+export default function CalendarClient({ members, activeId }: { members: Member[]; activeId: string }) {
   const now = new Date()
   const [year, setYear]   = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [data, setData]   = useState<CalendarData | null>(null)
-  // 로딩은 파생값 — "마지막으로 적재 완료한 연-월"과 현재 연-월이 다르면 로딩 중
+  // 로딩은 파생값 — "마지막으로 적재 완료한 멤버·연-월"과 현재 값이 다르면 로딩 중
   const [loadedKey, setLoadedKey] = useState('')
-  const monthKey = `${year}-${month}`
+  const monthKey = `${activeId}:${year}-${month}`
   const loading = loadedKey !== monthKey
 
   const todayStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
@@ -47,11 +49,11 @@ export default function CalendarClient() {
         const res = await fetch(`/api/calendar?year=${year}&month=${month}`)
         if (active && res.ok) setData(await res.json())
       } finally {
-        if (active) setLoadedKey(`${year}-${month}`)
+        if (active) setLoadedKey(`${activeId}:${year}-${month}`)
       }
     })()
     return () => { active = false }
-  }, [year, month])
+  }, [year, month, activeId])
 
   function prev() {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
@@ -105,6 +107,7 @@ export default function CalendarClient() {
   return (
     <div className="space-y-6">
       <AppHeader />
+      <MemberSwitcher members={members} activeId={activeId} />
       <h1 className="font-display text-2xl text-yc-neutral900">복약 캘린더</h1>
 
       {/* 월 네비게이션 */}

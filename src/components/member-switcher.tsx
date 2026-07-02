@@ -39,7 +39,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
     try {
       const res = await fetch('/api/members', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, relation: newRelation.trim() || null }),
+        body: JSON.stringify({ name, relation: newRelation.trim() || null, consent }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
