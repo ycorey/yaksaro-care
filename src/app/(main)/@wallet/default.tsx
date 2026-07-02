@@ -12,6 +12,7 @@ import SupplementSection from './supplement-section'
 import OtcSection from './otc-section'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import MemberContextBar from '@/components/member-context-bar'
 import LifestyleSection from './lifestyle-section'
 import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
@@ -199,6 +200,7 @@ export default async function WalletPage() {
       {/* ── 헤더 ── */}
       <AppHeader actions={<WalletHeaderActions />} />
       <MemberSwitcher members={members} activeId={active.id} />
+      <MemberContextBar active={active} />
       <div className="flex items-center justify-between pt-1">
         <div>
           <h1 className="font-display text-2xl text-yc-neutral900">내 약지갑</h1>

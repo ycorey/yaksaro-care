@@ -5,6 +5,7 @@ import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import MemberContextBar from '@/components/member-context-bar'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -97,7 +98,7 @@ export default async function TodayPage() {
     <TodayTimeline
       initialSlots={slots}
       hasMeds={medTotal > 0}
-      memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
+      memberSwitcher={<><MemberSwitcher members={members} activeId={active.id} /><MemberContextBar active={active} /></>}
     />
   )
 }

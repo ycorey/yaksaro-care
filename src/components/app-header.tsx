@@ -11,6 +11,7 @@ export default function AppHeader({ actions }: { actions?: React.ReactNode }) {
         <img
           src="/brand-assets/logo-wordmark.svg"
           alt="약사로"
+          decoding="async"
           style={{ height: '32px', width: 'auto' }}
         />
       </Link>

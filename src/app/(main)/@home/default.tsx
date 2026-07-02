@@ -5,6 +5,7 @@ import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
+import MemberContextBar from '@/components/member-context-bar'
 import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import { computeRefillSoon } from '@/lib/refill'
@@ -79,7 +80,7 @@ export default async function HomePage() {
   return (
     <div>
       <HomeClient
-        memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
+        memberSwitcher={<><MemberSwitcher members={members} activeId={active.id} /><MemberContextBar active={active} /></>}
         medCount={meds?.length ?? 0}
         doneMeals={doneMeals}
         totalSlots={activeSlotKeys.length}

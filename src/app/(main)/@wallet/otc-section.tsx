@@ -61,7 +61,7 @@ export default function OtcSection({
                 <Warning weight="fill" size={14} className="text-yc-warning flex-shrink-0" />
               )}
               <Pill weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0" />
-              <span className="text-sm font-medium text-yc-neutral600 max-w-[140px] truncate">{med.name}</span>
+              <span className="text-base font-medium text-yc-neutral600 max-w-[170px] truncate">{med.name}</span>
               {med.scheduleLabel && (
                 <span className="text-xs font-semibold text-yc-green700 bg-yc-green50 rounded-full px-1.5 py-0.5 flex-shrink-0">{med.scheduleLabel}</span>
               )}

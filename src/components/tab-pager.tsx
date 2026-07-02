@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
  *  · displayIndex로 트랙 위치를 관리 → 드래그/스냅/탭클릭(URL변화)이 매끄럽게 합쳐진다.
  */
 const TABS = ['/home', '/wallet', '/today', '/calendar', '/share'] as const
+const TAB_LABELS = ['홈', '약지갑', '오늘복약', '캘린더', '전달'] as const
 
 function indexOf(pathname: string): number {
   const i = TABS.findIndex(t => pathname === t || pathname.startsWith(t + '/'))
@@ -162,19 +163,27 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
         ))}
       </div>
 
-      {/* 페이지 도트 — 현재 위치 + "옆으로 넘길 수 있음" 표시(장식). 조작은 하단 탭바가 담당 */}
+      {/* 페이지 도트 — 현재 위치 + "옆으로 넘길 수 있음" 표시. 눌러도 이동하도록 최소 핸들러 부여
+          (실버가 페이지네이션 컨트롤로 오인해 탭했을 때 무반응이면 "고장"으로 읽힘 — 7차 M1) */}
       <div
-        aria-hidden
-        className="md:hidden pointer-events-none fixed left-0 right-0 z-40 flex justify-center gap-1.5"
-        style={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+        className="md:hidden fixed left-0 right-0 z-40 flex justify-center"
+        style={{ bottom: 'calc(70px + env(safe-area-inset-bottom))' }}
       >
         {TABS.map((t, i) => (
-          <span
+          <button
             key={t}
-            className={`rounded-full transition-colors duration-300 ${
-              i === displayIndex ? 'w-4 h-1.5 bg-yc-green600' : 'w-1.5 h-1.5 bg-yc-neutral300'
-            }`}
-          />
+            type="button"
+            onClick={() => { if (i !== displayIndex) { setDisplayIndex(i); router.push(t) } }}
+            aria-label={`${TAB_LABELS[i]} 탭으로 이동`}
+            aria-current={i === displayIndex ? 'page' : undefined}
+            className="p-2 flex items-center justify-center"
+          >
+            <span
+              className={`rounded-full transition-colors duration-300 ${
+                i === displayIndex ? 'w-4 h-1.5 bg-yc-green600' : 'w-1.5 h-1.5 bg-yc-neutral300'
+              }`}
+            />
+          </button>
         ))}
       </div>
     </div>

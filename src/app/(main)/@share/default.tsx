@@ -7,6 +7,7 @@ import { getActiveMember } from '@/lib/active-member'
 import { applyMemberScope } from '@/lib/member'
 import { isMeal } from '@/lib/meal-slots'
 import MemberSwitcher from '@/components/member-switcher'
+import MemberContextBar from '@/components/member-context-bar'
 
 export default async function SharePage() {
   const supabase = await createClient()
@@ -104,7 +105,7 @@ export default async function SharePage() {
   return (
     <div>
       <ShareClient
-        memberSwitcher={<MemberSwitcher members={members} activeId={active.id} />}
+        memberSwitcher={<><MemberSwitcher members={members} activeId={active.id} /><MemberContextBar active={active} /></>}
         meds={items}
         doctorData={doctorData}
         adherence={adherence}
