@@ -1,4 +1,5 @@
-import { isMeal } from './meal-slots.ts'
+// 유효 끼니 키 (meal-slots.ts의 Meal과 동일 — 무의존 로딩 위해 로컬 정의)
+const VALID_MEALS = new Set(['morning', 'afternoon', 'evening', 'bedtime'])
 
 export type AdherenceSummary = {
   periodDays:   number
@@ -21,7 +22,7 @@ export function summarizeAdherence(
 
   const latestByDayMeal = new Map<string, Map<string, boolean>>()
   for (const row of logs) {
-    if (!isMeal(row.meal_time)) continue
+    if (!VALID_MEALS.has(row.meal_time)) continue
     let mm = latestByDayMeal.get(row.check_date)
     if (!mm) { mm = new Map(); latestByDayMeal.set(row.check_date, mm) }
     mm.set(row.meal_time, row.is_checked)
