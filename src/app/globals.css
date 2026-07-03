@@ -240,6 +240,23 @@
   }
 }
 
+/* ── 탭 반응성: 모든 버튼/링크 즉시 눌림 피드백 (모바일 "눌렸는지 모름" 개선) ──
+ * 커스텀 button/onClick 요소엔 OS 눌림표시가 없어 무반응처럼 느껴진다.
+ *  · touch-action: manipulation → 탭 지연(≈300ms) 제거로 반응 빨라짐
+ *  · -webkit-tap-highlight-color: transparent → 회색 깜빡임 제거 후 아래 :active로 통일
+ *  · button/a/[role=button] :active 기본 눌림(낮은 특이도 → 개별 디자인 active 클래스가 우선,
+ *    active 없는 버튼에만 기본 피드백을 채운다) */
+button, a, [role="button"], summary, label,
+input[type="checkbox"], input[type="radio"], select {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button:active,
+a[href]:active,
+[role="button"]:active {
+  opacity: 0.68;
+}
+
 /* ── 핸드오프 전환·이벤트 애니메이션 ────────────────────────────────── */
 @keyframes ycSlideFwd {
   from { transform: translateX(20px);  opacity: 0; }
@@ -312,10 +329,10 @@
  * 하위 position:fixed(하단 탭바 등)가 뷰포트 기준으로 고정된다. (both는 transform 잔류)
  * will-change로 합성 레이어 승격 → 슬라이드/페이드를 부드럽게(GPU). */
 .anim-fwd           { animation: ycSlideFwd     240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
-.anim-page          { animation: ycPageIn       240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
+.anim-page          { animation: ycPageIn       180ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
 .anim-back          { animation: ycSlideBack    240ms cubic-bezier(0.16,0.84,0.30,1) backwards; will-change: transform, opacity; }
 .anim-fade          { animation: ycFadeScreen   260ms ease both; }
-.anim-scale-in      { animation: ycScaleIn      300ms cubic-bezier(0.16,1,0.3,1)   backwards; will-change: transform, opacity; }
+.anim-scale-in      { animation: ycScaleIn      210ms cubic-bezier(0.16,1,0.3,1)   backwards; will-change: transform, opacity; }
 .anim-sheet-in      { animation: ycSheetIn      420ms cubic-bezier(0.32,0.72,0,1) backwards; will-change: transform, opacity; }
 .anim-sheet-out     { animation: ycSheetOut     260ms cubic-bezier(0.4,0,1,1)     forwards;  will-change: transform, opacity; }
 .anim-expand        { animation: ycExpandIn      200ms cubic-bezier(0.16,1,0.3,1) backwards; }
