@@ -169,6 +169,7 @@ export default function PharmacyRequestInbox({ initial, today }: { initial: Inbo
                         <p className="text-xs text-yc-neutral400 text-right">{(replyDraft[r.id] ?? '').length}/300</p>
                         <button onClick={() => sendReply(r.id)} disabled={replying === r.id || !(replyDraft[r.id] ?? '').trim()}
                           className="min-h-[48px] px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">답 보내기</button>
+                        <p className="text-xs text-yc-neutral400">예약·물류 안내용 — 복약 상담은 전화·대면으로</p>
                       </div>
                     )}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
