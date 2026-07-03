@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LandingClient from './landing-client'
+
+// 로그아웃 시 루트는 마케팅 랜딩을 렌더 → 중복 방지 위해 마케팅 도메인(yaksaro.co.kr)으로 canonical.
+// SEO 권위는 랜딩이 전담, care는 앱+공유링크 중심.
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://yaksaro.co.kr' },
+}
 
 export default async function LandingPage({
   searchParams,
