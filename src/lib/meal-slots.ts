@@ -29,3 +29,12 @@ export function defaultMealKeys(dosesPerDay: number): Meal[] {
   if (dosesPerDay === 2) return ['morning', 'evening']
   return ['morning', 'afternoon', 'evening']
 }
+
+// 이 약이 실제 배정되는 끼니(홈/오늘/알림 공용 SSOT).
+// meal_times가 있으면 유효한 Meal만, 없으면 복용횟수 기반 기본 슬롯으로 폴백.
+export function effectiveMealSlots(
+  med: { meal_times?: string[] | null; doses_per_day?: number | null },
+): Meal[] {
+  const explicit = (med.meal_times ?? []).filter(isMeal)
+  return explicit.length > 0 ? explicit : defaultMealKeys(med.doses_per_day ?? 0)
+}
