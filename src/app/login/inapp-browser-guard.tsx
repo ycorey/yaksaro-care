@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { ClipboardText, Globe } from '@phosphor-icons/react'
 
-// 카카오톡·네이버·인스타·페북·라인·다음 등 인앱 브라우저(WebView) 시그니처
-const INAPP_RE = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|DaumApps|everytimeApp|kakaostory|; wv\)/i
+// 카카오톡·네이버·인스타·페북·라인·다음·밴드 등 인앱 브라우저(WebView) 시그니처.
+// 마지막 `;\s?wv`는 안드로이드 WebView 범용 마커(정식 크롬/삼성인터넷엔 없음) — 신규·기타
+// 국내앱 인앱브라우저까지 폭넓게 잡는다. 구글은 웹뷰 OAuth를 disallowed_useragent로 차단하므로
+// 카카오·구글 양쪽 로그인 실패를 막으려면 감지 폭을 넓히는 게 핵심.
+const INAPP_RE = /KAKAOTALK|kakaostory|NAVER|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|DaumApps|everytimeApp|BAND\/|Snapchat|TikTok|musical_ly|Twitter|Whale\/.*inapp|;\s?wv/i
 
 export default function InAppBrowserGuard() {
   const [blocked, setBlocked] = useState(false)

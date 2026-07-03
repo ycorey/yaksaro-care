@@ -38,7 +38,7 @@ function LoginContent() {
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
 
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   const errorMsg = errorCode === 'auth_callback_failed'
     ? '로그인 중 문제가 발생했습니다. 다시 시도해주세요.'
@@ -58,10 +58,19 @@ function LoginContent() {
       .find(c => c.startsWith('pending_pharmacy_id='))
       ?.split('=')[1] ?? null
 
+    // QR 매핑 이중 안전장치:
+    //  · store_id: pending 쿠키의 약국 UUID (쿠키가 살아있으면 콜백이 즉시 매핑)
+    //  · next: /login?redirect=/store/:id 의 redirect 값 → 인앱→외부 브라우저 전환 시
+    //    쿠키는 승계 안 되지만 URL은 승계되므로, 콜백이 /store/:id로 재진입해 로그인 상태로 매핑
+    const redirectParam = searchParams.get('redirect')
+    const safeNext = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam : null
+
     const callbackBase = `${window.location.origin}/auth/callback`
-    const redirectTo   = pendingPharmacyId
-      ? `${callbackBase}?store_id=${encodeURIComponent(pendingPharmacyId)}`
-      : callbackBase
+    const qp = new URLSearchParams()
+    if (pendingPharmacyId) qp.set('store_id', pendingPharmacyId)
+    if (safeNext) qp.set('next', safeNext)
+    const redirectTo = qp.toString() ? `${callbackBase}?${qp.toString()}` : callbackBase
 
     // 카카오는 비즈니스 인증 없이 account_email scope 요청 시 KOE205 에러
     // profile만 요청하고 이메일 없이 로그인 허용
@@ -184,7 +193,7 @@ function LoginContent() {
 // Suspense로 감싸야 useSearchParams()가 동작한다 (Next.js App Router 필수)
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div className="min-h-screen bg-yc-pageBg" />}>
       <LoginContent />
     </Suspense>
   )
