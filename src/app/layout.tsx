@@ -8,6 +8,7 @@ import { PhosphorProvider } from '@/components/providers/phosphor-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://care.yaksaro.co.kr'),
   applicationName: '약사로케어',
   title: '약사로케어',
   description: '내 약을 한 곳에 담아두는 디지털 약 지갑',
@@ -27,8 +28,21 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
-  verification: {
-    other: { 'naver-site-verification': '7edb341d97aadc0bb2d2c07170822768fc4b997b' },
+  // 공유(카톡·SNS) 링크 프리뷰 — 랜딩과 동일 브랜드 OG 이미지(care로 복사 보유)
+  openGraph: {
+    type: 'website',
+    siteName: '약사로케어',
+    title: '약사로케어 — 디지털 약 지갑',
+    description: '내 약을 한 곳에 담아두는 디지털 약 지갑',
+    url: 'https://care.yaksaro.co.kr',
+    locale: 'ko_KR',
+    images: [{ url: '/og/og-home.png', width: 1200, height: 630, alt: '약사로케어 — 디지털 약 지갑' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '약사로케어 — 디지털 약 지갑',
+    description: '내 약을 한 곳에 담아두는 디지털 약 지갑',
+    images: ['/og/og-home.png'],
   },
 }
 
