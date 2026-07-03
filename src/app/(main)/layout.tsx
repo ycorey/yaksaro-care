@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DashboardNav from '@/components/dashboard/nav'
 import TabPager from '@/components/tab-pager'
+import PharmacyLinkFinalizer from './pharmacy-link-finalizer'
 
 // 탭 5종(/home /wallet /today /calendar /share)을 병렬 슬롯으로 동시 마운트하고,
 // TabPager가 가로 트랙을 손가락 따라 밀어 "한 장처럼" 넘긴다.
@@ -29,6 +30,7 @@ export default async function MainLayout({
 
   return (
     <div className="bg-[#EFEBE2]">
+      <PharmacyLinkFinalizer />
       <DashboardNav user={user} profile={profile} />
       <main>
         <TabPager home={home} wallet={wallet} today={today} calendar={calendar} share={share} />

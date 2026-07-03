@@ -99,6 +99,22 @@ try {
   check('교환 실패 시 3xx로 안전 처리', t5.status >= 300 && t5.status < 400, `status=${t5.status}`)
   check('로그인 에러로 유도(500 아님)', t5.location.includes('/login'), t5.location)
 
+  // ── T7: 마무리 링크 API(/api/profile/link-store) — localStorage 안전망 경로 ──
+  // OAuth 왕복에서 쿠키·URL 파라미터가 모두 유실돼도, 로그인 후 store_id로 확실히 연결.
+  console.log('\n[T7] 마무리 링크 API (쿠키/파라미터 유실 대비 안전망)')
+  await admin.from('profiles').update({ regular_pharmacy_id: null }).eq('id', uid)
+  {
+    const res = await fetch(BASE + '/api/profile/link-store', {
+      method: 'POST',
+      headers: { cookie: cookieHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ store: storeId }),
+    })
+    const data = await res.json().catch(() => ({}))
+    check('link-store → linked:true + 약국명 반환', data?.linked === true && !!data?.name, JSON.stringify(data))
+    const { data: prof2 } = await admin.from('profiles').select('regular_pharmacy_id').eq('id', uid).maybeSingle()
+    check('link-store 후 DB regular_pharmacy_id 세팅됨', prof2?.regular_pharmacy_id === pharmacyId, `db=${prof2?.regular_pharmacy_id}`)
+  }
+
   // ── T6: pending 쿠키만으로도 로그인 후 매핑 경로 존재(구조 확인) ──────────
   // 실제 exchangeCodeForSession은 OAuth 제공자 필요 → 헤드리스 불가.
   // 대신 콜백이 pending 쿠키/‑store_id 파라미터를 읽어 매핑하는 코드가 T2의 매핑과 동일 경로임을 명시.

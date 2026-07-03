@@ -66,6 +66,12 @@ function LoginContent() {
     const safeNext = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam : null
 
+    // 견고한 안전망: QR 진입(redirect=/store/:id)이면 store_id를 localStorage에도 보관.
+    // OAuth 왕복에서 쿠키/쿼리파라미터가 모두 유실돼도, 로그인 후 PharmacyLinkFinalizer가
+    // 이 값으로 단골 연결을 마무리한다(localStorage는 같은 브라우저 왕복을 항상 견딤).
+    const storeMatch = redirectParam?.match(/^\/store\/([^/?#]+)/)
+    if (storeMatch) { try { localStorage.setItem('yc_pending_store', storeMatch[1]) } catch {} }
+
     const callbackBase = `${window.location.origin}/auth/callback`
     const qp = new URLSearchParams()
     if (pendingPharmacyId) qp.set('store_id', pendingPharmacyId)
