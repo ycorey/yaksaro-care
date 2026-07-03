@@ -65,6 +65,7 @@ export type Database = {
         Row: {
           contact_phone: string | null
           created_at: string
+          due_date: string | null
           id: string
           member_id: string | null
           note: string | null
@@ -80,6 +81,7 @@ export type Database = {
         Insert: {
           contact_phone?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           member_id?: string | null
           note?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         Update: {
           contact_phone?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           member_id?: string | null
           note?: string | null

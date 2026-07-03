@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { getActiveMember } from '@/lib/active-member'
+import { todayKST } from '@/lib/request-schedule'
 
 // 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
 const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
       type:          body.type,
       note:          (body.note ?? '').toString().trim().slice(0, 300) || null,
       contact_phone: (body.contact_phone ?? '').toString().trim().slice(0, 30) || null,
+      due_date:      todayKST(),   // 기본 마감 = 접수일(당일), 약사가 조정
     })
     .select('id, type, note, status, created_at')
     .single()
