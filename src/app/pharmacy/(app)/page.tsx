@@ -29,7 +29,8 @@ export default async function PharmacyHome() {
       .from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
       .order('created_at', { ascending: false })
-      .limit(30),
+      // 지연(마감 지난) 오래된 활성 요청이 누락되지 않도록 넉넉히 조회
+      .limit(100),
   ])
 
   const ids = (patients ?? []).map(p => p.id as string)
