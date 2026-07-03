@@ -5,6 +5,8 @@ import { SectionHeader } from '@/components/yc/section-header'
 import PatientNoteCard from '../../patient-note-card'
 import { YCCard } from '@/components/yc/yc-card'
 import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
+import { summarizeAdherence } from '@/lib/adherence'
+import PharmacyAdherenceSection from './pharmacy-adherence-section'
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
   return [
@@ -90,6 +92,22 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
   const selfMemberId = selfMember?.id ?? null
 
+  // 최근 14일 복약 기록(약사 토큰+RLS, 044 정책). self 멤버 있을 때만.
+  const DAY = 86_400_000
+  const nowMs = new Date().getTime()
+  const utcDate = (ms: number) => new Date(ms).toISOString().split('T')[0]
+  const { data: checkLogs } = selfMemberId
+    ? await supabase
+        .from('medication_check_logs')
+        .select('check_date, meal_time, is_checked, logged_at')
+        .eq('user_id', id)
+        .eq('member_id', selfMemberId)
+        .gte('check_date', utcDate(nowMs - 13 * DAY))
+        .lte('check_date', utcDate(nowMs))
+        .order('logged_at', { ascending: true })
+    : { data: null }
+  const adherence = summarizeAdherence(checkLogs ?? [], 14, nowMs)
+
   // self 멤버가 없으면 빈 uuid('')로 쿼리하지 않음(Postgres 22P02 방지) — 빈 결과로 처리
   const { data: meds } = selfMemberId
     ? await supabase
@@ -146,6 +164,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
       </div>
 
       <PatientNoteCard patientId={id} initialNote={noteText} initialUpdatedAt={noteUpdatedAt} />
+      {selfMemberId && <PharmacyAdherenceSection adherence={adherence} />}
 
       {(rx.length + otc.length) > 0 && (
         <div className="space-y-3">

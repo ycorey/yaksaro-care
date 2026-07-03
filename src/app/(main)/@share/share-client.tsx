@@ -4,7 +4,8 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Pill, Hospital, Flask } from '@phosphor-icons/react'
 import DoctorView, { type DoctorData } from './doctor-view'
-import ReportView, { type AdherenceSummary } from './report-view'
+import ReportView from './report-view'
+import type { AdherenceSummary } from '@/lib/adherence'
 import AppHeader from '@/components/app-header'
 
 interface Med {

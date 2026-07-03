@@ -3,15 +3,7 @@
 import { useState } from 'react'
 import { Printer, X, FileText, Hospital, Flask, Pill, type Icon } from '@phosphor-icons/react'
 import type { DoctorData, DoctorMed } from './doctor-view'
-
-// 최근 N일 복약 순응도 요약 (medication_check_logs 기반, 서버에서 집계).
-// 분모(예정 슬롯)를 임의로 만들지 않고 '기록한 날 기준'으로만 서술 — 과장 없이 정직하게.
-export type AdherenceSummary = {
-  periodDays:   number
-  recordedDays: number                     // 최근 기간 중 1회 이상 복약을 기록한 날 수
-  checkedSlots: number                     // 체크된 끼니 총합
-  perDay:       { date: string; done: number }[]  // 각 날짜별 체크된 끼니 수(0~4)
-}
+import type { AdherenceSummary } from '@/lib/adherence'
 
 // 그날 챙긴 끼니 수에 따라 진하게 — 히트맵 스트립
 function stripColor(done: number): string {
