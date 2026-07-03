@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Pill } from '@phosphor-icons/react'
 import type { Provider } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import InAppBrowserGuard from './inapp-browser-guard'
 
 // ── 소셜 로그인 아이콘 ──────────────────────────────────────────────────
@@ -37,6 +38,7 @@ function LoginContent() {
   const errorCode    = searchParams.get('error')
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
+  const [consentError, setConsentError] = useState(false)  // 동의 없이 로그인 시도 → 강조
 
   const [supabase] = useState(() => createClient())
 
@@ -47,6 +49,13 @@ function LoginContent() {
       : null
 
   async function handleOAuthSignIn(provider: string) {
+    // 동의 미체크 시: 버튼을 죽이지 말고(무반응 방지) 명확히 안내 + 체크박스 강조
+    if (!consented) {
+      setConsentError(true)
+      toast.error('먼저 [필수] 동의에 체크해 주세요')
+      document.getElementById('consent-check')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     setLoading(provider)
 
     // ── QR 세션 유실 방지: 쿠키 → URL 파라미터 이중 보존 ────────────────
@@ -76,14 +85,16 @@ function LoginContent() {
     // profile만 요청하고 이메일 없이 로그인 허용
     const scopes = provider === 'kakao' ? 'profile_nickname profile_image' : undefined
 
-    await supabase.auth.signInWithOAuth({
+    // 성공 시 signInWithOAuth가 브라우저를 리다이렉트 → 아래는 실행 안 됨.
+    // 실패(네트워크·설정 오류) 시에만 도달 → 조용히 죽지 않게 안내 + 버튼 복구.
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: provider as Provider,
       options: { redirectTo, scopes },
     })
-
-    // signInWithOAuth는 브라우저를 리다이렉트하므로
-    // 여기 도달하지 않음 — 에러 발생 시에만 loading 초기화
-    setLoading(null)
+    if (error) {
+      toast.error('로그인 연결에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      setLoading(null)
+    }
   }
 
   return (
@@ -108,12 +119,17 @@ function LoginContent() {
         )}
 
         {/* 민감정보 동의 — 개인정보보호법 §23 (건강·복약정보) */}
-        <label className="flex items-start gap-3 mb-6 cursor-pointer">
+        <label
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl p-3 -m-3 transition-colors ${
+            consentError ? 'bg-red-50 ring-1 ring-red-300' : ''
+          }`}
+        >
           <input
+            id="consent-check"
             type="checkbox"
             checked={consented}
-            onChange={e => setConsented(e.target.checked)}
-            className="mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0"
+            onChange={e => { setConsented(e.target.checked); if (e.target.checked) setConsentError(false) }}
+            className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError ? 'ring-2 ring-red-400' : ''}`}
           />
           <span className="text-sm text-yc-neutral600 leading-relaxed">
             <span className="font-semibold text-yc-neutral900">[필수] 민감정보 수집·이용 동의</span><br />
@@ -121,6 +137,9 @@ function LoginContent() {
             <Link href="/privacy" className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
           </span>
         </label>
+        <p className={`mb-5 text-xs font-medium h-4 transition-colors ${consentError ? 'text-red-600' : 'text-transparent'}`}>
+          로그인하려면 위 [필수] 동의에 체크해 주세요.
+        </p>
 
         {/* 소셜 로그인 버튼 3종 */}
         <div className="space-y-3">
@@ -128,7 +147,7 @@ function LoginContent() {
           {/* 카카오 */}
           <button
             onClick={() => handleOAuthSignIn('kakao')}
-            disabled={!!loading || !consented}
+            disabled={!!loading}
             className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ backgroundColor: '#FEE500', color: '#191919', padding: '18px 20px' }}
           >
@@ -145,7 +164,7 @@ function LoginContent() {
           {/* 네이버 — Supabase 공식 미지원 시 주석 해제
           <button
             onClick={() => handleOAuthSignIn('naver')}
-            disabled={!!loading || !consented}
+            disabled={!!loading}
             className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-white transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ backgroundColor: '#03C75A', padding: '18px 20px' }}
           >
@@ -162,7 +181,7 @@ function LoginContent() {
           {/* 구글 */}
           <button
             onClick={() => handleOAuthSignIn('google')}
-            disabled={!!loading || !consented}
+            disabled={!!loading}
             className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ padding: '18px 20px' }}
           >

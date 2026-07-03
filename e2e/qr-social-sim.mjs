@@ -89,6 +89,29 @@ try {
     await ctx.close()
   }
 
+  // ── D) 동의 미체크 시 소셜 버튼 피드백 (무반응 버그 수정 검증) ──────────
+  console.log('\n[D] 동의 미체크로 소셜 버튼 클릭 → 안내 피드백(죽은 버튼 아님)')
+  {
+    const ctx = await browser.newContext({ userAgent: UA.safari, viewport: { width: 390, height: 844 } })
+    const page = await ctx.newPage()
+    let authorizeCalled = false
+    await page.route('**/auth/v1/authorize**', route => { authorizeCalled = true; route.abort() })
+    await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
+    await page.waitForTimeout(500)
+    // 동의 체크 안 한 상태에서 바로 카카오 버튼 클릭
+    await page.getByRole('button', { name: /카카오톡으로 바로 시작/ }).click().catch(() => {})
+    await page.waitForTimeout(800)
+    check('동의 없이 클릭 → 안내 토스트 노출(무반응 아님)',
+      await page.getByText('먼저 [필수] 동의에 체크해 주세요').isVisible().catch(() => false))
+    check('동의 없이 클릭 → OAuth로 안 넘어감(안내만)', !authorizeCalled && page.url().includes('/login'))
+    // 동의 체크 후 다시 클릭하면 이번엔 OAuth 진행
+    await page.locator('input#consent-check').check().catch(() => {})
+    await page.getByRole('button', { name: /카카오톡으로 바로 시작/ }).click().catch(() => {})
+    await page.waitForTimeout(1200)
+    check('동의 체크 후 클릭 → OAuth authorize 진행', authorizeCalled)
+    await ctx.close()
+  }
+
   // ── C) QR 진입 → OAuth redirect_to에 매핑 폴백 파라미터 실림 확인 ────────
   console.log('\n[C] QR 진입(미로그인) → 소셜 클릭 시 redirect_to 파라미터 검증')
   for (const provider of ['google', 'kakao']) {
