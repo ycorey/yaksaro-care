@@ -162,7 +162,7 @@ function LoginContent() {
             ) : (
               <>
                 <KakaoIcon />
-                <span>늘 쓰시던 카카오톡으로 바로 시작하기</span>
+                <span>카카오톡으로 바로 시작하기</span>
               </>
             )}
           </button>

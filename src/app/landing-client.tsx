@@ -93,7 +93,7 @@ export default function LandingClient() {
             >
               {loading === 'kakao'
                 ? <span className="animate-pulse">연결 중...</span>
-                : <><KakaoIcon /><span>늘 쓰시던 카카오톡으로 바로 시작하기</span></>}
+                : <><KakaoIcon /><span>카카오톡으로 바로 시작하기</span></>}
             </button>
 
             <button
