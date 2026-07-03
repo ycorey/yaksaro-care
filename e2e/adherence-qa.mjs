@@ -2,7 +2,8 @@
 // 실행: node --experimental-strip-types --test e2e/adherence-qa.mjs
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { summarizeAdherence } from '../src/lib/adherence.ts'
+import { summarizeAdherence, VALID_MEALS } from '../src/lib/adherence.ts'
+import { ALL_MEALS } from '../src/lib/meal-slots.ts'
 
 // 기준 nowMs = 2026-07-14T00:00:00Z (UTC). periodDays=3 → 07-12,07-13,07-14
 const NOW = Date.parse('2026-07-14T00:00:00Z')
@@ -50,4 +51,8 @@ test('기간 밖 로그는 집계 제외', () => {
   const r = summarizeAdherence(logs, 3, NOW)
   assert.equal(r.recordedDays, 0)
   assert.equal(r.perDay.length, 3)
+})
+
+test('VALID_MEALS는 meal-slots SSOT(ALL_MEALS)와 일치 — 드리프트 가드', () => {
+  assert.deepEqual([...VALID_MEALS].sort(), [...ALL_MEALS].sort())
 })

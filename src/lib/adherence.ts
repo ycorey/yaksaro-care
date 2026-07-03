@@ -1,5 +1,5 @@
 // 유효 끼니 키 (meal-slots.ts의 Meal과 동일 — 무의존 로딩 위해 로컬 정의)
-const VALID_MEALS = new Set(['morning', 'afternoon', 'evening', 'bedtime'])
+export const VALID_MEALS = new Set(['morning', 'afternoon', 'evening', 'bedtime'])
 
 export type AdherenceSummary = {
   periodDays:   number
