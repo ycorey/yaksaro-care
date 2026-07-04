@@ -48,6 +48,10 @@ function LoginContent() {
       ? decodeURIComponent(errorCode)
       : null
 
+  // QR(store) 진입으로 왔다면 약국 코드 추출 — 이미 앱을 쓰는 사용자에게 직접 입력 경로 안내.
+  // (QR 스캔은 설치된 PWA가 아닌 외부 브라우저에서 열려, 로그인 세션이 없는 컨텍스트로 빠질 수 있다.)
+  const storeCode = searchParams.get('redirect')?.match(/^\/store\/([^/?#]+)/)?.[1] ?? null
+
   async function handleOAuthSignIn(provider: string) {
     // 동의 미체크 시: 버튼을 죽이지 말고(무반응 방지) 명확히 안내 + 체크박스 강조
     if (!consented) {
@@ -121,6 +125,18 @@ function LoginContent() {
         {errorMsg && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
             {errorMsg}
+          </div>
+        )}
+
+        {/* QR 진입 — 이미 앱을 쓰는 사용자용 직접 입력 안내 */}
+        {storeCode && (
+          <div className="mb-6 bg-yc-green50 border border-yc-green100 rounded-2xl px-5 py-4">
+            <p className="text-sm font-semibold text-yc-green700">이미 약사로 케어 앱이 있으신가요?</p>
+            <p className="text-sm text-yc-neutral700 mt-1 leading-relaxed">
+              앱을 열어 <b>설정 › 단골약국 › 약국 코드</b>에 아래 코드를 입력하면 바로 연결돼요.
+            </p>
+            <p className="text-xl font-bold tracking-[0.2em] text-yc-neutral900 mt-2 text-center select-all">{storeCode}</p>
+            <p className="text-xs text-yc-neutral500 mt-2">처음이시면 아래에서 회원가입하면 자동으로 연결돼요.</p>
           </div>
         )}
 
