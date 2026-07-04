@@ -516,6 +516,41 @@ export type Database = {
           },
         ]
       }
+      pharmacy_todos: {
+        Row: {
+          created_at: string
+          done: boolean
+          done_at: string | null
+          id: string
+          pharmacy_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          pharmacy_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          pharmacy_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_todos_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           created_at: string | null
