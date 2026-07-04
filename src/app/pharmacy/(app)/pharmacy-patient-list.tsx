@@ -20,10 +20,13 @@ export default function PharmacyPatientList({ patients, today }: { patients: Pat
   const refs = useRef<Record<string, HTMLLIElement | null>>({})
 
   // ?focus=<patientId> → 해당 환자 자동 펼침(렌더 중 상태 조정 — effect에서 setState 대신 공식 패턴 사용)
-  const [prevFocus, setPrevFocus] = useState(focus)
-  if (focus !== prevFocus) {
+  // prevFocus 초기값은 반드시 null(실제 focus와 절대 안 겹치는 sentinel)이어야 한다.
+  // useState(focus)로 시드하면 첫 마운트에 focus!==prevFocus가 false가 되어
+  // 딥링크(북마크·공유 링크·하드 리로드·뒤로가기)로 진입 시 자동펼침이 깨진다.
+  const [prevFocus, setPrevFocus] = useState<string | null>(null)
+  if (focus && focus !== prevFocus) {
     setPrevFocus(focus)
-    if (focus) setOpen(prev => new Set(prev).add(focus))
+    setOpen(prev => { const n = new Set(prev); n.add(focus); return n })
   }
 
   // 스크롤은 외부 DOM 부수효과이므로 effect에 유지
