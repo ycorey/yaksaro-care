@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
@@ -47,16 +48,13 @@ export async function GET(request: Request) {
         const admin = createAdminClient()
         const { data: pharmacy } = await admin
           .from('pharmacies')
-          .select('id, name')
+          .select('id, name, phone, address')
           .eq('id', pendingPharmacyId)
           .maybeSingle()
 
         if (pharmacy) {
-          // 본인 행 update이므로 세션(user 토큰) 클라이언트 + RLS(profiles_self)로 충분
-          await supabase
-            .from('profiles')
-            .update({ regular_pharmacy_id: pharmacy.id })
-            .eq('id', user.id)
+          // 본인 행 update이므로 세션(user 토큰) 클라이언트 + RLS(profiles_self)로 충분. 표시 필드도 함께 저장.
+          await updateRegularPharmacy(supabase, user.id, pharmacy)
 
           cookieStore.delete('pending_pharmacy_id')
           return NextResponse.redirect(

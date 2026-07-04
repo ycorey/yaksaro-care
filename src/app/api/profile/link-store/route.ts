@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { normalizeStoreCode } from '@/lib/store-code'
+import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
 
 // 단골약국 "마무리 링크" — 두 곳에서 사용:
 //  1) QR(store_id) 진입 → 소셜 로그인 뒤 OAuth 왕복에서 쿠키/파라미터가 유실된 경우의 안전망
@@ -22,16 +23,13 @@ export async function POST(request: Request) {
   const admin = createAdminClient()
   const { data: pharmacy } = await admin
     .from('pharmacies')
-    .select('id, name')
+    .select('id, name, phone, address')
     .eq('store_id', storeId)
     .maybeSingle()
   if (!pharmacy) return NextResponse.json({ linked: false })
 
-  // 본인 profiles 행만 갱신 — user 토큰 + RLS(profiles_self)
-  const { error } = await supabase
-    .from('profiles')
-    .update({ regular_pharmacy_id: pharmacy.id })
-    .eq('id', user.id)
+  // 본인 profiles 행만 갱신 — user 토큰 + RLS(profiles_self). 표시 필드도 함께 저장.
+  const { error } = await updateRegularPharmacy(supabase, user.id, pharmacy)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ linked: true, name: pharmacy.name })

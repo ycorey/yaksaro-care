@@ -5,6 +5,7 @@ export function normalizeStoreCode(input: string | null | undefined): string {
   // 전체 URL을 붙여넣은 경우 /store/<code> 세그먼트에서 코드만 추출
   const m = s.match(/\/store\/([^/?#\s]+)/)
   if (m) s = m[1]
-  // 공백·하이픈 등 구분자 제거, 코드 문자셋(영숫자)만 남김
-  return s.replace(/[^0-9a-z]/g, '')
+  // 코드 문자셋(영숫자·하이픈)만 남김 — store_id에 하이픈이 포함될 수 있으므로 보존(예: yc-jl2zm4).
+  // 공백 등 그 외 문자만 제거.
+  return s.replace(/[^0-9a-z-]/g, '')
 }
