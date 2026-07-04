@@ -4,102 +4,138 @@ import Link from 'next/link'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
-import PharmacyRequestInbox, { type InboxRow } from './pharmacy-request-inbox'
 import PharmacistNotify from './pharmacist-notify'
 import DashboardPoll from './dashboard-poll'
+import PharmacyCalendar from './pharmacy-calendar'
+import PharmacyStatusBoard, { type RefillSoon, type OverdueReq, type RecentConn } from './pharmacy-status-board'
+import type { TodoItem } from './pharmacy-todo-list'
 import { YCCard } from '@/components/yc/yc-card'
-import { todayKST } from '@/lib/request-schedule'
+import { todayKST, bucketByDue } from '@/lib/request-schedule'
+import { computeRefillSoon, type RefillMedRow } from '@/lib/refill'
+import { TYPE_LABEL, buildCalendarItems, deriveTodayAutoTasks, type InboxRow } from '@/lib/pharmacy-board'
 
-// 약사 대시보드 — 동의한 단골 환자 목록(read-only). 모든 조회는 사용자(약사) 토큰 + RLS.
 export default async function PharmacyHome() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/pharmacy/login')
+  const today = todayKST()
 
-  // patients 쿼리와 reqs 쿼리는 상호 무관 — 동시 실행
-  const [{ data: patients }, { data: reqs }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('id, full_name')
-      .eq('consent_pharmacist_view', true)
-      .neq('id', user.id)
-      .order('full_name', { ascending: true })
-      .limit(200),
-    supabase
-      .from('pharmacy_requests')
+  // 동의 단골 환자 + 요청 + 내 약국 + 수동 메모 — 상호 무관, 동시 실행
+  const [{ data: patients }, { data: reqs }, { data: pharmacy }, { data: todoRows }] = await Promise.all([
+    supabase.from('profiles')
+      .select('id, full_name, consent_pharmacist_view_at')
+      .eq('consent_pharmacist_view', true).neq('id', user.id)
+      .order('full_name', { ascending: true }).limit(200),
+    supabase.from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
-      .order('created_at', { ascending: false })
-      // 지연(마감 지난) 오래된 활성 요청이 누락되지 않도록 넉넉히 조회
-      .limit(100),
+      .order('created_at', { ascending: false }).limit(100),
+    supabase.from('pharmacies').select('id').eq('owner_id', user.id).maybeSingle(),
+    supabase.from('pharmacy_todos').select('id, text, done, created_at')
+      .order('done', { ascending: true }).order('created_at', { ascending: false }).limit(50),
   ])
 
   const ids = (patients ?? []).map(p => p.id as string)
 
-  // 환자별 본인(is_self) 멤버 id 조회 — 약사는 본인 약만 볼 수 있음(가족 누수 방지)
+  // 환자별 본인(is_self) 멤버 (약사는 본인 약만 — 가족 누수 방지)
   const selfMemberByPatient = new Map<string, string>()
   if (ids.length > 0) {
-    const { data: selfMembers } = await supabase
-      .from('members')
-      .select('id, owner_id')
-      .in('owner_id', ids)
-      .eq('is_self', true)
-    for (const m of selfMembers ?? []) {
-      selfMemberByPatient.set(m.owner_id as string, m.id as string)
-    }
+    const { data: selfMembers } = await supabase.from('members').select('id, owner_id').in('owner_id', ids).eq('is_self', true)
+    for (const m of selfMembers ?? []) selfMemberByPatient.set(m.owner_id as string, m.id as string)
   }
 
-  // 환자별 활성 복약 종수 (RLS가 동의 환자 것만 허용, 본인 멤버만)
+  // 환자별 복약(카운트 + 리필 계산 겸용) — 본인 멤버만
+  const medsByUser = new Map<string, RefillMedRow[]>()
   const countByUser = new Map<string, number>()
-  if (ids.length > 0) {
-    const selfMemberIds = [...selfMemberByPatient.values()]
-    if (selfMemberIds.length > 0) {
-      const { data: meds } = await supabase
-        .from('user_medications')
-        .select('user_id, member_id')
-        .is('deleted_at', null)
-        .is('ended_at', null)
-        .in('user_id', ids)
-        .in('member_id', selfMemberIds)
-      for (const m of meds ?? []) {
-        const uid = m.user_id as string
-        countByUser.set(uid, (countByUser.get(uid) ?? 0) + 1)
-      }
+  const selfMemberIds = [...selfMemberByPatient.values()]
+  if (ids.length > 0 && selfMemberIds.length > 0) {
+    const { data: meds } = await supabase.from('user_medications')
+      .select('user_id, member_id, total_days, custom_name, drug:drugs(item_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
+      .is('deleted_at', null).is('ended_at', null)
+      .in('user_id', ids).in('member_id', selfMemberIds)
+    for (const m of meds ?? []) {
+      const uid = m.user_id as string
+      countByUser.set(uid, (countByUser.get(uid) ?? 0) + 1)
+      const arr = medsByUser.get(uid) ?? []; arr.push(m as unknown as RefillMedRow); medsByUser.set(uid, arr)
     }
   }
 
-  // 미처리 요청 환자 ID 집합 (배지·부제 표기용)
-  const pendingIds = new Set(
-    (reqs ?? [])
-      .filter(r => r.status === 'open' || r.status === 'acknowledged')
-      .map(r => r.patient_id as string)
-  )
+  // 요청 → 환자별 그룹 + 이름
+  const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
+  const { data: reqPats } = reqPatientIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
+    : { data: [] as { id: string; full_name: string | null }[] }
+  const nameById = new Map<string, string | null>([
+    ...(patients ?? []).map(p => [p.id as string, p.full_name as string | null] as const),
+    ...(reqPats ?? []).map(p => [p.id as string, p.full_name as string | null] as const),
+  ])
+
+  const requestsByPatient = new Map<string, InboxRow[]>()
+  for (const r of reqs ?? []) {
+    const row: InboxRow = {
+      id: r.id, type: r.type, note: r.note, contact_phone: r.contact_phone,
+      status: r.status as InboxRow['status'], created_at: r.created_at, due_date: r.due_date,
+      patientName: nameById.get(r.patient_id as string) ?? null, isFamily: !!r.member_id,
+      replyText: r.reply_text, repliedAt: r.replied_at, patientAckAt: r.patient_ack_at, patientId: r.patient_id as string,
+    }
+    const arr = requestsByPatient.get(r.patient_id as string) ?? []; arr.push(row); requestsByPatient.set(r.patient_id as string, arr)
+  }
 
   const rows: PatientRow[] = (patients ?? []).map(p => ({
     id: p.id as string,
     name: (p.full_name as string | null) ?? '이름 미등록',
     medCount: countByUser.get(p.id as string) ?? 0,
-    hasRequest: pendingIds.has(p.id as string),
+    requests: requestsByPatient.get(p.id as string) ?? [],
   }))
 
-  // 환자 요청함 — reqPats는 reqs에 의존하므로 직렬
-  const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
-  const { data: reqPats } = reqPatientIds.length > 0
-    ? await supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
-    : { data: [] as { id: string; full_name: string | null }[] }
-  const nameById = new Map((reqPats ?? []).map(p => [p.id as string, (p.full_name as string | null)]))
-  const inboxRows: InboxRow[] = (reqs ?? []).map(r => ({
-    id: r.id, type: r.type, note: r.note, contact_phone: r.contact_phone,
-    status: r.status as InboxRow['status'], created_at: r.created_at,
-    due_date: r.due_date,
-    patientName: nameById.get(r.patient_id as string) ?? null,
-    // 가족 요청 여부만 표기(가족 이름·약명은 노출 안 함 — 약사는 전화로 확인)
-    isFamily: !!r.member_id,
-    replyText: r.reply_text,
-    repliedAt: r.replied_at,
-    patientAckAt: r.patient_ack_at,
-  }))
+  // ── 현황판/캘린더 데이터 조립 ──
+  // 리필(환자별 가장 임박)
+  const refillSoon: RefillSoon[] = []
+  const refillCalendar: { date: string | null; label: string }[] = []
+  const refillsToday: { patientId: string; patientName: string }[] = []
+  for (const [uid, meds] of medsByUser) {
+    const items = computeRefillSoon(meds)
+    if (items.length === 0) continue
+    const name = nameById.get(uid) ?? '환자'
+    const soonest = items[0]
+    refillSoon.push({ patientId: uid, patientName: name, dDay: soonest.dDay, expiryLabel: soonest.expiryLabel })
+    if (soonest.dDay === 0) refillsToday.push({ patientId: uid, patientName: name })
+    for (const it of items) refillCalendar.push({ date: it.expiryDate, label: `${name} 리필` })
+  }
+  refillSoon.sort((a, b) => a.dDay - b.dDay)
 
-  const pendingCount = pendingIds.size
+  // 오늘 할 일(자동)
+  const autoTasks = deriveTodayAutoTasks({
+    requests: (reqs ?? []).map(r => ({
+      id: r.id, patientId: r.patient_id as string, patientName: nameById.get(r.patient_id as string) ?? '환자',
+      status: r.status as InboxRow['status'], due_date: r.due_date, replyText: r.reply_text,
+    })),
+    refillsToday, today,
+  })
+
+  // 지연 요청(overdue, 활성)
+  const overdue: OverdueReq[] = (reqs ?? [])
+    .filter(r => (r.status === 'open' || r.status === 'acknowledged') && bucketByDue(r.due_date, today) === 'overdue')
+    .map(r => ({ id: r.id, patientId: r.patient_id as string, patientName: nameById.get(r.patient_id as string) ?? '환자', label: TYPE_LABEL[r.type] ?? '요청' }))
+
+  // 캘린더 항목(요청 마감 + 리필)
+  const calendarItems = buildCalendarItems(
+    (reqs ?? []).filter(r => r.status === 'open' || r.status === 'acknowledged')
+      .map(r => ({ date: r.due_date, label: `${nameById.get(r.patient_id as string) ?? '환자'} ${TYPE_LABEL[r.type] ?? '요청'}` })),
+    refillCalendar,
+  )
+
+  // 최근 연결된 단골(공개 동의 시각 desc, 상위 5)
+  const recent: RecentConn[] = [...(patients ?? [])]
+    .filter(p => p.consent_pharmacist_view_at)
+    .sort((a, b) => String(b.consent_pharmacist_view_at).localeCompare(String(a.consent_pharmacist_view_at)))
+    .slice(0, 5)
+    .map(p => {
+      const days = Math.floor((new Date().getTime() - Date.parse(p.consent_pharmacist_view_at as string)) / 86_400_000)  // Date.now()는 react-hooks/purity가 렌더 중 차단
+      return { id: p.id as string, name: (p.full_name as string | null) ?? '이름 미등록', agoLabel: days <= 0 ? '오늘' : `${days}일 전` }
+    })
+
+  const todos = (todoRows ?? []) as TodoItem[]
+  const activeReqCount = (reqs ?? []).filter(r => r.status === 'open' || r.status === 'acknowledged').length
 
   return (
     <div className="space-y-5">
@@ -108,24 +144,21 @@ export default async function PharmacyHome() {
       <div>
         <h1 className="font-display text-2xl text-yc-neutral900">단골 환자 복약 현황</h1>
         <p className="text-sm text-yc-neutral500 mt-1">
-          {pendingCount > 0
-            ? `처리할 요청 ${pendingCount}건 · 단골 환자 ${rows.length}명`
+          {activeReqCount > 0
+            ? `처리할 요청 ${activeReqCount}건 · 단골 환자 ${rows.length}명`
             : `내 약 목록 공개에 동의한 단골 환자 ${rows.length}명 · 읽기 전용`}
         </p>
       </div>
 
-      {/* 데스크톱 2컬럼: 좌=알림+요청함, 우=환자목록+QR */}
+      {/* 좌=캘린더+현황판 / 우=알림+환자목록+QR */}
       <div className="space-y-5 lg:grid lg:grid-cols-[minmax(340px,420px)_1fr] lg:gap-6 lg:space-y-0">
-        {/* 좌 컬럼 — 새 요청 알림 + 요청함 */}
         <div className="space-y-5">
-          {/* 새 요청 알림 켜기(약사 푸시) */}
-          <PharmacistNotify />
-          {/* 환자 요청함 (예약·콜백·문의 — 비임상) */}
-          <PharmacyRequestInbox initial={inboxRows} today={todayKST()} />
+          <PharmacyCalendar items={calendarItems} today={today} />
+          <PharmacyStatusBoard autoTasks={autoTasks} todos={todos} refillSoon={refillSoon} overdue={overdue} recent={recent} />
         </div>
 
-        {/* 우 컬럼 — 환자목록 + QR(하단) */}
         <div className="space-y-5">
+          <PharmacistNotify />
           {rows.length === 0 ? (
             <YCCard radius="lg" className="py-12 text-center px-6">
               <div className="mb-3 flex justify-center"><PharmacyEmptyIcon /></div>
@@ -133,14 +166,11 @@ export default async function PharmacyHome() {
               <p className="text-sm text-yc-neutral500">환자가 설정에서 &ldquo;단골 약사에게 공개&rdquo;를 켜면 여기에 표시돼요</p>
             </YCCard>
           ) : (
-            <PharmacyPatientList patients={rows} />
+            <PharmacyPatientList patients={rows} today={today} />
           )}
 
-          {/* 약국 QR — 환자 단골 연결 진입점 (우 컬럼 하단) */}
-          <Link
-            href="/pharmacy/qr"
-            className="flex items-center gap-3 bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:bg-yc-neutral50"
-          >
+          <Link href="/pharmacy/qr"
+            className="flex items-center gap-3 bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:bg-yc-neutral50">
             <PharmacyQrIcon />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-yc-neutral900">우리 약국 QR 만들기 · 인쇄</p>

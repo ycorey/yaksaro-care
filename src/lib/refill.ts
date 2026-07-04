@@ -18,7 +18,7 @@ export type RefillItem = {
 
 type Presc = { id?: string; prescribed_at?: string | null; duration_days?: number | null; hospital_name?: string | null }
 
-type RefillMedRow = {
+export type RefillMedRow = {
   total_days?: number | null
   custom_name?: string | null
   drug?: { item_name?: string | null } | null

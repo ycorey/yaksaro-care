@@ -19,10 +19,16 @@ export default function PharmacyPatientList({ patients, today }: { patients: Pat
   const focus = useSearchParams().get('focus')
   const refs = useRef<Record<string, HTMLLIElement | null>>({})
 
-  // ?focus=<patientId> → 해당 환자 자동 펼침 + 스크롤
+  // ?focus=<patientId> → 해당 환자 자동 펼침(렌더 중 상태 조정 — effect에서 setState 대신 공식 패턴 사용)
+  const [prevFocus, setPrevFocus] = useState(focus)
+  if (focus !== prevFocus) {
+    setPrevFocus(focus)
+    if (focus) setOpen(prev => new Set(prev).add(focus))
+  }
+
+  // 스크롤은 외부 DOM 부수효과이므로 effect에 유지
   useEffect(() => {
     if (!focus) return
-    setOpen(prev => new Set(prev).add(focus))
     refs.current[focus]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focus])
 
@@ -31,7 +37,11 @@ export default function PharmacyPatientList({ patients, today }: { patients: Pat
     : rows
 
   function toggle(id: string) {
-    setOpen(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+    setOpen(prev => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id); else n.add(id)
+      return n
+    })
   }
   function updateRequest(patientId: string, updated: InboxRow) {
     setRows(rs => rs.map(p => p.id === patientId
