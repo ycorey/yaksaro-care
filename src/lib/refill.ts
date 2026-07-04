@@ -12,6 +12,7 @@ export type RefillItem = {
   label: string        // 병원명 또는 '처방약'
   dDay: number         // 만료까지 남은 일(0~5)
   expiryLabel: string  // "7월 1일"
+  expiryDate: string   // "2026-07-01" (ISO, 캘린더 점용)
   medNames: string[]
 }
 
@@ -46,13 +47,18 @@ export function computeRefillSoon(meds: RefillMedRow[]): RefillItem[] {
     if (maxDays < MIN_DURATION_DAYS) continue
     const exp = new Date(presc.prescribed_at + 'T00:00:00')
     exp.setDate(exp.getDate() + maxDays)
-    const dDay = Math.ceil((exp.getTime() - today.getTime()) / 86_400_000)
+    const dDayExact = (exp.getTime() - today.getTime()) / 86_400_000
+    const dDay = dDayExact > 0 ? Math.floor(dDayExact) + 1 : 0
     if (dDay < 0 || dDay > REFILL_LEAD_DAYS) continue
+    const y = exp.getFullYear()
+    const mm = String(exp.getMonth() + 1).padStart(2, '0')
+    const dd = String(exp.getDate()).padStart(2, '0')
     items.push({
       id: presc.id!,
       label: presc.hospital_name ?? '처방약',
       dDay,
       expiryLabel: `${exp.getMonth() + 1}월 ${exp.getDate()}일`,
+      expiryDate: `${y}-${mm}-${dd}`,
       medNames,
     })
   }
