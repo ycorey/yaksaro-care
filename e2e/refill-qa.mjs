@@ -8,7 +8,10 @@ import { computeRefillSoon } from '../src/lib/refill.ts'
 function iso(offsetDays) {
   const d = new Date(); d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().split('T')[0]
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 test('만료 3일 전 처방 → 리필 대상 + expiryDate가 ISO(YYYY-MM-DD)', () => {
