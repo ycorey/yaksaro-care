@@ -20,8 +20,8 @@ export default async function PharmacyHome() {
   if (!user) redirect('/pharmacy/login')
   const today = todayKST()
 
-  // 동의 단골 환자 + 요청 + 내 약국 + 수동 메모 — 상호 무관, 동시 실행
-  const [{ data: patients }, { data: reqs }, { data: pharmacy }, { data: todoRows }] = await Promise.all([
+  // 동의 단골 환자 + 요청 + 수동 메모 — 상호 무관, 동시 실행
+  const [{ data: patients }, { data: reqs }, { data: todoRows }] = await Promise.all([
     supabase.from('profiles')
       .select('id, full_name, consent_pharmacist_view_at')
       .eq('consent_pharmacist_view', true).neq('id', user.id)
@@ -29,7 +29,6 @@ export default async function PharmacyHome() {
     supabase.from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
       .order('created_at', { ascending: false }).limit(100),
-    supabase.from('pharmacies').select('id').eq('owner_id', user.id).maybeSingle(),
     supabase.from('pharmacy_todos').select('id, text, done, created_at')
       .order('done', { ascending: true }).order('created_at', { ascending: false }).limit(50),
   ])
@@ -80,12 +79,23 @@ export default async function PharmacyHome() {
     const arr = requestsByPatient.get(r.patient_id as string) ?? []; arr.push(row); requestsByPatient.set(r.patient_id as string, arr)
   }
 
-  const rows: PatientRow[] = (patients ?? []).map(p => ({
-    id: p.id as string,
-    name: (p.full_name as string | null) ?? '이름 미등록',
-    medCount: countByUser.get(p.id as string) ?? 0,
-    requests: requestsByPatient.get(p.id as string) ?? [],
-  }))
+  const rowMap = new Map<string, PatientRow>()
+  for (const p of patients ?? []) {
+    const pid = p.id as string
+    rowMap.set(pid, {
+      id: pid,
+      name: (p.full_name as string | null) ?? '이름 미등록',
+      medCount: countByUser.get(pid) ?? 0,
+      requests: requestsByPatient.get(pid) ?? [],
+    })
+  }
+  // 약 공개는 안 했지만 요청을 보낸 단골도 목록에서 처리 가능해야 함(요청 귀속 원칙)
+  for (const [pid, reqList] of requestsByPatient) {
+    if (!rowMap.has(pid)) {
+      rowMap.set(pid, { id: pid, name: nameById.get(pid) ?? '이름 미등록', medCount: 0, requests: reqList })
+    }
+  }
+  const rows: PatientRow[] = [...rowMap.values()].sort((a, b) => a.name.localeCompare(b.name))
 
   // ── 현황판/캘린더 데이터 조립 ──
   // 리필(환자별 가장 임박)

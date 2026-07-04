@@ -15,6 +15,11 @@ function isActive(r: InboxRow) { return r.status === 'open' || r.status === 'ack
 export default function PharmacyPatientList({ patients, today }: { patients: PatientRow[]; today: string }) {
   const [q, setQ] = useState('')
   const [rows, setRows] = useState(patients)
+  const [prevPatients, setPrevPatients] = useState(patients)
+  if (patients !== prevPatients) {
+    setPrevPatients(patients)
+    setRows(patients)
+  }
   const [open, setOpen] = useState<Set<string>>(new Set())
   const focus = useSearchParams().get('focus')
   const refs = useRef<Record<string, HTMLLIElement | null>>({})
