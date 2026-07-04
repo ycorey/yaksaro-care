@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
 
 // QR 약국 진입점 — store_id로 약국을 찾아 단골 매핑.
 //  · 로그인 상태: 즉시 profiles.regular_pharmacy_id 매핑 후 /wallet
@@ -22,7 +23,7 @@ export async function GET(
   // store_id 유효성 확인
   const { data: pharmacy } = await admin
     .from('pharmacies')
-    .select('id, name')
+    .select('id, name, phone, address')
     .eq('store_id', store_id)
     .maybeSingle()
 
@@ -35,11 +36,8 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    // 즉시 매핑 — 본인 행 update이므로 user 토큰 + RLS(profiles_self)로 충분
-    await supabase
-      .from('profiles')
-      .update({ regular_pharmacy_id: pharmacy.id })
-      .eq('id', user.id)
+    // 즉시 매핑 — 본인 행 update이므로 user 토큰 + RLS(profiles_self)로 충분. 표시 필드도 함께 저장.
+    await updateRegularPharmacy(supabase, user.id, pharmacy)
 
     const res = NextResponse.redirect(
       new URL(`/wallet?pharmacy_linked=1&pharmacy_name=${encodeURIComponent(pharmacy.name)}`, origin),

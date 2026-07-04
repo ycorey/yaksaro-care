@@ -62,7 +62,15 @@ export default async function PharmacyQrPage() {
               className="mx-auto w-56 h-56 [&_svg]:w-full [&_svg]:h-full"
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
-            <p className="text-sm text-yc-neutral500 mt-6 break-all">{storeUrl}</p>
+            {/* 약국 코드 — QR이 안 될 때(특히 아이폰 앱 설치 상태) 앱에서 직접 입력용 */}
+            <div className="mt-6 inline-flex flex-col items-center">
+              <p className="text-xs text-yc-neutral500">약국 코드</p>
+              <p className="text-2xl font-bold tracking-[0.25em] text-yc-neutral900 mt-0.5">{pharmacy.store_id}</p>
+            </div>
+            <p className="text-sm text-yc-neutral500 mt-3">
+              앱 <b>설정 › 단골약국 › 약국 코드</b>에 위 코드를 입력해도 연결돼요
+            </p>
+            <p className="text-sm text-yc-neutral500 mt-4 break-all">{storeUrl}</p>
             <p className="text-base text-yc-neutral700 mt-4">
               복약 알림 · 처방전 사진 정리 · 의사에게 약 목록 보여주기 — 모두 무료
             </p>
@@ -73,6 +81,7 @@ export default async function PharmacyQrPage() {
             <p className="text-xs text-yc-neutral500 leading-relaxed flex-1 min-w-48">
               인쇄해서 카운터·조제 봉투·게시판에 붙여보세요.
               환자가 스캔 → 회원가입만 하면 자동으로 우리 약국 단골이 돼요.
+              이미 앱을 쓰는 환자는 <b>약국 코드</b>를 앱에 입력하면 돼요.
             </p>
           </div>
         </>
