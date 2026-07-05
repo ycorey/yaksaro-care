@@ -34,15 +34,25 @@ export default async function PharmacyHome() {
   ])
 
   const ids = (patients ?? []).map(p => p.id as string)
+  const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
+
+  // 본인 멤버 조회와 요청자 이름 조회는 서로 무관 → 병렬 실행(순차 워터폴 1홉 감소).
+  const [selfMembersRes, reqPatsRes] = await Promise.all([
+    ids.length > 0
+      ? supabase.from('members').select('id, owner_id').in('owner_id', ids).eq('is_self', true)
+      : null,
+    reqPatientIds.length > 0
+      ? supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
+      : null,
+  ])
 
   // 환자별 본인(is_self) 멤버 (약사는 본인 약만 — 가족 누수 방지)
   const selfMemberByPatient = new Map<string, string>()
-  if (ids.length > 0) {
-    const { data: selfMembers } = await supabase.from('members').select('id, owner_id').in('owner_id', ids).eq('is_self', true)
-    for (const m of selfMembers ?? []) selfMemberByPatient.set(m.owner_id as string, m.id as string)
-  }
+  for (const m of selfMembersRes?.data ?? []) selfMemberByPatient.set(m.owner_id as string, m.id as string)
 
-  // 환자별 복약(카운트 + 리필 계산 겸용) — 본인 멤버만
+  const reqPats = reqPatsRes?.data ?? []
+
+  // 환자별 복약(카운트 + 리필 계산 겸용) — 본인 멤버만. selfMemberIds가 필요하므로 members 뒤에 실행.
   const medsByUser = new Map<string, RefillMedRow[]>()
   const countByUser = new Map<string, number>()
   const selfMemberIds = [...selfMemberByPatient.values()]
@@ -58,11 +68,7 @@ export default async function PharmacyHome() {
     }
   }
 
-  // 요청 → 환자별 그룹 + 이름
-  const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]
-  const { data: reqPats } = reqPatientIds.length > 0
-    ? await supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
-    : { data: [] as { id: string; full_name: string | null }[] }
+  // 요청자 이름 맵
   const nameById = new Map<string, string | null>([
     ...(patients ?? []).map(p => [p.id as string, p.full_name as string | null] as const),
     ...(reqPats ?? []).map(p => [p.id as string, p.full_name as string | null] as const),
