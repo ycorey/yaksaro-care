@@ -72,8 +72,10 @@ function Group({ rows }: { rows: MedRow[] }) {
 export default async function PharmacyPatientDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/pharmacy/login')
+  // getClaims: JWT 로컬 검증 → Auth 서버 왕복 없이 인증 확인. 환자 데이터 접근은 RLS(pharmacist_can_view)가 보장.
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims?.sub
+  if (!userId) redirect('/pharmacy/login')
 
   // RLS: 동의·단골 아닌 환자면 null
   const { data: patient } = await supabase
@@ -122,7 +124,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
   // 약국 비공개 메모(특이사항) 로드 — 약사 본인 약국 기준. RLS가 동의·소유 게이트.
   const { data: myPharmacy } = await supabase
-    .from('pharmacies').select('id').eq('owner_id', user.id).maybeSingle()
+    .from('pharmacies').select('id').eq('owner_id', userId).maybeSingle()
   let noteText = ''
   let noteUpdatedAt: string | null = null
   if (myPharmacy?.id) {

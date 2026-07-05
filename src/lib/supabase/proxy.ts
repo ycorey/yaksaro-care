@@ -23,7 +23,10 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getClaims: 비대칭 서명키(ES256)로 JWT를 로컬 검증 → Auth 서버 네트워크 왕복 없이 인증 확인.
+  // 세션 만료 시 토큰 갱신·쿠키 재기록은 내부 getSession 경로에서 그대로 수행된다(getUser와 동일).
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims?.sub
   const { pathname } = request.nextUrl
 
   // ── 약사(B2B 웹) 영역 — 환자 앱과 입구를 완전히 분리 ──────────────────
@@ -32,13 +35,13 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith('/pharmacy')) {
     const isLoginPage = pathname === '/pharmacy/login'
 
-    if (!user) {
+    if (!userId) {
       return isLoginPage
         ? supabaseResponse
         : NextResponse.redirect(new URL('/pharmacy/login', request.url))
     }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
     const isPharmacist = profile?.role === 'pharmacist'
 
     if (isLoginPage) {
@@ -55,13 +58,13 @@ export async function updateSession(request: NextRequest) {
   // /store/[id]는 QR 진입점(route handler) — 미로그인도 도달해야 쿠키 저장+로그인 유도가
   // 동작하므로 protectedPaths에서 제외(자체적으로 로그인 리다이렉트 처리).
   const protectedPaths = ['/dashboard', '/medications', '/profile', '/wallet', '/interactions', '/today', '/calendar', '/home', '/share']
-  if (!user && protectedPaths.some(p => pathname.startsWith(p))) {
+  if (!userId && protectedPaths.some(p => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // 환자 로그인/회원가입 페이지에 이미 로그인된 채로 오면 role 기반 분기
-  if (user && (pathname === '/login' || pathname === '/signup')) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (userId && (pathname === '/login' || pathname === '/signup')) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
     return NextResponse.redirect(new URL(profile?.role === 'pharmacist' ? '/pharmacy' : '/home', request.url))
   }
 
