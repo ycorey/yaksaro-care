@@ -78,6 +78,8 @@ export function PharmacyRequestCard({ row, today, onChange }: { row: InboxRow; t
   }
 
   const badge = dueBadge(row.due_date)
+  // 완료·취소된 요청은 읽기 전용(답장·처리 UI 숨김) — 이미 처리된 건에 답장하면 서버가 0행이 되어 에러.
+  const isActive = row.status === 'open' || row.status === 'acknowledged'
   return (
     <YCCard radius="lg" className="px-4 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -96,7 +98,7 @@ export function PharmacyRequestCard({ row, today, onChange }: { row: InboxRow; t
           <p className="text-sm text-yc-neutral800 break-keep">{row.replyText}</p>
           <p className="text-xs text-yc-neutral500 mt-1">{row.patientAckAt ? '환자 확인함' : '답 보냄'}{row.repliedAt ? ` · ${timeAgo(row.repliedAt)}` : ''}</p>
         </div>
-      ) : (
+      ) : isActive ? (
         <div className="space-y-1.5">
           <textarea
             value={draft} onChange={e => setDraft(e.target.value)}
@@ -111,25 +113,31 @@ export function PharmacyRequestCard({ row, today, onChange }: { row: InboxRow; t
             className="min-h-[48px] px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">답 보내기</button>
           <p className="text-xs text-yc-neutral400">예약·물류 안내용 — 복약 상담은 전화·대면으로</p>
         </div>
+      ) : null}
+      {(row.contact_phone || isActive) && (
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          {row.contact_phone && (
+            <a href={`tel:${row.contact_phone.replace(/[^0-9]/g, '')}`}
+              className="inline-flex items-center gap-1.5 h-11 px-3 rounded-yc-md bg-yc-green100 text-yc-green700 text-sm font-semibold active:opacity-80">
+              <Phone weight="fill" size={15} /> 전화
+            </a>
+          )}
+          {isActive && (
+            <>
+              <button onClick={() => changeDue(addDays(0))} disabled={busy}
+                className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">오늘</button>
+              <button onClick={() => changeDue(addDays(1))} disabled={busy}
+                className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">내일</button>
+              {row.status === 'open' && (
+                <button onClick={() => setStatus('acknowledged')} disabled={busy}
+                  className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">확인</button>
+              )}
+              <button onClick={() => setStatus('done')} disabled={busy}
+                className="h-11 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">완료</button>
+            </>
+          )}
+        </div>
       )}
-      <div className="flex flex-wrap items-center gap-2 pt-0.5">
-        {row.contact_phone && (
-          <a href={`tel:${row.contact_phone.replace(/[^0-9]/g, '')}`}
-            className="inline-flex items-center gap-1.5 h-11 px-3 rounded-yc-md bg-yc-green100 text-yc-green700 text-sm font-semibold active:opacity-80">
-            <Phone weight="fill" size={15} /> 전화
-          </a>
-        )}
-        <button onClick={() => changeDue(addDays(0))} disabled={busy}
-          className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">오늘</button>
-        <button onClick={() => changeDue(addDays(1))} disabled={busy}
-          className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">내일</button>
-        {row.status === 'open' && (
-          <button onClick={() => setStatus('acknowledged')} disabled={busy}
-            className="h-11 px-3 rounded-yc-md bg-yc-neutral100 text-yc-neutral700 text-sm font-semibold active:bg-yc-neutral200 disabled:opacity-50">확인</button>
-        )}
-        <button onClick={() => setStatus('done')} disabled={busy}
-          className="h-11 px-3 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50">완료</button>
-      </div>
     </YCCard>
   )
 }
