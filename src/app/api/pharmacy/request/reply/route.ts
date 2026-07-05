@@ -28,8 +28,9 @@ export async function POST(request: Request) {
     .eq('id', id)
     .in('status', ['open', 'acknowledged'])
     .select('patient_id')
-    .single()
-  if (error || !data) return NextResponse.json({ error: error?.message ?? '대상 없음' }, { status: 500 })
+    .maybeSingle()
+  if (error) return NextResponse.json({ error: '전송에 실패했어요. 다시 시도해주세요' }, { status: 500 })
+  if (!data) return NextResponse.json({ error: '이미 처리됐거나 답장할 수 없는 요청이에요' }, { status: 409 })
 
   // 환자에게 푸시 (fire-and-forget)
   void sendPushToUser(data.patient_id as string, {
