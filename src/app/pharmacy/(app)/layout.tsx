@@ -8,13 +8,15 @@ import PharmacyLogout from './pharmacy-logout'
 // 약사 전용 영역 — role 가드는 미들웨어(proxy)가 1차로, 여기서 2차 방어.
 export default async function PharmacyLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/pharmacy/login')
+  // getClaims: JWT 로컬 검증(비대칭 ES256 키) → Auth 서버 왕복 없이 인증 확인. RLS가 데이터 접근은 별도 보장.
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims?.sub
+  if (!userId) redirect('/pharmacy/login')
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, regular_pharmacy:pharmacies!owner_id(name)')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single()
   if (profile?.role !== 'pharmacist') redirect('/home')
 
