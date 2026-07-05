@@ -8,15 +8,13 @@ import { IssueStoreIdButton, PrintButton } from './qr-actions'
 // 약국 QR 생성·출력 — 환자가 스캔하면 /store/[store_id]로 진입해 단골 매핑된다.
 export default async function PharmacyQrPage() {
   const supabase = await createClient()
-  // getClaims: JWT 로컬 검증 → Auth 서버 왕복 없이 인증 확인.
-  const { data: claimsData } = await supabase.auth.getClaims()
-  const userId = claimsData?.claims?.sub
-  if (!userId) redirect('/pharmacy/login')
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/pharmacy/login')
 
   const { data: pharmacy } = await supabase
     .from('pharmacies')
     .select('name, store_id')
-    .eq('owner_id', userId)
+    .eq('owner_id', user.id)
     .maybeSingle()
   if (!pharmacy) redirect('/pharmacy/login')
 

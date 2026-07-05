@@ -16,17 +16,15 @@ import { TYPE_LABEL, buildCalendarItems, deriveTodayAutoTasks, type InboxRow } f
 
 export default async function PharmacyHome() {
   const supabase = await createClient()
-  // getClaims: JWT 로컬 검증(비대칭 ES256 키) → Auth 서버 왕복 없이 인증 확인. 데이터 접근은 RLS가 보장.
-  const { data: claimsData } = await supabase.auth.getClaims()
-  const userId = claimsData?.claims?.sub
-  if (!userId) redirect('/pharmacy/login')
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/pharmacy/login')
   const today = todayKST()
 
   // 동의 단골 환자 + 요청 + 수동 메모 — 상호 무관, 동시 실행
   const [{ data: patients }, { data: reqs }, { data: todoRows }] = await Promise.all([
     supabase.from('profiles')
       .select('id, full_name, consent_pharmacist_view_at')
-      .eq('consent_pharmacist_view', true).neq('id', userId)
+      .eq('consent_pharmacist_view', true).neq('id', user.id)
       .order('full_name', { ascending: true }).limit(200),
     supabase.from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
