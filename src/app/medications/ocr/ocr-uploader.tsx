@@ -529,8 +529,8 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       {state === 'uploading' && (
         <div className="space-y-4">
           {/* 신뢰 메시지 — 스캔 빔 느낌의 펄스 */}
-          <div className="text-center pt-4 pb-2">
-            <CircleNotch size={48} weight="bold" className="text-yc-green600 mx-auto mb-4 animate-spin" />
+          <div role="status" aria-live="polite" className="text-center pt-4 pb-2">
+            <CircleNotch size={48} weight="bold" aria-hidden="true" className="text-yc-green600 mx-auto mb-4 animate-spin" />
             <p className="font-display text-xl text-yc-neutral900 leading-snug px-2">
               {OCR_STAGES[stage]}
             </p>

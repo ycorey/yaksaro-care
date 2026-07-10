@@ -267,8 +267,9 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
               <div className="h-24 w-4/5 rounded-yc-md border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
             </div>
             {phase === 'looking-up' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <CircleNotch size={32} className="animate-spin text-white" />
+              <div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <CircleNotch size={32} aria-hidden="true" className="animate-spin text-white" />
+                <span className="sr-only">바코드로 약을 찾는 중이에요</span>
               </div>
             )}
           </div>
