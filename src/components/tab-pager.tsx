@@ -34,6 +34,7 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
   const [displayIndex, setDisplayIndex] = useState(activeIndex)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [dragDot, setDragDot] = useState<number | null>(null)  // 드래그 중 손가락이 가리키는 도트(스냅 전 실시간 추종)
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const gesture = useRef<{
@@ -113,12 +114,15 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
     const atEnd = displayIndex === TABS.length - 1 && d < 0
     if (atStart || atEnd) d = d / 3
     setDragX(d)
+    // 활성 도트를 손가락 방향으로 즉시 이동(g.w는 핸들러라 접근 허용) — 양수 d = 이전 탭 방향
+    setDragDot(Math.max(0, Math.min(TABS.length - 1, Math.round(displayIndex - d / g.w))))
   }
 
   function onTouchEnd() {
     const g = gesture.current
     gesture.current = null
     setDragging(false)
+    setDragDot(null)
     if (!g || g.axis !== 'h') { setDragX(0); return }
 
     const distThreshold = Math.min(72, g.w * 0.22)
@@ -141,6 +145,10 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
     transform: `translateX(calc(${-displayIndex * 100}% + ${dragX}px))`,
     transition: dragging ? 'none' : 'transform 360ms cubic-bezier(0.22, 0.66, 0.16, 1)',
   }
+
+  // 도트 하이라이트는 드래그 중 손가락을 실시간으로 따라간다(스냅 전에도 이동 → "미추종" 오인 제거, 7차 M1).
+  // dragDot은 onTouchMove(핸들러)에서 뷰포트 폭 기준으로 계산해 둔 값.
+  const dotIndex = dragDot ?? displayIndex
 
   return (
     <div
@@ -179,8 +187,8 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
             className="p-2 flex items-center justify-center"
           >
             <span
-              className={`rounded-full transition-colors duration-300 ${
-                i === displayIndex ? 'w-4 h-1.5 bg-yc-green600' : 'w-1.5 h-1.5 bg-yc-neutral300'
+              className={`rounded-full transition-all duration-200 ${
+                i === dotIndex ? 'w-4 h-1.5 bg-yc-green600' : 'w-1.5 h-1.5 bg-yc-neutral300'
               }`}
             />
           </button>

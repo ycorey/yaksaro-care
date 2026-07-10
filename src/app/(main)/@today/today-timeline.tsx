@@ -266,7 +266,7 @@ export default function TodayTimeline({
               >
                 {/* 시간 라벨 — 무채 텍스트만 (강조는 '다음' 슬롯 그린 한 곳). 핵심 시간 정보라 실버 기준 상향 */}
                 <div className="w-14 shrink-0 pt-0.5">
-                  <p className="text-sm text-yc-neutral500 leading-tight">{s.time}</p>
+                  <p className="text-base text-yc-neutral500 leading-tight tabular-nums">{s.time}</p>
                   <p className="text-base font-bold text-yc-neutral700 mt-0.5">{s.label}</p>
                 </div>
 
