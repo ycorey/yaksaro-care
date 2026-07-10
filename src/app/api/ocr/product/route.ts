@@ -54,16 +54,13 @@ function isValidOpenAiKey(key: string | undefined): boolean {
   return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
 }
 
-// 약봉투/조제 라벨 감지 — 조제 특유 신호가 2개 이상이면 처방전 검증 플로우(약별 확인·수정)로
-// 유도한다. 단일 OTC 박스(성분·효능 위주)는 이 신호가 거의 없어 오탐이 낮다.
-const RX_SIGNALS: RegExp[] = [
-  /조제/, /복용/, /처방/, /약국/,
-  /(1일|하루)\s*\d+\s*[회번]/,   // 1일 3회
-  /\d+\s*일\s*분/,                // 5일분
-  /식후|식전|취침\s*전|자기\s*전|아침|점심|저녁/,
-]
+// 처방전/약봉투 판정 — 처방전 서식 특유 어휘 또는 대괄호 9자리 EDI 코드가 있을 때만 true.
+// 일반약통 박스의 "1일 3회·식후 복용" 문구만으로는 처방전으로 보지 않는다(오분류 방지).
+// 13자리 바코드는 대괄호가 없어 EDI로 오인하지 않는다.
+const RX_EDI_RE    = /\[\s*\d{9}\s*\]/                                  // [671701890]
+const RX_STRONG_RE = /조제|처방전|요양기관|교부일|투약일수|본인부담|1일\s*투여\s*횟수|1회\s*투약량/
 function looksLikePrescription(rawText: string): boolean {
-  return RX_SIGNALS.filter(re => re.test(rawText)).length >= 2
+  return RX_EDI_RE.test(rawText) || RX_STRONG_RE.test(rawText)
 }
 
 // GPT 미사용 폴백: 한글이 포함되고 단위/숫자 위주가 아닌 라인을 길이순으로 후보화.
@@ -112,6 +109,90 @@ async function extractNamesWithGpt(rawText: string): Promise<string[]> {
   }
 }
 
+// ── 제품명 → 성분·정식 품목 해결 ─────────────────────────────────────
+type LicenseDetail = {
+  ITEM_SEQ?: string; ITEM_NAME?: string; ENTP_NAME?: string; ITEM_INGR_NAME?: string
+  SPCLTY_PBLC?: string; PRDUCT_TYPE?: string; BIG_PRDT_IMG_URL?: string
+}
+async function fetchLicenseByName(itemName: string): Promise<LicenseDetail | null> {
+  const key = process.env.MFDS_DRUG_LICENSE_KEY
+  if (!key) return null
+  const url = 'https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnInq07'
+    + `?serviceKey=${encodeURIComponent(key)}&item_name=${encodeURIComponent(itemName)}&numOfRows=1&pageNo=1&type=json`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) })
+    if (!res.ok) return null
+    const json  = await res.json()
+    const items = json?.body?.items
+    const first = Array.isArray(items) ? items[0] : items
+    return (first as LicenseDetail) ?? null
+  } catch { return null }
+}
+// "[02390]기타의 소화기관용약" → "기타의 소화기관용약"
+function cleanCategory(t?: string): string | null {
+  if (!t) return null
+  return t.replace(/^\[[^\]]*\]/, '').trim() || null
+}
+
+type ResolvedProduct = {
+  name: string; ingredient: string | null; drug_id: string | null; item_seq: string | null
+  entp_name: string | null; image_url: string | null; category: string | null
+  classType: string | null; resolved: boolean
+}
+
+// 이름 1개 → 로컬 drugs(성분 조인) 우선, 없으면 허가정보 API 폴백. 실패는 resolved:false로 흡수.
+async function resolveProduct(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rawName: string,
+): Promise<ResolvedProduct> {
+  const q = rawName.replace(/\([^)]*\)/g, '').trim()
+  const empty: ResolvedProduct = {
+    name: rawName, ingredient: null, drug_id: null, item_seq: null,
+    entp_name: null, image_url: null, category: null, classType: null, resolved: false,
+  }
+  if (q.length < 2) return empty
+
+  // 1) 로컬 drugs: prefix 우선 → contains 폴백 (ilike 값은 파라미터라 특수문자 안전)
+  const cols = 'id, item_seq, item_name, entp_name, image_url, etc_otc_name'
+  const prefix = await supabase.from('drugs').select(cols)
+    .eq('is_canceled', false).ilike('item_name', `${q}%`).limit(1).maybeSingle()
+  let local = prefix.data
+  if (!local) {
+    const contains = await supabase.from('drugs').select(cols)
+      .eq('is_canceled', false).ilike('item_name', `%${q}%`).limit(1).maybeSingle()
+    local = contains.data
+  }
+
+  if (local) {
+    const { data: ings } = await supabase
+      .from('drug_ingredients')
+      .select('name_ko, name_en, position')
+      .eq('drug_id', local.id)
+      .order('position')
+    const ingredient = (ings ?? [])
+      .map(x => x.name_ko || x.name_en)
+      .filter(Boolean)
+      .join(', ') || null
+    return {
+      name: local.item_name, ingredient, drug_id: local.id, item_seq: local.item_seq ?? null,
+      entp_name: local.entp_name ?? null, image_url: local.image_url ?? null,
+      category: null, classType: local.etc_otc_name ?? null, resolved: true,
+    }
+  }
+
+  // 2) 허가정보 API 폴백
+  const lic = await fetchLicenseByName(q)
+  if (lic?.ITEM_NAME) {
+    return {
+      name: lic.ITEM_NAME, ingredient: lic.ITEM_INGR_NAME ?? null,
+      drug_id: null, item_seq: lic.ITEM_SEQ ?? null, entp_name: lic.ENTP_NAME ?? null,
+      image_url: lic.BIG_PRDT_IMG_URL ?? null, category: cleanCategory(lic.PRDUCT_TYPE),
+      classType: lic.SPCLTY_PBLC ?? null, resolved: true,
+    }
+  }
+  return empty
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -135,11 +216,21 @@ export async function POST(request: Request) {
 
   try {
     const rawText = await runClovaOcr(bytes, mime, ext)
-    if (!rawText) return NextResponse.json({ names: [], isPrescription: false })
-    const names = await extractNamesWithGpt(rawText)
-    return NextResponse.json({ names, isPrescription: looksLikePrescription(rawText) })
+    if (!rawText) return NextResponse.json({ products: [], candidates: [], isPrescription: false })
+
+    const names = await extractNamesWithGpt(rawText)          // string[] (최대 3)
+    const resolvedAll = await Promise.all(names.slice(0, 3).map(n => resolveProduct(supabase, n)))
+    const hit = resolvedAll.filter(p => p.resolved)
+    // 해결된 게 없으면 최상위 후보 1개라도 이름으로 넘겨 검색 폴백(막다른 길 방지)
+    const products = hit.length > 0 ? hit : resolvedAll.slice(0, 1)
+
+    return NextResponse.json({
+      products,
+      candidates: names,
+      isPrescription: looksLikePrescription(rawText),
+    })
   } catch (e) {
     logger.error('OCR', '박스 인식 오류', e)
-    return NextResponse.json({ names: [], isPrescription: false, error: 'ocr_failed' }, { status: 200 })
+    return NextResponse.json({ products: [], candidates: [], isPrescription: false, error: 'ocr_failed' }, { status: 200 })
   }
 }
