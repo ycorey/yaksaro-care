@@ -145,7 +145,7 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
   return (
     <div
       ref={viewportRef}
-      className="md:ml-64 overflow-hidden"
+      className="md:ml-64 overflow-hidden px-4"
       style={{ height: '100dvh' }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -155,10 +155,10 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
         {panels.map((panel, i) => (
           <div
             key={TABS[i]}
-            className="shrink-0 w-full h-full overflow-y-auto overflow-x-hidden"
+            className="shrink-0 w-full h-full overflow-y-auto overflow-x-hidden yc-noscrollbar bg-background"
             style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="max-w-[430px] mx-auto px-4 pt-5 pb-28">{panel}</div>
+            <div className="max-w-[430px] mx-auto pt-5 pb-28">{panel}</div>
           </div>
         ))}
       </div>
