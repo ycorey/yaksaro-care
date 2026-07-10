@@ -352,6 +352,11 @@ a[href]:active,
 .anim-checked-flash { animation: ycCheckedFlash 360ms ease both; }
 .anim-swipe-hint    { animation: ycSwipeHint    800ms cubic-bezier(0.4,0,0.2,1) 700ms backwards; }
 
+/* 스크롤바 숨김(스크롤 기능은 유지) — 탭 페이저 패널에 적용.
+ * 오버레이 세로 스크롤바가 가로 슬라이딩 중 화면을 가로질러 '세로 띠'로 보이는 현상 제거. */
+.yc-noscrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.yc-noscrollbar::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
 /* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
