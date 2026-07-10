@@ -88,7 +88,7 @@ export default function LandingClient() {
             <button
               onClick={() => handleOAuthSignIn('kakao')}
               disabled={!!loading}
-              className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-yc-lg text-xl font-display shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2.5 py-[clamp(14px,4vw,18px)] px-4 rounded-yc-lg text-[clamp(1rem,4.4vw,1.25rem)] font-display break-keep shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
               style={{ backgroundColor: '#FEE500', color: '#191919' }}
             >
               {loading === 'kakao'
@@ -99,7 +99,7 @@ export default function LandingClient() {
             <button
               onClick={() => handleOAuthSignIn('google')}
               disabled={!!loading}
-              className="w-full flex items-center justify-center gap-2.5 py-[16px] rounded-yc-lg text-base font-semibold text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2.5 py-[clamp(13px,3.6vw,16px)] px-4 rounded-yc-lg text-[clamp(0.9375rem,4vw,1.0625rem)] font-semibold break-keep text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] active:opacity-75 disabled:opacity-50 transition-opacity"
             >
               {loading === 'google'
                 ? <span className="animate-pulse">연결 중...</span>
