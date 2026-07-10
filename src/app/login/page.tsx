@@ -170,8 +170,8 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('kakao')}
             disabled={!!loading}
-            className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold transition-opacity active:opacity-75 disabled:opacity-40"
-            style={{ backgroundColor: '#FEE500', color: '#191919', padding: '18px 20px' }}
+            className="w-full flex items-center justify-center gap-2.5 sm:gap-3 rounded-2xl text-[clamp(1rem,4.4vw,1.25rem)] font-bold break-keep transition-opacity active:opacity-75 disabled:opacity-40"
+            style={{ backgroundColor: '#FEE500', color: '#191919', padding: 'clamp(14px,4vw,18px) clamp(16px,4.5vw,20px)' }}
           >
             {loading === 'kakao' ? (
               <span className="animate-pulse">연결 중...</span>
@@ -187,8 +187,8 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('naver')}
             disabled={!!loading}
-            className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-white transition-opacity active:opacity-75 disabled:opacity-40"
-            style={{ backgroundColor: '#03C75A', padding: '18px 20px' }}
+            className="w-full flex items-center justify-center gap-2.5 sm:gap-3 rounded-2xl text-[clamp(1rem,4.4vw,1.25rem)] font-bold break-keep text-white transition-opacity active:opacity-75 disabled:opacity-40"
+            style={{ backgroundColor: '#03C75A', padding: 'clamp(14px,4vw,18px) clamp(16px,4.5vw,20px)' }}
           >
             {loading === 'naver' ? (
               <span className="animate-pulse">연결 중...</span>
@@ -204,8 +204,8 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('google')}
             disabled={!!loading}
-            className="w-full flex items-center justify-center gap-3 rounded-2xl text-xl font-bold text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] transition-opacity active:opacity-75 disabled:opacity-40"
-            style={{ padding: '18px 20px' }}
+            className="w-full flex items-center justify-center gap-2.5 sm:gap-3 rounded-2xl text-[clamp(1rem,4.4vw,1.25rem)] font-bold break-keep text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] transition-opacity active:opacity-75 disabled:opacity-40"
+            style={{ padding: 'clamp(14px,4vw,18px) clamp(16px,4.5vw,20px)' }}
           >
             {loading === 'google' ? (
               <span className="animate-pulse">연결 중...</span>
