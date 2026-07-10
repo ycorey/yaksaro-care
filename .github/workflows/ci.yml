@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:   # db-gate 수동 실행용 (테스트 DB 대상)
+
+jobs:
+  # 시크릿 불필요 — 모든 push/PR에서 자동 게이트(타입·린트·단위테스트·빌드).
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npx eslint .
+      - name: Unit tests (Node 내장 러너, 36건)
+        run: npm run test:unit
+      - name: Build
+        run: npm run build
+        env:
+          # 빌드는 실제 백엔드 연결 없이 통과 — 공개 키가 없어도 정적 분석/타입 통과 확인용 더미.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+
+  # DB/RLS 실측 게이트(약사 토큰 누수·단골 코드 등 11종). 실 DB에 임시 유저를 시드·삭제하므로
+  # 운영 DB가 아닌 "테스트/스테이징 Supabase"를 대상으로만 실행할 것 → 수동 트리거(workflow_dispatch).
+  # 필요 시크릿(테스트 DB): TEST_SUPABASE_URL / TEST_SUPABASE_ANON_KEY / TEST_SUPABASE_SERVICE_ROLE_KEY
+  db-gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Write .env.local from test-DB secrets
+        run: |
+          cat > .env.local <<EOF
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.TEST_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          EOF
+      - name: DB/RLS 게이트 (test:e2e:db)
+        run: npm run test:e2e:db

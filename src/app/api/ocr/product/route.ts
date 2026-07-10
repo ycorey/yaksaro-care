@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import {
-  extractNames, resolveOneProduct, assembleResponse,
+  extractNames, resolveOneProduct, assembleResponse, validateImageUpload,
   type LicenseDetail, type LocalDrug,
 } from '@/lib/ocr-product'
 
@@ -90,19 +90,13 @@ export async function POST(request: Request) {
 
   const formData = await request.formData()
   const file     = formData.get('image') as File | null
-  if (!file) return NextResponse.json({ error: '이미지 없음' }, { status: 400 })
+  const rejection = validateImageUpload(file)
+  if (rejection) return NextResponse.json(rejection.body, { status: rejection.status })
 
-  const MAX_BYTES = 4 * 1024 * 1024
-  if (file.size > MAX_BYTES) return NextResponse.json({ error: 'image_too_large', max_mb: 4 }, { status: 413 })
-
-  const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: 'unsupported_type', allowed: [...ALLOWED_TYPES] }, { status: 415 })
-  }
-
-  const bytes = await file.arrayBuffer()
-  const mime  = file.type || 'image/jpeg'
-  const ext   = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
+  const okFile = file as File   // validateImageUpload가 null 아님을 보장
+  const bytes  = await okFile.arrayBuffer()
+  const mime   = okFile.type || 'image/jpeg'
+  const ext    = (okFile.name.split('.').pop() ?? 'jpg').toLowerCase()
 
   try {
     const rawText = await runClovaOcr(bytes, mime, ext)

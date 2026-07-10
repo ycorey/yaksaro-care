@@ -32,6 +32,22 @@ export function isValidOpenAiKey(key: string | undefined): boolean {
   return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
 }
 
+// ── 이미지 업로드 HTTP 경계 검증 (순수 → route 핸들러의 400/413/415 분기 테스트 가능) ──
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'] as const
+
+export type UploadRejection = { status: 400 | 413 | 415; body: Record<string, unknown> }
+
+// 통과 시 null, 실패 시 {status, body}. file은 size·type만 참조하므로 최소 형태로도 검증 가능.
+export function validateImageUpload(file: Pick<File, 'size' | 'type'> | null): UploadRejection | null {
+  if (!file) return { status: 400, body: { error: '이미지 없음' } }
+  if (file.size > MAX_UPLOAD_BYTES) return { status: 413, body: { error: 'image_too_large', max_mb: 4 } }
+  if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+    return { status: 415, body: { error: 'unsupported_type', allowed: [...ALLOWED_IMAGE_TYPES] } }
+  }
+  return null
+}
+
 // GPT 응답의 names 배열을 정제(문자열·길이 필터 + 최대 3). 순수 함수.
 export function cleanGptNames(parsed: unknown): string[] {
   const raw = (parsed as { names?: unknown })?.names
