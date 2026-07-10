@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import {
   extractNames, resolveOneProduct, assembleResponse, validateImageUpload,
-  type LicenseDetail, type LocalDrug,
+  parseLicenseDetail, parseLocalDrug, type LicenseDetail, type LocalDrug,
 } from '@/lib/ocr-product'
 
 // 박스 사진 → 제품명 후보 추출 전용. 처방전 OCR(/api/ocr)과 달리 EDI·용법·표 파싱을
@@ -57,7 +57,7 @@ async function fetchLicenseByName(itemName: string): Promise<LicenseDetail | nul
     const json  = await res.json()
     const items = json?.body?.items
     const first = Array.isArray(items) ? items[0] : items
-    return (first as LicenseDetail) ?? null
+    return parseLicenseDetail(first)   // as 캐스팅 대신 런타임 검증
   } catch { return null }
 }
 
@@ -68,10 +68,11 @@ async function findLocalDrug(supabase: Supa, q: string): Promise<LocalDrug | nul
   const cols = 'id, item_seq, item_name, entp_name, image_url, etc_otc_name'
   const prefix = await supabase.from('drugs').select(cols)
     .eq('is_canceled', false).ilike('item_name', `${q}%`).limit(1).maybeSingle()
-  if (prefix.data) return prefix.data as LocalDrug
+  const p = parseLocalDrug(prefix.data)
+  if (p) return p
   const contains = await supabase.from('drugs').select(cols)
     .eq('is_canceled', false).ilike('item_name', `%${q}%`).limit(1).maybeSingle()
-  return (contains.data as LocalDrug) ?? null
+  return parseLocalDrug(contains.data)
 }
 
 async function findIngredients(supabase: Supa, drugId: string): Promise<(string | null)[]> {

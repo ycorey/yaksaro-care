@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   cleanGptNames, extractNames, resolveOneProduct, assembleResponse,
   mapLicenseToProduct, normalizeQuery, isValidOpenAiKey, emptyProduct,
-  validateImageUpload, MAX_UPLOAD_BYTES,
+  validateImageUpload, MAX_UPLOAD_BYTES, parseLicenseDetail, parseLocalDrug,
   type LocalDrug, type LicenseDetail,
 } from './ocr-product.ts'
 
@@ -134,6 +134,35 @@ test('resolveOneProduct: 로컬·허가정보 모두 미스 → 미해결', asyn
   assert.equal(r.resolved, false)
   assert.equal(r.name, '없는제품명')
   assert.equal(r.drug_id, null)
+})
+
+// ── 외부 JSON 스키마 가드 ─────────────────────────────────────────
+test('parseLicenseDetail: 비객체 → null', () => {
+  assert.equal(parseLicenseDetail(null), null)
+  assert.equal(parseLicenseDetail('문자열'), null)
+  assert.equal(parseLicenseDetail(42), null)
+  assert.equal(parseLicenseDetail(undefined), null)
+})
+test('parseLicenseDetail: 문자열 필드만 수용, 비문자열은 undefined로 버림', () => {
+  const d = parseLicenseDetail({ ITEM_NAME: '타이레놀', ITEM_SEQ: 12345, ENTP_NAME: null, PRDUCT_TYPE: '[02390]해열' })
+  assert.equal(d?.ITEM_NAME, '타이레놀')
+  assert.equal(d?.ITEM_SEQ, undefined)   // 숫자 → 버림(타입 오염 방지)
+  assert.equal(d?.ENTP_NAME, undefined)  // null → 버림
+  assert.equal(d?.PRDUCT_TYPE, '[02390]해열')
+})
+test('parseLicenseDetail → mapLicenseToProduct: 깨진 응답은 미해결로 안전 폴백', () => {
+  assert.equal(mapLicenseToProduct(parseLicenseDetail({ foo: 'bar' })), null) // ITEM_NAME 없음
+  assert.equal(mapLicenseToProduct(parseLicenseDetail(['배열은', '객체아님'])), null)
+})
+test('parseLocalDrug: id·item_name 문자열 필수, 아니면 null', () => {
+  assert.equal(parseLocalDrug(null), null)
+  assert.equal(parseLocalDrug({ id: 'x' }), null)              // item_name 없음
+  assert.equal(parseLocalDrug({ id: 1, item_name: '약' }), null) // id 비문자열
+  const d = parseLocalDrug({ id: 'd1', item_name: '게보린', item_seq: null, entp_name: '삼진' })
+  assert.equal(d?.id, 'd1')
+  assert.equal(d?.item_name, '게보린')
+  assert.equal(d?.item_seq, null)   // null → null 정규화
+  assert.equal(d?.entp_name, '삼진')
 })
 
 // ── mapLicenseToProduct / normalizeQuery (순수) ───────────────────
