@@ -1,10 +1,29 @@
 // 경량 구조화 로거 — 흩어진 console.* 호출을 한 곳으로 통일한다.
 //
-// 의도적으로 외부 의존성이 없다(서버·클라이언트 공용). 추후 Sentry 등 외부
-// 수집기를 붙일 때는 이 파일의 emit()만 교체하면 되며, 호출부는 손대지 않는다.
-// (NEXT_PUBLIC_SENTRY_DSN 분기 지점도 여기 한 곳으로 집중시킨다.)
+// 의도적으로 외부 의존성이 없다(서버·클라이언트 공용). 외부 수집기(Sentry 등)는
+// setLogReporter()로 런타임에 주입한다 → 로거 자체는 무의존을 유지하고, 호출부는 손대지 않는다.
+//
+// Sentry 연결 예시 (예: app 진입점/instrumentation에서 1회):
+//   import * as Sentry from '@sentry/nextjs'
+//   import { setLogReporter } from '@/lib/logger'
+//   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+//     setLogReporter((level, scope, message, detail) => {
+//       if (detail instanceof Error) Sentry.captureException(detail, { tags: { scope }, extra: { message } })
+//       else Sentry.captureMessage(`[${scope}] ${message}`, level === 'error' ? 'error' : 'warning')
+//     })
+//   }
 
 type Level = 'error' | 'warn' | 'info'
+
+// 외부 수집기 훅. 등록 전엔 null → 아무 것도 전송하지 않는다(no-op).
+export type LogReporter = (level: Level, scope: string, message: string, detail?: unknown) => void
+
+let reporter: LogReporter | null = null
+
+// 외부 수집기 등록/해제. null을 넘기면 해제(테스트·SSR 안전).
+export function setLogReporter(fn: LogReporter | null): void {
+  reporter = fn
+}
 
 function emit(level: Level, scope: string, message: string, detail?: unknown) {
   const prefix = `[${scope}] ${message}`
@@ -13,8 +32,10 @@ function emit(level: Level, scope: string, message: string, detail?: unknown) {
   if (payload === undefined) console[level](prefix)
   else console[level](prefix, payload)
 
-  // 추후 확장 지점: 프로덕션 + DSN 설정 시 여기서 외부 수집기로 전송
-  // if (level === 'error' && process.env.NEXT_PUBLIC_SENTRY_DSN) { /* Sentry.captureException(...) */ }
+  // 등록된 외부 수집기로 전달(error·warn만). 수집기 오류가 로깅·앱을 깨지 않도록 흡수.
+  if (reporter && level !== 'info') {
+    try { reporter(level, scope, message, detail) } catch { /* 수집기 예외 무시 */ }
+  }
 }
 
 export const logger = {
