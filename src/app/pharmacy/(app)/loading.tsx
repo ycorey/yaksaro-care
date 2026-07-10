@@ -2,7 +2,7 @@
 // 레이아웃(헤더)은 이미 렌더된 상태에서 이 스켈레톤이 페이지 자리를 채운다.
 export default function Loading() {
   return (
-    <div className="space-y-5 animate-pulse">
+    <div className="space-y-5 animate-pulse" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">약사 대시보드를 불러오는 중이에요</span>
       <div>
         <div className="h-7 w-44 rounded bg-yc-neutral100" />
         <div className="mt-2 h-4 w-64 rounded bg-yc-neutral100" />

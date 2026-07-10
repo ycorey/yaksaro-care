@@ -170,6 +170,7 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('kakao')}
             disabled={!!loading}
+            aria-busy={loading === 'kakao'}
             className="w-full flex items-center justify-center gap-2.5 sm:gap-3 rounded-2xl text-[clamp(1rem,4.4vw,1.25rem)] font-bold break-keep transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ backgroundColor: '#FEE500', color: '#191919', padding: 'clamp(14px,4vw,18px) clamp(16px,4.5vw,20px)' }}
           >
@@ -204,6 +205,7 @@ function LoginContent() {
           <button
             onClick={() => handleOAuthSignIn('google')}
             disabled={!!loading}
+            aria-busy={loading === 'google'}
             className="w-full flex items-center justify-center gap-2.5 sm:gap-3 rounded-2xl text-[clamp(1rem,4.4vw,1.25rem)] font-bold break-keep text-yc-neutral900 bg-white border border-yc-neutral200 shadow-[var(--yc-shadow-sm)] transition-opacity active:opacity-75 disabled:opacity-40"
             style={{ padding: 'clamp(14px,4vw,18px) clamp(16px,4.5vw,20px)' }}
           >

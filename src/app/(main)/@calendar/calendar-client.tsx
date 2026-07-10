@@ -152,12 +152,13 @@ export default function CalendarClient({ members, activeId }: { members: Member[
 
         {/* 날짜 그리드 */}
         {loading ? (
-          <div className="grid grid-cols-7 gap-y-1">
+          <div role="status" aria-live="polite" className="grid grid-cols-7 gap-y-1">
             {Array.from({ length: 35 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center py-1.5">
+              <div key={i} className="flex flex-col items-center py-1.5" aria-hidden="true">
                 <div className="w-7 h-7 rounded-full bg-yc-neutral100 animate-pulse" />
               </div>
             ))}
+            <span className="sr-only">복약 캘린더를 불러오는 중이에요</span>
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-y-1">

@@ -319,9 +319,9 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
         </p>
 
         {phase === 'reading' ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 text-yc-neutral600">
-            <CircleNotch size={32} className="animate-spin text-yc-green600" />
-            <p className="text-sm">제품명을 읽고 있어요…</p>
+          <div role="status" aria-live="polite" className="flex flex-col items-center justify-center gap-3 py-10 text-yc-neutral600">
+            <CircleNotch size={32} aria-hidden="true" className="animate-spin text-yc-green600" />
+            <p className="text-base">제품명을 읽고 있어요…</p>
           </div>
         ) : (
           <>
