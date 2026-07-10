@@ -2,14 +2,20 @@
 
 import { useState, useRef, type ChangeEvent } from 'react'
 import { toast } from 'sonner'
-import { Camera, Images, CircleNotch, FileText } from '@phosphor-icons/react'
-import AddForm from './add-form'
+import { Camera, Images, CircleNotch, FileText, Pill, Check } from '@phosphor-icons/react'
+import AddForm, { type Selected } from './add-form'
 import { BackButton } from '../back-button'
 import MemberContextBadge from '@/components/member-context-badge'
 import type { Member } from '@/lib/member'
 
 type TabType = 'otc' | 'supplement'
 type Phase = 'capture' | 'confirm' | 'reading' | 'form'
+
+type ResolvedProduct = {
+  name: string; ingredient: string | null; drug_id: string | null; item_seq: string | null
+  entp_name: string | null; image_url: string | null; category: string | null
+  classType: string | null; resolved: boolean
+}
 
 // Canvas 다운스케일+JPEG 압축 — 전송량/비용 절감 + 413 방지 (ocr-uploader와 동일 패턴)
 function compressImage(file: Blob, maxDim: number, quality: number): Promise<Blob> {
@@ -70,6 +76,8 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
   const [phase, setPhase]       = useState<Phase>('capture')
   const [query, setQuery]       = useState('')   // 선택된 제품명(검색창 prefill)
   const [candidates, setCandidates] = useState<string[]>([])  // OCR 후보 1~3개
+  const [products, setProducts] = useState<ResolvedProduct[]>([])  // 성분·정식품목까지 해결된 결과
+  const [picked,   setPicked]   = useState<ResolvedProduct | null>(null)  // "이 약이 맞아요" 선택분
   const [preview, setPreview]   = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [looksRx, setLooksRx]   = useState(false)  // 약봉투/조제 라벨로 감지됨 → 처방전 플로우 유도
@@ -98,15 +106,21 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
         blob = await compressImage(pendingFile, 1100, 0.6)
         res = await postProduct(blob)
       }
-      const data  = await res.json().catch(() => ({}))
-      const names: string[] = Array.isArray(data?.names) ? data.names : []
+      const data = await res.json().catch(() => ({}))
+      const prods: ResolvedProduct[] = Array.isArray(data?.products) ? data.products : []
+      const names: string[] = Array.isArray(data?.candidates) ? data.candidates : []
       setLooksRx(!!data?.isPrescription)
+      setProducts(prods)
+      setCandidates(names)
+      setPicked(null)
 
       if (data?.isPrescription) {
         // 약봉투/조제 라벨 — 이름 검색으로 처리하기엔 여러 약이라, 처방전 검증 플로우로 유도
         toast.success('여러 약이 적힌 약봉투 같아요.')
+      } else if (prods.some(p => p.resolved)) {
+        setQuery(prods.find(p => p.resolved)!.name)
+        toast.success('약을 찾았어요. 맞는지 확인해 주세요.')
       } else if (names.length > 0) {
-        setCandidates(names)
         setQuery(names[0])
         toast.success('제품명을 읽었어요. 검색 결과에서 골라 주세요.')
       } else {
@@ -136,11 +150,28 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     setPhase('capture')
   }
 
-  // ── 폼 단계: OCR로 뽑은 이름을 검색창에 prefill → 사용자가 정확한 품목 선택 ──
+  // 해결된 정식 품목을 AddForm의 선택완료(Selected) 형태로 — 검색 생략하고 바로 담기
+  function toSelected(p: ResolvedProduct): Selected | null {
+    if (!p.resolved) return null
+    if (p.drug_id) {
+      return { type: 'drug', id: p.drug_id, item_seq: p.item_seq, name: p.name,
+               sub: p.entp_name ?? '', source: 'db', imageUrl: p.image_url }
+    }
+    if (p.item_seq) {
+      return { type: 'drug', id: p.item_seq, item_seq: p.item_seq, name: p.name,
+               sub: p.entp_name ?? '', source: 'api', imageUrl: p.image_url }
+    }
+    return null
+  }
+
+  // ── 폼 단계: OTC 전용 간소 확인 화면 (인식된 약·성분 → 바로 담기) ──
   if (phase === 'form') {
+    const resolvedProducts = products.filter(p => p.resolved)
+    const selected = picked ? toSelected(picked) : null
     return (
       <div className="space-y-5 anim-scale-in">
         <StepHeader title={initialTab === 'supplement' ? '영양제 · 보조제' : '일반의약품'} member={member} />
+
         {looksRx && (
           <div className="rounded-yc-xl border border-yc-green200 bg-yc-green50 px-5 py-4 space-y-3">
             <div className="flex items-start gap-2.5">
@@ -155,26 +186,95 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
             </button>
           </div>
         )}
-        {query && (
-          <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
-            박스에서 <b>&quot;{query}&quot;</b>를 읽었어요. 검색 결과에서 맞는 제품을 골라 주세요.
-          </p>
-        )}
-        {candidates.length > 1 && (
-          <div className="space-y-1.5">
-            <p className="text-xs text-yc-neutral500">다른 이름으로 읽혔다면 눌러서 바꿔요</p>
-            <div className="flex flex-wrap gap-1.5">
-              {candidates.map(c => (
-                <button key={c} type="button" onClick={() => setQuery(c)}
-                  className={`text-sm px-3 py-2 rounded-full border transition-colors ${c === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
-                  {c}
-                </button>
-              ))}
-            </div>
+
+        {/* 정식 품목 확인 완료 → 검색 생략하고 바로 폼(선택완료 상태) */}
+        {selected ? (
+          <>
+            {picked?.ingredient && (
+              <div className="rounded-yc-lg bg-yc-green50 border border-yc-green100 px-4 py-3">
+                <p className="text-xs font-bold text-yc-green700 mb-0.5">성분</p>
+                <p className="text-sm text-yc-neutral800 break-keep">{picked.ingredient}</p>
+              </div>
+            )}
+            <AddForm key={selected.name} initialTab={initialTab} initialSelected={selected} />
+          </>
+        ) : resolvedProducts.length > 0 ? (
+          /* ── OTC 전용 간소 화면: 인식된 약 확인 ── */
+          <div className="space-y-4">
+            {candidates.length > 1 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-yc-neutral500">다른 약으로 읽혔다면 눌러서 바꿔요</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {resolvedProducts.map((p, i) => (
+                    <button key={`${p.name}-${i}`} type="button" onClick={() => setQuery(p.name)}
+                      className={`text-sm px-3 py-2 rounded-full border transition-colors ${p.name === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(() => {
+              const p = resolvedProducts.find(x => x.name === query) ?? resolvedProducts[0]
+              return (
+                <div className="rounded-yc-xl border border-yc-neutral200 bg-white overflow-hidden shadow-[var(--yc-shadow-sm)]">
+                  <div className="flex items-start gap-4 p-5">
+                    <div className="w-20 h-20 rounded-yc-lg bg-yc-neutral50 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      {p.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img loading="lazy" decoding="async" src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                      ) : <Pill weight="fill" size={28} className="text-yc-green600 opacity-60" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-lg font-bold text-yc-neutral900 leading-tight break-keep">{p.name}</p>
+                      {p.entp_name && <p className="text-xs text-yc-neutral500 mt-0.5">{p.entp_name}</p>}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {p.category  && <span className="text-xs bg-yc-green50 text-yc-green700 rounded-full px-2.5 py-0.5">{p.category}</span>}
+                        {p.classType && <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{p.classType}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-5 pb-4">
+                    <p className="text-xs font-bold text-yc-neutral500 mb-1">성분</p>
+                    <p className="text-sm text-yc-neutral800 break-keep">{p.ingredient ?? '성분 정보 없음'}</p>
+                  </div>
+                  <button type="button" onClick={() => setPicked(p)}
+                    className="w-full h-14 bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center gap-2">
+                    <Check weight="bold" size={18} /> 이 약이 맞아요
+                  </button>
+                </div>
+              )
+            })()}
+            <button type="button" onClick={() => { setPicked(null); setProducts([]) }}
+              className="min-h-[44px] w-full flex items-center justify-center text-sm font-medium text-yc-neutral600 underline active:opacity-70">
+              다른 이름으로 직접 검색
+            </button>
           </div>
+        ) : (
+          /* ── 미해결: 읽은 이름으로 검색 폴백 (재시작 루프 없음) ── */
+          <>
+            {query && (
+              <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
+                박스에서 <b>&quot;{query}&quot;</b>를 읽었어요. 검색 결과에서 맞는 제품을 골라 주세요.
+              </p>
+            )}
+            {candidates.length > 1 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-yc-neutral500">다른 이름으로 읽혔다면 눌러서 바꿔요</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {candidates.map(c => (
+                    <button key={c} type="button" onClick={() => setQuery(c)}
+                      className={`text-sm px-3 py-2 rounded-full border transition-colors ${c === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* query 변경(후보 전환) 시 AddForm을 리마운트해 검색창을 새 이름으로 다시 채움 */}
+            <AddForm key={query} initialTab={initialTab} initialQuery={query || undefined} />
+          </>
         )}
-        {/* query 변경(후보 전환) 시 AddForm을 리마운트해 검색창을 새 이름으로 다시 채움 */}
-        <AddForm key={query} initialTab={initialTab} initialQuery={query || undefined} />
       </div>
     )
   }
