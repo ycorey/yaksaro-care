@@ -158,7 +158,7 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
             className="shrink-0 w-full h-full overflow-y-auto overflow-x-hidden yc-noscrollbar bg-background"
             style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="max-w-[430px] mx-auto px-4 pt-5 pb-28">{panel}</div>
+            <div className="max-w-[430px] mx-auto px-4 pt-5 pb-28 min-h-full">{panel}</div>
           </div>
         ))}
       </div>
