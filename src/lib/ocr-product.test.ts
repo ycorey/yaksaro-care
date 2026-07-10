@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   cleanGptNames, extractNames, resolveOneProduct, assembleResponse,
   mapLicenseToProduct, normalizeQuery, isValidOpenAiKey, emptyProduct,
+  validateImageUpload, MAX_UPLOAD_BYTES,
   type LocalDrug, type LicenseDetail,
 } from './ocr-product.ts'
 
@@ -17,6 +18,27 @@ function gptOk(content: string): typeof fetch {
 }
 const gptFail: typeof fetch = (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch
 const gptThrow: typeof fetch = (async () => { throw new Error('timeout') }) as unknown as typeof fetch
+
+// ── validateImageUpload: route HTTP 경계(400/413/415) ─────────────
+test('validateImageUpload: 파일 없음 → 400', () => {
+  assert.deepEqual(validateImageUpload(null), { status: 400, body: { error: '이미지 없음' } })
+})
+test('validateImageUpload: 4MB 초과 → 413', () => {
+  const r = validateImageUpload({ size: MAX_UPLOAD_BYTES + 1, type: 'image/jpeg' })
+  assert.equal(r?.status, 413)
+  assert.equal(r?.body.error, 'image_too_large')
+})
+test('validateImageUpload: 미허용 MIME → 415(allowed 목록 포함)', () => {
+  const r = validateImageUpload({ size: 100, type: 'application/pdf' })
+  assert.equal(r?.status, 415)
+  assert.equal(r?.body.error, 'unsupported_type')
+  assert.ok(Array.isArray(r?.body.allowed) && (r?.body.allowed as string[]).includes('image/jpeg'))
+})
+test('validateImageUpload: 허용 이미지(jpeg/png/heic) → 통과(null)', () => {
+  assert.equal(validateImageUpload({ size: 100, type: 'image/jpeg' }), null)
+  assert.equal(validateImageUpload({ size: 100, type: 'image/png' }), null)
+  assert.equal(validateImageUpload({ size: MAX_UPLOAD_BYTES, type: 'image/heic' }), null) // 경계값(=최대)은 통과
+})
 
 // ── isValidOpenAiKey ──────────────────────────────────────────────
 test('isValidOpenAiKey: sk- 접두 + 길이', () => {
