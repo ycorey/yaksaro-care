@@ -142,7 +142,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
             <div
               key={d}
               className={`text-center text-[11px] font-medium pb-1 ${
-                i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-blue700' : 'text-yc-neutral500'
+                i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-saturday' : 'text-yc-neutral500'
               }`}
             >
               {d}
@@ -180,7 +180,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
                         : dow === 0
                         ? 'text-yc-error'
                         : dow === 6
-                        ? 'text-yc-blue700'
+                        ? 'text-yc-saturday'
                         : 'text-yc-neutral800'
                     }`}
                   >

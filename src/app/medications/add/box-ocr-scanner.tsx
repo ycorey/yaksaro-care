@@ -207,7 +207,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
                 <div className="flex flex-wrap gap-1.5">
                   {resolvedProducts.map((p, i) => (
                     <button key={`${p.name}-${i}`} type="button" onClick={() => setQuery(p.name)}
-                      className={`text-sm px-3 py-2 rounded-full border transition-colors ${p.name === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                      className={`text-base px-3.5 py-2 min-h-[44px] inline-flex items-center rounded-full border transition-colors ${p.name === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
                       {p.name}
                     </button>
                   ))}
@@ -264,7 +264,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
                 <div className="flex flex-wrap gap-1.5">
                   {candidates.map(c => (
                     <button key={c} type="button" onClick={() => setQuery(c)}
-                      className={`text-sm px-3 py-2 rounded-full border transition-colors ${c === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
+                      className={`text-base px-3.5 py-2 min-h-[44px] inline-flex items-center rounded-full border transition-colors ${c === query ? 'bg-yc-green600 text-white border-yc-green600' : 'bg-white text-yc-neutral700 border-yc-neutral200 active:bg-yc-neutral50'}`}>
                       {c}
                     </button>
                   ))}

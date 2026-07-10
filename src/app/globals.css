@@ -191,6 +191,7 @@
   --color-yc-warningText:     #92600A;
   --color-yc-warningTextSoft: #7A5A00;
   --color-yc-infoText:        #1E5BA8;
+  --color-yc-saturday:        #2E6CA6;   /* 달력 토요일 — 한국 달력 관습(토=파랑). 일=yc-error와 대칭. WCAG AA */
 
   /* Radius (핸드오프 스케일) */
   --radius-yc-sm: 8px;
