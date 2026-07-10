@@ -32,6 +32,35 @@ export function isValidOpenAiKey(key: string | undefined): boolean {
   return typeof key === 'string' && key.startsWith('sk-') && key.length > 20
 }
 
+// ── 외부 JSON 런타임 스키마 가드 (식약처 API·DB 응답을 `as` 캐스팅 대신 실검증) ──
+// zod 등 무의존 원칙 유지 위해 경량 순수 가드로 구현. 응답 형태가 바뀌면 조용한 오동작 대신 null로 폴백.
+function asStr(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length > 0 ? v : undefined
+}
+
+// 식약처 허가정보 1건 → LicenseDetail. 객체가 아니면 null, 필드는 문자열만 수용(숫자·null·객체는 버림).
+export function parseLicenseDetail(raw: unknown): LicenseDetail | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  return {
+    ITEM_SEQ: asStr(o.ITEM_SEQ), ITEM_NAME: asStr(o.ITEM_NAME), ENTP_NAME: asStr(o.ENTP_NAME),
+    ITEM_INGR_NAME: asStr(o.ITEM_INGR_NAME), SPCLTY_PBLC: asStr(o.SPCLTY_PBLC),
+    PRDUCT_TYPE: asStr(o.PRDUCT_TYPE), BIG_PRDT_IMG_URL: asStr(o.BIG_PRDT_IMG_URL),
+  }
+}
+
+// 로컬 drugs 행 → LocalDrug. id·item_name(필수)이 문자열이 아니면 null(빈/깨진 행을 resolved로 오인 방지).
+export function parseLocalDrug(raw: unknown): LocalDrug | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  if (typeof o.id !== 'string' || typeof o.item_name !== 'string') return null
+  return {
+    id: o.id, item_name: o.item_name,
+    item_seq: asStr(o.item_seq) ?? null, entp_name: asStr(o.entp_name) ?? null,
+    image_url: asStr(o.image_url) ?? null, etc_otc_name: asStr(o.etc_otc_name) ?? null,
+  }
+}
+
 // ── 이미지 업로드 HTTP 경계 검증 (순수 → route 핸들러의 400/413/415 분기 테스트 가능) ──
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'] as const
