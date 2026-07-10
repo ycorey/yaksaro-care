@@ -15,6 +15,7 @@ const DB_ONLY = [
   'adherence-qa', 'meal-slots-qa', 'store-code-qa', 'refill-qa',
   'request-schedule-qa', 'pharmacy-board-qa',
   'pharmacist-adherence-qa', 'dangol-code-link-qa', 'pharmacy-due-qa', 'pharmacy-todo-qa',
+  'pharmacist-rls-qa', // 약사 토큰 RLS 누수 실측(B2B 게이트) — 미동의/타약국/철회/가족 0건 증명
 ]
 // 서버 필요 + 자체 시드·정리.
 const SERVER_STANDALONE = ['qr-flow-sim', 'qr-social-sim', 'ux-tap-qa']
