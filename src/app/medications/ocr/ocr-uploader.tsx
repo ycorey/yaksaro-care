@@ -441,7 +441,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <div className="flex items-start gap-2 bg-yc-green50 border border-yc-green100 rounded-yc-md px-4 py-3">
             <Lightbulb weight="fill" size={16} className="text-yc-green600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-yc-neutral600 leading-relaxed">
-              처방전 <span className="font-semibold text-yc-neutral800">전체가 화면에 가득 차게</span>, 밝은 곳에서 평평하게 펴고 찍으면 더 정확하게 읽어요.
+              <span className="font-semibold text-yc-neutral800">① 폰 카메라로 처방전을 먼저 찍고 → ② 아래 &lsquo;앨범에서 선택&rsquo;</span>으로 불러오면 가장 잘 돼요. 처방전 전체가 화면에 가득 차게, 밝은 곳에서 평평하게 펴고 찍어 주세요.
             </p>
           </div>
 
@@ -462,21 +462,28 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
             onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f) }}
           />
 
+          {/* 앨범 선택을 기본(권장) 경로로 — 설치형 PWA에서 앱 내 카메라(capture)는
+              촬영 중 OS가 앱을 메모리에서 종료해 콜드 재시작되며 사진이 유실될 수 있음.
+              앨범 피커는 훨씬 가벼워 앱이 죽지 않는다(실측 확정). */}
           <button
             type="button"
-            onClick={() => cameraRef.current?.click()}
+            onClick={() => fileRef.current?.click()}
             className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md bg-yc-green600 text-white font-semibold active:bg-yc-green700 transition-colors"
           >
-            <Camera weight="fill" size={20} /> 카메라 촬영
+            <Images weight="fill" size={20} /> 앨범에서 선택
           </button>
 
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => cameraRef.current?.click()}
             className="flex items-center justify-center gap-2 w-full h-12 rounded-yc-md border border-yc-neutral300 bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral100 transition-colors"
           >
-            <Images size={20} /> 사진 선택
+            <Camera weight="fill" size={20} /> 카메라로 바로 촬영
           </button>
+          <p className="text-xs text-yc-neutral500 leading-relaxed text-center px-2">
+            일부 휴대폰은 앱 안에서 바로 촬영하면 앱이 재시작되며 사진이 사라질 수 있어요.
+            그럴 땐 위 <span className="font-semibold text-yc-neutral700">&lsquo;앨범에서 선택&rsquo;</span>을 이용해 주세요.
+          </p>
         </div>
       )}
 

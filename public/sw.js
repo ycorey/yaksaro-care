@@ -4,7 +4,7 @@
  *  - 페이지 이동(navigate): network-first → 실패 시 /offline 폴백 (인증/데이터 신선도 우선)
  *  - 그 외(API 등): 네트워크 통과 (캐시하지 않음 — 약 정보는 항상 최신)
  */
-const VERSION = 'v1'
+const VERSION = 'v2'
 const STATIC_CACHE = `yc-static-${VERSION}`
 const PRECACHE = [
   '/offline',
