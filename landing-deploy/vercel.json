@@ -1,0 +1,12 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/((?!naver).*)",
+      "has": [{ "type": "host", "value": "www.yaksaro.co.kr" }],
+      "destination": "https://yaksaro.co.kr/$1",
+      "permanent": true
+    }
+  ]
+}
