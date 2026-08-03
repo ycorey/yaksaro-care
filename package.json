@@ -24,6 +24,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "@vercel/analytics": "^2.0.1",
     "@zxing/browser": "^0.2.0",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",

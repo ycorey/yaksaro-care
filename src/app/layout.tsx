@@ -5,6 +5,7 @@ import PWARegister from '@/components/pwa-register'
 import SplashScreen from '@/components/splash-screen'
 import InstallBanner from '@/components/pwa/install-banner'
 import { PhosphorProvider } from '@/components/providers/phosphor-provider'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -82,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <InstallBanner />
           <PWARegister />
         </PhosphorProvider>
+        <Analytics />
       </body>
     </html>
   )
