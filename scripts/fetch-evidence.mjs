@@ -12,9 +12,33 @@
 //   로컬(기본): http://localhost:3000  → dev 서버(npm run dev)가 떠 있어야 함
 //   배포:       EVIDENCE_API_URL=https://<vercel-도메인> node scripts/fetch-evidence.mjs ...
 //
+// 인증: /api/evidence 는 유료 호출(PubMed+Claude) 보호를 위해 인증을 요구한다.
+// CLI 는 브라우저가 아니라 쿠키 세션을 가질 수 없으므로 .env.local 의
+// EVIDENCE_API_SECRET 을 Authorization 헤더로 보낸다(라우트의 헤더 전용 경로).
+//
 // 주의: 검색어는 영문이 PubMed 적중률이 높다. 한국어로 넣어도 동작은 하나 결과가 적을 수 있다.
 
+import { readFileSync } from 'fs'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
+
+// .env.local 로드 — 이 스크립트는 다른 폴더(블로그 작업 폴더 등)에서 절대경로로
+// 호출되므로 cwd 가 아니라 "스크립트 위치 기준"으로 찾아야 한다.
+const fileEnv = {}
+try {
+  const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  readFileSync(resolve(projectRoot, '.env.local'), 'utf-8')
+    .split('\n')
+    .forEach((l) => {
+      const [k, ...v] = l.split('=')
+      if (k && !k.startsWith('#')) fileEnv[k.trim()] = v.join('=').trim()
+    })
+} catch {
+  // .env.local 이 없어도 진행 — process.env 로만 동작할 수 있다.
+}
+
 const BASE = process.env.EVIDENCE_API_URL || 'http://localhost:3000'
+const SECRET = process.env.EVIDENCE_API_SECRET || fileEnv['EVIDENCE_API_SECRET']
 
 const query = process.argv[2]
 const context = process.argv[3] || 'blog'
@@ -57,7 +81,10 @@ async function main() {
   try {
     res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(SECRET ? { Authorization: `Bearer ${SECRET}` } : {}),
+      },
       body: JSON.stringify({ query, context }),
     })
   } catch (err) {
@@ -70,6 +97,13 @@ async function main() {
 
   if (!res.ok) {
     console.error(`API 오류 [HTTP ${res.status}]: ${data.error || '알 수 없는 오류'}`)
+    if (res.status === 401) {
+      console.error(
+        SECRET
+          ? 'EVIDENCE_API_SECRET 값이 서버(.env.local)와 다릅니다. dev 서버를 재시작했는지 확인하세요.'
+          : '.env.local 에 EVIDENCE_API_SECRET 이 없습니다. 서버와 동일한 값을 넣어주세요.',
+      )
+    }
     process.exit(1)
   }
 

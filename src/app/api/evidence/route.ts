@@ -56,10 +56,20 @@ function buildQueryKey(b: EvidenceBody): string {
 }
 
 export async function POST(request: Request) {
-  // 인증 게이트 — PubMed + Claude 유료 호출/캐시 쓰기 전에 로그인 사용자만 허용(비용 남용 방지)
-  const sb = await createClient()
-  const { data: { user } } = await sb.auth.getUser()
-  if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+  // 인증 게이트 — PubMed + Claude 유료 호출/캐시 쓰기 전에 인증된 호출만 허용(비용 남용 방지).
+  // 경로 둘: ① 브라우저 = Supabase 세션 쿠키, ② CLI/서버 = Authorization 헤더.
+  // ②는 쿠키를 가질 수 없는 호출자(scripts/fetch-evidence.mjs)를 위한 것이고,
+  // 헤더 전용이다(쿼리스트링은 로그·Referer 노출 → 금지). cron 라우트와 동일 패턴.
+  // EVIDENCE_API_SECRET 미설정 시 ②는 항상 차단 — 실수로 열리는 것을 막는다.
+  const secret = process.env.EVIDENCE_API_SECRET
+  const bearer = request.headers.get('authorization')?.replace('Bearer ', '')
+  const viaSecret = Boolean(secret) && bearer === secret
+
+  if (!viaSecret) {
+    const sb = await createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+  }
 
   let raw: Record<string, unknown>
   try {
