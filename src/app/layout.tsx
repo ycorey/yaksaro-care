@@ -6,6 +6,8 @@ import SplashScreen from '@/components/splash-screen'
 import InstallBanner from '@/components/pwa/install-banner'
 import { PhosphorProvider } from '@/components/providers/phosphor-provider'
 import { Analytics } from '@vercel/analytics/next'
+import GoogleAnalytics from '@/components/analytics/google-analytics'
+import GaInit from '@/components/analytics/ga-init'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -58,6 +60,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {/* GA4 초기화 — 자동 페이지뷰를 끄고 정화된 page_location 기본값을 심는다 (측정 ID 없으면 미렌더) */}
+        <GaInit />
         {/* 글자 크기 설정 — localStorage에서 즉시 복원 (FOUC 방지) */}
         <script dangerouslySetInnerHTML={{ __html: `try{var fs=localStorage.getItem('yaksaro_font_size');var px={'normal':16,'large':18,'xlarge':20}[fs];if(px)document.documentElement.style.fontSize=px+'px';}catch(e){}` }} />
         {/* 디스플레이 폰트(헤더 전역 사용) 선로딩 → 첫 헤딩 페인트 가속 */}
@@ -84,6 +88,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PWARegister />
         </PhosphorProvider>
         <Analytics />
+        {/* GA4 — 측정 ID(NEXT_PUBLIC_GA_ID)가 없으면 아무것도 렌더되지 않는다 */}
+        <GoogleAnalytics />
       </body>
     </html>
   )

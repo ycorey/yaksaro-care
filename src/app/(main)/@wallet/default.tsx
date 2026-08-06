@@ -7,6 +7,7 @@ import AppHeader from '@/components/app-header'
 import { WalletHeaderActions } from './wallet-header-actions'
 import { SectionHeader } from '@/components/yc/section-header'
 import PharmacyToast from './pharmacy-toast'
+import FirstDrugTracker from '@/components/analytics/first-drug-tracker'
 import PrescriptionSection, { type MedCard, type HospitalGroup } from './prescription-section'
 import SupplementSection from './supplement-section'
 import OtcSection from './otc-section'
@@ -196,6 +197,8 @@ export default async function WalletPage() {
   return (
     <div className="space-y-8 pb-6">
       <PharmacyToast />
+      {/* GA4 퍼널 — 첫 약 등록 감지(내용은 담지 않는다). 가입 마커는 (main)/layout 이 받는다 */}
+      <FirstDrugTracker hasMeds={activeMeds.length > 0} />
 
       {/* ── 헤더 ── */}
       <AppHeader actions={<WalletHeaderActions />} />
