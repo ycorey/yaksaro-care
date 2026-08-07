@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { unsubscribeFromPush } from '@/lib/push-client'
 import { MEMBER_COOKIE } from '@/lib/member'
+import { FONT_SIZE_KEY } from '@/lib/font-size'
 
 // 로그아웃 퍼지 SSOT.
 //
@@ -13,9 +14,16 @@ import { MEMBER_COOKIE } from '@/lib/member'
 // 순서가 중요하다: 푸시 해제는 DELETE /api/push/subscribe 가 세션을 요구하므로
 // **signOut 이전**에 해야 서버 행까지 지워진다.
 
-/** localStorage·sessionStorage·앱 쿠키를 모두 비운다. */
+/** localStorage·sessionStorage·앱 쿠키를 비운다. 기기 접근성 설정만 예외로 보존한다. */
 export function purgeLocalState(): void {
+  // 글자 크기는 개인정보가 아니라 **기기 접근성 설정**이다. 로그아웃 때 같이 지우면
+  // 실버 사용자가 다음 로그인에서 화면이 20% 작아진 채 되돌리는 법을 모르게 된다.
+  // (서버에도 남아 있지만 첫 페인트는 이 값이 결정한다)
+  let fontSize: string | null = null
+  try { fontSize = localStorage.getItem(FONT_SIZE_KEY) } catch { /* 접근 불가 */ }
+
   try { localStorage.clear() } catch { /* 사파리 프라이빗 등 */ }
+  try { if (fontSize) localStorage.setItem(FONT_SIZE_KEY, fontSize) } catch { /* 동일 */ }
   // sessionStorage 에는 박스 OCR → 처방전 OCR 핸드오프용 사진(dataURL 원본)이 들어간다.
   // 설치형 PWA 는 앱 자체가 하나의 탭이라 로그아웃/로그인 사이에도 살아남는다.
   try { sessionStorage.clear() } catch { /* 동일 */ }

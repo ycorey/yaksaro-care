@@ -12,13 +12,13 @@ import { subscribeToPush, unsubscribeFromPush, pushSupported } from '@/lib/push-
 import { Lock, Hospital, Bell, Check, X } from '@phosphor-icons/react'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import PharmacyLink from './pharmacy-link'
+import { FONT_SIZE_KEY, FONT_PX, type FontSize } from '@/lib/font-size'
 
-type FontSize = 'normal' | 'large' | 'xlarge'
-
-const FONT_SIZES: { key: FontSize; label: string; px: number }[] = [
-  { key: 'normal', label: '보통',    px: 16 },
-  { key: 'large',  label: '크게',    px: 18 },
-  { key: 'xlarge', label: '아주 크게', px: 20 },
+// 키·픽셀은 SSOT(lib/font-size) — 루트 FOUC 스크립트·(main) 레이아웃 복원·로그아웃 보존이 같은 값을 쓴다
+const FONT_SIZE_OPTIONS: { key: FontSize; label: string }[] = [
+  { key: 'normal', label: '보통' },
+  { key: 'large',  label: '크게' },
+  { key: 'xlarge', label: '아주 크게' },
 ]
 
 // 키·라벨 모두 SSOT(meal-slots)에서 파생 — cron이 profiles.alarm_times[meal]로 필터한다
@@ -122,6 +122,9 @@ export default function SettingsClient({
 
   // 글자 크기 — 서버(profiles)가 진실원, localStorage는 FOUC 방지 캐시
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize)
+  const [deleteOpen,    setDeleteOpen]    = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting,      setDeleting]      = useState(false)
 
   // 알림 — 서버(profiles)가 진실원, cron이 이 값으로 발송 대상을 거른다
   const [alarmEnabled, setAlarmEnabled]   = useState(initialAlarmEnabled)
@@ -131,15 +134,14 @@ export default function SettingsClient({
   })
 
   function applyFontSize(fs: FontSize) {
-    const px = FONT_SIZES.find(f => f.key === fs)?.px ?? 16
-    document.documentElement.style.fontSize = `${px}px`
+    document.documentElement.style.fontSize = `${FONT_PX[fs]}px`
   }
 
   // 서버 값을 화면·localStorage 캐시에 동기화 (기기 변경 시 복원)
   useEffect(() => {
     applyFontSize(initialFontSize)
     try {
-      localStorage.setItem('yaksaro_font_size', initialFontSize)
+      localStorage.setItem(FONT_SIZE_KEY, initialFontSize)
       localStorage.setItem('yaksaro_alarm_enabled', initialAlarmEnabled ? '1' : '0')
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,7 +150,7 @@ export default function SettingsClient({
   function changeFontSize(fs: FontSize) {
     setFontSize(fs)
     applyFontSize(fs)
-    try { localStorage.setItem('yaksaro_font_size', fs) } catch {}
+    try { localStorage.setItem(FONT_SIZE_KEY, fs) } catch {}
     persistSettings({ font_size: fs })
   }
 
@@ -196,6 +198,30 @@ export default function SettingsClient({
     persistSettings({ alarm_times: next })
   }
 
+  async function handleDeleteAccount() {
+    if (deleteConfirm.trim() !== '탈퇴' || deleting) return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/profile/delete', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(typeof data?.error === 'string' ? data.error : '탈퇴 처리에 실패했어요')
+        setDeleting(false)
+        return
+      }
+      // 서버에서 계정이 사라졌으므로 로컬 흔적도 함께 지운다(푸시 해제 포함).
+      // 계정이 없어 signOut 이 실패해도 로컬 파기는 진행돼야 하므로 개별 처리한다.
+      await signOutAndPurge().catch(() => {})
+      // 계정 자체가 사라진 상태다. 소프트 이동은 죽은 세션을 든 React 트리를 그대로 들고 가
+      // 프록시·슬롯이 잔여 상태로 렌더될 수 있으므로 문서를 새로 연다.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- 탈퇴 직후 상태 초기화를 위한 의도된 하드 내비게이션
+      window.location.href = '/login?deleted=1'
+    } catch {
+      toast.error('탈퇴 처리에 실패했어요')
+      setDeleting(false)
+    }
+  }
+
   async function handleLogout() {
     await signOutAndPurge()
     router.push('/login')
@@ -210,7 +236,7 @@ export default function SettingsClient({
       <section className="anim-page" style={{ animationDelay: '0ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">글자 크기</p>
         <div className="flex gap-2">
-          {FONT_SIZES.map(f => (
+          {FONT_SIZE_OPTIONS.map(f => (
             <button key={f.key} type="button" onClick={() => changeFontSize(f.key)}
               className={`flex-1 py-3.5 rounded-yc-lg text-sm transition-colors shadow-[var(--yc-shadow-sm)] ${
                 fontSize === f.key
@@ -335,11 +361,56 @@ export default function SettingsClient({
             className="w-full px-5 py-4 text-left text-sm font-medium text-yc-error active:bg-yc-errorBg transition-colors">
             로그아웃
           </button>
+          {/* 약사 계정은 셀프 탈퇴 불가 — CASCADE 로 약국·QR·요청 이력까지 함께 사라진다(API 도 403) */}
+          {userRole !== 'pharmacist' && (
+            <button onClick={() => setDeleteOpen(true)}
+              className="w-full px-5 py-4 text-left text-sm font-medium text-yc-neutral600 border-t border-yc-neutral200 active:bg-yc-neutral100 transition-colors min-h-[52px]">
+              회원 탈퇴
+            </button>
+          )}
         </div>
         <p className="text-xs text-yc-neutral500 mt-3 text-center leading-relaxed">
-          계정 삭제·개인정보 열람 요청은 ycorey@gmail.com 으로 문의하세요.
+          개인정보 열람·정정 요청은 ycorey@gmail.com 으로 문의하세요.
         </p>
       </section>
+
+      {/* 탈퇴 확인 — 되돌릴 수 없으므로 '탈퇴'를 직접 입력해야 진행된다(오탭 방지) */}
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+             role="dialog" aria-modal="true" aria-labelledby="yc-del-title">
+          <div className="bg-white rounded-yc-lg w-full max-w-md p-6 shadow-lg">
+            <h2 id="yc-del-title" className="text-lg font-bold text-yc-neutral900">정말 탈퇴하시겠어요?</h2>
+            <p className="text-sm text-yc-neutral600 mt-3 leading-relaxed">
+              등록한 약, 복약 기록, 가족 정보가 <b>모두 삭제되고 되돌릴 수 없어요.</b>
+              {' '}알림도 더 이상 오지 않아요.
+            </p>
+            <label htmlFor="yc-del-confirm" className="block text-sm text-yc-neutral700 mt-4">
+              계속하시려면 아래에 <b>탈퇴</b> 라고 입력해주세요.
+            </label>
+            <input
+              id="yc-del-confirm"
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              className="w-full mt-2 px-4 py-3 text-base border border-yc-neutral300 rounded-yc-md focus:outline-none focus:border-yc-green600"
+            />
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => { setDeleteOpen(false); setDeleteConfirm('') }}
+                disabled={deleting}
+                className="flex-1 py-3 text-base font-semibold text-yc-neutral700 bg-yc-neutral100 rounded-yc-md min-h-[52px]">
+                취소
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm.trim() !== '탈퇴' || deleting}
+                className="flex-1 py-3 text-base font-semibold text-white bg-yc-error rounded-yc-md min-h-[52px] disabled:opacity-40">
+                {deleting ? '처리 중…' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

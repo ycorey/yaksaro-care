@@ -130,6 +130,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const [proMode,          setProMode]          = useState(false)  // 전문가 상세 모드(약사 검수용)
   const [saving,           setSaving]           = useState(false)
   const [error,            setError]            = useState<string | null>(null)
+  const [retryable,        setRetryable]        = useState(true)   // 429·401 은 재시도해도 동일 → 버튼 숨김
   const [info,             setInfo]             = useState<Record<number, DrugInfo>>({})
   const [pharmacy,         setPharmacy]         = useState<SelectedPharmacy>(emptyPharmacy(regularPharmacy?.name))
   const [pharmSearch,      setPharmSearch]      = useState('')
@@ -200,6 +201,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
   const onFile = (f: File) => {
     setResult(null)
     setError(null)
+    setRetryable(true)
     setEditIdx(null)
     setPharmacy(emptyPharmacy(regularPharmacy?.name))
     setPendingFile(f)
@@ -263,6 +265,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     setStage(0)
     setState('uploading')
     setError(null)
+    setRetryable(true)
     try {
       let res: Response
       try {
@@ -277,7 +280,16 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       }
       if (res.status === 413) throw new Error('이미지가 너무 큽니다. 더 가까이서 다시 촬영해 주세요.')
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? '오류')
+      if (!res.ok) {
+        // 429(하루 한도)·401(세션 만료)은 같은 사진을 다시 보내도 결과가 같다 →
+        // 재시도 버튼을 감춰 확정 실패를 반복하지 않게 한다.
+        if (res.status === 429 || res.status === 401) setRetryable(false)
+        throw new Error(
+          typeof data?.error === 'string' && data.error
+            ? data.error
+            : '사진을 읽지 못했어요. 잠시 후 다시 시도해주세요.',
+        )
+      }
       setResult({
         ...data,
         medicines: (data.medicines ?? []).map((m: Omit<Medicine, 'meal_times'>) => ({
@@ -522,7 +534,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       {error && (
         <div className="bg-yc-errorBg border border-yc-error/30 rounded-yc-md px-4 py-3.5 text-sm text-yc-error">
           <p>{error}</p>
-          {file && state === 'idle' && (
+          {file && state === 'idle' && retryable && (
             <button
               type="button"
               onClick={() => runOcr(file, file)}

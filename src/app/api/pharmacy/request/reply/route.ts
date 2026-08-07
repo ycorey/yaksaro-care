@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   void sendPushToUser(data.patient_id as string, {
     title: '단골약국에서 답이 왔어요',
     body: '앱에서 내용을 확인해주세요',
-    url: '/settings',
+    url: '/medications/pharmacy-request',   // 회신 내용이 있는 화면으로 직행(설정 하단까지 찾아 들어가지 않게)
   }).catch(() => {})
 
   return NextResponse.json({ ok: true })

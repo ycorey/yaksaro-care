@@ -85,7 +85,6 @@ export default async function HomePage() {
         doneMeals={doneMeals}
         totalSlots={activeSlotKeys.length}
         activeSlotKeys={activeSlotKeys}
-        memberLabel={active.is_self ? null : active.name}
         lifestyleHook={lifestyleHook}
         refillHook={refillHook}
         regularPharmacy={regularPharmacy}

@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
   void sendPushToUser(data.patient_id as string, {
     title: '단골약국 소식',
     body: status === 'done' ? `${label}이(가) 완료됐어요` : `${label}을(를) 약국이 확인했어요`,
-    url: '/settings',
+    url: '/medications/pharmacy-request',   // 회신 내용이 있는 화면으로 직행(설정 하단까지 찾아 들어가지 않게)
   }).catch(() => {})
 
   return NextResponse.json({ ok: true })
