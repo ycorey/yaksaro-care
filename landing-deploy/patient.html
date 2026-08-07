@@ -457,7 +457,9 @@
       <div class="glow"></div>
       <h2>오늘부터, 부모님 약 걱정<br>한 가지는 덜어보세요</h2>
       <p>처방전 한 장이면 충분합니다. 지금 바로 시작해보세요.</p>
-      <a href="#" class="btn btn-lime btn-lg">약사로 케어 시작하기
+      <!-- 죽어 있던 링크(href="#")를 실제 웹앱으로 연결. 내부 이동이라 UTM 미부착
+           — 캠페인 파라미터가 붙으면 GA4가 세션을 재시작해 원래 유입 출처가 끊긴다. -->
+      <a href="https://care.yaksaro.co.kr/" data-cta="patient_final" class="btn btn-lime btn-lg">약사로 케어 시작하기
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
       <div class="final-note">디지털 약 지갑 · 복약 알림 · 단골약국 연결 — 한 앱에서</div>
