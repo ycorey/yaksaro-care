@@ -107,6 +107,20 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
         res = await postProduct(blob)
       }
       const data = await res.json().catch(() => ({}))
+
+      // 실패 응답을 그냥 흘리면 products 가 비어 "제품명을 못 읽었어요"로 둔갑한다.
+      // 사용자는 사진 탓으로 오인해 다시 찍고, 재촬영마다 사용량이 또 깎인다.
+      // 특히 429(하루 한도)·401(세션 만료)은 재촬영으로 해결되지 않는다.
+      if (!res.ok) {
+        toast.error(
+          typeof data?.error === 'string' && data.error
+            ? data.error
+            : '사진을 읽지 못했어요. 잠시 후 다시 시도해주세요.',
+        )
+        setPhase('capture')
+        return
+      }
+
       const prods: ResolvedProduct[] = Array.isArray(data?.products) ? data.products : []
       const names: string[] = Array.isArray(data?.candidates) ? data.candidates : []
       setLooksRx(!!data?.isPrescription)

@@ -349,11 +349,6 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  // 인증만으로는 부족하다 — 소셜 가입 비용이 0이라 유료 API(CLOVA+GPT) 남용을 막을 수 없다.
-  if (!await consumeQuota(user.id, QUOTAS.ocr)) {
-    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocr) }, { status: 429 })
-  }
-
   const { active } = await getActiveMember(supabase, user.id)
 
   const formData = await request.formData()
@@ -370,6 +365,13 @@ export async function POST(request: Request) {
   const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
   if (!ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json({ error: 'unsupported_type', allowed: [...ALLOWED_TYPES] }, { status: 415 })
+  }
+
+  // 인증만으로는 부족하다 — 소셜 가입 비용이 0이라 유료 API(CLOVA+GPT) 남용을 막을 수 없다.
+  // 차감은 **검증 통과 후**에 한다. 앞에 두면 413/415 로 외부 API 를 부르지도 못한 요청이
+  // 하루치를 깎고, 프론트가 더 작게 압축해 재시도할 때 또 깎인다.
+  if (!await consumeQuota(user.id, QUOTAS.ocr)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocr) }, { status: 429 })
   }
 
   const bytes = await file.arrayBuffer()
