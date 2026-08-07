@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 import type { TablesUpdate } from '@/types/database'
 
 // 본인 복약 항목 삭제(소프트 삭제) / 수정. RLS + user_id 필터로 본인 것만 처리.
@@ -35,11 +35,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     custom_name?:   string
     drug_id?:       string | null
     supplement_id?: string | null
-    // 허가정보 API 결과 선택 시 — 검색에서 받아온 정보를 직접 전달 (외부 API 재호출 없이 upsert)
+    // 허가정보 API 결과 선택 시 — 조회 키만 받는다.
+    // 약품명·제조사·이미지는 서버가 허가정보에서 재취득한다(전역 마스터 오염 방지).
     item_seq?:      string | null
-    drug_name?:     string | null
-    drug_entp?:     string | null
-    drug_img?:      string | null
   }
 
   const patch: TablesUpdate<'user_medications'> = {}
@@ -55,31 +53,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.drug_id = body.drug_id; patch.supplement_id = null; patch.custom_name = null
   } else if (body.supplement_id) {
     patch.supplement_id = body.supplement_id; patch.drug_id = null; patch.custom_name = null
-  } else if (body.item_seq && body.drug_name) {
-    // 허가정보 API 결과 선택 — 검색에서 받아온 정보로 직접 upsert (외부 API 재호출 금지)
-    // item_seq로 먼저 기존 약 조회, 없으면 upsert로 생성
-    const { data: existing } = await supabase
-      .from('drugs').select('id').eq('item_seq', body.item_seq).maybeSingle()
-    if (existing?.id) {
-      patch.drug_id = existing.id; patch.supplement_id = null; patch.custom_name = null
-    } else {
-      const admin = createAdminClient()
-      const { data: newDrug } = await admin
-        .from('drugs')
-        .upsert(
-          {
-            item_seq:  body.item_seq,
-            item_name: body.drug_name,
-            entp_name: body.drug_entp ?? null,
-            image_url: body.drug_img  ?? null,  // 검색 결과의 이미지를 즉시 반영
-          },
-          { onConflict: 'item_seq' }
-        )
-        .select('id')
-        .single()
-      if (newDrug?.id) {
-        patch.drug_id = newDrug.id; patch.supplement_id = null; patch.custom_name = null
-      }
+  } else if (body.item_seq) {
+    // 허가정보 API 결과 선택 — 클라이언트가 보낸 약품명·제조사·이미지는 신뢰하지 않는다.
+    // resolveDrugIdByItemSeq 가 허가정보에서 값을 재취득해 전역 마스터를 채운다.
+    const resolved = await resolveDrugIdByItemSeq(supabase, body.item_seq)
+    if (resolved) {
+      patch.drug_id = resolved; patch.supplement_id = null; patch.custom_name = null
     }
   } else if (typeof body.custom_name === 'string' && body.custom_name.trim()) {
     patch.custom_name = body.custom_name.trim()

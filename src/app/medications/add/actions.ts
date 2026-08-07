@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 import { redirect } from 'next/navigation'
 import { checkOtcInteraction } from '@/lib/dur-otc-check'
 import { getActiveMember } from '@/lib/active-member'
@@ -16,9 +16,9 @@ export async function addMedication(formData: FormData) {
   const type         = formData.get('type') as 'prescription' | 'otc' | 'supplement' | null
   const drugId       = (formData.get('drug_id')       as string | null) || null
   const itemSeq      = (formData.get('item_seq')       as string | null) || null
+  // drug_name은 마스터 해석에 실패했을 때 사용자 본인 행의 custom_name 폴백으로만 쓴다.
+  // (entp·img는 전역 마스터 값이라 클라이언트 입력을 받지 않는다 — drug-master.ts 참고)
   const drugName     = (formData.get('drug_name')      as string | null) || null
-  const drugEntp     = (formData.get('drug_entp')      as string | null) || null
-  const drugImg      = (formData.get('drug_img')       as string | null) || null
   const supplementId = (formData.get('supplement_id') as string | null) || null
   const customName   = (formData.get('custom_name')   as string | null) || null
   const dose         = (formData.get('dose')           as string | null) || null
@@ -32,25 +32,12 @@ export async function addMedication(formData: FormData) {
   // 방어: 매주인데 요일이 비면 약이 어디에도 안 뜨므로 daily로 폴백
   if (scheduleType === 'weekly' && (!dow || dow.length === 0)) { scheduleType = 'daily'; dow = null }
 
-  // API 결과 약품(item_seq만 있고 drug_id 없음) → drugs 테이블에 upsert 후 UUID 획득
+  // API 결과 약품(item_seq만 있고 drug_id 없음) → 전역 마스터에서 해석 후 UUID 획득.
+  // 클라이언트가 보낸 약품명·제조사·이미지는 신뢰하지 않는다(마스터 오염 방지) —
+  // resolveDrugIdByItemSeq 가 허가정보에서 값을 다시 가져온다.
   let resolvedDrugId = drugId
-  if (!resolvedDrugId && itemSeq && drugName) {
-    const { data: existing } = await supabase
-      .from('drugs').select('id').eq('item_seq', itemSeq).maybeSingle()
-    if (existing?.id) {
-      resolvedDrugId = existing.id
-    } else {
-      const admin = createAdminClient()
-      const { data: newDrug } = await admin
-        .from('drugs')
-        .upsert(
-          { item_seq: itemSeq, item_name: drugName, entp_name: drugEntp ?? null, image_url: drugImg ?? null },
-          { onConflict: 'item_seq' }
-        )
-        .select('id')
-        .single()
-      resolvedDrugId = newDrug?.id ?? null
-    }
+  if (!resolvedDrugId && itemSeq) {
+    resolvedDrugId = await resolveDrugIdByItemSeq(supabase, itemSeq)
   }
 
   const today = new Date().toISOString().split('T')[0]

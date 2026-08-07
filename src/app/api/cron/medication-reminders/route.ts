@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { MEAL_LABELS, MEAL_TIMES, isMeal, effectiveMealSlots } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
+import { isAuthorizedBearer } from '@/lib/bearer-auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -19,9 +20,7 @@ function todayKST(): string {
  * 인증: Authorization: Bearer <CRON_SECRET> (헤더 전용 — 쿼리스트링은 로그/Referer 노출되어 금지).
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET
-  const auth = req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!secret || auth !== secret) {
+  if (!isAuthorizedBearer(req, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 

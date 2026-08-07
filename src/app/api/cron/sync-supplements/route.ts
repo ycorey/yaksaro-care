@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isAuthorizedBearer } from '@/lib/bearer-auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,8 +18,7 @@ function toArr(v: unknown): Record<string, unknown>[] {
 
 export async function GET(req: NextRequest) {
   // Vercel cron 보안 — CRON_SECRET 미설정이어도 차단 (medication-reminders와 동일 패턴)
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!isAuthorizedBearer(req, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   if (!KEY) return NextResponse.json({ error: 'MFDS_HEALTH_FOOD_KEY 없음' }, { status: 500 })

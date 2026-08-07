@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 import { logDurShadow } from '@/lib/dur-shadow'
 import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
@@ -48,18 +48,11 @@ export async function POST(request: Request) {
         drugRow = data
       }
       if (!drugRow && m.item_seq) {
-        const { data: bySeq } = await supabase.from('drugs').select('id')
-          .eq('item_seq', m.item_seq).maybeSingle()
-        if (bySeq) {
-          drugRow = bySeq
-        } else {
-          // 허가정보(api) 결과 → drugs에 upsert 후 UUID 확보 (addMedication과 동일 패턴)
-          const admin = createAdminClient()
-          const { data: up } = await admin.from('drugs')
-            .upsert({ item_seq: m.item_seq, item_name: m.name }, { onConflict: 'item_seq' })
-            .select('id').single()
-          drugRow = up ?? null
-        }
+        // 마스터 조회 → 없으면 허가정보에서 재취득해 생성 (addMedication과 동일 경로).
+        // OCR이 넘긴 이름(m.name)은 마스터 값으로 쓰지 않는다 — 오인식 텍스트가
+        // 전역 검색 결과에 정상 품목처럼 섞이는 것을 막는다.
+        const resolved = await resolveDrugIdByItemSeq(supabase, m.item_seq)
+        drugRow = resolved ? { id: resolved } : null
       }
 
       const ediCode = m.edi_code?.replace(/\D/g, '') || null

@@ -129,18 +129,14 @@ export default function MedCardItem(p: MedCardItemProps) {
       // 자동완성으로 실제 약을 골랐으면 ID로 연결(사진·정보 자동), 아니면 텍스트 이름
       if (picked?.type === 'drug') {
         if (picked.source === 'api' && picked.itemSeq) {
-          // 허가정보 API 결과: 검색 시 받은 정보를 그대로 전달 (PATCH에서 API 재호출 불필요)
-          body.item_seq  = picked.itemSeq
-          body.drug_name = picked.name
-          body.drug_entp = picked.entpName ?? null
-          body.drug_img  = picked.imageUrl ?? null
+          // 허가정보 API 결과: 조회 키만 보낸다. 약품명·제조사·이미지는 서버가
+          // 허가정보에서 재취득한다(전역 마스터 오염 방지 — lib/drug-master.ts).
+          body.item_seq = picked.itemSeq
         } else if (picked.id) {
           body.drug_id = picked.id
         } else if (picked.itemSeq) {
           // DB 약품인데 id가 없는 경우 (item_seq가 PK인 스키마 대응)
-          body.item_seq  = picked.itemSeq
-          body.drug_name = picked.name
-          body.drug_entp = picked.entpName ?? null
+          body.item_seq = picked.itemSeq
         }
       } else if (picked?.type === 'supplement') {
         body.supplement_id = picked.id

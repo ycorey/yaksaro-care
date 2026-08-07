@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 import {
   extractNames, resolveOneProduct, assembleResponse, validateImageUpload,
   parseLicenseDetail, parseLocalDrug, type LicenseDetail, type LocalDrug,
@@ -88,6 +89,10 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  if (!await consumeQuota(user.id, QUOTAS.ocrProduct)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocrProduct) }, { status: 429 })
+  }
 
   const formData = await request.formData()
   const file     = formData.get('image') as File | null

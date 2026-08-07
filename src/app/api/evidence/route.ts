@@ -24,6 +24,8 @@ import {
 } from '@/lib/evidence-grade'
 import { summarizeForKorean, type EvidenceContext } from '@/lib/summarize'
 import { logger } from '@/lib/logger'
+import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
+import { isAuthorizedBearer } from '@/lib/bearer-auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -61,14 +63,18 @@ export async function POST(request: Request) {
   // ②는 쿠키를 가질 수 없는 호출자(scripts/fetch-evidence.mjs)를 위한 것이고,
   // 헤더 전용이다(쿼리스트링은 로그·Referer 노출 → 금지). cron 라우트와 동일 패턴.
   // EVIDENCE_API_SECRET 미설정 시 ②는 항상 차단 — 실수로 열리는 것을 막는다.
-  const secret = process.env.EVIDENCE_API_SECRET
-  const bearer = request.headers.get('authorization')?.replace('Bearer ', '')
-  const viaSecret = Boolean(secret) && bearer === secret
+  const viaSecret = isAuthorizedBearer(request, process.env.EVIDENCE_API_SECRET)
 
   if (!viaSecret) {
     const sb = await createClient()
     const { data: { user } } = await sb.auth.getUser()
     if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+    // 캐시 키가 사용자 입력에서 파생되므로 query 를 조금씩 바꾸면 항상 캐시 미스가 되고,
+    // 매 요청이 PubMed + Claude 호출 + pubmed_cache 행 증식으로 이어진다.
+    if (!await consumeQuota(user.id, QUOTAS.evidence)) {
+      return NextResponse.json({ error: quotaExceededMessage(QUOTAS.evidence) }, { status: 429 })
+    }
   }
 
   let raw: Record<string, unknown>

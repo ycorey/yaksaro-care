@@ -43,6 +43,7 @@ export default function PharmacyLoginPage() {
     }
 
     // 세션 쿠키 반영을 위해 hard navigation
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- 소프트 이동은 프록시가 갱신 전 쿠키를 읽어 role 가드에 걸린다
     window.location.href = '/pharmacy'
   }
 

@@ -1,6 +1,7 @@
 // 박스 OCR → 제품명 추출·품목 해결의 폴백 오케스트레이션 (외부 I/O는 주입 → 단위테스트 가능).
 // route.ts가 이 모듈을 SSOT로 쓰고, CLOVA/GPT/식약처 fetch·Supabase 쿼리만 어댑터로 주입한다.
 import { pickNamesHeuristic, cleanCategory, looksLikePrescription } from './ocr-classify.ts'
+import { redactPii } from './redact-pii.ts'
 
 export type ResolvedProduct = {
   name: string; ingredient: string | null; drug_id: string | null; item_seq: string | null
@@ -104,7 +105,9 @@ export async function extractNames(
         model: 'gpt-4o-mini',
         messages: [
           { role: 'developer', content: BOX_PROMPT },
-          { role: 'user', content: rawText.slice(0, 4000) },
+          // 제품 박스라 PII 가능성은 낮지만 외부 전송 경로는 동일하게 마스킹한다.
+          // plainDigits=false — 구분자 없는 13자리는 EAN-13 상품 바코드라 남겨야 한다.
+          { role: 'user', content: redactPii(rawText.slice(0, 4000), { plainDigits: false }) },
         ],
         max_tokens: 200,
         temperature: 0,
