@@ -97,7 +97,7 @@ const SECTIONS: Section[] = [
   {
     heading: '제11조 (문의처 및 약관의 변경)',
     blocks: [
-      { kind: 'p', text: '본 약관의 변경 시 시행 전 서비스 내 공지를 통해 안내합니다. 문의: ycorey@gmail.com' },
+      { kind: 'p', text: '본 약관의 변경 시 시행 전 서비스 내 공지를 통해 안내합니다. 문의: admin@yaksaro.co.kr' },
       { kind: 'p', text: `시행일: ${EFFECTIVE_DATE} (초안 · 법무 검토 후 확정)` },
     ],
   },

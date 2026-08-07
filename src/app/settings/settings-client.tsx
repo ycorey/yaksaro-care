@@ -370,7 +370,7 @@ export default function SettingsClient({
           )}
         </div>
         <p className="text-xs text-yc-neutral500 mt-3 text-center leading-relaxed">
-          개인정보 열람·정정 요청은 ycorey@gmail.com 으로 문의하세요.
+          개인정보 열람·정정 요청은 admin@yaksaro.co.kr 으로 문의하세요.
         </p>
       </section>
 
