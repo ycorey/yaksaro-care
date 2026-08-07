@@ -141,6 +141,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
         sessionStorage.setItem(RX_HANDOFF_KEY, await blobToDataUrl(blob))
       } catch { /* 용량초과 등 → 이미지 없이 이동(그쪽에서 재촬영) */ }
     }
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- sessionStorage 핸드오프를 새 문서에서 읽어야 해 하드 내비게이션이 필요하다
     window.location.href = '/medications/ocr'
   }
 

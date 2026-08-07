@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { getActiveMember } from '@/lib/active-member'
+import { redactPii, hasResidualRrn } from '@/lib/redact-pii'
+import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
 export const maxDuration = 60
@@ -191,6 +193,15 @@ async function parseWithGpt(rawText: string): Promise<ParsedPrescription> {
   const key = process.env.OPENAI_API_KEY
   if (!isValidOpenAiKey(key)) return parseWithRegex(rawText)
 
+  // 처방전 원문에는 환자 실명·주민등록번호가 들어 있다. 프롬프트의 "무시하라" 지시는
+  // 모델 출력만 통제하므로, 전송 전에 잘라낸다. 마스킹 후에도 패턴이 남으면
+  // 외부 전송을 포기하고 정규식 경로로 처리한다(약품명·코드만 보므로 정확도 손실은 제한적).
+  const safeText = redactPii(rawText)
+  if (hasResidualRrn(safeText)) {
+    logger.warn('OCR', 'PII 잔존 — GPT 전송 생략, 정규식 폴백')
+    return parseWithRegex(rawText)
+  }
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method:  'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -198,7 +209,7 @@ async function parseWithGpt(rawText: string): Promise<ParsedPrescription> {
       model:           'gpt-4o-mini',
       messages: [
         { role: 'developer', content: PARSE_PROMPT },
-        { role: 'user',      content: rawText },
+        { role: 'user',      content: safeText },
       ],
       max_tokens:      600,
       temperature:     0,
@@ -337,6 +348,11 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // 인증만으로는 부족하다 — 소셜 가입 비용이 0이라 유료 API(CLOVA+GPT) 남용을 막을 수 없다.
+  if (!await consumeQuota(user.id, QUOTAS.ocr)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocr) }, { status: 429 })
+  }
 
   const { active } = await getActiveMember(supabase, user.id)
 

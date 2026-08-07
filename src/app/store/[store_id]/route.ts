@@ -55,6 +55,9 @@ export async function GET(
     maxAge: 60 * 60 * 24 * 7,
     path: '/',
     sameSite: 'lax',
+    // 서버(auth/callback)만 읽는 값이다. JS 접근을 막아 XSS 시 단골약국 조작 수단이 되지 않게 한다.
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
   })
   return res
 }

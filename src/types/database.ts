@@ -1008,6 +1008,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_quota: { Args: { p_user: string; p_bucket: string; p_window_sec: number }; Returns: number }
       end_expired_medications: { Args: { today: string }; Returns: undefined }
       pharmacist_can_view: { Args: { patient: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }

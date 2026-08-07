@@ -11,6 +11,7 @@ export default function PharmacyLogout() {
     try { document.cookie = 'pending_pharmacy_id=; Max-Age=0; path=/' } catch {}
     // 하드 내비게이션 — 로그인과 동일 패턴. 소프트 이동(router.push)은 쿠키 삭제와 경쟁해
     // 프록시가 잔여 세션을 보고 role null→'/home'(고객용)으로 튕길 수 있음.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- 위 사유로 의도된 하드 내비게이션
     window.location.href = '/pharmacy/login'
   }
 

@@ -301,9 +301,9 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
         <>
           <input type="hidden" name="drug_id"  value={selected.source === 'db' ? selected.id : ''} />
           <input type="hidden" name="item_seq"  value={selected.item_seq ?? ''} />
+          {/* 마스터 해석 실패 시 본인 행의 custom_name 폴백용. 제조사·이미지는
+              서버가 허가정보에서 재취득한다(lib/drug-master.ts). */}
           <input type="hidden" name="drug_name" value={selected.name} />
-          <input type="hidden" name="drug_entp" value={selected.sub} />
-          <input type="hidden" name="drug_img"  value={selected.imageUrl ?? ''} />
         </>
       )}
       {selected?.type === 'supplement' && <input type="hidden" name="supplement_id" value={selected.id} />}
