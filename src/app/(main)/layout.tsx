@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import DashboardNav from '@/components/dashboard/nav'
 import TabPager from '@/components/tab-pager'
 import PharmacyLinkFinalizer from './pharmacy-link-finalizer'
+import SignupTracker from '@/components/analytics/signup-tracker'
 
 // 탭 5종(/home /wallet /today /calendar /share)을 병렬 슬롯으로 동시 마운트하고,
 // TabPager가 가로 트랙을 손가락 따라 밀어 "한 장처럼" 넘긴다.
@@ -31,6 +32,8 @@ export default async function MainLayout({
   return (
     <div className="bg-[#EFEBE2]">
       <PharmacyLinkFinalizer />
+      {/* GA4 가입 완료(sign_up) — OAuth 콜백이 붙인 ?yc_su 마커를 받아 발화하고 주소에서 지운다 */}
+      <SignupTracker />
       <DashboardNav user={user} profile={profile} />
       <main>
         <TabPager home={home} wallet={wallet} today={today} calendar={calendar} share={share} />

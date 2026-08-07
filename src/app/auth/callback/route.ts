@@ -37,6 +37,16 @@ export async function GET(request: Request) {
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && user) {
+      // GA4 sign_up 발화용 마커 — 최초 가입인지는 서버만 안다.
+      // 신규 계정은 created_at 과 last_sign_in_at 이 사실상 같은 순간이다(10초 창).
+      // 값은 'kakao' | 'google' | 'naver' 분류값뿐이고, 클라이언트가 이벤트를 쏜 뒤 주소에서 지운다.
+      const createdAt  = user.created_at ? new Date(user.created_at).getTime() : 0
+      const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0
+      const isNewUser  = createdAt > 0 && lastSignIn > 0 && Math.abs(lastSignIn - createdAt) < 10_000
+      const provider   = user.app_metadata?.provider ?? ''
+      const marker     = isNewUser && provider ? `yc_su=${encodeURIComponent(provider)}` : ''
+      const withMarker = (url: string) => (marker ? `${url}${url.includes('?') ? '&' : '?'}${marker}` : url)
+
       // QR 매핑: 쿠키 우선, 없으면 URL 쿼리 파라미터(인앱 브라우저 쿠키 유실 폴백)
       // 로그인 시 signInWithOAuth의 redirectTo에 ?store_id=xxx를 태워 보냈으므로
       // 쿠키가 유실된 경우에도 여기서 복원할 수 있다.
@@ -58,13 +68,13 @@ export async function GET(request: Request) {
 
           cookieStore.delete('pending_pharmacy_id')
           return NextResponse.redirect(
-            `${origin}/wallet?pharmacy_linked=1&pharmacy_name=${encodeURIComponent(pharmacy.name)}`
+            withMarker(`${origin}/wallet?pharmacy_linked=1&pharmacy_name=${encodeURIComponent(pharmacy.name)}`)
           )
         }
         cookieStore.delete('pending_pharmacy_id')
       }
 
-      return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(withMarker(`${origin}${next}`))
     }
   }
 

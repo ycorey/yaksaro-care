@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { track } from '@/lib/analytics'
 import { createClient } from '@/lib/supabase/client'
 import { Pill } from '@phosphor-icons/react'
 import type { Provider } from '@supabase/supabase-js'
@@ -61,6 +62,8 @@ function LoginContent() {
       return
     }
     setLoading(provider)
+    // 퍼널 1단계 — 로그인 시도. 분류값(provider)만 담는다.
+    track('sign_up_start', { method: provider })
 
     // ── QR 세션 유실 방지: 쿠키 → URL 파라미터 이중 보존 ────────────────
     // 인앱 브라우저(카카오/네이버 앱)는 외부 OAuth 리다이렉트 후 쿠키가
