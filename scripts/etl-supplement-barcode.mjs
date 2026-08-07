@@ -14,7 +14,7 @@
  * ⚠️ 키: 식품안전나라 자체 인증키 (data.go.kr 키와 별개). foodsafetykorea.go.kr/apiMain.do
  *   에서 발급 → .env.local 의 FOODSAFETY_API_KEY. (data.go.kr 15060549 활용신청만으로는
  *   이 엔드포인트 키가 안 나올 수 있음 — RESULT.CODE 로 인증 여부 진단.)
- * 스펙: http://openapi.foodsafetykorea.go.kr/api/{키}/I2570/json/{start}/{end}/PRDT_NM={제품명}
+ * 스펙: https://openapi.foodsafetykorea.go.kr/api/{키}/I2570/json/{start}/{end}/PRDT_NM={제품명}
  *   응답: I2570.row[] · BRCD_NO(바코드) · PRDT_NM(제품명) · CMPNY_NM(회사명) · 품목분류
  * 사전조건: 027_barcode.sql 적용.
  * 실행:
@@ -37,7 +37,9 @@ const LIMIT = (() => { const i = process.argv.indexOf('--limit'); return i >= 0 
 
 // ── 식품안전나라 I2570 스펙 ──────────────────────────────────────────
 const API_KEY    = env['FOODSAFETY_API_KEY'] || env['MFDS_HEALTH_FOOD_KEY']
-const API_BASE   = 'http://openapi.foodsafetykorea.go.kr/api'
+// https 필수 — 이 API 는 인증키를 URL **경로**에 실으므로 평문이면 동일 네트워크에서
+// 키가 그대로 읽힌다(쿼리스트링보다 노출 범위가 넓다). TLS 지원·인증서 검증 확인됨.
+const API_BASE   = 'https://openapi.foodsafetykorea.go.kr/api'
 const SERVICE    = 'I2570'
 const FIELD_NAME = 'PRDT_NM'    // 제품명
 const FIELD_CODE = 'BRCD_NO'    // 바코드번호

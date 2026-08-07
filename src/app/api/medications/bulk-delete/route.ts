@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
 
 // 여러 복약 항목을 한 번에 소프트 삭제. 한 처방전의 약 전체 삭제에 사용.
 export async function POST(request: Request) {
@@ -18,6 +19,6 @@ export async function POST(request: Request) {
     .in('id', ids)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('medications', error)
   return NextResponse.json({ ok: true, deleted: ids.length })
 }

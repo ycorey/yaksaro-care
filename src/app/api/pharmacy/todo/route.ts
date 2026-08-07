@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
+import { ownedPharmacyId } from '@/lib/pharmacy-auth'
 
 // 약국 수동 '오늘 할 일' 메모 CRUD. 사용자(약사) 토큰 + RLS(owner 약국만). service_role 미사용.
-async function ownedPharmacyId(supabase: Awaited<ReturnType<typeof createClient>>, uid: string) {
-  const { data } = await supabase.from('pharmacies').select('id').eq('owner_id', uid).maybeSingle()
-  return data?.id ?? null
-}
-
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,7 +15,7 @@ export async function GET() {
     .order('done', { ascending: true })
     .order('created_at', { ascending: false })
     .limit(50)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
   return NextResponse.json({ todos: data ?? [] })
 }
 
@@ -36,7 +33,7 @@ export async function POST(request: Request) {
     .insert({ pharmacy_id: pharmacyId, text: t })
     .select('id, text, done, created_at')
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
   return NextResponse.json({ todo: data })
 }
 
@@ -51,7 +48,7 @@ export async function PATCH(request: Request) {
     .from('pharmacy_todos')
     .update({ done, done_at: done ? new Date().toISOString() : null })
     .eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
   return NextResponse.json({ ok: true })
 }
 
@@ -62,6 +59,6 @@ export async function DELETE(request: Request) {
   const { id } = await request.json().catch(() => ({})) as { id?: string }
   if (!id) return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
   const { error } = await supabase.from('pharmacy_todos').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
   return NextResponse.json({ ok: true })
 }

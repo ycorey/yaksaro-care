@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { getActiveMember } from '@/lib/active-member'
 import { todayKST } from '@/lib/request-schedule'
+import { dbError } from '@/lib/api-error'
 
 // 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
 const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
     })
     .select('id, type, note, status, created_at')
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
 
   // 약국 owner(약사)에게 새 요청 푸시 — PII/임상정보 없이 알림만 (fire-and-forget)
   void (async () => {
@@ -104,7 +105,7 @@ export async function PATCH(request: Request) {
       .from('pharmacy_requests')
       .update({ patient_ack_at: new Date().toISOString() })
       .eq('id', id).eq('patient_id', user.id).not('replied_at', 'is', null)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return dbError('pharmacy', error)
     return NextResponse.json({ ok: true })
   }
 
@@ -113,6 +114,6 @@ export async function PATCH(request: Request) {
     .from('pharmacy_requests')
     .update({ status: 'canceled' })
     .eq('id', id).eq('patient_id', user.id).in('status', ['open', 'acknowledged'])
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('pharmacy', error)
   return NextResponse.json({ ok: true })
 }

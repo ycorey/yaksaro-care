@@ -7,6 +7,7 @@ import AddForm, { type Selected } from './add-form'
 import { BackButton } from '../back-button'
 import MemberContextBadge from '@/components/member-context-badge'
 import type { Member } from '@/lib/member'
+import { putRxHandoff } from '@/lib/rx-handoff'
 
 type TabType = 'otc' | 'supplement'
 type Phase = 'capture' | 'confirm' | 'reading' | 'form'
@@ -49,7 +50,6 @@ function postProduct(f: Blob): Promise<Response> {
 }
 
 // 처방전 검증 플로우로 넘길 사진을 세션에 임시 보관하는 키 (ocr-uploader가 마운트 시 픽업)
-const RX_HANDOFF_KEY = 'yc_rx_handoff'
 
 function blobToDataUrl(b: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -138,7 +138,8 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
     if (pendingFile) {
       try {
         const blob = await compressImage(pendingFile, 1400, 0.72)
-        sessionStorage.setItem(RX_HANDOFF_KEY, await blobToDataUrl(blob))
+        // 소유자·시각 각인 후 저장 (lib/rx-handoff 가 규약 SSOT)
+        await putRxHandoff(await blobToDataUrl(blob))
       } catch { /* 용량초과 등 → 이미지 없이 이동(그쪽에서 재촬영) */ }
     }
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- sessionStorage 핸드오프를 새 문서에서 읽어야 해 하드 내비게이션이 필요하다

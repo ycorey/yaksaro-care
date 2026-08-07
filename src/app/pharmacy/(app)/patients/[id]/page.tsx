@@ -77,7 +77,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
 
   // RLS: 동의·단골 아닌 환자면 null
   const { data: patient } = await supabase
-    .from('profiles')
+    .from('pharmacist_patient_view')   // 051: 약사 전용 통로(관계 AND 동의 게이트 내장)
     .select('full_name')
     .eq('id', id)
     .maybeSingle()

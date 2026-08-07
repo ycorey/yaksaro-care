@@ -55,9 +55,13 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
     }),
   )
 
-  // 만료 구독 정리
+  // 만료 구독 정리 — 반드시 이 사용자 스코프로 지운다.
+  // user_id 없이 endpoint 로만 지우면, 같은 endpoint 를 쓰는 다른 사용자의 구독까지
+  // 함께 날아가 그 사람이 복약 알림을 못 받게 된다.
   if (stale.length) {
-    try { await admin.from('push_subscriptions').delete().in('endpoint', stale) } catch {}
+    try {
+      await admin.from('push_subscriptions').delete().eq('user_id', userId).in('endpoint', stale)
+    } catch { /* 정리 실패는 전송 결과에 영향 없음 */ }
   }
 
   return results.filter((r) => r.status === 'fulfilled').length

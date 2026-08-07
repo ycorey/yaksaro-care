@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:   # db-gate 수동 실행용 (테스트 DB 대상)
 
+# 최소 권한 — 저장소 기본값(설정에 따라 contents: write)을 상속하지 않게 명시한다.
+permissions:
+  contents: read
+
 jobs:
   # 시크릿 불필요 — 모든 push/PR에서 자동 게이트(타입·린트·단위테스트·빌드).
   quality:
@@ -44,12 +48,32 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Write .env.local from test-DB secrets
+      # 시크릿을 셸 인자/heredoc 본문이 아니라 env 로 받고 printf 로 쓴다.
+      # (미인용 heredoc 은 시크릿 안의 $ · 백틱을 셸이 확장/명령치환한다)
+      - name: Write .env.local from test-DB secrets (운영 DB 차단 가드)
+        env:
+          SB_URL:     ${{ secrets.TEST_SUPABASE_URL }}
+          SB_ANON:    ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          SB_SERVICE: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          PROD_REF:   ${{ secrets.PROD_SUPABASE_REF }}
         run: |
-          cat > .env.local <<EOF
-          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.TEST_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.TEST_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
-          EOF
+          set -eu
+          if [ -z "${SB_URL:-}" ] || [ -z "${SB_ANON:-}" ] || [ -z "${SB_SERVICE:-}" ]; then
+            echo "::error::TEST_SUPABASE_* 시크릿이 없습니다. 이 잡은 테스트/스테이징 DB 전용입니다."
+            exit 1
+          fi
+          # 운영 프로젝트 ref 는 저장소에 적지 않고 시크릿으로 주입한다(public 저장소).
+          if [ -z "${PROD_REF:-}" ]; then
+            echo "::error::PROD_SUPABASE_REF 시크릿이 없어 운영 DB 여부를 판별할 수 없습니다(fail-closed)."
+            exit 1
+          fi
+          if printf '%s' "$SB_URL" | grep -qF "$PROD_REF"; then
+            echo "::error::운영 DB 를 대상으로 한 실행을 차단했습니다. 이 잡은 실 DB 에 유저·약국·처방을 시드·삭제합니다."
+            exit 1
+          fi
+          { printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n'      "$SB_URL"
+            printf 'NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$SB_ANON"
+            printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n'     "$SB_SERVICE"
+          } > .env.local
       - name: DB/RLS 게이트 (test:e2e:db)
         run: npm run test:e2e:db

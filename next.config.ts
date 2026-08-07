@@ -14,11 +14,36 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // 전역 보안 헤더. CSP는 리소스 로딩을 깨지 않는 frame-ancestors(클릭재킹 차단)만 적용 —
-        // script-src 등 콘텐츠 제한형 CSP는 Next 인라인 스크립트 nonce 검증 후 별도 도입.
+        // 전역 보안 헤더.
+        //
+        // CSP 오리진은 코드·라이브 페이지 실측으로 뽑았다:
+        //   googletagmanager(GA 스크립트) · google-analytics(전송) ·
+        //   cdn.jsdelivr.net(Pretendard 폰트 CSS+woff2, 버전 고정) ·
+        //   nedrug.mfds.go.kr(식약처 약 이미지) · *.supabase.co(API·스토리지)
+        //
+        // script-src 에 'unsafe-inline' 이 남아 있는 건 Next 인라인 부트스트랩 때문이다.
+        // 그래서 이 CSP 의 실익은 XSS 차단보다 **유출 경로 축소**(connect-src·img-src)와
+        // 주입 프리미티브 차단(object-src·base-uri·form-action)에 있다.
+        // nonce 기반 script-src 는 후속 과제.
         source: '/:path*',
         headers: [
-          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+              "font-src 'self' data: https://cdn.jsdelivr.net",
+              "img-src 'self' data: blob: https://nedrug.mfds.go.kr https://*.supabase.co https://www.googletagmanager.com https://*.google-analytics.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+              "worker-src 'self'",
+              "manifest-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join('; '),
+          },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

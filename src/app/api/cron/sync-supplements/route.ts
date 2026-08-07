@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
+import { dbError } from '@/lib/api-error'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
       const { error } = await supabase
         .from('supplements')
         .upsert(rows, { onConflict: 'product_seq' })
-      if (error) return NextResponse.json({ error: `upsert 실패: ${error.message}` }, { status: 500 })
+      if (error) return dbError('cron', error, '건기식 동기화에 실패했어요')
       upserted += rows.length
     }
 

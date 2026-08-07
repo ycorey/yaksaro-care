@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
 
 // 가족 멤버 CRUD. 본인(is_self) 멤버는 이름만 수정 가능, 삭제 불가. 모두 owner 본인 행만(RLS).
 export async function POST(request: Request) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     .insert({ owner_id: user.id, name, relation: body.relation?.toString().trim() || null, is_self: false, consent_at: new Date().toISOString() })
     .select('id, name, relation, is_self')
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('members', error)
   return NextResponse.json({ member: data })
 }
 
@@ -36,7 +37,7 @@ export async function PATCH(request: Request) {
 
   const { error } = await supabase
     .from('members').update(patch).eq('id', body.id).eq('owner_id', user.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('members', error)
   return NextResponse.json({ ok: true })
 }
 
@@ -55,6 +56,6 @@ export async function DELETE(request: Request) {
 
   // 멤버 삭제 → 그 멤버의 약·처방·체크가 CASCADE로 함께 삭제됨
   const { error } = await supabase.from('members').delete().eq('id', id).eq('owner_id', user.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('members', error)
   return NextResponse.json({ ok: true })
 }

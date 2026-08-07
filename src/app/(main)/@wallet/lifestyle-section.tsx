@@ -57,7 +57,9 @@ export default function LifestyleSection({
                       <span key={s.pmid || i} className="inline-flex items-center gap-1">
                         {s.grade && <EvidenceGradeBadge grade={s.grade} label={s.gradeLabel} />}
                         <a
-                          href={s.url}
+                          // 스킴 검증 — 현재 값은 service_role 로만 적재되는 PubMed URL 이지만,
+                          // 앵커 href 는 javascript:·data: 가 실행되는 지점이라 렌더 직전에 거른다.
+                          href={/^https?:\/\//i.test(s.url ?? '') ? s.url : '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs font-medium text-yc-green700 underline underline-offset-2 active:opacity-70"

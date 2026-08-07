@@ -1005,7 +1005,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      // 051 — 약사 전용 환자 프로필 통로(단골 관계 AND 동의 게이트 내장, 3컬럼만 노출)
+      pharmacist_patient_view: {
+        Row: {
+          id: string | null
+          full_name: string | null
+          consent_pharmacist_view_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       consume_quota: { Args: { p_user: string; p_bucket: string; p_window_sec: number }; Returns: number }

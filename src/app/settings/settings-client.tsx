@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { signOutAndPurge } from '@/lib/purge'
 import {
   requestNotificationPermission,
   showLocalNotification,
@@ -197,10 +197,7 @@ export default function SettingsClient({
   }
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    try { localStorage.clear() } catch {}
-    try { document.cookie = 'pending_pharmacy_id=; Max-Age=0; path=/' } catch {}
+    await signOutAndPurge()
     router.push('/login')
     router.refresh()
   }

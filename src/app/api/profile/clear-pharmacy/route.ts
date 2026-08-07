@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
 
 // 단골약국 해제 — FK·텍스트 모두 비우고, 약사 열람 동의도 함께 해제(볼 대상이 없어짐).
 export async function POST() {
@@ -18,6 +19,6 @@ export async function POST() {
     })
     .eq('id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('profile', error)
   return NextResponse.json({ ok: true })
 }

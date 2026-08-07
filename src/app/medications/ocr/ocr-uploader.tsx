@@ -6,6 +6,7 @@ import { Camera, Images, CircleNotch, Pill, Hospital, Phone, MapPin, Storefront,
 import { MEAL_SLOTS, defaultMealKeys } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 import MedNameSearch, { type DrugPick } from './med-name-search'
+import { takeRxHandoff } from '@/lib/rx-handoff'
 
 type Medicine = {
   name:          string
@@ -206,20 +207,20 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
     setState('confirm')
   }
 
-  // 박스 OCR에서 약봉투로 판단돼 넘어온 사진을 픽업 → 확인 단계로 (재촬영 없이 이어받음)
+  // 박스 OCR에서 약봉투로 판단돼 넘어온 사진을 픽업 → 확인 단계로 (재촬영 없이 이어받음).
+  // takeRxHandoff 가 소유자·만료를 검증하고 1회용으로 파기한다 — 공용 기기에서 이전 사용자의
+  // 처방전 사진이 넘어오지 않도록.
   useEffect(() => {
-    let dataUrl: string | null = null
-    try { dataUrl = sessionStorage.getItem('yc_rx_handoff') } catch {}
-    if (!dataUrl) return
-    try { sessionStorage.removeItem('yc_rx_handoff') } catch {}
-    const src = dataUrl
-    const t = setTimeout(async () => {
+    let cancelled = false
+    void (async () => {
+      const src = await takeRxHandoff()
+      if (!src || cancelled) return
       try {
         const blob = await (await fetch(src)).blob()
-        onFile(new File([blob], 'medbag.jpg', { type: 'image/jpeg' }))
+        if (!cancelled) onFile(new File([blob], 'medbag.jpg', { type: 'image/jpeg' }))
       } catch { /* 픽업 실패 → 사용자가 직접 촬영 */ }
-    }, 0)
-    return () => clearTimeout(t)
+    })()
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
