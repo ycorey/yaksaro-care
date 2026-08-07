@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 
 // 약품 정보 하이브리드 조회 (둘 다 data.go.kr 공식 API, 승인된 키 사용)
 //  1) 의약품 허가정보(DrugPrdtPrmsnInfoService) — 거의 모든 허가 의약품 매칭.
@@ -108,6 +109,12 @@ export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // 공공 API(식약처·심평원)는 일일 호출 한도를 전 사용자가 공유한다.
+  // 한 계정이 소진시키면 모두의 약품·약국 조회가 멈추므로 시간당 상한을 둔다.
+  if (!await consumeQuota(user.id, QUOTAS.publicApi)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.publicApi) }, { status: 429 })
+  }
 
   const { searchParams } = new URL(request.url)
   const name       = searchParams.get('name')?.trim()

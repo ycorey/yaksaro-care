@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { consumeQuota, QUOTAS } from '@/lib/rate-limit'
 
 type DrugResult = {
   id:        string        // UUID (local) 또는 item_seq (api)
@@ -138,7 +139,9 @@ export async function GET(request: Request) {
 
   // otcOnly일 때는 외부 API 보완 생략 (전문/일반 구분 불가)
   let apiDrugs: DrugResult[] = []
-  if (!otcOnly && localDrugs.length < 5) {
+  // 공공 API 한도는 전 사용자가 공유한다 — 한 계정이 소진시키면 모두의 조회가 멈춘다.
+  // 그래서 429 로 검색 자체를 막지 않고, **외부 보완만 생략**해 로컬 43k 품목으로 계속 답한다.
+  if (!otcOnly && localDrugs.length < 5 && await consumeQuota(user.id, QUOTAS.publicApi)) {
     apiDrugs = await searchLicenseApi(q)
     const localSeqs  = new Set(localDrugs.map(d => d.item_seq).filter(Boolean))
     const localNames = new Set(localDrugs.map(d => d.item_name.toLowerCase()))

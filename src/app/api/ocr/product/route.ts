@@ -90,14 +90,17 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  if (!await consumeQuota(user.id, QUOTAS.ocrProduct)) {
-    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocrProduct) }, { status: 429 })
-  }
-
   const formData = await request.formData()
   const file     = formData.get('image') as File | null
   const rejection = validateImageUpload(file)
   if (rejection) return NextResponse.json(rejection.body, { status: rejection.status })
+
+  // 쿼터는 **검증을 통과한 뒤** 차감한다. 앞에 두면 413(용량초과)처럼 외부 유료 API 를
+  // 부르지도 못한 요청이 하루치를 깎고, 프론트가 더 작게 압축해 재시도하면 또 깎여
+  // "하루 N장"이라는 설계와 체감이 어긋난다.
+  if (!await consumeQuota(user.id, QUOTAS.ocrProduct)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.ocrProduct) }, { status: 429 })
+  }
 
   const okFile = file as File   // validateImageUpload가 null 아님을 보장
   const bytes  = await okFile.arrayBuffer()

@@ -188,6 +188,20 @@ try {
   check('약사 토큰 UPDATE → 0행 영향(쓰기 정책 없음)', (wr.data?.length ?? 0) === 0, `updated=${wr.data?.length ?? 0}${wr.error ? ' err=' + wr.error.message : ''}`)
   const verify = await admin.from('user_prescriptions').select('hospital_name').eq('id', rxSelf.id).single()
   check('원본 처방 병원명 불변(조작 실패 확인)', verify.data?.hospital_name === '본인내과', `got=${verify.data?.hospital_name}`)
+
+  // ★ 뷰를 통한 쓰기 차단 — 기반 테이블만 검사하면 이 경로를 놓친다.
+  // pharmacist_patient_view 는 단일 테이블·비집계라 auto-updatable 이고 정의자 권한으로 실행된다.
+  // 권한 회수에서 authenticated 를 빠뜨리면 약사가 이 뷰로 환자 profiles 행을 지울 수 있다(053).
+  const vDel = await pClient.from('pharmacist_patient_view').delete().eq('id', patientUid).select('id')
+  check('★뷰 DELETE 차단 — 약사가 환자 프로필을 지울 수 없다',
+    (vDel.data?.length ?? 0) === 0, `deleted=${vDel.data?.length ?? 0}${vDel.error ? ' err=' + vDel.error.code : ''}`)
+  const vUpd = await pClient.from('pharmacist_patient_view').update({ full_name: '약사가조작' }).eq('id', patientUid).select('id')
+  check('★뷰 UPDATE 차단',
+    (vUpd.data?.length ?? 0) === 0, `updated=${vUpd.data?.length ?? 0}${vUpd.error ? ' err=' + vUpd.error.code : ''}`)
+  const stillThere = await admin.from('profiles').select('id, full_name').eq('id', patientUid).maybeSingle()
+  check('★환자 profiles 행 생존(뷰 DELETE 실패 확인)', !!stillThere.data, stillThere.data ? '존재' : '삭제됨')
+  check('★환자 이름 미조작(뷰 UPDATE 실패 확인)',
+    stillThere.data?.full_name !== '약사가조작', `got=${stillThere.data?.full_name ?? 'null'}`)
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {

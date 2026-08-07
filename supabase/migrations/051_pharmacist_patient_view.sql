@@ -30,8 +30,15 @@ CREATE OR REPLACE VIEW public.pharmacist_patient_view
 -- e2e/pharmacist-rls-qa 가 ① 동의 시 1건 ② 미동의·타약국 0건 ③ profiles 직접조회 0건
 -- ④ 노출 컬럼 3개를 매 실행마다 검증한다.
 
--- 환자 본인은 profiles_self 로 자기 행을 그대로 읽는다. 이 뷰는 약사 전용 통로다.
-REVOKE ALL ON public.pharmacist_patient_view FROM PUBLIC, anon;
+-- 환자 본인은 profiles_self 로 자기 행을 그대로 읽는다. 이 뷰는 약사 전용 **읽기** 통로다.
+--
+-- ⚠️ authenticated 를 반드시 REVOKE 대상에 포함할 것.
+-- Supabase 는 뷰 생성 시 authenticated 에 ALL(arwdDxtm)을 기본 부여하는데,
+-- 이 뷰는 단일 테이블·비집계라 **auto-updatable** 이고 정의자 권한으로 실행된다.
+-- 즉 REVOKE 에서 authenticated 를 빠뜨리면 뒤이은 GRANT SELECT 가 아무것도 좁히지 못하고,
+-- 약사가 DELETE /rest/v1/pharmacist_patient_view?id=eq.<환자> 로 환자 profiles 행을
+-- 통째로 지울 수 있다(RLS·컬럼 GRANT 를 둘 다 우회). "약사는 read-only" 계율 위반.
+REVOKE ALL ON public.pharmacist_patient_view FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.pharmacist_patient_view TO authenticated;
 
 -- 행 전체를 열던 정책 제거 → 약사는 이제 profiles 를 직접 조회할 수 없다.

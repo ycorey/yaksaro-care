@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { XMLParser } from 'fast-xml-parser'
 import { createClient } from '@/lib/supabase/server'
 import { HIRA_SIDOS, HIRA_SGGUS } from '@/lib/hira-regions'
+import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 
 export type PharmacyResult = {
   name:    string
@@ -137,6 +138,12 @@ export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json([], { status: 401 })
+
+  // 공공 API(식약처·심평원)는 일일 호출 한도를 전 사용자가 공유한다.
+  // 한 계정이 소진시키면 모두의 약품·약국 조회가 멈추므로 시간당 상한을 둔다.
+  if (!await consumeQuota(user.id, QUOTAS.publicApi)) {
+    return NextResponse.json({ error: quotaExceededMessage(QUOTAS.publicApi) }, { status: 429 })
+  }
 
   const key = process.env.HIRA_PHARMACY_KEY
   if (!key) return NextResponse.json([])
