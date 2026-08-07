@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { type Meal, ALL_MEALS, isMeal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import { applyMemberScope } from '@/lib/member'
+import { dbError } from '@/lib/api-error'
 
 const TOTAL = ALL_MEALS.length // 4 (아침/점심/저녁/자기 전)
 
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await logsQuery
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('calendar', error)
 
   // 미래 날짜 제외 (오늘까지만)
   const today = todayStr()

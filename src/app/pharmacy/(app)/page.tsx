@@ -22,9 +22,11 @@ export default async function PharmacyHome() {
 
   // 동의 단골 환자 + 요청 + 수동 메모 — 상호 무관, 동시 실행
   const [{ data: patients }, { data: reqs }, { data: todoRows }] = await Promise.all([
-    supabase.from('profiles')
+    // 약사는 profiles 를 직접 읽지 않는다(051). 뷰가 단골 관계 AND 동의 게이트를 적용하고
+    // id·이름·동의시각만 노출한다.
+    supabase.from('pharmacist_patient_view')
       .select('id, full_name, consent_pharmacist_view_at')
-      .eq('consent_pharmacist_view', true).neq('id', user.id)
+      .neq('id', user.id)
       .order('full_name', { ascending: true }).limit(200),
     supabase.from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
@@ -42,7 +44,7 @@ export default async function PharmacyHome() {
       ? supabase.from('members').select('id, owner_id').in('owner_id', ids).eq('is_self', true)
       : null,
     reqPatientIds.length > 0
-      ? supabase.from('profiles').select('id, full_name').in('id', reqPatientIds)
+      ? supabase.from('pharmacist_patient_view').select('id, full_name').in('id', reqPatientIds)
       : null,
   ])
 

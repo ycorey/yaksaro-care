@@ -38,13 +38,17 @@ async function pharmacistSees(pClient, uid) {
   const rx  = await pClient.from('user_prescriptions').select('id, member_id').eq('user_id', uid)
   const med = await pClient.from('user_medications').select('id, member_id').eq('user_id', uid)
   const log = await pClient.from('medication_check_logs').select('id, member_id').eq('user_id', uid)
-  const prof = await pClient.from('profiles').select('id, full_name').eq('id', uid)
+  // 051 이후 약사는 profiles 를 직접 읽지 못하고, 컬럼을 좁힌 뷰로만 본다.
+  const prof = await pClient.from('pharmacist_patient_view').select('id, full_name').eq('id', uid)
+  // 직접 조회가 실제로 닫혔는지도 함께 계측한다(정책이 되살아나면 여기서 잡힌다).
+  const profDirect = await pClient.from('profiles').select('id, full_name').eq('id', uid)
   const rows = [...(rx.data ?? []), ...(med.data ?? []), ...(log.data ?? [])]
   return {
     rx: rx.data?.length ?? 0,
     med: med.data?.length ?? 0,
     log: log.data?.length ?? 0,
     profile: prof.data?.length ?? 0,
+    profileDirect: profDirect.data?.length ?? 0,
     total: rows.length,
     memberIds: new Set(rows.map(r => r.member_id)),
   }
@@ -137,7 +141,12 @@ try {
   check('본인 처방 2건 조회됨', a.rx === 2, `rx=${a.rx}`)
   check('본인 약 2건 조회됨', a.med === 2, `med=${a.med}`)
   check('본인 체크로그 2건 조회됨', a.log === 2, `log=${a.log}`)
-  check('동의 환자 profile 조회됨', a.profile === 1, `profile=${a.profile}`)
+  check('동의 환자 profile 조회됨(전용 뷰)', a.profile === 1, `profile=${a.profile}`)
+  check('★profiles 직접 조회는 0건 — 이메일·전화·알림설정 등 과다노출 차단(051)', a.profileDirect === 0, `direct=${a.profileDirect}`)
+  const wide = await pClient.from('pharmacist_patient_view').select('*').eq('id', patientUid).maybeSingle()
+  check('뷰가 노출하는 컬럼은 id·full_name·동의시각 3개뿐',
+    !wide.data || Object.keys(wide.data).sort().join(',') === 'consent_pharmacist_view_at,full_name,id',
+    `cols=${wide.data ? Object.keys(wide.data).sort().join(',') : 'none'}`)
   check('★가족(비-본인) 멤버 행 0건 — 노출된 member_id에 famId 없음', !a.memberIds.has(famId), `memberIds=${[...a.memberIds].join(',')}`)
   const membersSelf = await pClient.from('members').select('id, is_self').eq('owner_id', patientUid)
   check('members: 본인(is_self)만 노출, 가족 미노출', (membersSelf.data ?? []).every(m => m.is_self) && (membersSelf.data ?? []).length >= 1, `rows=${membersSelf.data?.length ?? 0}`)

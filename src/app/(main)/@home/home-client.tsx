@@ -194,7 +194,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
             </span>
           </Link>
         ) : regularPharmacy.phone ? (
-          <a href={`tel:${regularPharmacy.phone}`}
+          <a href={`tel:${regularPharmacy.phone.replace(/[^0-9]/g, '')}`}
             className="flex items-center gap-3 bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] px-5 py-4 active:scale-[0.99] transition-transform">
             <div className="w-11 h-11 rounded-xl bg-yc-green50 flex items-center justify-center flex-shrink-0">
               <Storefront size={24} className="text-yc-green600" weight="fill" />

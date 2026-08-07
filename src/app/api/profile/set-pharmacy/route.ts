@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
 
 // 검색으로 단골약국 등록(자유텍스트). B2B(QR) 링크가 아니므로 regular_pharmacy_id는 비운다.
 // 본인 profiles 행만 갱신 — user 토큰 + RLS.
@@ -24,6 +25,6 @@ export async function POST(request: Request) {
     })
     .eq('id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('profile', error)
   return NextResponse.json({ ok: true })
 }

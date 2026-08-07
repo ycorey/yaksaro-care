@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { dbError } from '@/lib/api-error'
 
 // 환자측 "단골 약사에게 내 약 목록 공개" opt-in 동의 갱신.
 // 끄면 consent_pharmacist_view=false → RLS 게이트가 다음 쿼리부터 즉시 약사 접근 차단.
@@ -19,6 +20,6 @@ export async function POST(req: NextRequest) {
     })
     .eq('id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('profile', error)
   return NextResponse.json({ ok: true, enabled: on })
 }

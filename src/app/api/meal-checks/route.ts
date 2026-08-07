@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { type Meal, isMeal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import { logger } from '@/lib/logger'
+import { dbError } from '@/lib/api-error'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     )
     .select('id')
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('meal-checks', error)
 
   // 2) 이력 로그 추가 (append-only, medication_check_logs) — fire-and-forget (응답 차단 금지)
   void supabase

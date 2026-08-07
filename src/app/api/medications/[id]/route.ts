@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 import type { TablesUpdate } from '@/types/database'
+import { dbError } from '@/lib/api-error'
 
 // 본인 복약 항목 삭제(소프트 삭제) / 수정. RLS + user_id 필터로 본인 것만 처리.
 
@@ -17,7 +18,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('medications', error)
   return NextResponse.json({ ok: true })
 }
 
@@ -73,6 +74,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return dbError('medications', error)
   return NextResponse.json({ ok: true })
 }

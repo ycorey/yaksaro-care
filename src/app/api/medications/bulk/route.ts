@@ -5,6 +5,7 @@ import { logDurShadow } from '@/lib/dur-shadow'
 import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
 import { getActiveMember } from '@/lib/active-member'
+import { dbError } from '@/lib/api-error'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.from('user_medications').insert(rows)
   if (error) {
     logger.error('medications/bulk', 'insert 오류', error.message)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return dbError('medications', error)
   }
 
   // DUR shadow: 저장된 실제 drug_id 기반 (fire-and-forget)

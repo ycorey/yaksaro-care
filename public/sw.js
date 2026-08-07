@@ -94,7 +94,11 @@ self.addEventListener('push', (event) => {
 // ── 알림 클릭 → 해당 화면으로 포커스/이동 ──
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const target = event.notification.data?.url || '/today'
+  // 동일 오리진 상대경로만 허용 — '//evil.com' 이나 절대 URL 이 들어와도 앱 밖으로 나가지 않게.
+  // 현재 payload 는 VAPID 서명으로 보호되고 호출부도 전부 리터럴이지만, 알림 클릭은
+  // 사용자가 신뢰하고 누르는 지점이라 심층 방어를 둔다.
+  const raw = event.notification.data?.url || '/today'
+  const target = typeof raw === 'string' && /^\/(?!\/)/.test(raw) ? raw : '/today'
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const c of clients) {

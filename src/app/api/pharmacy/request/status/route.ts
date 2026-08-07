@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendPushToUser } from '@/lib/push'
+import { ownedPharmacyId } from '@/lib/pharmacy-auth'
+import { dbError } from '@/lib/api-error'
 
 // 약사가 요청 상태 변경(확인/완료) → 환자에게 상태 푸시. 사용자(약사) 토큰+RLS(자기 약국만).
 const TYPE_LABEL: Record<string, string> = {
@@ -18,14 +20,19 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
   }
 
-  // RLS(preq_pharmacist_update)가 자기 약국 요청만 허용. 환자 푸시용 patient_id 회수.
+  // 약국 계정인지 앱 계층에서 먼저 확인 — RLS 만 믿으면 환자가 자기 요청에 대해 통과한다.
+  const pharmacyId = await ownedPharmacyId(supabase, user.id)
+  if (!pharmacyId) return NextResponse.json({ error: '약국 계정이 아닙니다' }, { status: 403 })
+
+  // RLS(preq_pharmacist_update) + pharmacy_id 명시로 이중 방어. 환자 푸시용 patient_id 회수.
   const { data, error } = await supabase
     .from('pharmacy_requests')
     .update({ status, responded_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('pharmacy_id', pharmacyId)
     .select('patient_id, type')
     .single()
-  if (error || !data) return NextResponse.json({ error: error?.message ?? '대상 없음' }, { status: 500 })
+  if (error || !data) return dbError('pharmacy', error, '요청을 찾을 수 없어요', 404)
 
   // 환자에게 상태 푸시 (fire-and-forget — 약국→환자 소식)
   const label = TYPE_LABEL[data.type as string] ?? '요청'
