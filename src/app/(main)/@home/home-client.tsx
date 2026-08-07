@@ -53,14 +53,13 @@ interface Props {
   doneMeals:      string[]
   totalSlots:     number
   activeSlotKeys: string[]
-  memberLabel?:   string | null
   lifestyleHook?: { disease: string; topic: string; body_ko: string } | null
   refillHook?:    { label: string; dDay: number; count: number } | null
   regularPharmacy?: { name: string | null; phone: string | null; isB2B?: boolean }
   memberSwitcher?:  ReactNode
 }
 
-export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, memberLabel, lifestyleHook, refillHook, regularPharmacy, memberSwitcher }: Props) {
+export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlotKeys, lifestyleHook, refillHook, regularPharmacy, memberSwitcher }: Props) {
   // 시간 의존 렌더는 마운트 후에만 → SSR(서버시간)과 클라(KST) 불일치(하이드레이션 #418) 방지
   const now = useNowMinute()
 
@@ -89,9 +88,6 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         <h1 className="font-display text-[1.625rem] text-yc-neutral900 mt-0.5">
           {now ? (h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요') : ' '}
         </h1>
-        {memberLabel && (
-          <p className="text-base font-semibold text-yc-green700 mt-1">{memberLabel}님의 복약을 보고 있어요</p>
-        )}
       </div>
 
       {/* 곧 떨어지는 약 — 리필·재방문 알림(가장 시급) */}

@@ -7,6 +7,7 @@ import { YCCard } from '@/components/yc/yc-card'
 import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
 import { summarizeAdherence } from '@/lib/adherence'
 import PharmacyAdherenceSection from './pharmacy-adherence-section'
+import { ownedPharmacyId } from '@/lib/pharmacy-auth'
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
   return [
@@ -121,15 +122,14 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
     : { data: null }
 
   // 약국 비공개 메모(특이사항) 로드 — 약사 본인 약국 기준. RLS가 동의·소유 게이트.
-  const { data: myPharmacy } = await supabase
-    .from('pharmacies').select('id').eq('owner_id', user.id).maybeSingle()
+  const myPharmacyId = await ownedPharmacyId(supabase, user.id)
   let noteText = ''
   let noteUpdatedAt: string | null = null
-  if (myPharmacy?.id) {
+  if (myPharmacyId) {
     const { data: noteRow } = await supabase
       .from('pharmacy_patient_notes')
       .select('note, updated_at')
-      .eq('pharmacy_id', myPharmacy.id)
+      .eq('pharmacy_id', myPharmacyId)
       .eq('patient_id', id)
       .maybeSingle()
     noteText = noteRow?.note ?? ''

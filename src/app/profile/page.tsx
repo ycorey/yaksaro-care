@@ -55,7 +55,7 @@ export default async function ProfilePage() {
       </div>
 
       <p className="text-xs text-yc-neutral500 text-center leading-relaxed px-4 pb-4">
-        계정 삭제·개인정보 열람 요청은 ycorey@gmail.com 으로 문의하세요.
+        개인정보 열람·정정 요청은 admin@yaksaro.co.kr 으로 문의하세요.
       </p>
     </div>
   )
