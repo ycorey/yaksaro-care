@@ -1,0 +1,37 @@
+name: Production smoke
+
+# "배포 성공" 은 "앱이 열린다" 를 보장하지 않는다.
+# 2026-08-11 에 약사 대시보드가 4일간 무한 리다이렉트로 접근 불가였는데, 빌드도 배포도
+# 성공 상태였고 서버는 500 이 아니라 307 을 무한히 주고 있었다. 그래서 배포가 끝난 **뒤에**
+# 실제 URL 을 두드려 본다.
+on:
+  # Vercel 이 배포 상태를 GitHub 에 보고할 때 발화한다.
+  deployment_status:
+  # 배포와 무관하게 지금 상태를 확인하고 싶을 때.
+  workflow_dispatch:
+    inputs:
+      base:
+        description: '검사할 베이스 URL'
+        required: false
+        default: 'https://care.yaksaro.co.kr'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    # 프로덕션 배포가 성공했을 때만. 프리뷰 배포는 도메인이 매번 달라 의미가 적고,
+    # 실패·진행중 상태에서 두드리면 당연히 실패해 소음이 된다.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       contains(fromJSON('["Production","production"]'), github.event.deployment.environment))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # 의존성 설치 불필요 — 스모크는 Node 내장 fetch 만 쓴다(설치 실패가 스모크를 막지 않게).
+      - name: Smoke production
+        run: node scripts/smoke-production.mjs "${{ github.event.inputs.base || 'https://care.yaksaro.co.kr' }}"

@@ -26,7 +26,8 @@ jobs:
         run: npx tsc --noEmit
       - name: Lint
         run: npx eslint .
-      - name: Unit tests (Node 내장 러너, 36건)
+      # 건수는 적지 않는다 — 늘어날 때마다 어긋나 결국 아무도 안 믿는 숫자가 된다.
+      - name: Unit tests (Node 내장 러너)
         run: npm run test:unit
       - name: Build
         run: npm run build
