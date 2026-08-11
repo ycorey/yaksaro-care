@@ -16,6 +16,9 @@ const DB_ONLY = [
   'request-schedule-qa', 'pharmacy-board-qa',
   'pharmacist-adherence-qa', 'dangol-code-link-qa', 'pharmacy-due-qa', 'pharmacy-todo-qa',
   'pharmacist-rls-qa', // 약사 토큰 RLS 누수 실측(B2B 게이트) — 미동의/타약국/철회/가족 0건 증명
+  // 코드의 PostgREST 임베드가 실제 FK 와 맞는지 실질의로 확인.
+  // 타입 검사로는 원리적으로 못 잡는 자리다(임베드 해석은 런타임 스키마 캐시의 일).
+  'embed-integrity-qa',
 ]
 // 서버 필요 + 자체 시드·정리.
 const SERVER_STANDALONE = [
