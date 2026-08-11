@@ -29,7 +29,12 @@ function guardTarget(url) {
 export function loadEnv() {
   const env = {}
   const raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
-  for (const line of raw.split('\n')) {
+  // CRLF·BOM 내성. Windows 에서 .env.local 을 편집기·스크립트가 한 번만 다시 써도 파일 전체가
+  // CRLF 로 바뀌는데, 예전 파서는 `\n` 으로만 쪼개 각 줄 끝에 `\r` 이 남았다. JS 정규식의 `.` 은
+  // **`\r` 을 매치하지 않으므로**(줄종결자 취급) `(.*)$` 가 어긋나 **모든 키가 통째로 유실**됐다.
+  // 값이 아니라 키가 0개가 되므로 증상은 "키가 필요합니다" 한 줄 — 실제로는 e2e 16종 전부 침묵.
+  // (2026-08-11 실측: 키 23개가 파일에 다 있는데 파싱된 줄 0개.)
+  for (const line of raw.replace(/^﻿/, '').split(/\r?\n/)) {
     const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
     if (m) env[m[1]] = m[2].trim().replace(/^["']|["']$/g, '')
   }
