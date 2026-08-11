@@ -93,7 +93,8 @@
   .nav-links { display:flex; align-items:center; gap:34px; }
   .nav-links a { font-weight:600; font-size:15.5px; color:var(--muted); transition:color .2s; }
   .nav-links a:hover { color:var(--green); }
-  .nav-cta {
+  /* `.nav-links a`(0,1,1)가 `.nav-cta`(0,1,0)보다 우선해 버튼 글자가 muted 로 깔리던 것 — 선택자를 맞춰 흰 글자를 되살린다 */
+  .nav-links a.nav-cta, .nav-cta {
     background:var(--green); color:var(--off); font-weight:700; font-size:15px;
     padding:11px 22px; border-radius:11px; transition:transform .2s, background .2s; white-space:nowrap;
   }
@@ -160,7 +161,7 @@
   .sec-desc { margin-top:18px; font-weight:400; font-size:18px; color:var(--muted); line-height:1.65; }
 
   /* ---------- ECOSYSTEM CARDS ---------- */
-  .eco-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .eco-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
   @media(max-width:920px){ .eco-grid{ grid-template-columns:1fr; } }
   .eco-card {
     position:relative; border-radius:22px; padding:34px 32px 30px;
@@ -318,6 +319,7 @@
     <div class="nav-links">
       <a href="#ecosystem">서비스</a>
       <a href="#care">약사로 케어</a>
+      <a href="/ter">약사로 터</a>
       <a href="#signup" class="nav-cta">출시 알림 받기</a>
     </div>
   </div>
@@ -374,8 +376,8 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="sec-tag">약사로 생태계</span>
-      <h2 class="sec-title">하나의 브랜드,<br>세 갈래로 이어지는 건강의 길</h2>
-      <p class="sec-desc">복약 관리에서 시작해 약국과 사람, 그리고 일상의 건강까지. 약사로는 단계적으로 생태계를 넓혀갑니다.</p>
+      <h2 class="sec-title">하나의 브랜드,<br>네 갈래로 이어지는 건강의 길</h2>
+      <p class="sec-desc">복약 관리에서 시작해 약국과 사람, 약국이 설 자리, 그리고 일상의 건강까지. 약사로는 단계적으로 생태계를 넓혀갑니다.</p>
     </div>
     <div class="eco-grid">
 
@@ -392,6 +394,22 @@
         <a href="https://care.yaksaro.co.kr/" data-cta="ecosystem_care"
            style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-weight:800;font-size:15px;color:#D9F25C;text-decoration:none;">
           미리 체험해보기
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <!-- 터 — 이미 신청을 받는 무료 서비스라 카드에서 바로 넘어갈 수 있게 링크를 붙인다 -->
+      <div class="eco-card reveal">
+        <div class="eco-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0E6E54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="eco-kicker">약국 입지 분석</div>
+        <div class="eco-name">약사로 터</div>
+        <p class="eco-desc">보고 계신 자리에 약국을 내도 되는지, 공공데이터로 계산해 무료로 알려 드립니다. 될 자리는 왜 되는지 숫자로 보여 드리고, 안 되는 자리는 안 된다고 말합니다.</p>
+        <span class="eco-status"><span class="s-dot"></span>지금 신청 가능 · 무료</span>
+        <a href="/ter" data-cta="ecosystem_ter"
+           style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-weight:800;font-size:15px;color:#0E6E54;text-decoration:none;">
+          무료로 입지 분석 받기
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>
@@ -543,6 +561,7 @@
         <div class="ft-col">
           <h4>서비스</h4>
           <a href="#care">약사로 케어</a>
+          <a href="/ter">약사로 터</a>
           <a href="/patient">환자·보호자용</a>
           <a href="/pharmacy">약국 도입</a>
           <a href="#ecosystem">약사로 구인구직</a>
