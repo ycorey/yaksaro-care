@@ -18,11 +18,23 @@ type Level = 'error' | 'warn' | 'info'
 // 외부 수집기 훅. 등록 전엔 null → 아무 것도 전송하지 않는다(no-op).
 export type LogReporter = (level: Level, scope: string, message: string, detail?: unknown) => void
 
-let reporter: LogReporter | null = null
+// 수집기는 모듈 변수가 아니라 globalThis 에 둔다.
+//
+// Next 는 instrumentation·route handler·클라이언트를 **서로 다른 번들**로 만들고, 각 번들은
+// 이 모듈의 별도 사본을 갖는다. 모듈 변수에 담으면 instrumentation 에서 등록한 수집기가
+// 라우트 핸들러의 사본에는 보이지 않아, 등록은 됐는데 아무 것도 전송되지 않는다.
+// (실측: throw 는 Sentry 에 도달했지만 logger.error 로 보낸 이벤트는 0건이었다.)
+// Symbol.for 전역 레지스트리는 번들 경계를 넘어 같은 키를 공유한다.
+const REPORTER_KEY = Symbol.for('yaksaro.care.logReporter')
+type ReporterHost = typeof globalThis & { [REPORTER_KEY]?: LogReporter | null }
 
 // 외부 수집기 등록/해제. null을 넘기면 해제(테스트·SSR 안전).
 export function setLogReporter(fn: LogReporter | null): void {
-  reporter = fn
+  ;(globalThis as ReporterHost)[REPORTER_KEY] = fn
+}
+
+function getReporter(): LogReporter | null {
+  return (globalThis as ReporterHost)[REPORTER_KEY] ?? null
 }
 
 function emit(level: Level, scope: string, message: string, detail?: unknown) {
@@ -33,6 +45,7 @@ function emit(level: Level, scope: string, message: string, detail?: unknown) {
   else console[level](prefix, payload)
 
   // 등록된 외부 수집기로 전달(error·warn만). 수집기 오류가 로깅·앱을 깨지 않도록 흡수.
+  const reporter = getReporter()
   if (reporter && level !== 'info') {
     try { reporter(level, scope, message, detail) } catch { /* 수집기 예외 무시 */ }
   }
