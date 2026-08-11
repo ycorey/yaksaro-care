@@ -21,7 +21,11 @@ export default async function PharmacyHome() {
   const today = todayKST()
 
   // 동의 단골 환자 + 요청 + 수동 메모 — 상호 무관, 동시 실행
-  const [{ data: patients }, { data: reqs }, { data: todoRows }] = await Promise.all([
+  const [
+    { data: patients, error: patientsError },
+    { data: reqs, error: reqsError },
+    { data: todoRows, error: todosError },
+  ] = await Promise.all([
     // 약사는 profiles 를 직접 읽지 않는다(051). 뷰가 단골 관계 AND 동의 게이트를 적용하고
     // id·이름·동의시각만 노출한다.
     supabase.from('pharmacist_patient_view')
@@ -34,6 +38,13 @@ export default async function PharmacyHome() {
     supabase.from('pharmacy_todos').select('id, text, done, created_at')
       .order('done', { ascending: true }).order('created_at', { ascending: false }).limit(50),
   ])
+
+  // 조회 실패를 빈 배열로 흘려보내면 이 화면은 "동의한 단골 환자 0명 · 요청 없음" 이라고
+  // 말한다 — 약사에게는 장애가 아니라 **평온한 하루**로 보인다. 환자가 보낸 요청이 있어도
+  // 없는 것처럼 보이므로, 조용한 실패가 곧 응대 누락이 된다. 그래서 화면을 그리지 않고
+  // 던진다(pharmacy/error.tsx 가 다시 시도·로그아웃과 함께 받는다).
+  const loadError = patientsError ?? reqsError ?? todosError
+  if (loadError) throw new Error(`약국 대시보드 조회 실패: ${loadError.code} ${loadError.message}`)
 
   const ids = (patients ?? []).map(p => p.id as string)
   const reqPatientIds = [...new Set((reqs ?? []).map(r => r.patient_id as string))]

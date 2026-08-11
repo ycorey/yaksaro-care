@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LandingClient from './landing-client'
@@ -27,5 +28,9 @@ export default async function LandingPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (user) redirect('/wallet')
 
-  return <LandingClient />
+  // pending_pharmacy_id 는 httpOnly 라 클라이언트가 못 읽는다(8/7). 서버가 읽어 넘긴다 —
+  // 자세한 사유는 login/page.tsx 주석 참조.
+  const pendingPharmacyId = (await cookies()).get('pending_pharmacy_id')?.value ?? null
+
+  return <LandingClient pendingPharmacyId={pendingPharmacyId} />
 }

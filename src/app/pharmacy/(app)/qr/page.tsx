@@ -11,12 +11,35 @@ export default async function PharmacyQrPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/pharmacy/login')
 
-  const { data: pharmacy } = await supabase
+  const { data: pharmacy, error: pharmacyError } = await supabase
     .from('pharmacies')
     .select('name, store_id')
     .eq('owner_id', user.id)
     .maybeSingle()
-  if (!pharmacy) redirect('/pharmacy/login')
+
+  // 예전엔 조회 실패와 '약국 행 없음' 을 똑같이 /pharmacy/login 으로 보냈다. 그런데 호출자는
+  // 이미 로그인한 약사라 프록시가 곧바로 /pharmacy 로 되돌려보낸다 — 약사 눈에는 QR 메뉴를
+  // 눌렀는데 **아무 일도 일어나지 않는** 것으로 보였다. 인증 문제가 아닌 것을 인증 문제로
+  // 처리한 탓이다. 둘을 분리한다.
+  if (pharmacyError) throw new Error(`약국 정보 조회 실패: ${pharmacyError.code} ${pharmacyError.message}`)
+
+  // 약국 행이 정말 없는 경우 — 계정 발급이 덜 된 상태다. 로그인으로 보내지 말고
+  // 무엇이 문제인지 화면에서 말해준다(약사는 스스로 약국 행을 만들 수 없다 — 046 이후
+  // 생성은 service_role 전용이라 관리자 절차가 필요하다).
+  if (!pharmacy) {
+    return (
+      <div className="space-y-6">
+        <Link href="/pharmacy" className="text-sm text-yc-green600 font-medium">‹ 대시보드로</Link>
+        <div className="bg-white rounded-yc-lg border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 px-6 text-center">
+          <p className="text-base font-semibold text-yc-neutral700 mb-1">약국 정보가 등록되지 않았어요</p>
+          <p className="text-sm text-yc-neutral500">
+            이 계정에 연결된 약국이 없어 QR을 만들 수 없어요.<br />
+            <a href="mailto:admin@yaksaro.co.kr" className="text-yc-green600 font-medium">admin@yaksaro.co.kr</a> 로 문의해주세요.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // 배포 도메인 기준 절대 URL (인쇄물에 들어가므로 실제 접속 host 사용)
   const h = await headers()

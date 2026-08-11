@@ -18,7 +18,12 @@ const DB_ONLY = [
   'pharmacist-rls-qa', // 약사 토큰 RLS 누수 실측(B2B 게이트) — 미동의/타약국/철회/가족 0건 증명
 ]
 // 서버 필요 + 자체 시드·정리.
-const SERVER_STANDALONE = ['qr-flow-sim', 'qr-social-sim', 'ux-tap-qa']
+const SERVER_STANDALONE = [
+  // 약사·환자가 실제로 화면에 도달하는지 HTTP 로 확인(리다이렉트 홉을 세어 루프 감지).
+  // DB 권한 테스트만으로는 못 잡는 결함 전용 — 2026-08-11 4일 장애가 이 자리의 공백이었다.
+  'pharmacy-entry-qa',
+  'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
+]
 // 서버 필요 + 공용 시드 의존(setup/teardown로 감싸야 함).
 const SHARED_SEED = 'run'
 
