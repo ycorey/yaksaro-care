@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
+import { cronDbFailure, settledFailures } from '@/lib/cron-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,23 +23,29 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient()
 
   // 1) 푸시 구독 + 알림 마스터 켠 사용자
-  const { data: subs } = await admin.from('push_subscriptions').select('user_id')
+  const { data: subs, error: subsError } = await admin.from('push_subscriptions').select('user_id')
+  const subsFail = cronDbFailure('cron:refill', '푸시 구독', subsError)
+  if (subsFail) return NextResponse.json(subsFail.body, { status: subsFail.status })
   const pushUsers = [...new Set((subs ?? []).map(s => s.user_id as string))]
   if (pushUsers.length === 0) return NextResponse.json({ sent: 0, reason: '구독자 없음' })
 
-  const { data: prefs } = await admin.from('profiles').select('id, alarm_enabled').in('id', pushUsers)
+  const { data: prefs, error: prefsError } = await admin.from('profiles').select('id, alarm_enabled').in('id', pushUsers)
+  const prefsFail = cronDbFailure('cron:refill', '알림 설정', prefsError)
+  if (prefsFail) return NextResponse.json(prefsFail.body, { status: prefsFail.status })
   const eligible = new Set((prefs ?? []).filter(p => p.alarm_enabled !== false).map(p => p.id as string))
   const users = pushUsers.filter(u => eligible.has(u))
   if (users.length === 0) return NextResponse.json({ sent: 0, reason: '알림 끔' })
 
   // 2) 활성 처방약 + 처방전(미알림) 로드
-  const { data: meds } = await admin
+  const { data: meds, error: medsError } = await admin
     .from('user_medications')
     .select('total_days, prescription:user_prescriptions!inner(id, user_id, prescribed_at, duration_days, refill_reminded_at)')
     .in('user_id', users)
     .is('deleted_at', null)
     .is('ended_at', null)
     .not('prescription_id', 'is', null)
+  const medsFail = cronDbFailure('cron:refill', '활성 처방약', medsError)
+  if (medsFail) return NextResponse.json(medsFail.body, { status: medsFail.status })
 
   type Presc = { id: string; user_id: string; prescribed_at: string | null; duration_days: number | null; refill_reminded_at: string | null }
   const groups = new Map<string, { p: Presc; totalDays: number[] }>()
@@ -68,7 +75,7 @@ export async function GET(req: NextRequest) {
   // 4) 사용자당 1회 푸시 + refill_reminded_at 기록
   let sent = 0
   const remindedIds: string[] = []
-  await Promise.allSettled([...byUser.entries()].map(async ([userId, { ids, minDDay }]) => {
+  const results = await Promise.allSettled([...byUser.entries()].map(async ([userId, { ids, minDDay }]) => {
     const body = ids.length > 1
       ? `처방약 ${ids.length}건이 곧 떨어져요. 재방문·재처방을 챙겨보세요.`
       : minDDay === 0
@@ -81,8 +88,15 @@ export async function GET(req: NextRequest) {
   }))
 
   if (remindedIds.length > 0) {
-    await admin.from('user_prescriptions').update({ refill_reminded_at: new Date().toISOString() }).in('id', remindedIds)
+    // 이 기록이 실패하면 다음 실행이 같은 사람에게 또 보낸다 — 조용히 넘기지 않는다.
+    const { error: markError } = await admin
+      .from('user_prescriptions').update({ refill_reminded_at: new Date().toISOString() }).in('id', remindedIds)
+    const markFail = cronDbFailure('cron:refill', '발송 기록', markError)
+    if (markFail) return NextResponse.json(markFail.body, { status: markFail.status })
   }
 
-  return NextResponse.json({ sent, prescriptions: remindedIds.length, users: byUser.size })
+  return NextResponse.json({
+    sent, prescriptions: remindedIds.length, users: byUser.size,
+    pushFailed: settledFailures(results),
+  })
 }
