@@ -170,7 +170,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ cached: false, results, summary_ko: summary.overall_ko })
   } catch (err) {
-    logger.error('evidence', `처리 실패: "${queryKey}"`, err)
+    // queryKey 는 `dn:와파린+오메가3` 처럼 **약품·영양제 이름**이다. 로그 메시지에 넣으면
+    // 외부 수집기(Sentry)로 그대로 나가고 이슈 제목·본문에 남는다 → 길이만 남긴다.
+    // 어떤 질의였는지는 서버 로그가 아니라 캐시 테이블(query_key)로 추적한다.
+    logger.error('evidence', `처리 실패 (질의 길이 ${queryKey.length})`, err)
     return NextResponse.json({ error: '근거 수집 중 오류가 발생했습니다.' }, { status: 500 })
   }
 }

@@ -22,11 +22,47 @@ export function initSentry(runtime: 'server' | 'client' | 'edge'): void {
     // ⚠️ 이 앱은 건강정보를 다룬다. 요청 본문·쿠키·헤더가 이벤트에 실리면
     //    처방·복약 정보가 제3자 서버로 나간다. 기본값(false)을 명시적으로 못박는다.
     sendDefaultPii: false,
+
+    // ⚠️ 처음 배선했을 때는 query_string·cookies·data 만 지웠는데, **이 앱에서는 그 셋이
+    //    애초에 채워지지 않는 필드**였다. 즉 아무것도 막고 있지 않았다.
+    //    실제 유출 경로는 브레드크럼과 URL 이다(10차 기술감사 H2):
+    //      · fetch 브레드크럼 URL — /api/drugs/search?q=<약품명>
+    //      · ui.click 브레드크럼 — DOM 의 aria-label/alt (약 이미지 alt={약이름},
+    //        멤버 스위처의 **가족 실명**)
+    //      · console 브레드크럼 — 인자 전문
+    //      · event.request.url(=location.href) · Referer
+    //    "기본값이 안전하겠지" 로 두면 안 되는 종류라, 남기는 것을 화이트리스트처럼 좁힌다.
+    beforeBreadcrumb(crumb) {
+      // 사용자가 무엇을 눌렀는지·무엇을 입력했는지는 화면 텍스트를 그대로 싣는다 → 통째로 버린다.
+      if (crumb.category?.startsWith('ui.')) return null
+      // console 은 무엇이든 들어올 수 있다. 어차피 의미 있는 것은 logger 가 별도로 보낸다.
+      if (crumb.category === 'console') return null
+      // 네트워크·내비게이션은 "어디서 터졌나" 를 아는 데 필요하므로 경로만 남기고 쿼리는 자른다.
+      if (crumb.data && typeof crumb.data.url === 'string') {
+        crumb.data.url = stripQuery(crumb.data.url)
+      }
+      if (typeof crumb.message === 'string' && crumb.message.includes('?')) {
+        crumb.message = stripQuery(crumb.message)
+      }
+      return crumb
+    },
+
     beforeSend(event) {
-      // URL 쿼리스트링에 개인정보가 실릴 여지를 원천 차단(검색어·코드 등).
-      if (event.request?.query_string) delete event.request.query_string
-      if (event.request?.cookies) delete event.request.cookies
-      if (event.request?.data) delete event.request.data
+      const req = event.request
+      if (req) {
+        delete req.query_string
+        delete req.cookies
+        delete req.data
+        // location.href 전체가 들어온다 — 검색어·약품명이 쿼리에 실린다.
+        if (typeof req.url === 'string') req.url = stripQuery(req.url)
+        // Referer 는 직전 화면의 쿼리를 그대로 옮겨온다. Cookie 는 세션 그 자체다.
+        if (req.headers) {
+          delete req.headers.Referer
+          delete req.headers.referer
+          delete req.headers.Cookie
+          delete req.headers.cookie
+        }
+      }
       return event
     },
   })
@@ -34,10 +70,29 @@ export function initSentry(runtime: 'server' | 'client' | 'edge'): void {
   // 기존 logger.error/warn 호출(코드 전역)이 그대로 Sentry 로 흐르게 한다.
   // 호출부는 한 줄도 바꾸지 않는다 — logger 가 이걸 위해 확장점을 갖고 있었다.
   setLogReporter((level, scope, message, detail) => {
+    const severity = level === 'error' ? 'error' : 'warning'
     if (detail instanceof Error) {
       Sentry.captureException(detail, { tags: { scope, runtime }, extra: { message } })
     } else {
-      Sentry.captureMessage(`[${scope}] ${message}`, level === 'error' ? 'error' : 'warning')
+      // detail 을 버리면 `dbError` 처럼 같은 문구를 쓰는 호출부 24곳이 진단 없이 한 이슈로
+      // 뭉친다(10차 M4). scope 를 태그로 넣어 호출부를 구분하고 detail 은 요약해 남긴다.
+      Sentry.captureMessage(`[${scope}] ${message}`, {
+        level: severity,
+        tags: { scope, runtime },
+        extra: detail === undefined ? undefined : { detail: summarize(detail) },
+      })
     }
   })
+}
+
+// 쿼리스트링 제거 — 상대·절대 URL 모두 처리하고, 파싱 실패해도 원문을 흘리지 않는다.
+function stripQuery(url: string): string {
+  const cut = url.search(/[?#]/)
+  return cut === -1 ? url : url.slice(0, cut)
+}
+
+// 진단에 쓸 만큼만 남기고 자른다. 객체 전문을 그대로 실으면 무엇이 들어올지 통제할 수 없다.
+function summarize(detail: unknown): string {
+  const text = typeof detail === 'string' ? detail : JSON.stringify(detail)
+  return (text ?? String(detail)).slice(0, 300)
 }

@@ -31,7 +31,7 @@ export default function GlobalError({
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
             앱을 불러오지 못했어요
           </h1>
-          <p style={{ fontSize: '1rem', color: '#6B6B6B', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: '1rem', color: '#5A5A5A', lineHeight: 1.6, margin: 0 }}>
             잠시 후 다시 시도해보세요.<br />계속 이 화면이 나오면 문의해주세요.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '20rem', marginTop: '0.5rem' }}>
@@ -59,7 +59,7 @@ export default function GlobalError({
             </a>
           </div>
           {error.digest ? (
-            <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9A9A9A' }}>
+            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#5A5A5A' }}>
               오류 코드 {error.digest}
             </p>
           ) : null}
