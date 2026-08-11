@@ -28,7 +28,7 @@ function GoogleIcon() {
   )
 }
 
-export default function LandingClient() {
+export default function LandingClient({ pendingPharmacyId }: { pendingPharmacyId: string | null }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [rxOpen, setRxOpen]   = useState(false)
   const supabase = createClient()
@@ -36,14 +36,9 @@ export default function LandingClient() {
   async function handleOAuthSignIn(provider: string) {
     setLoading(provider)
 
-    // QR 세션 유실 방지: 약국 QR 유입 쿠키(pending_pharmacy_id)를 읽어
-    // redirectTo 쿼리(?store_id=)에 강제 바인딩 → 인앱 브라우저 쿠키 유실 시에도
-    // 콜백에서 약국 매핑을 복원한다.
-    const pendingPharmacyId = document.cookie
-      .split('; ')
-      .find(c => c.startsWith('pending_pharmacy_id='))
-      ?.split('=')[1] ?? null
-
+    // QR 세션 유실 방지: 약국 QR 유입 쿠키(pending_pharmacy_id)를 redirectTo 쿼리(?store_id=)
+    // 에 강제 바인딩 → 인앱 브라우저 쿠키 유실 시에도 콜백에서 약국 매핑을 복원한다.
+    // 쿠키는 httpOnly 라 서버(page.tsx)가 읽어 prop 으로 내려준다.
     const callbackBase = `${window.location.origin}/auth/callback`
     const redirectTo   = pendingPharmacyId
       ? `${callbackBase}?store_id=${encodeURIComponent(pendingPharmacyId)}`
