@@ -77,6 +77,14 @@ try {
   if (e2) throw new Error('pharmacy PH2: ' + e2.message)
   ph2 = p2.id
 
+  // 실제 약국 계정은 scripts/create-pharmacy-account.mjs 가 service_role 로 role 을 승격시킨다
+  // (049 이후 트리거는 가입 메타데이터의 role 을 믿지 않고 항상 'patient' 로 만든다).
+  // 시드가 이 승격을 빠뜨리면 RLS 게이트는 pharmacies.owner_id 로 판정하니 [A]~[E] 는 그대로
+  // 통과해버리고, role 로 판정하는 라우트 가드만 현실과 어긋난 채 검증을 비껴간다.
+  const { error: roleErr } = await admin.from('profiles')
+    .update({ role: 'pharmacist' }).in('id', [pharmacistUid, otherUid])
+  if (roleErr) throw new Error('role 승격: ' + roleErr.message)
+
   // 3) 환자 U + 멤버(본인/가족)
   const uEmail = `e2e-rls-patient+${now}@yaksaro-e2e.test`, uPw = pw()
   const { data: uUser, error: uErr } = await admin.auth.admin.createUser({ email: uEmail, password: uPw, email_confirm: true })
@@ -202,6 +210,24 @@ try {
   check('★환자 profiles 행 생존(뷰 DELETE 실패 확인)', !!stillThere.data, stillThere.data ? '존재' : '삭제됨')
   check('★환자 이름 미조작(뷰 UPDATE 실패 확인)',
     stillThere.data?.full_name !== '약사가조작', `got=${stillThere.data?.full_name ?? 'null'}`)
+
+  // ── F. 약사 대시보드 진입 — 게이트 쿼리가 실제로 성공하는가 ──────────
+  // [A]~[E] 는 "약사가 무엇을 못 보는가"만 봤고, "약사가 자기 대시보드에 들어가지는가"는
+  // 아무도 보지 않았다. 그 사이 050 이 pharmacies.owner_id FK 를 profiles → auth.users 로
+  // 옮기면서 pharmacy/(app)/layout.tsx 의 `pharmacies!owner_id(name)` 임베드가 PGRST200 으로
+  // 죽었고, 쿼리 실패 → profile=null → role!=='pharmacist' → /home,
+  // 그런데 (main)/layout 은 role==='pharmacist' 라고 /pharmacy 로 → 무한 리다이렉트가 됐다.
+  // 권한 테스트가 전부 통과해도 약사는 사이트에 못 들어간다 — 그 구멍을 여기서 막는다.
+  console.log('\n[F] 약사 대시보드 진입 게이트')
+  const gate = await pClient.from('profiles').select('role').eq('id', pharmacistUid).single()
+  check('게이트 쿼리 성공(에러 없음)', !gate.error, gate.error ? `err=${gate.error.code} ${gate.error.message}` : 'ok')
+  check('★약사 role 판독 = pharmacist (실패 시 /home 무한루프)',
+    gate.data?.role === 'pharmacist', `got=${gate.data?.role ?? 'null'}`)
+
+  // 헤더에 띄우는 소유 약국명도 같은 요청에서 얻는다 — 여기가 깨지면 진입 자체가 막힌다.
+  const owned = await pClient.from('pharmacies').select('name').eq('owner_id', pharmacistUid).maybeSingle()
+  check('소유 약국명 조회 성공', !owned.error && owned.data?.name === 'E2E검증약국',
+    owned.error ? `err=${owned.error.code} ${owned.error.message}` : `got=${owned.data?.name ?? 'null'}`)
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {
