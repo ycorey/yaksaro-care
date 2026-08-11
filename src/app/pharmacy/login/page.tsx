@@ -29,11 +29,21 @@ export default function PharmacyLoginPage() {
     }
 
     // 약사 계정인지 확인 (환자 계정으로 이 입구를 쓰지 못하게)
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
       .single()
+
+    // 판독이 실패하면 확인이 안 된 것이지 '약사가 아닌' 것이 아니다. 예전엔 이 둘을 같은
+    // 문구로 처리해, 멀쩡한 약사가 일시적 장애 때 "약사 계정이 아닙니다" 라는 **사실과 다른**
+    // 안내를 받고 관리자에게 문의하게 됐다. 입장은 똑같이 막되(확인 못 했으니) 이유는 맞게 말한다.
+    if (profileError) {
+      await supabase.auth.signOut()
+      setError('지금은 계정을 확인할 수 없어요. 잠시 후 다시 시도해주세요.')
+      setLoading(false)
+      return
+    }
 
     if (profile?.role !== 'pharmacist') {
       await supabase.auth.signOut()
