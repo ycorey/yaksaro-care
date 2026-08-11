@@ -31,7 +31,18 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+              // 개발 모드에서만 'unsafe-eval' 을 허용한다.
+              // Next dev(webpack HMR·소스맵)는 모듈을 eval 로 평가하는데, CSP 가 이를 막으면
+              // **하이드레이션 자체가 실패한다** — 화면은 그려지지만 onClick 이 하나도 안 붙어
+              // 로컬에서 앱이 통째로 '클릭이 안 되는' 상태가 된다(8/7 CSP 도입 후 그랬다).
+              // Playwright e2e 도 dev 서버를 때리므로 상호작용 테스트가 전부 오탐으로 실패했다.
+              // 프로덕션 번들은 eval 을 쓰지 않으므로 운영 CSP 는 그대로 둔다(실측: prod 빌드 hydrated).
+              process.env.NODE_ENV === 'production'
+                ? "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com"
+                // va.vercel-scripts.com 은 @vercel/analytics 가 **개발 모드에서만** 불러오는
+                // 디버그 스크립트다(운영은 /_vercel/insights 로 자체 전송). 막아두면 콘솔에
+                // 상시 빨간 줄이 남는데, 그런 상시 소음이 진짜 에러를 가린다.
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
               "font-src 'self' data: https://cdn.jsdelivr.net",
               "img-src 'self' data: blob: https://nedrug.mfds.go.kr https://*.supabase.co https://www.googletagmanager.com https://*.google-analytics.com",
