@@ -46,7 +46,9 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
               "font-src 'self' data: https://cdn.jsdelivr.net",
               "img-src 'self' data: blob: https://nedrug.mfds.go.kr https://*.supabase.co https://www.googletagmanager.com https://*.google-analytics.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+              // Sentry 인제스트를 connect-src 에 넣지 않으면 이벤트가 CSP 로 조용히 차단된다 —
+              // "장애를 알아차리는 장치" 가 정작 자기 실패를 못 알리는 상태가 된다.
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
               "worker-src 'self'",
               "manifest-src 'self'",
               "object-src 'none'",
