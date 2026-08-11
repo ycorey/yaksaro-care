@@ -1,37 +1,82 @@
 // ter-notify — 「약사로 터」 리포트 신청이 들어오면 운영 메일로 알린다.
 //
-// 흐름:  landing /ter 폼 → ter_requests INSERT → (트리거 055) pg_net → 이 함수 → Resend
+// 흐름:  landing /ter 폼 → ter_requests INSERT → (트리거 055) pg_net → 이 함수 → Gmail SMTP
 //
-// 왜 Resend 인가:
-//   처음에는 Zoho SMTP 로 붙였다. Zoho 는 이미 처리방침 제5·6조에 수탁자로 올라 있어
-//   메일에 신청 내용을 담아도 방침을 손대지 않아도 되기 때문이다.
-//   그런데 **Zoho 무료 플랜은 SMTP 접근이 잠겨 있어** 앱 비밀번호가 맞아도 535 로 막힌다.
-//   (그 전에 denomailer 가 한글 btoa 에서 죽는 문제도 있었고, SMTP 직접 구현으로 넘겼었다.)
+// 발송 수단을 여기까지 온 경위:
+//   ① Zoho SMTP — 이미 처리방침 제5·6조에 수탁자로 올라 있어 내용을 담아도 됐지만,
+//      **무료 플랜은 SMTP 접근이 잠겨 있어** 앱 비밀번호가 맞아도 535 로 막힌다.
+//   ② Resend — 가입 단계에서 막혔다.
+//   ③ Gmail — 무료 계정도 앱 비밀번호로 SMTP 를 연다. 새 업체를 붙이지 않아도 된다.
+//   (denomailer 1.6.0 은 한글이 들어가면 btoa 에서 죽어 못 쓴다. 그래서 SMTP 를 직접 말한다.)
 //
-// 그래서 알림 내용을 비운다:
-//   Resend 가 신청자의 주소·이메일을 실어 나르면 처리방침에 수탁자·국외이전을 추가해야 한다.
-//   기본값은 "새 신청 1건"만 보내고 상세는 대시보드에서 본다 → Resend 는 개인정보를 처리하지 않는다.
-//   NOTIFY_DETAIL=full 로 켜면 상세를 담지만, **그때는 방침 제5·6조 개정이 선행돼야 한다.**
+// 알림에 내용을 담지 않는 이유:
+//   메일 발송자가 신청자의 주소·이메일을 실어 나르면 처리방침의 수탁 범위를 넓혀야 한다.
+//   Google 은 수탁자로 등재돼 있지만 위탁업무가 "웹사이트 이용 통계 분석"으로 한정돼 있다.
+//   기본값은 "새 신청 1건 + 시각 + 대시보드 링크"만 보낸다 → 개인정보가 메일을 타지 않는다.
+//   NOTIFY_DETAIL=full 로 켜면 상세를 담지만, **그때는 제5조 위탁업무 내용과
+//   제6조 이전 항목을 먼저 손봐야 한다.**
 //
 // 필요한 시크릿(대시보드 → Edge Functions → Secrets):
-//   RESEND_API_KEY   필수. resend.com → API Keys
-//   NOTIFY_TO        (선택) 수신 주소. 기본 admin@yaksaro.co.kr
-//   RESEND_FROM      (선택) 발신. 기본 onboarding@resend.dev
-//                    ※ 도메인 인증 전에는 onboarding@resend.dev 로만 보낼 수 있고,
-//                      수신자도 Resend 계정 주소로 제한된다. yaksaro.co.kr 을 인증하면 풀린다.
-//   NOTIFY_DETAIL    (선택) "full" 이면 신청 내용을 메일에 담는다 — 방침 개정 후에만 켤 것
+//   GMAIL_USER          발송에 쓸 구글 계정 주소 (SMTP 로그인 = 발신 주소)
+//   GMAIL_APP_PASSWORD  구글 앱 비밀번호 16자리. 계정 비밀번호 아님. 2단계 인증 필요
+//   NOTIFY_TO           (선택) 수신 주소. 기본 admin@yaksaro.co.kr
+//   NOTIFY_DETAIL       (선택) "full" 이면 신청 내용을 담는다 — 방침 개정 후에만 켤 것
+//   SMTP_HOST           (선택) 기본 smtp.gmail.com
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const SMTP_USER = Deno.env.get("GMAIL_USER") ?? "";
+// 앱 비밀번호는 구글 화면에서 4자씩 띄어 보여준다. 공백이 섞여 들어와도 통과시킨다.
+const SMTP_PASS = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/\s+/g, "");
 const NOTIFY_TO = Deno.env.get("NOTIFY_TO") || "admin@yaksaro.co.kr";
-const RESEND_FROM = Deno.env.get("RESEND_FROM") || "Yaksaro Ter <onboarding@resend.dev>";
+const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
 const DETAIL = (Deno.env.get("NOTIFY_DETAIL") || "").toLowerCase() === "full";
 
-const MAX_AGE_SEC = 300;   // 위조 방지 창(초)
+const MAX_AGE_SEC = 300;          // 위조 방지 창(초)
+const SMTP_TIMEOUT_MS = 20000;
 const DASHBOARD =
   "https://supabase.com/dashboard/project/tjtugyoexwsqaquheega/editor";
+
+// ── 인코딩 ────────────────────────────────────────────────────────────────────
+function b64(bytes: Uint8Array): string {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);   // 여기 들어오는 건 항상 바이트(latin1 범위)라 안전하다
+}
+
+function b64utf8(s: string): string {
+  return b64(new TextEncoder().encode(s));
+}
+
+/** base64 본문을 76자로 접는다(RFC 2045). */
+function foldBase64(s: string): string {
+  return (s.match(/.{1,76}/g) ?? []).join("\r\n");
+}
+
+/**
+ * 헤더용 RFC 2047 인코디드워드. 한 워드가 75자를 넘으면 안 되므로
+ * **문자 경계**를 지키며 UTF-8 45바이트 단위로 쪼개 여러 워드로 접는다.
+ */
+function encodeHeader(s: string): string {
+  if (/^[\x00-\x7F]*$/.test(s)) return s;   // ASCII 뿐이면 그대로
+  const enc = new TextEncoder();
+  const words: string[] = [];
+  let chunk = "";
+  let bytes = 0;
+  for (const ch of s) {
+    const n = enc.encode(ch).length;
+    if (bytes + n > 45) {
+      words.push(`=?UTF-8?B?${b64utf8(chunk)}?=`);
+      chunk = "";
+      bytes = 0;
+    }
+    chunk += ch;
+    bytes += n;
+  }
+  if (chunk) words.push(`=?UTF-8?B?${b64utf8(chunk)}?=`);
+  return words.join("\r\n ");   // 접힘(folding)은 CRLF + 공백
+}
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -44,6 +89,117 @@ function seoul(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
 }
 
+// ── 최소 SMTP 클라이언트 (implicit TLS, AUTH LOGIN) ──────────────────────────
+class Smtp {
+  #conn!: Deno.TlsConn;
+  #buf = "";
+  #dec = new TextDecoder();
+  #enc = new TextEncoder();
+  #chunk = new Uint8Array(4096);
+
+  async connect(hostname: string, port: number) {
+    this.#conn = await Deno.connectTls({ hostname, port });
+    await this.#expect(220);
+  }
+
+  async #readLine(): Promise<string> {
+    while (true) {
+      const nl = this.#buf.indexOf("\r\n");
+      if (nl >= 0) {
+        const line = this.#buf.slice(0, nl);
+        this.#buf = this.#buf.slice(nl + 2);
+        return line;
+      }
+      const n = await this.#conn.read(this.#chunk);
+      if (n === null) throw new Error("smtp: connection closed");
+      this.#buf += this.#dec.decode(this.#chunk.subarray(0, n));
+    }
+  }
+
+  /** 멀티라인 응답("250-...")을 끝까지 읽고 코드를 확인한다. */
+  async #expect(...codes: number[]): Promise<string> {
+    const lines: string[] = [];
+    while (true) {
+      const line = await this.#readLine();
+      lines.push(line);
+      if (/^\d{3} /.test(line)) break;      // 마지막 줄은 "250 " 처럼 공백
+    }
+    const last = lines[lines.length - 1];
+    const code = Number(last.slice(0, 3));
+    if (!codes.includes(code)) {
+      throw new Error(`smtp: expected ${codes.join("/")}, got "${last}"`);
+    }
+    return lines.join("\n");
+  }
+
+  async cmd(line: string, ...codes: number[]): Promise<string> {
+    await this.#conn.write(this.#enc.encode(line + "\r\n"));
+    return await this.#expect(...codes);
+  }
+
+  /** DATA 본문 — 점으로 시작하는 줄은 점을 하나 덧붙인다(dot-stuffing). */
+  async data(message: string) {
+    await this.cmd("DATA", 354);
+    const stuffed = message.split("\r\n")
+      .map((l) => (l.startsWith(".") ? "." + l : l))
+      .join("\r\n");
+    await this.#conn.write(this.#enc.encode(stuffed + "\r\n.\r\n"));
+    await this.#expect(250);
+  }
+
+  async quit() {
+    try {
+      await this.#conn.write(this.#enc.encode("QUIT\r\n"));
+    } catch { /* 이미 닫혔으면 그만 */ }
+    try { this.#conn.close(); } catch { /* noop */ }
+  }
+}
+
+async function sendMail(opts: {
+  to: string; replyTo?: string; subject: string; text: string; html: string;
+}) {
+  const smtp = new Smtp();
+  try {
+    await smtp.connect(SMTP_HOST, 465);
+    await smtp.cmd("EHLO yaksaro.co.kr", 250);
+    await smtp.cmd("AUTH LOGIN", 334);
+    await smtp.cmd(b64utf8(SMTP_USER), 334);
+    await smtp.cmd(b64utf8(SMTP_PASS), 235);   // 235 = 인증 성공
+    await smtp.cmd(`MAIL FROM:<${SMTP_USER}>`, 250);
+    await smtp.cmd(`RCPT TO:<${opts.to}>`, 250, 251);
+
+    const boundary = `b_${crypto.randomUUID().replace(/-/g, "")}`;
+    const headers = [
+      `From: ${encodeHeader("약사로 터")} <${SMTP_USER}>`,
+      `To: ${opts.to}`,
+      ...(opts.replyTo ? [`Reply-To: ${opts.replyTo}`] : []),
+      `Subject: ${encodeHeader(opts.subject)}`,
+      `Date: ${new Date().toUTCString()}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    ].join("\r\n");
+
+    const body = [
+      "",
+      `--${boundary}`,
+      `Content-Type: text/plain; charset=UTF-8`,
+      `Content-Transfer-Encoding: base64`,
+      "",
+      foldBase64(b64utf8(opts.text)),
+      `--${boundary}`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: base64`,
+      "",
+      foldBase64(b64utf8(opts.html)),
+      `--${boundary}--`,
+    ].join("\r\n");
+
+    await smtp.data(headers + "\r\n" + body);
+  } finally {
+    await smtp.quit();
+  }
+}
+
 function shell(inner: string): string {
   return `
 <div style="font-family:-apple-system,'Malgun Gothic',sans-serif;font-size:15px;line-height:1.75;color:#13261F">
@@ -51,6 +207,7 @@ ${inner}
 </div>`.trim();
 }
 
+// ── 핸들러 ────────────────────────────────────────────────────────────────────
 // 핸들러가 예외로 죽으면 플랫폼이 본문 없는 "Internal Server Error" 만 돌려줘서
 // 원인을 알 수 없다. 밖에서 한 번 더 받아 이유를 남긴다.
 Deno.serve(async (req: Request) => {
@@ -70,9 +227,9 @@ async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return new Response("method not allowed", { status: 405 });
   }
-  if (!RESEND_KEY) {
-    console.error("RESEND_API_KEY 시크릿이 비어 있다");
-    return new Response(JSON.stringify({ error: "resend not configured" }), { status: 500 });
+  if (!SMTP_USER || !SMTP_PASS) {
+    console.error("GMAIL_USER / GMAIL_APP_PASSWORD 시크릿이 비어 있다");
+    return new Response(JSON.stringify({ error: "smtp not configured" }), { status: 500 });
   }
 
   let id: string | undefined;
@@ -108,6 +265,7 @@ async function handle(req: Request): Promise<Response> {
 
   // ── 기본: 내용 없는 알림. 신청 시각 외에는 아무것도 싣지 않는다 ──────────────
   let subject = "[약사로 터] 새 신청 1건";
+  let replyTo: string | undefined;
   let text = [
     "약사로 터에 새 신청이 1건 들어왔습니다.",
     `신청 시각: ${when}`,
@@ -115,7 +273,7 @@ async function handle(req: Request): Promise<Response> {
     "신청 내용은 대시보드에서 확인해 주세요.",
     DASHBOARD,
     "",
-    "(개인정보가 메일 발송 업체를 거치지 않도록 내용은 담지 않습니다.)",
+    "(개인정보가 메일을 타지 않도록 내용은 담지 않습니다.)",
   ].join("\n");
   let html = shell(`
   <p style="margin:0 0 18px"><b style="color:#0E6E54">약사로 터</b>에 새 신청이 <b>1건</b> 들어왔습니다.</p>
@@ -124,12 +282,13 @@ async function handle(req: Request): Promise<Response> {
     <a href="${DASHBOARD}" style="display:inline-block;padding:11px 20px;border-radius:11px;background:#0E6E54;color:#FAFAF5;text-decoration:none;font-weight:700">대시보드에서 확인하기</a>
   </p>
   <p style="margin:0;font-size:13.5px;color:#7A7F74">
-    개인정보가 메일 발송 업체를 거치지 않도록 신청 내용은 담지 않았습니다.
+    개인정보가 메일을 타지 않도록 신청 내용은 담지 않았습니다.
   </p>`);
 
-  // ── NOTIFY_DETAIL=full: 상세 포함. 처리방침 제5·6조 개정이 선행돼야 한다 ────
+  // ── NOTIFY_DETAIL=full: 상세 포함. 처리방침 개정이 선행돼야 한다 ────────────
   if (DETAIL) {
     subject = `[약사로 터] 신청 — ${row.addr}`;
+    replyTo = row.email;   // 메일에서 바로 답장하면 신청자에게 간다
     text = [
       "[약사로 터] 리포트 신청",
       `주소·지역: ${row.addr}`,
@@ -152,31 +311,21 @@ async function handle(req: Request): Promise<Response> {
   </p>`);
   }
 
-  const send = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [NOTIFY_TO],
-      subject,
-      text,
-      html,
-      // 상세를 담을 때만 답장이 신청자에게 가도록 한다.
-      // 내용 없는 알림에 reply_to 를 붙이면 그것만으로 신청자 주소가 Resend 를 거친다.
-      ...(DETAIL ? { reply_to: row.email } : {}),
-    }),
-  });
-
-  if (!send.ok) {
-    const body = await send.text();
-    console.error("resend failed", send.status, body);
-    return new Response(
-      JSON.stringify({ error: "send failed", status: send.status, message: body.slice(0, 400) }),
-      { status: 502, headers: { "Content-Type": "application/json" } },
-    );
+  try {
+    // 연결이 매달리면 아이솔레이트째 타임아웃되므로 우리가 먼저 끊는다.
+    await Promise.race([
+      sendMail({ to: NOTIFY_TO, replyTo, subject, text, html }),
+      new Promise((_, rej) =>
+        setTimeout(() => rej(new Error("smtp: timeout")), SMTP_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (err) {
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    console.error("smtp send failed", msg);
+    return new Response(JSON.stringify({ error: "send failed", message: msg }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   return new Response(JSON.stringify({ sent: true, detail: DETAIL }), {
