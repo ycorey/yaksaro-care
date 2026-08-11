@@ -1,5 +1,13 @@
-// Supabase generate_typescript_types로 생성 (2026-06-22, 마이그레이션 001~030 기준).
+// Supabase generate_typescript_types로 생성 (2026-08-11, 마이그레이션 001~055 기준).
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
+//
+// 왜 이 파일이 최신이어야 하는가:
+//   직전 버전은 001~030(6/22) 기준으로 멈춰 있었고, 050 이 pharmacies.owner_id 의 FK 를
+//   profiles → auth.users 로 옮긴 뒤에도 `pharmacies_owner_id_fkey → profiles` 를 계속
+//   선언했다. 그래서 **이미 죽어 있던 PostgREST 임베드가 tsc·lint·CI·build 를 전부 초록으로
+//   통과했고**, 약사 대시보드가 4일간 접근 불가인 채로 배포까지 됐다.
+//   타입이 스키마보다 오래되면 타입 검사는 안전망이 아니라 위장막이 된다.
+//   임베드가 실제로 해석되는지는 e2e/embed-integrity-qa.mjs 가 운영 스키마로 검증한다.
 export type Json =
   | string
   | number
@@ -16,99 +24,24 @@ export type Database = {
   }
   public: {
     Tables: {
-      lifestyle_content: {
+      api_quota: {
         Row: {
-          body_ko: string
-          disease: string
-          sources: Json
-          topic: string
-          updated_at: string
+          bucket: string
+          count: number
+          user_id: string
+          window_start: string
         }
         Insert: {
-          body_ko: string
-          disease: string
-          sources?: Json
-          topic: string
-          updated_at?: string
+          bucket: string
+          count?: number
+          user_id: string
+          window_start: string
         }
         Update: {
-          body_ko?: string
-          disease?: string
-          sources?: Json
-          topic?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      pharmacy_patient_notes: {
-        Row: {
-          pharmacy_id: string
-          patient_id: string
-          note: string | null
-          updated_at: string
-        }
-        Insert: {
-          pharmacy_id: string
-          patient_id: string
-          note?: string | null
-          updated_at?: string
-        }
-        Update: {
-          pharmacy_id?: string
-          patient_id?: string
-          note?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      pharmacy_requests: {
-        Row: {
-          contact_phone: string | null
-          created_at: string
-          due_date: string | null
-          id: string
-          member_id: string | null
-          note: string | null
-          patient_ack_at: string | null
-          patient_id: string
-          pharmacy_id: string
-          replied_at: string | null
-          reply_text: string | null
-          responded_at: string | null
-          status: string
-          type: string
-        }
-        Insert: {
-          contact_phone?: string | null
-          created_at?: string
-          due_date?: string | null
-          id?: string
-          member_id?: string | null
-          note?: string | null
-          patient_ack_at?: string | null
-          patient_id: string
-          pharmacy_id: string
-          replied_at?: string | null
-          reply_text?: string | null
-          responded_at?: string | null
-          status?: string
-          type: string
-        }
-        Update: {
-          contact_phone?: string | null
-          created_at?: string
-          due_date?: string | null
-          id?: string
-          member_id?: string | null
-          note?: string | null
-          patient_ack_at?: string | null
-          patient_id?: string
-          pharmacy_id?: string
-          replied_at?: string | null
-          reply_text?: string | null
-          responded_at?: string | null
-          status?: string
-          type?: string
+          bucket?: string
+          count?: number
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -285,6 +218,30 @@ export type Database = {
           },
         ]
       }
+      lifestyle_content: {
+        Row: {
+          body_ko: string
+          disease: string
+          sources: Json
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          body_ko: string
+          disease: string
+          sources?: Json
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          body_ko?: string
+          disease?: string
+          sources?: Json
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medication_check_logs: {
         Row: {
           check_date: string
@@ -329,13 +286,6 @@ export type Database = {
             columns: ["schedule_id"]
             isOneToOne: false
             referencedRelation: "medication_schedules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medication_check_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -386,13 +336,6 @@ export type Database = {
             referencedRelation: "user_prescriptions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "medication_schedules_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       members: {
@@ -423,15 +366,7 @@ export type Database = {
           owner_id?: string
           relation?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "members_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pharmacies: {
         Row: {
@@ -467,12 +402,33 @@ export type Database = {
           store_id?: string | null
           subscription_status?: string
         }
+        Relationships: []
+      }
+      pharmacy_patient_notes: {
+        Row: {
+          note: string | null
+          patient_id: string
+          pharmacy_id: string
+          updated_at: string
+        }
+        Insert: {
+          note?: string | null
+          patient_id: string
+          pharmacy_id: string
+          updated_at?: string
+        }
+        Update: {
+          note?: string | null
+          patient_id?: string
+          pharmacy_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "pharmacies_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: "pharmacy_patient_notes_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "pharmacies"
             referencedColumns: ["id"]
           },
         ]
@@ -504,11 +460,84 @@ export type Database = {
             foreignKeyName: "pharmacy_patients_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "pharmacist_patient_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_patients_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pharmacy_patients_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_requests: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          member_id: string | null
+          note: string | null
+          patient_ack_at: string | null
+          patient_id: string
+          pharmacy_id: string
+          replied_at: string | null
+          reply_text: string | null
+          responded_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_ack_at?: string | null
+          patient_id: string
+          pharmacy_id: string
+          replied_at?: string | null
+          reply_text?: string | null
+          responded_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          member_id?: string | null
+          note?: string | null
+          patient_ack_at?: string | null
+          patient_id?: string
+          pharmacy_id?: string
+          replied_at?: string | null
+          reply_text?: string | null
+          responded_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_requests_pharmacy_id_fkey"
             columns: ["pharmacy_id"]
             isOneToOne: false
             referencedRelation: "pharmacies"
@@ -577,6 +606,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "prescriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacist_patient_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prescriptions_user_id_fkey"
             columns: ["user_id"]
@@ -706,15 +742,7 @@ export type Database = {
           p256dh?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       supplement_interaction_cache: {
         Row: {
@@ -827,6 +855,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ter_requests: {
+        Row: {
+          addr: string
+          agreed: boolean
+          created_at: string
+          email: string
+          id: string
+          note: string | null
+          source: string
+        }
+        Insert: {
+          addr: string
+          agreed?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          note?: string | null
+          source?: string
+        }
+        Update: {
+          addr?: string
+          agreed?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          note?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       user_medications: {
         Row: {
           created_at: string | null
@@ -929,13 +987,6 @@ export type Database = {
             referencedRelation: "supplements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_medications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_prescriptions: {
@@ -1003,21 +1054,55 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      // 051 — 약사 전용 환자 프로필 통로(단골 관계 AND 동의 게이트 내장, 3컬럼만 노출)
       pharmacist_patient_view: {
         Row: {
-          id: string | null
-          full_name: string | null
           consent_pharmacist_view_at: string | null
+          full_name: string | null
+          id: string | null
+        }
+        Insert: {
+          consent_pharmacist_view_at?: string | null
+          full_name?: string | null
+          id?: string | null
+        }
+        Update: {
+          consent_pharmacist_view_at?: string | null
+          full_name?: string | null
+          id?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
-      consume_quota: { Args: { p_user: string; p_bucket: string; p_window_sec: number }; Returns: number }
+      consume_quota: {
+        Args: { p_bucket: string; p_user: string; p_window_sec: number }
+        Returns: number
+      }
       end_expired_medications: { Args: { today: string }; Returns: undefined }
+      is_self_member: { Args: { p_member: string }; Returns: boolean }
       pharmacist_can_view: { Args: { patient: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
