@@ -36,8 +36,11 @@ const DETAIL = (Deno.env.get("NOTIFY_DETAIL") || "").toLowerCase() === "full";
 
 const MAX_AGE_SEC = 300;          // 위조 방지 창(초)
 const SMTP_TIMEOUT_MS = 20000;
-const DASHBOARD =
-  "https://supabase.com/dashboard/project/tjtugyoexwsqaquheega/editor";
+// 테이블 에디터 딥링크. 뒤 숫자는 ter_requests 의 oid 로, 이게 없으면 에디터 첫 화면만 열려
+// 어느 테이블인지 못 찾는다. 테이블을 drop/create 하면 oid 가 바뀌니 그때 갱신할 것
+// (확인: select oid from pg_class where relname='ter_requests').
+const DASHBOARD = Deno.env.get("DASHBOARD_URL") ||
+  "https://supabase.com/dashboard/project/tjtugyoexwsqaquheega/editor/18868";
 
 // ── 인코딩 ────────────────────────────────────────────────────────────────────
 function b64(bytes: Uint8Array): string {
