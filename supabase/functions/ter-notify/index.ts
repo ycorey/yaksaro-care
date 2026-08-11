@@ -26,9 +26,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMTP_USER = Deno.env.get("GMAIL_USER") ?? "";
+// 붙여넣기로 딸려 들어온 공백·줄바꿈·따옴표는 걷어낸다. 남아 있으면 Gmail 이 535 로 거절한다.
+const SMTP_USER = (Deno.env.get("GMAIL_USER") ?? "").trim().replace(/^["']|["']$/g, "");
 // 앱 비밀번호는 구글 화면에서 4자씩 띄어 보여준다. 공백이 섞여 들어와도 통과시킨다.
-const SMTP_PASS = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/\s+/g, "");
+const SMTP_PASS = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/["']/g, "").replace(/\s+/g, "");
 const NOTIFY_TO = Deno.env.get("NOTIFY_TO") || "admin@yaksaro.co.kr";
 const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
 const DETAIL = (Deno.env.get("NOTIFY_DETAIL") || "").toLowerCase() === "full";
@@ -322,7 +323,13 @@ async function handle(req: Request): Promise<Response> {
   } catch (err) {
     const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     console.error("smtp send failed", msg);
-    return new Response(JSON.stringify({ error: "send failed", message: msg }), {
+    // 자격증명 자체는 절대 싣지 않는다. 길이와 모양만 남겨 "값이 잘못 들어갔는지"를 가린다.
+    // (앱 비밀번호는 공백 제거 후 16자, 계정은 @ 를 포함해야 한다)
+    return new Response(JSON.stringify({
+      error: "send failed",
+      message: msg,
+      creds: { userLen: SMTP_USER.length, userHasAt: SMTP_USER.includes("@"), passLen: SMTP_PASS.length },
+    }), {
       status: 502,
       headers: { "Content-Type": "application/json" },
     });

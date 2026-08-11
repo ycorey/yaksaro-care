@@ -26,7 +26,9 @@ begin
       'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqdHVneW9leHdzcWFxdWhlZWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxOTk0MTAsImV4cCI6MjA5NTc3NTQxMH0.oZw5P8Mzr1k1yDylQIptp1Qaic-BJOOvyogfBkkUyZc'
     ),
     body    := jsonb_build_object('id', new.id),
-    timeout_milliseconds := 5000
+    -- SMTP 왕복이 5초를 넘는다(실측 5.5초). 기본값 5000 이면 발송은 성공하는데
+    -- pg_net 이 먼저 끊어 net._http_response 에 타임아웃으로만 남아 진단이 어긋난다.
+    timeout_milliseconds := 25000
   );
   return null;   -- AFTER 트리거라도 plpgsql 은 RETURN 이 없으면 2F005 로 죽는다(= INSERT 실패)
 exception when others then
