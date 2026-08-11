@@ -26,9 +26,14 @@ function guardTarget(url) {
   return ref
 }
 
-export function loadEnv() {
+function parseEnvFile() {
   const env = {}
-  const raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
+  let raw
+  try {
+    raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
+  } catch {
+    return env   // CI 에는 .env.local 이 없다 — 그쪽은 process.env 로 받는다.
+  }
   // CRLF·BOM 내성. Windows 에서 .env.local 을 편집기·스크립트가 한 번만 다시 써도 파일 전체가
   // CRLF 로 바뀌는데, 예전 파서는 `\n` 으로만 쪼개 각 줄 끝에 `\r` 이 남았다. JS 정규식의 `.` 은
   // **`\r` 을 매치하지 않으므로**(줄종결자 취급) `(.*)$` 가 어긋나 **모든 키가 통째로 유실**됐다.
@@ -38,10 +43,35 @@ export function loadEnv() {
     const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
     if (m) env[m[1]] = m[2].trim().replace(/^["']|["']$/g, '')
   }
+  return env
+}
+
+export function loadEnv() {
+  const env = parseEnvFile()
   const URL_ = env.NEXT_PUBLIC_SUPABASE_URL
   const ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const SERVICE = env.SUPABASE_SERVICE_ROLE_KEY
   if (!URL_ || !ANON || !SERVICE) throw new Error('.env.local에 SUPABASE URL/ANON/SERVICE_ROLE 키가 필요합니다')
   guardTarget(URL_)
   return { URL_, ANON, SERVICE }
+}
+
+// 읽기 전용 검사용 — **공개 키(anon)만** 돌려주고 service_role 은 아예 제공하지 않는다.
+//
+// 위의 guardTarget 은 시드·삭제를 하는 하네스가 운영 DB 를 치는 것을 CI 에서 막는다.
+// 그런데 스키마 정합성 검사(임베드 ↔ FK)는 **정확히 운영 스키마를 대상으로 돌아야** 의미가 있다
+// — 8/11 장애는 운영에서만 존재하던 FK 변경이 원인이었고, 테스트 DB 를 봤다면 못 잡았다.
+// 그래서 이 경로는 막지 않되, **쓰기 능력 자체를 주지 않는 것**으로 안전을 보장한다.
+// anon 키 + RLS 로는 시드도 삭제도 불가능하므로 "운영을 친다" 는 위험이 성립하지 않는다.
+// CI 에서는 process.env(시크릿), 로컬에서는 .env.local 을 쓴다.
+export function loadPublicEnv() {
+  const env = parseEnvFile()
+  const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL
+  const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!URL_ || !ANON) {
+    throw new Error('SUPABASE URL/ANON 이 필요합니다 (.env.local 또는 환경변수)')
+  }
+  const ref = URL_.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/i)?.[1] ?? '(unknown)'
+  console.log(`[schema] 대상 Supabase 프로젝트: ${ref} (읽기 전용·anon)`)
+  return { URL_, ANON }
 }
