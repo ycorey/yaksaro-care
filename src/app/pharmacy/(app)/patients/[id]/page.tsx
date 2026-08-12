@@ -77,19 +77,25 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   if (!user) redirect('/pharmacy/login')
 
   // RLS: 동의·단골 아닌 환자면 null
-  const { data: patient } = await supabase
+  //
+  // error 를 반드시 받아야 한다. 예전엔 버렸는데, 그러면 **조회 실패가 '동의 해제' 로 둔갑**했다
+  // — 약사는 사실이 아닌 안내를 보고 환자에게 "동의 푸셨어요?" 라고 묻게 된다.
+  // 권한이 없어 안 보이는 것과 물어보지 못한 것은 다른 사건이다.
+  const { data: patient, error: patientError } = await supabase
     .from('pharmacist_patient_view')   // 051: 약사 전용 통로(관계 AND 동의 게이트 내장)
     .select('full_name')
     .eq('id', id)
     .maybeSingle()
+  if (patientError) throw new Error(`환자 조회 실패: ${patientError.code} ${patientError.message}`)
 
   // 약사는 환자의 본인(is_self) 멤버 약만 볼 수 있음 — 가족 멤버 약 노출 방지
-  const { data: selfMember } = await supabase
+  const { data: selfMember, error: selfMemberError } = await supabase
     .from('members')
     .select('id')
     .eq('owner_id', id)
     .eq('is_self', true)
     .maybeSingle()
+  if (selfMemberError) throw new Error(`멤버 조회 실패: ${selfMemberError.code} ${selfMemberError.message}`)
 
   const selfMemberId = selfMember?.id ?? null
 
@@ -97,7 +103,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   const DAY = 86_400_000
   const nowMs = new Date().getTime()
   const utcDate = (ms: number) => new Date(ms).toISOString().split('T')[0]
-  const { data: checkLogs } = selfMemberId
+  const { data: checkLogs, error: checkLogsError } = selfMemberId
     ? await supabase
         .from('medication_check_logs')
         .select('check_date, meal_time, is_checked, logged_at')
@@ -106,11 +112,12 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         .gte('check_date', utcDate(nowMs - 13 * DAY))
         .lte('check_date', utcDate(nowMs))
         .order('logged_at', { ascending: true })
-    : { data: null }
+    : { data: null, error: null }
+  if (checkLogsError) throw new Error(`복약 기록 조회 실패: ${checkLogsError.code} ${checkLogsError.message}`)
   const adherence = summarizeAdherence(checkLogs ?? [], 14, nowMs)
 
   // self 멤버가 없으면 빈 uuid('')로 쿼리하지 않음(Postgres 22P02 방지) — 빈 결과로 처리
-  const { data: meds } = selfMemberId
+  const { data: meds, error: medsError } = selfMemberId
     ? await supabase
         .from('user_medications')
         .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
@@ -119,7 +126,8 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
         .is('deleted_at', null)
         .is('ended_at', null)
         .order('created_at', { ascending: false })
-    : { data: null }
+    : { data: null, error: null }
+  if (medsError) throw new Error(`복약 조회 실패: ${medsError.code} ${medsError.message}`)
 
   // 약국 비공개 메모(특이사항) 로드 — 약사 본인 약국 기준. RLS가 동의·소유 게이트.
   const myPharmacyId = await ownedPharmacyId(supabase, user.id)
@@ -145,6 +153,8 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
           <div className="mb-3 flex justify-center"><LockEmptyIcon /></div>
           <p className="text-base font-semibold text-yc-neutral700 mb-1">볼 수 없는 환자예요</p>
           <p className="text-sm text-yc-neutral500">동의가 해제되었거나 내 단골 환자가 아니에요</p>
+          {/* 이 문구는 이제 **정말 권한이 없을 때만** 나온다. 조회가 실패하면 위에서 던져
+              에러 화면(pharmacy/(app)/error.tsx)이 받는다 — 사실이 아닌 말을 하지 않기 위해서다. */}
         </YCCard>
       </div>
     )

@@ -326,12 +326,16 @@ async function handle(req: Request): Promise<Response> {
   } catch (err) {
     const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     console.error("smtp send failed", msg);
-    // 자격증명 자체는 절대 싣지 않는다. 길이와 모양만 남겨 "값이 잘못 들어갔는지"를 가린다.
-    // (앱 비밀번호는 공백 제거 후 16자, 계정은 @ 를 포함해야 한다)
+    // 자격증명 진단(길이·@ 포함 여부)은 **서버 로그에만** 남긴다.
+    // 예전엔 응답 본문에 실었는데, 이 함수는 verify_jwt 라도 통과에 필요한 것이
+    // **랜딩 HTML 에 공개된 anon 키**뿐이라 사실상 누구나 호출할 수 있다.
+    // 비밀번호 길이는 그 자체로 무차별 대입의 탐색 공간을 좁혀준다 — 설정을 맞춘 지금은
+    // 진단값을 밖으로 내보낼 이유가 없다.
+    console.error("smtp creds shape", {
+      userLen: SMTP_USER.length, userHasAt: SMTP_USER.includes("@"), passLen: SMTP_PASS.length,
+    });
     return new Response(JSON.stringify({
       error: "send failed",
-      message: msg,
-      creds: { userLen: SMTP_USER.length, userHasAt: SMTP_USER.includes("@"), passLen: SMTP_PASS.length },
     }), {
       status: 502,
       headers: { "Content-Type": "application/json" },

@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
 import { cronDbFailure, settledFailures } from '@/lib/cron-guard'
+import { recordNotificationRun } from '@/lib/notification-run'
+import { todayKST } from '@/lib/request-schedule'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -27,14 +29,20 @@ export async function GET(req: NextRequest) {
   const subsFail = cronDbFailure('cron:refill', '푸시 구독', subsError)
   if (subsFail) return NextResponse.json(subsFail.body, { status: subsFail.status })
   const pushUsers = [...new Set((subs ?? []).map(s => s.user_id as string))]
-  if (pushUsers.length === 0) return NextResponse.json({ sent: 0, reason: '구독자 없음' })
+  if (pushUsers.length === 0) {
+    await recordNotificationRun(admin, { kind: 'refill', runDate: todayKST(), note: '구독자 없음' })
+    return NextResponse.json({ sent: 0, reason: '구독자 없음' })
+  }
 
   const { data: prefs, error: prefsError } = await admin.from('profiles').select('id, alarm_enabled').in('id', pushUsers)
   const prefsFail = cronDbFailure('cron:refill', '알림 설정', prefsError)
   if (prefsFail) return NextResponse.json(prefsFail.body, { status: prefsFail.status })
   const eligible = new Set((prefs ?? []).filter(p => p.alarm_enabled !== false).map(p => p.id as string))
   const users = pushUsers.filter(u => eligible.has(u))
-  if (users.length === 0) return NextResponse.json({ sent: 0, reason: '알림 끔' })
+  if (users.length === 0) {
+    await recordNotificationRun(admin, { kind: 'refill', runDate: todayKST(), note: '알림 끔' })
+    return NextResponse.json({ sent: 0, reason: '알림 끔' })
+  }
 
   // 2) 활성 처방약 + 처방전(미알림) 로드
   const { data: meds, error: medsError } = await admin
@@ -95,8 +103,11 @@ export async function GET(req: NextRequest) {
     if (markFail) return NextResponse.json(markFail.body, { status: markFail.status })
   }
 
-  return NextResponse.json({
-    sent, prescriptions: remindedIds.length, users: byUser.size,
-    pushFailed: settledFailures(results),
+  const pushFailed = settledFailures(results)
+  await recordNotificationRun(admin, {
+    kind: 'refill', runDate: todayKST(),
+    targets: byUser.size, sent, failed: pushFailed,
+    note: byUser.size === 0 ? '조건 충족 처방 없음' : null,
   })
+  return NextResponse.json({ sent, prescriptions: remindedIds.length, users: byUser.size, pushFailed })
 }
