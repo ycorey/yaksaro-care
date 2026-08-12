@@ -1,5 +1,5 @@
 // Supabase generate_typescript_types로 생성 (2026-08-11, 마이그레이션 001~055 기준).
-// + 056(pharmacy_todos.due_date)만 수기 반영 — 운영 information_schema 와 대조해 확인함.
+// + 056(pharmacy_todos.due_date)·058(notification_runs)만 수기 반영 — 운영 information_schema 와 대조해 확인함.
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
 //
 // 왜 이 파일이 최신이어야 하는가:
@@ -366,6 +366,42 @@ export type Database = {
           name?: string
           owner_id?: string
           relation?: string | null
+        }
+        Relationships: []
+      }
+      notification_runs: {
+        Row: {
+          created_at: string
+          failed: number
+          id: string
+          kind: string
+          note: string | null
+          run_date: string
+          sent: number
+          slot: string | null
+          targets: number
+        }
+        Insert: {
+          created_at?: string
+          failed?: number
+          id?: string
+          kind: string
+          note?: string | null
+          run_date: string
+          sent?: number
+          slot?: string | null
+          targets?: number
+        }
+        Update: {
+          created_at?: string
+          failed?: number
+          id?: string
+          kind?: string
+          note?: string | null
+          run_date?: string
+          sent?: number
+          slot?: string | null
+          targets?: number
         }
         Relationships: []
       }

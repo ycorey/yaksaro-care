@@ -5,6 +5,7 @@ import { MEAL_LABELS, MEAL_TIMES, isMeal, effectiveMealSlots } from '@/lib/meal-
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
 import { cronDbFailure, settledFailures } from '@/lib/cron-guard'
+import { recordNotificationRun } from '@/lib/notification-run'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -43,7 +44,10 @@ export async function GET(req: NextRequest) {
   const subsFail = cronDbFailure('cron:meal', '푸시 구독', subsError)
   if (subsFail) return NextResponse.json(subsFail.body, { status: subsFail.status })
   const pushUsers = [...new Set((subs ?? []).map((s) => s.user_id as string))]
-  if (pushUsers.length === 0) return NextResponse.json({ sent: 0, reason: '구독자 없음' })
+  if (pushUsers.length === 0) {
+    await recordNotificationRun(admin, { kind: 'meal', runDate: day, slot: meal, note: '구독자 없음' })
+    return NextResponse.json({ sent: 0, reason: '구독자 없음' })
+  }
 
   // 2) 알림 설정을 켜둔 사용자 (전체 토글 + 이 끼니 토글)
   const { data: prefs, error: prefsError } = await admin
@@ -116,5 +120,11 @@ export async function GET(req: NextRequest) {
     }),
   )
 
-  return NextResponse.json({ meal, day, targets: targets.length, sent, pushFailed: settledFailures(results) })
+  const pushFailed = settledFailures(results)
+  await recordNotificationRun(admin, {
+    kind: 'meal', runDate: day, slot: meal,
+    targets: targets.length, sent, failed: pushFailed,
+    note: targets.length === 0 ? '대상 없음(이미 체크했거나 해당 끼니 약 없음)' : null,
+  })
+  return NextResponse.json({ meal, day, targets: targets.length, sent, pushFailed })
 }
