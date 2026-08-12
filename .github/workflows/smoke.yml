@@ -7,6 +7,10 @@ name: Production smoke
 on:
   # Vercel 이 배포 상태를 GitHub 에 보고할 때 발화한다.
   deployment_status:
+  # 배포가 없어도 주기적으로 확인한다. 이 프로젝트는 마이그레이션을 배포 없이 SQL Editor 로
+  # 적용하므로(8/11 의 050), 배포 이벤트에만 걸어두면 DB 만 바뀌어 앱이 깨지는 경우를 못 본다.
+  schedule:
+    - cron: '0 1,13 * * *'   # 10:00 / 22:00 KST
   # 배포와 무관하게 지금 상태를 확인하고 싶을 때.
   workflow_dispatch:
     inputs:
@@ -24,6 +28,7 @@ jobs:
     # 실패·진행중 상태에서 두드리면 당연히 실패해 소음이 된다.
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
       (github.event.deployment_status.state == 'success' &&
        contains(fromJSON('["Production","production"]'), github.event.deployment.environment))
     runs-on: ubuntu-latest

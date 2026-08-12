@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:   # db-gate 수동 실행용 (테스트 DB 대상)
+  # 이 프로젝트는 마이그레이션을 **배포 없이 Supabase SQL Editor 로** 적용한다(8/11 의 050 이 그랬다).
+  # push 에만 걸린 게이트는 그 변경을 영원히 못 본다 → 하루 두 번 스스로 확인한다.
+  schedule:
+    - cron: '0 1,13 * * *'   # 10:00 / 22:00 KST
 
 # 최소 권한 — 저장소 기본값(설정에 따라 contents: write)을 상속하지 않게 명시한다.
 permissions:
@@ -35,6 +39,36 @@ jobs:
           # 빌드는 실제 백엔드 연결 없이 통과 — 공개 키가 없어도 정적 분석/타입 통과 확인용 더미.
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+
+  # 스키마 정합성 게이트 — 코드의 PostgREST 임베드가 **운영 스키마**의 실제 FK 와 맞는지.
+  #
+  # 8/11 장애(약사 대시보드 4일 접근 불가)가 정확히 이 자리의 공백이었다. 050 이 FK 를 옮기자
+  # 임베드가 죽었는데 database.ts 가 옛 관계를 선언하고 있어 tsc·lint·build 가 전부 초록이었다.
+  # 임베드 해석은 컴파일 타임이 아니라 **런타임에 PostgREST 가** 하는 일이라 타입 검사로는
+  # 원리적으로 못 잡는다 → 실제로 질의해 본다.
+  #
+  # 운영을 대상으로 도는 것이 핵심이다(문제의 FK 는 운영에만 있었다). 안전은 **공개 키(anon)만
+  # 쓰는 것**으로 보장한다 — RLS 때문에 시드도 삭제도 불가능해 "운영을 친다" 는 위험이 없다.
+  # 필요 시크릿: SUPABASE_URL / SUPABASE_ANON_KEY (둘 다 공개 값)
+  schema-gate:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'schedule' || github.repository == 'ycorey/yaksaro-care' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # 의존성 설치 불필요 — Node 내장 fetch 만 쓴다.
+      - name: 임베드 ↔ FK 정합성
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "::warning::SUPABASE_URL/ANON_KEY 시크릿 미설정 — 스키마 게이트를 건너뜁니다."
+            exit 0
+          fi
+          node e2e/embed-integrity-qa.mjs
 
   # DB/RLS 실측 게이트(약사 토큰 누수·단골 코드 등 11종). 실 DB에 임시 유저를 시드·삭제하므로
   # 운영 DB가 아닌 "테스트/스테이징 Supabase"를 대상으로만 실행할 것 → 수동 트리거(workflow_dispatch).

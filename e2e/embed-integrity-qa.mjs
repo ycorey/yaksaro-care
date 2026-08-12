@@ -9,13 +9,17 @@
 // 관계 오류(PGRST200/PGRST201)는 RLS 평가보다 **먼저** 나므로, 익명 키로도
 // "관계가 깨졌다"(400)와 "권한상 0행"(200)이 명확히 구분된다. 로그인 불필요.
 //
-// 실행: node e2e/embed-integrity-qa.mjs   (서버 불필요, DB 만 있으면 됨)
+// 실행: node e2e/embed-integrity-qa.mjs   (서버 불필요)
+//
+// **공개 키(anon)만 쓴다** — 시드도 삭제도 불가능하므로 운영 스키마를 대상으로 CI 에서 돌려도
+// 안전하다. 오히려 운영을 봐야 의미가 있다: 8/11 장애의 FK 변경은 운영에만 존재했고,
+// 테스트 DB 를 봤다면 못 잡았을 것이다.
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadEnv } from './_env.mjs'
+import { loadPublicEnv } from './_env.mjs'
 
-const { URL_, ANON } = loadEnv()
+const { URL_, ANON } = loadPublicEnv()
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
 const results = []
