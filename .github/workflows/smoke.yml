@@ -37,6 +37,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      # 의존성 설치 불필요 — 스모크는 Node 내장 fetch 만 쓴다(설치 실패가 스모크를 막지 않게).
-      - name: Smoke production
+      # 익명 스모크는 의존성 없이 Node 내장 fetch 만 쓴다(설치 실패가 스모크를 막지 않게).
+      - name: Smoke production (익명)
         run: node scripts/smoke-production.mjs "${{ github.event.inputs.base || 'https://care.yaksaro.co.kr' }}"
+
+      # 인증 스모크는 @supabase/ssr 로 세션 쿠키를 만들어야 해서 설치가 필요하다.
+      # 익명 단계 뒤에 두어, 설치가 실패해도 위 단계는 이미 결과를 냈다.
+      - name: Install deps (인증 스모크용)
+        run: npm ci
+
+      # ★ 8/7 장애(약사 대시보드 4일 접근 불가)는 **로그인한 약사에게만** 보이는 무한
+      #   리다이렉트였다. 익명 스모크는 문 앞까지만 보므로 그 상황에서도 11/11 PASS 한다
+      #   (실측). 그래서 모니터링 전용 약사 계정으로 실제 진입까지 확인한다.
+      #   service_role 은 쓰지 않는다 — 시드도 삭제도 하지 않으므로 필요 없다.
+      - name: Smoke production (약사 세션)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SMOKE_PHARMACIST_EMAIL: ${{ secrets.SMOKE_PHARMACIST_EMAIL }}
+          SMOKE_PHARMACIST_PASSWORD: ${{ secrets.SMOKE_PHARMACIST_PASSWORD }}
+        run: node e2e/smoke-authenticated.mjs "${{ github.event.inputs.base || 'https://care.yaksaro.co.kr' }}"
