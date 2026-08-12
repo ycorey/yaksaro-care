@@ -6,7 +6,7 @@ import PharmacyPatientList, { type PatientRow } from './pharmacy-patient-list'
 import { PharmacyEmptyIcon, PharmacyQrIcon } from './pharmacy-icons'
 import PharmacistNotify from './pharmacist-notify'
 import DashboardPoll from './dashboard-poll'
-import PharmacyCalendar from './pharmacy-calendar'
+import PharmacyDaySchedule from './pharmacy-day-schedule'
 import PharmacyStatusBoard, { type RefillSoon, type OverdueReq, type RecentConn } from './pharmacy-status-board'
 import type { TodoItem } from './pharmacy-todo-list'
 import { YCCard } from '@/components/yc/yc-card'
@@ -35,8 +35,11 @@ export default async function PharmacyHome() {
     supabase.from('pharmacy_requests')
       .select('id, type, note, contact_phone, status, created_at, due_date, patient_id, member_id, reply_text, replied_at, patient_ack_at')
       .order('created_at', { ascending: false }).limit(100),
-    supabase.from('pharmacy_todos').select('id, text, done, created_at')
-      .order('done', { ascending: true }).order('created_at', { ascending: false }).limit(50),
+    // due_date 를 빼먹으면 화면이 **아무 메모도 없는 것처럼** 보인다(날짜로 거르므로).
+    // 조용히 빈 목록이 되는 종류라, 컬럼 추가 시 조회부를 같이 고치는 것이 중요하다.
+    supabase.from('pharmacy_todos').select('id, text, done, created_at, due_date')
+      .order('done', { ascending: true }).order('due_date', { ascending: false })
+      .order('created_at', { ascending: false }).limit(100),
   ])
 
   // 조회 실패를 빈 배열로 흘려보내면 이 화면은 "동의한 단골 환자 0명 · 요청 없음" 이라고
@@ -119,7 +122,7 @@ export default async function PharmacyHome() {
   // ── 현황판/캘린더 데이터 조립 ──
   // 리필(환자별 가장 임박)
   const refillSoon: RefillSoon[] = []
-  const refillCalendar: { date: string | null; label: string }[] = []
+  const refillCalendar: { date: string | null; label: string; patientId: string }[] = []
   const refillsToday: { patientId: string; patientName: string }[] = []
   for (const [uid, meds] of medsByUser) {
     const items = computeRefillSoon(meds)
@@ -128,7 +131,7 @@ export default async function PharmacyHome() {
     const soonest = items[0]
     refillSoon.push({ patientId: uid, patientName: name, dDay: soonest.dDay, expiryLabel: soonest.expiryLabel })
     if (soonest.dDay === 0) refillsToday.push({ patientId: uid, patientName: name })
-    for (const it of items) refillCalendar.push({ date: it.expiryDate, label: `${name} 리필` })
+    for (const it of items) refillCalendar.push({ date: it.expiryDate, label: `${name} 리필`, patientId: uid })
   }
   refillSoon.sort((a, b) => a.dDay - b.dDay)
 
@@ -149,7 +152,7 @@ export default async function PharmacyHome() {
   // 캘린더 항목(요청 마감 + 리필)
   const calendarItems = buildCalendarItems(
     (reqs ?? []).filter(r => r.status === 'open' || r.status === 'acknowledged')
-      .map(r => ({ date: r.due_date, label: `${nameById.get(r.patient_id as string) ?? '환자'} ${TYPE_LABEL[r.type] ?? '요청'}` })),
+      .map(r => ({ date: r.due_date, label: `${nameById.get(r.patient_id as string) ?? '환자'} ${TYPE_LABEL[r.type] ?? '요청'}`, patientId: r.patient_id as string })),
     refillCalendar,
   )
 
@@ -182,8 +185,11 @@ export default async function PharmacyHome() {
       {/* 좌=캘린더+현황판 / 우=알림+환자목록+QR */}
       <div className="space-y-5 lg:grid lg:grid-cols-[minmax(340px,420px)_1fr] lg:gap-6 lg:space-y-0">
         <div className="space-y-5">
-          <PharmacyCalendar items={calendarItems} today={today} />
-          <PharmacyStatusBoard autoTasks={autoTasks} todos={todos} refillSoon={refillSoon} overdue={overdue} recent={recent} />
+          <PharmacyDaySchedule
+            today={today} calendarItems={calendarItems} todos={todos}
+            replyPending={autoTasks.filter(t => t.kind === 'reply_pending')}
+          />
+          <PharmacyStatusBoard refillSoon={refillSoon} overdue={overdue} recent={recent} />
         </div>
 
         <div className="space-y-5">
