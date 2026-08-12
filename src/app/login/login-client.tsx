@@ -37,6 +37,10 @@ function GoogleIcon() {
 function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null }) {
   const searchParams = useSearchParams()
   const errorCode    = searchParams.get('error')
+  // 탈퇴 완료 안내. settings 가 /login?deleted=1 로 보내는데 받는 쪽이 없어
+  // **아무 일도 없었던 것처럼** 로그인 화면만 떴다 — 되돌릴 수 없는 작업을 하고도
+  // 확인을 못 받는 상태다. 확인은 안심의 문제이자, 정말 지워졌는지 아는 유일한 신호다.
+  const deleted      = searchParams.get('deleted') === '1'
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
   const [consentError, setConsentError] = useState(false)  // 동의 없이 로그인 시도 → 강조
@@ -119,6 +123,17 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           <h1 className="font-display text-3xl text-yc-neutral900">약사로 케어</h1>
           <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 복약 주치의</p>
         </div>
+
+        {/* 탈퇴 완료 — 에러가 아니므로 붉은 배너가 아니라 중립 톤으로 */}
+        {deleted && (
+          <div className="mb-6 bg-yc-neutral50 border border-yc-neutral200 rounded-2xl px-5 py-4">
+            <p className="text-sm font-semibold text-yc-neutral800">탈퇴가 완료되었어요</p>
+            <p className="text-sm text-yc-neutral600 mt-1 leading-relaxed">
+              복약 기록과 계정 정보를 모두 삭제했어요.<br />
+              그동안 이용해 주셔서 감사합니다.
+            </p>
+          </div>
+        )}
 
         {/* 에러 메시지 */}
         {errorMsg && (
