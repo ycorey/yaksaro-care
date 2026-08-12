@@ -38,7 +38,7 @@ const STATUS: Record<PharmacyRequestRow['status'], { label: string; cls: string 
 export default function PharmacyRequest({
   pharmacyName, defaultPhone, initialRequests, walletMeds = [],
 }: {
-  pharmacyName: string; defaultPhone: string | null; initialRequests: PharmacyRequestRow[]
+  pharmacyName: string | null; defaultPhone: string | null; initialRequests: PharmacyRequestRow[]
   walletMeds?: { id: string; name: string }[]
 }) {
   const router = useRouter()
@@ -107,10 +107,23 @@ export default function PharmacyRequest({
 
   return (
     <div className="bg-white rounded-yc-lg px-5 py-4 shadow-[var(--yc-shadow-sm)] space-y-3">
-      <p className="text-sm font-semibold text-yc-neutral900">{pharmacyName}에 요청</p>
+      {/* 단골 연결이 끊겨도 **지난 회신은 읽을 수 있어야 한다.** 회신은 과거 관계의 산물이고,
+          약사 쪽에는 이미 "회신함" 으로 보이기 때문이다(10차 UX H4).
+          연결이 없으면 보내기만 닫고 이력은 그대로 보여준다. */}
+      {pharmacyName ? (
+        <p className="text-sm font-semibold text-yc-neutral900">{pharmacyName}에 요청</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-yc-neutral900">지난 요청·회신</p>
+          <p className="text-xs text-yc-neutral500 leading-relaxed">
+            지금은 연결된 단골약국이 없어 새 요청은 보낼 수 없어요.<br />
+            설정에서 단골약국을 연결하면 다시 보낼 수 있어요.
+          </p>
+        </div>
+      )}
 
       {/* 요청 유형 */}
-      <div className="space-y-2">
+      <div className={pharmacyName ? 'space-y-2' : 'hidden'}>
         {TYPES.map(({ key, label, desc, Icon }) => (
           <div key={key}>
             <button onClick={() => selectType(key)}

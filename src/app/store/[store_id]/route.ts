@@ -28,7 +28,10 @@ export async function GET(
     .maybeSingle()
 
   if (!pharmacy) {
-    return NextResponse.redirect(new URL('/', origin))
+    // 무음으로 `/` 에 보내면 로그인 상태에서는 루트가 다시 `/wallet` 으로 넘겨
+    // **성공했을 때와 똑같은 화면**이 된다 — 환자는 연결된 줄 알고, 약국은 이유를 모른다.
+    // QR 은 인쇄물이라 DB 행보다 오래 산다(코드 재발급·해지·오탈자). 실패는 실패라고 말한다.
+    return NextResponse.redirect(new URL('/store-unknown', origin))
   }
 
   // 로그인 여부 확인
