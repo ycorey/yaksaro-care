@@ -18,8 +18,7 @@ export default async function PharmacyRequestPage() {
     .single()
 
   const regularPharmacyName = profile?.regular_pharmacy?.name ?? profile?.regular_pharmacy_name ?? null
-  // B2B 단골약국이 없으면 요청 채널이 성립하지 않음 → 설정(등록/연결)으로
-  if (!profile?.regular_pharmacy_id || !regularPharmacyName) redirect('/settings')
+  const linked = !!profile?.regular_pharmacy_id && !!regularPharmacyName
 
   const { active } = await getActiveMember(supabase, user.id)
   const [{ data: reqs }, { data: meds }] = await Promise.all([
@@ -35,6 +34,13 @@ export default async function PharmacyRequestPage() {
   ])
 
   const pharmacyRequests = (reqs ?? []) as PharmacyRequestRow[]
+
+  // 예전엔 단골 연결이 없으면 무조건 /settings 로 보냈다. 그런데 이 화면은 **약사 회신을 읽는
+  // 유일한 곳**이라, 연결이 끊기는 순간(다른 약국 검색·등록 시 id 가 null 이 되거나, 단골 해제,
+  // 약국 행 삭제 시 003 의 ON DELETE SET NULL) 이미 도착한 회신이 영구히 도달 불가가 됐다.
+  // 그동안 약사 화면에는 "회신함" 으로 계속 보인다 — 양쪽이 서로 다른 사실을 믿는 상태다.
+  // 연결도 없고 이력도 없을 때만 설정으로 보낸다.
+  if (!linked && pharmacyRequests.length === 0) redirect('/settings')
   const walletMeds = (meds ?? []).map(m => ({
     id: m.id,
     name: (m.drug as { item_name?: string } | null)?.item_name
@@ -53,7 +59,7 @@ export default async function PharmacyRequestPage() {
       </div>
 
       <PharmacyRequest
-        pharmacyName={regularPharmacyName}
+        pharmacyName={linked ? regularPharmacyName : null}
         defaultPhone={profile?.phone ?? null}
         initialRequests={pharmacyRequests}
         walletMeds={walletMeds}

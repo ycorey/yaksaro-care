@@ -86,7 +86,10 @@ try {
   console.log('\n[T3] 잘못된 store_id')
   const t3 = await hop(`/store/nope-${now}`)
   check('3xx 리다이렉트', t3.status >= 300 && t3.status < 400, `status=${t3.status}`)
-  check('홈(/)으로 폴백', new URL(t3.location, BASE).pathname === '/', t3.location)
+  // 예전엔 무음으로 `/` 로 보냈는데, 로그인 상태면 루트가 다시 /wallet 으로 넘겨
+  // **성공과 구별되지 않는 화면**이 됐다. 실패는 실패라고 말하는 화면으로 보낸다(10차 UX H5).
+  check('죽은 QR 전용 안내로 이동(성공과 구별됨)',
+    new URL(t3.location, BASE).pathname === '/store-unknown', t3.location)
 
   // ── T4: 콜백에 code 없음 → 로그인?error=auth_callback_failed ──────────
   console.log('\n[T4] auth/callback code 누락')
