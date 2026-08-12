@@ -120,7 +120,7 @@ export async function POST(request: Request) {
   // DUR shadow: 저장된 실제 drug_id 기반 (fire-and-forget)
   const drugIds = rows.map(r => r.drug_id).filter((id): id is string => !!id)
   if (drugIds.length >= 2) {
-    logDurShadow(user.id, drugIds, prescription_id ?? undefined)
+    logDurShadow(user.id, active, drugIds, prescription_id ?? undefined)
   }
 
   // 건기식·약물 상호작용 shadow: 지갑 전체(약물×건기식) 기준 (fire-and-forget)

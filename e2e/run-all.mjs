@@ -19,6 +19,9 @@ const DB_ONLY = [
   // 코드의 PostgREST 임베드가 실제 FK 와 맞는지 실질의로 확인.
   // 타입 검사로는 원리적으로 못 잡는 자리다(임베드 해석은 런타임 스키마 캐시의 일).
   'embed-integrity-qa',
+  // DUR 경고가 대상 멤버 밖으로 새지 않는지. [A] 옛 방식 재현을 함께 돌려
+  // "원래 괜찮았던 것 아니냐" 와 구분한다.
+  'dur-member-qa',
 ]
 // 서버 필요 + 자체 시드·정리.
 const SERVER_STANDALONE = [
