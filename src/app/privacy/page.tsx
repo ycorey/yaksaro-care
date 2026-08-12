@@ -5,12 +5,16 @@ export const metadata = { title: '개인정보 처리방침 · 약사로케어' 
 
 // 약사로케어 개인정보 처리방침.
 // 앱의 실제 데이터 처리 실태(OCR 즉시 파기·비식별화, 수탁 처리, 약사 opt-in 동의 등)를 반영한 본문.
-// ⚠️ 정식 시행 전 개인정보보호 법무 검토를 거쳐 시행일·보유기간·수탁사 목록을 최종 확정할 것.
+// 2026-08-12 시행. 시행일은 사업자가 확정했다(법정 기재사항이라 임의로 정하지 않는다).
+// 수탁사·국외이전 목록은 실제 처리 실태와 대조해 확인함 — 새 외부 전송 경로를 추가할 때는
+// 이 문서를 **같은 커밋에서** 갱신할 것. 8/12 에 랜딩 방침이 쓰지도 않는 Zoho 를 수탁사로
+// 등재해 둔 것이 발견됐는데, 원인은 발송 경로를 바꾸고 문서를 안 고친 것이었다.
 
 type Block = { kind: 'p'; text: string } | { kind: 'ul'; items: string[] }
 type Section = { heading: string; blocks: Block[] }
 
-const LAST_UPDATED = '2026-08-07' // 최종 개정(초안) 작성일 — 시행일은 법무 검토 후 확정
+const EFFECTIVE_DATE = '2026-08-12' // 시행일
+const PREV_EFFECTIVE = null            // 종전 방침 없음(최초 시행)
 
 const SECTIONS: Section[] = [
   {
@@ -76,7 +80,7 @@ const SECTIONS: Section[] = [
   {
     heading: '제6조 (개인정보 처리의 위탁)',
     blocks: [
-      { kind: 'p', text: '서비스는 원활한 처리를 위해 아래와 같이 일부 업무를 외부 전문업체에 위탁하며, 위탁계약 시 개인정보가 안전하게 관리되도록 필요한 사항을 규정합니다. (수탁사 및 위탁 범위는 법무 검토 후 최종 확정)' },
+      { kind: 'p', text: '서비스는 원활한 처리를 위해 아래와 같이 일부 업무를 외부 전문업체에 위탁하며, 위탁계약 시 개인정보가 안전하게 관리되도록 필요한 사항을 규정합니다.' },
       {
         kind: 'ul',
         items: [
@@ -220,7 +224,7 @@ const SECTIONS: Section[] = [
     heading: '제15조 (방침의 변경)',
     blocks: [
       { kind: 'p', text: '본 방침의 내용 추가·삭제·수정이 있을 경우 시행 전 서비스 내 공지를 통해 안내합니다.' },
-      { kind: 'p', text: `최종 작성일: ${LAST_UPDATED} (초안 · 시행일은 법무 검토 후 확정)` },
+      { kind: 'p', text: `시행일: ${EFFECTIVE_DATE}${PREV_EFFECTIVE ? ` · 종전 방침 시행일: ${PREV_EFFECTIVE}` : ' (최초 시행)'}` },
     ],
   },
 ]
@@ -233,11 +237,6 @@ export default function PrivacyPolicyPage() {
           <LogoMark size={40} />
           <h1 className="font-display text-2xl text-yc-neutral900">개인정보 처리방침</h1>
         </div>
-
-        <p className="mb-8 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4 text-sm text-amber-800 leading-relaxed">
-          본 문서는 서비스의 실제 데이터 처리 실태를 반영한 초안입니다. 정식 시행 전 개인정보보호 법무 검토를 거쳐
-          시행일·보유기간·수탁사 등 세부 항목이 최종 확정됩니다.
-        </p>
 
         <div className="space-y-8">
           {SECTIONS.map(section => (

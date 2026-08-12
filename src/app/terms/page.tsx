@@ -4,12 +4,16 @@ import { LogoMark } from '@/components/yc/logo'
 export const metadata = { title: '이용약관 · 약사로케어' }
 
 // 약사로케어 이용약관.
-// ⚠️ 정식 시행 전 법무 검토를 거쳐 시행일·사업자 정보·분쟁/준거법 조항을 최종 확정할 것.
+// 2026-08-12 시행. 시행일은 사업자가 확정했다.
+// ⚠️ 사업자 정보(상호·대표자·사업자등록번호·주소)는 **아직 기재하지 않았다.** 법정 기재사항이라
+//    임의로 채우지 않는다(보호책임자 성명을 플레이스홀더로 둔 것과 같은 이유).
+//    현재는 무료 서비스라 전자상거래법상 표시의무 강도가 다르지만, **유료 전환 전에는 반드시**
+//    사업자 정보와 환불·청약철회 조항을 채워야 한다.
 
 type Block = { kind: 'p'; text: string } | { kind: 'ul'; items: string[] }
 type Section = { heading: string; blocks: Block[] }
 
-const EFFECTIVE_DATE = '2026-06-14' // 초안 작성일 — 시행일은 법무 검토 후 확정
+const EFFECTIVE_DATE = '2026-08-12' // 시행일
 
 const SECTIONS: Section[] = [
   {
@@ -91,14 +95,14 @@ const SECTIONS: Section[] = [
   {
     heading: '제10조 (분쟁 해결 및 준거법)',
     blocks: [
-      { kind: 'p', text: '본 약관은 대한민국 법령에 따라 해석·적용되며, 서비스 이용과 관련하여 발생한 분쟁은 관계 법령 및 상관례에 따릅니다. (관할·준거법 세부 조항은 법무 검토 후 확정)' },
+      { kind: 'p', text: '본 약관은 대한민국 법령에 따라 해석·적용되며, 서비스 이용과 관련하여 발생한 분쟁은 관계 법령 및 상관례에 따릅니다.' },
     ],
   },
   {
     heading: '제11조 (문의처 및 약관의 변경)',
     blocks: [
       { kind: 'p', text: '본 약관의 변경 시 시행 전 서비스 내 공지를 통해 안내합니다. 문의: admin@yaksaro.co.kr' },
-      { kind: 'p', text: `시행일: ${EFFECTIVE_DATE} (초안 · 법무 검토 후 확정)` },
+      { kind: 'p', text: `시행일: ${EFFECTIVE_DATE} (최초 시행)` },
     ],
   },
 ]
@@ -111,11 +115,6 @@ export default function TermsPage() {
           <LogoMark size={40} />
           <h1 className="font-display text-2xl text-yc-neutral900">이용약관</h1>
         </div>
-
-        <p className="mb-8 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4 text-sm text-amber-800 leading-relaxed">
-          본 문서는 서비스 운영 실태를 반영한 초안입니다. 정식 시행 전 법무 검토를 거쳐 시행일·사업자 정보·관할 조항이
-          최종 확정됩니다.
-        </p>
 
         <div className="space-y-8">
           {SECTIONS.map(section => (
