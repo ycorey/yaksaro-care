@@ -59,6 +59,17 @@ function Card({ m }: { m: MedRow }) {
   )
 }
 
+// 처방일 표기(KST). 연도는 올해면 생략해 헤더가 길어지지 않게 한다.
+function fmtDate(iso: string): string {
+  const d = new Date(iso)
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
+  const m = kst.getUTCMonth() + 1
+  const day = kst.getUTCDate()
+  const y = kst.getUTCFullYear()
+  const nowY = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCFullYear()
+  return y === nowY ? `${m}월 ${day}일` : `${y}년 ${m}월 ${day}일`
+}
+
 function Group({ rows }: { rows: MedRow[] }) {
   return (
     <YCCard radius="lg" className="overflow-hidden">
@@ -165,6 +176,37 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   const supp = rows.filter(m => !!m.supplement)
   const otc  = rows.filter(m => !m.prescription_id && !m.supplement)
 
+  // 처방 출처(의료기관·진료과)를 함께 읽는다.
+  //
+  // 약사가 복약을 상담할 때 가장 먼저 묻는 것이 "어느 과에서 받으신 거예요?" 다. 같은 성분이라도
+  // 정형외과 단기 처방과 내과 만성 처방은 다루는 방식이 다르다. 지금까지는 약 이름만 보였고,
+  // 환자는 이미 앱에 그 정보를 갖고 있었는데도 약사에게는 닿지 않았다.
+  // (환자 화면과 같은 데이터다 — 새로 수집하지 않는다. 노출 범위는 RLS 가 그대로 강제한다.)
+  const rxIds = [...new Set(rx.map(m => m.prescription_id as string))]
+  const { data: prescriptions, error: prescError } = rxIds.length
+    ? await supabase
+        .from('user_prescriptions')
+        .select('id, hospital_name, department, prescribed_at')
+        .in('id', rxIds)
+    : { data: null, error: null }
+  if (prescError) throw new Error(`처방 정보 조회 실패: ${prescError.code} ${prescError.message}`)
+
+  const prescById = new Map((prescriptions ?? []).map(p => [p.id, p]))
+  // 약은 이미 created_at desc 로 정렬돼 있으므로, 처방 그룹도 처음 등장한 순서를 따르면 최신순이 된다.
+  const rxGroups: { key: string; label: string | null; date: string | null; rows: MedRow[] }[] = []
+  for (const m of rx) {
+    const key = m.prescription_id as string
+    let g = rxGroups.find(x => x.key === key)
+    if (!g) {
+      const p = prescById.get(key)
+      // 병원·진료과 중 있는 것만 이어 붙인다 — 없는 값을 '미상' 으로 채우면 없는 사실을 만든 게 된다.
+      const label = [p?.hospital_name, p?.department].filter(Boolean).join(' · ') || null
+      g = { key, label, date: p?.prescribed_at ?? null, rows: [] }
+      rxGroups.push(g)
+    }
+    g.rows.push(m)
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -179,7 +221,19 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
       {(rx.length + otc.length) > 0 && (
         <div className="space-y-3">
           <SectionHeader label="처방약 · 일반약" count={rx.length + otc.length} dotClassName="bg-yc-blue500" />
-          {rx.length > 0 && <Group rows={rx} />}
+          {rxGroups.map(g => (
+            <div key={g.key} className="space-y-1.5">
+              {(g.label || g.date) && (
+                <div className="flex items-baseline gap-2 px-1">
+                  <span className="text-sm font-medium text-yc-neutral700">{g.label ?? '처방'}</span>
+                  {g.date && (
+                    <span className="text-xs text-yc-neutral500">{fmtDate(g.date)} 처방</span>
+                  )}
+                </div>
+              )}
+              <Group rows={g.rows} />
+            </div>
+          ))}
           {otc.length > 0 && <Group rows={otc} />}
         </div>
       )}

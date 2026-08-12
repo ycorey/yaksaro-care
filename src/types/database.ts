@@ -1,5 +1,6 @@
 // Supabase generate_typescript_types로 생성 (2026-08-11, 마이그레이션 001~055 기준).
-// + 056(pharmacy_todos.due_date)·058(notification_runs)만 수기 반영 — 운영 information_schema 와 대조해 확인함.
+// + 056(pharmacy_todos.due_date)·058(notification_runs)·060(dur_shadow_logs.member_id)만 수기 반영
+// — 운영 information_schema 와 대조해 확인함.
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
 //
 // 왜 이 파일이 최신이어야 하는가:
@@ -146,6 +147,7 @@ export type Database = {
           created_at: string | null
           drug_ids: string[]
           id: string
+          member_id: string | null
           interaction_count: number
           matched_count: number
           ocr_session_id: string | null
@@ -156,6 +158,7 @@ export type Database = {
           created_at?: string | null
           drug_ids: string[]
           id?: string
+          member_id?: string | null
           interaction_count?: number
           matched_count?: number
           ocr_session_id?: string | null
@@ -166,13 +169,22 @@ export type Database = {
           created_at?: string | null
           drug_ids?: string[]
           id?: string
+          member_id?: string | null
           interaction_count?: number
           matched_count?: number
           ocr_session_id?: string | null
           severity_summary?: Json | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dur_shadow_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interactions: {
         Row: {
