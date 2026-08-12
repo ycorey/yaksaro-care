@@ -55,16 +55,18 @@ export function deriveTodayAutoTasks({ requests, refillsToday, today }: DerivePa
   return tasks
 }
 
-export type CalendarItem = { date: string; kind: 'request' | 'refill'; label: string }
+// patientId 는 일정에서 환자 상세로 바로 갈 수 있게 하려고 싣는다 — 약사가 캘린더에서
+// 할 일을 보고 곧장 그 환자로 이동하는 것이 실제 동선이다.
+export type CalendarItem = { date: string; kind: 'request' | 'refill'; label: string; patientId: string }
 
 // 요청 마감·리필 만료를 캘린더 항목으로. null 날짜 제외 후 날짜순.
 export function buildCalendarItems(
-  requests: { date: string | null; label: string }[],
-  refills: { date: string | null; label: string }[],
+  requests: { date: string | null; label: string; patientId: string }[],
+  refills: { date: string | null; label: string; patientId: string }[],
 ): CalendarItem[] {
   const items: CalendarItem[] = []
-  for (const r of requests) if (r.date) items.push({ date: r.date, kind: 'request', label: r.label })
-  for (const r of refills) if (r.date) items.push({ date: r.date, kind: 'refill', label: r.label })
+  for (const r of requests) if (r.date) items.push({ date: r.date, kind: 'request', label: r.label, patientId: r.patientId })
+  for (const r of refills) if (r.date) items.push({ date: r.date, kind: 'refill', label: r.label, patientId: r.patientId })
   return items.sort((a, b) => a.date.localeCompare(b.date))
 }
 
