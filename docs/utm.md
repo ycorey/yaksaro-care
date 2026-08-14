@@ -82,8 +82,13 @@ https://yaksaro.co.kr/?utm_source=instagram&utm_medium=reels&utm_campaign=parent
 https://yaksaro.co.kr/?utm_source=danggeun&utm_medium=post&utm_campaign=parent_meds
 
 # 환자용 상세 페이지로 바로 보낼 때 (경로만 바뀌고 태그는 동일)
-https://yaksaro.co.kr/patient.html?utm_source=blog&utm_medium=post&utm_campaign=parent_meds
+https://yaksaro.co.kr/patient?utm_source=blog&utm_medium=post&utm_campaign=parent_meds
 ```
+
+> 랜딩은 `cleanUrls: true` 라 **확장자를 붙이지 않는다.** `/patient.html` 도 308 로
+> `/patient` 에 보내주고 쿼리도 보존되지만(실측), 홉이 하나 늘 뿐 득이 없다.
+> 앱 링크가 있는 페이지는 `/`(2개)와 `/patient`(1개) 둘뿐이다 — `/pharmacy` 는
+> 약국 대상이라 앱 CTA 가 없어 전달 대상이 아니다.
 
 **약국 QR 은 손댈 필요 없다.** `/store/[store_id]` 라우트가 착지 URL 에
 `utm_source=qr&utm_medium=pharmacy_poster` 를 서버에서 붙인다 — 이미 인쇄돼 나간
