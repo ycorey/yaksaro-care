@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
-import { cronDbFailure, settledFailures } from '@/lib/cron-guard'
+import { cronDbFailure, settledFailures, type CronFailure } from '@/lib/cron-guard'
 import { recordNotificationRun } from '@/lib/notification-run'
 import { todayKST } from '@/lib/request-schedule'
+import { logger } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -19,28 +20,48 @@ const MIN_DURATION_DAYS = 28
  */
 export async function GET(req: NextRequest) {
   if (!isAuthorizedBearer(req, process.env.CRON_SECRET)) {
+    // 영수증을 표에 남기지 않는다 — 미인증 요청에 쓰기 경로를 열어주면 표가 밖에서 부풀려지고,
+    // 그러면 "행이 없으면 안 돈 것" 이라는 판독 규칙 자체를 남이 흔들 수 있다.
+    // 대신 경보로 올린다. CRON_SECRET 이 한쪽만 회전하면 **모든 실행이 여기서 끝나는데**
+    // 표에는 아무 행도 안 생겨, 10주간 아무도 몰랐던 그 모양과 정확히 같아진다.
+    logger.warn('cron:refill', '인증 실패로 거부 — CRON_SECRET 불일치일 수 있다')
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 
   const admin = createAdminClient()
+  // 실행 중 자정을 넘겨도 한 실행이 두 날짜로 쪼개지지 않도록 한 번만 읽는다.
+  const day = todayKST()
+
+  // 조회 실패로 중단할 때도 영수증을 남긴다.
+  // 남기지 않으면 "돌았는데 실패한 실행" 이 "안 돈 실행" 과 **같은 모양**(행 없음)이 되어,
+  // 058 이 세운 판독 규칙("행이 없으면 안 돈 것")이 성립하지 않는다.
+  const abort = async (
+    fail: CronFailure, step: string,
+    counts?: { targets: number; sent: number; failed: number },
+  ) => {
+    await recordNotificationRun(admin, {
+      kind: 'refill', runDate: day, ...counts, note: `중단: ${step} 단계 실패`,
+    })
+    return NextResponse.json(fail.body, { status: fail.status })
+  }
 
   // 1) 푸시 구독 + 알림 마스터 켠 사용자
   const { data: subs, error: subsError } = await admin.from('push_subscriptions').select('user_id')
   const subsFail = cronDbFailure('cron:refill', '푸시 구독', subsError)
-  if (subsFail) return NextResponse.json(subsFail.body, { status: subsFail.status })
+  if (subsFail) return abort(subsFail, '푸시 구독')
   const pushUsers = [...new Set((subs ?? []).map(s => s.user_id as string))]
   if (pushUsers.length === 0) {
-    await recordNotificationRun(admin, { kind: 'refill', runDate: todayKST(), note: '구독자 없음' })
+    await recordNotificationRun(admin, { kind: 'refill', runDate: day, note: '구독자 없음' })
     return NextResponse.json({ sent: 0, reason: '구독자 없음' })
   }
 
   const { data: prefs, error: prefsError } = await admin.from('profiles').select('id, alarm_enabled').in('id', pushUsers)
   const prefsFail = cronDbFailure('cron:refill', '알림 설정', prefsError)
-  if (prefsFail) return NextResponse.json(prefsFail.body, { status: prefsFail.status })
+  if (prefsFail) return abort(prefsFail, '알림 설정')
   const eligible = new Set((prefs ?? []).filter(p => p.alarm_enabled !== false).map(p => p.id as string))
   const users = pushUsers.filter(u => eligible.has(u))
   if (users.length === 0) {
-    await recordNotificationRun(admin, { kind: 'refill', runDate: todayKST(), note: '알림 끔' })
+    await recordNotificationRun(admin, { kind: 'refill', runDate: day, note: '알림 끔' })
     return NextResponse.json({ sent: 0, reason: '알림 끔' })
   }
 
@@ -53,7 +74,7 @@ export async function GET(req: NextRequest) {
     .is('ended_at', null)
     .not('prescription_id', 'is', null)
   const medsFail = cronDbFailure('cron:refill', '활성 처방약', medsError)
-  if (medsFail) return NextResponse.json(medsFail.body, { status: medsFail.status })
+  if (medsFail) return abort(medsFail, '활성 처방약')
 
   type Presc = { id: string; user_id: string; prescribed_at: string | null; duration_days: number | null; refill_reminded_at: string | null }
   const groups = new Map<string, { p: Presc; totalDays: number[] }>()
@@ -100,12 +121,14 @@ export async function GET(req: NextRequest) {
     const { error: markError } = await admin
       .from('user_prescriptions').update({ refill_reminded_at: new Date().toISOString() }).in('id', remindedIds)
     const markFail = cronDbFailure('cron:refill', '발송 기록', markError)
-    if (markFail) return NextResponse.json(markFail.body, { status: markFail.status })
+    // 여기까지 왔으면 **푸시는 이미 나갔다.** 숫자 없이 중단만 남기면 다음 실행이
+    // 같은 사람에게 또 보냈을 때 "몇 통이 중복됐는지" 를 셀 수 없다.
+    if (markFail) return abort(markFail, '발송 기록', { targets: byUser.size, sent, failed: settledFailures(results) })
   }
 
   const pushFailed = settledFailures(results)
   await recordNotificationRun(admin, {
-    kind: 'refill', runDate: todayKST(),
+    kind: 'refill', runDate: day,
     targets: byUser.size, sent, failed: pushFailed,
     note: byUser.size === 0 ? '조건 충족 처방 없음' : null,
   })
