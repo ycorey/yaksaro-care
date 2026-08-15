@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { setLogReporter } from './logger.ts'
+import { redactDetail } from './redact-detail.ts'
 
 // Sentry 초기화 + 기존 logger 와의 연결. 서버·클라이언트가 같은 규칙을 쓰도록 한 곳에 모은다.
 //
@@ -76,10 +77,15 @@ export function initSentry(runtime: 'server' | 'client' | 'edge'): void {
     } else {
       // detail 을 버리면 `dbError` 처럼 같은 문구를 쓰는 호출부 24곳이 진단 없이 한 이슈로
       // 뭉친다(10차 M4). scope 를 태그로 넣어 호출부를 구분하고 detail 은 요약해 남긴다.
+      //
+      // ⚠️ 요약만으로는 부족했다(11차 H2). `dbError` 가 넘기는 Postgres `details` 에는
+      //    행의 실제 값이 들어간다("Failing row contains (…, 김상우, 와파린, …)").
+      //    `JSON.stringify` 로 300자를 자르는 건 **길이만 줄일 뿐 내용을 안 본다** —
+      //    실명·약품명은 대개 앞쪽 300자 안에 있다. redactDetail 이 필드를 보고 지운다.
       Sentry.captureMessage(`[${scope}] ${message}`, {
         level: severity,
         tags: { scope, runtime },
-        extra: detail === undefined ? undefined : { detail: summarize(detail) },
+        extra: detail === undefined ? undefined : { detail: redactDetail(detail) },
       })
     }
   })
@@ -89,10 +95,4 @@ export function initSentry(runtime: 'server' | 'client' | 'edge'): void {
 function stripQuery(url: string): string {
   const cut = url.search(/[?#]/)
   return cut === -1 ? url : url.slice(0, cut)
-}
-
-// 진단에 쓸 만큼만 남기고 자른다. 객체 전문을 그대로 실으면 무엇이 들어올지 통제할 수 없다.
-function summarize(detail: unknown): string {
-  const text = typeof detail === 'string' ? detail : JSON.stringify(detail)
-  return (text ?? String(detail)).slice(0, 300)
 }

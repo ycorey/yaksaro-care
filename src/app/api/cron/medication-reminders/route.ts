@@ -4,8 +4,9 @@ import { sendPushToUser } from '@/lib/push'
 import { MEAL_LABELS, MEAL_TIMES, isMeal, effectiveMealSlots } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
-import { cronDbFailure, settledFailures } from '@/lib/cron-guard'
+import { cronDbFailure, settledFailures, type CronFailure } from '@/lib/cron-guard'
 import { recordNotificationRun } from '@/lib/notification-run'
+import { logger } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,16 +24,39 @@ function todayKST(): string {
  */
 export async function GET(req: NextRequest) {
   if (!isAuthorizedBearer(req, process.env.CRON_SECRET)) {
+    // 영수증을 표에 남기지 않는다 — 미인증 요청에 쓰기 경로를 열어주면 표가 밖에서 부풀려지고,
+    // 그러면 "행이 없으면 안 돈 것" 이라는 판독 규칙 자체를 남이 흔들 수 있다.
+    // 대신 경보로 올린다. CRON_SECRET 이 한쪽만 회전하면 **모든 실행이 여기서 끝나는데**
+    // 표에는 아무 행도 안 생겨, 10주간 아무도 몰랐던 그 모양과 정확히 같아진다.
+    logger.warn('cron:meal', '인증 실패로 거부 — CRON_SECRET 불일치일 수 있다')
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 
+  const admin = createAdminClient()
+  const day = todayKST()
+
   const meal = req.nextUrl.searchParams.get('meal') ?? ''
-  if (!isMeal(meal)) return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening/bedtime)' }, { status: 400 })
+  if (!isMeal(meal)) {
+    // 인증은 통과했으니 이건 **호출 설정이 어긋난 것**이다(vercel.json 의 path 오타 등).
+    // 행을 남기지 않으면 "cron 이 아예 안 돌았다" 로 읽혀 엉뚱한 곳을 파게 된다.
+    await recordNotificationRun(admin, {
+      kind: 'meal', runDate: day,
+      note: `중단: meal 파라미터 이상(${meal.slice(0, 20) || '없음'})`,
+    })
+    return NextResponse.json({ error: 'meal 파라미터 필요(morning/afternoon/evening/bedtime)' }, { status: 400 })
+  }
   const label = MEAL_LABELS[meal]
   const time  = MEAL_TIMES[meal]
 
-  const admin = createAdminClient()
-  const day = todayKST()
+  // 조회 실패로 중단할 때도 영수증을 남긴다.
+  // 남기지 않으면 "돌았는데 실패한 실행" 이 "안 돈 실행" 과 **같은 모양**(행 없음)이 되어,
+  // 058 이 세운 판독 규칙("행이 없으면 안 돈 것")이 성립하지 않는다.
+  const abort = async (fail: CronFailure, step: string) => {
+    await recordNotificationRun(admin, {
+      kind: 'meal', runDate: day, slot: meal, note: `중단: ${step} 단계 실패`,
+    })
+    return NextResponse.json(fail.body, { status: fail.status })
+  }
 
   // 0) 만료 처방 약 자동 종료 — 매 cron 실행마다 한 번만 처리 (morning 끼니에 한정)
   if (meal === 'morning') {
@@ -42,7 +66,7 @@ export async function GET(req: NextRequest) {
   // 1) 푸시 구독한 사용자
   const { data: subs, error: subsError } = await admin.from('push_subscriptions').select('user_id')
   const subsFail = cronDbFailure('cron:meal', '푸시 구독', subsError)
-  if (subsFail) return NextResponse.json(subsFail.body, { status: subsFail.status })
+  if (subsFail) return abort(subsFail, '푸시 구독')
   const pushUsers = [...new Set((subs ?? []).map((s) => s.user_id as string))]
   if (pushUsers.length === 0) {
     await recordNotificationRun(admin, { kind: 'meal', runDate: day, slot: meal, note: '구독자 없음' })
@@ -55,7 +79,7 @@ export async function GET(req: NextRequest) {
     .select('id, alarm_enabled, alarm_times')
     .in('id', pushUsers)
   const prefsFail = cronDbFailure('cron:meal', '알림 설정', prefsError)
-  if (prefsFail) return NextResponse.json(prefsFail.body, { status: prefsFail.status })
+  if (prefsFail) return abort(prefsFail, '알림 설정')
   const allowedSet = new Set(
     (prefs ?? [])
       .filter((p) =>
@@ -75,7 +99,7 @@ export async function GET(req: NextRequest) {
     .eq('check_date', day).eq('meal_time', meal).eq('is_checked', true)
     .in('user_id', pushUsers)
   const checkedFail = cronDbFailure('cron:meal', '오늘 체크 현황', checkedError)
-  if (checkedFail) return NextResponse.json(checkedFail.body, { status: checkedFail.status })
+  if (checkedFail) return abort(checkedFail, '오늘 체크 현황')
   const checkedPairs = new Set((checked ?? []).map((c) => pairKey(c.user_id as string, c.member_id as string | null)))
 
   // 4) 활성 복약이 있는 (사용자, 멤버) 쌍 → 사용자별 활성 멤버 집합
@@ -85,7 +109,7 @@ export async function GET(req: NextRequest) {
     .in('user_id', pushUsers)
     .is('deleted_at', null).is('ended_at', null)
   const activeFail = cronDbFailure('cron:meal', '활성 복약', activeError)
-  if (activeFail) return NextResponse.json(activeFail.body, { status: activeFail.status })
+  if (activeFail) return abort(activeFail, '활성 복약')
   // prn(필요시)·오늘 요일 미해당 weekly는 알림 대상에서 제외
   const wd = kstWeekday()
   const activeMembersByUser = new Map<string, Set<string | null>>()
