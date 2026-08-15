@@ -2,7 +2,8 @@
 
 > 기준: 11차 종합 평가 (2026-08-12) + 환자앱 앱스토어 적합성 평가 (2026-08-12)
 > 리포트: `_workspace/eval/final-evaluation.md` · `_workspace/eval_appstore/final-appstore-assessment.md`
-> 상태: Critical 0(5회 연속) · High 6. B2C 운영 중. 이 문서는 **남은 것**만 적는다 — 끝난 일의 이력은 `CLAUDE.md` 변경 이력에 있다.
+> 상태: Critical 0(5회 연속) · **High 6 중 2건 해소(PR #66)**. B2C 운영 중.
+> 이 문서는 **남은 것**만 적는다 — 끝난 일의 이력은 `CLAUDE.md` 변경 이력에 있다.
 
 ---
 
@@ -12,12 +13,26 @@
       **`NEXT_PUBLIC_SHOW_INTERACTIONS` 는 `src/` 어디서도 읽지 않는다**(실측). 링크만 없을 뿐 가드가 없어 로그인 사용자면 URL 로 열린다.
       화면이 `병용금기`·`안전`·**"검출되지 않았습니다"**(음성 판정)를 면책 없이 표시 → 웰니스(비의료기기) 판정과 Play 건강앱 선언에 동시에 걸린다.
       ※ 플래그 방식을 유지하려면 **실제로 플래그를 읽게** 할 것. 반나절.
-- [ ] **Sentry `summarize()` 화이트리스트** — `sentry-init.ts:95-98` 이 Postgres `details` 를 무여과 300자 반입.
-      `privacy:110` 이 "이용자 식별정보 및 약품·복약 내용 미포함" 이라 못박았는데 유니크 위반 시 `Key (user_id, endpoint)=(...)` 가 실린다.
-      **이미 켜져 있어 나간 이벤트는 회수 불가.** `code`·`hint` 만 남기는 4줄. (`setFingerprint` 도 같은 자리)
-- [ ] **끼니 cron 영수증 공백 확인** — 401(`route.ts:26-28`)·400·`cronDbFailure` 조기 return 4곳이 **기록 전에 반환**한다.
-      → `TODO` 상시 게이트의 "행이 없으면 안 돈 것" 이 **성립하지 않는다.** 조기 종료에도 `note` 를 담은 영수증을 남길 것(3~4줄).
-      그리고 **다음 끼니 슬롯 직후 `notification_runs` 를 한 번 조회**해 "배포 직후 재등록 지연" 인지 "구조적 공백" 인지 가를 것.
+- [x] ~~**Sentry `summarize()` 화이트리스트**~~ — **PR #66 (2026-08-16).** `redactDetail()` 이 직렬화
+      replacer 로 `details` 만 지운다(중첩 포함). `code`·`message`·`hint` 는 남긴다 —
+      `hint` 는 PostgREST 스키마 힌트를 담고, 8/11 의 4일짜리 약사 대시보드 장애(PGRST200)를
+      진단해 준 것이 그 문자열이다. 외부 의존성 0 인 모듈 + 단위 테스트 9종.
+- [x] ~~**끼니 cron 영수증 공백**~~ — **PR #66 (2026-08-16).** 조회 실패 7곳·400 1곳에 영수증
+      추가(리필 '발송 기록' 실패는 푸시가 이미 나간 뒤라 targets·sent·failed 동봉).
+      **401 은 일부러 표에 안 남긴다** — 미인증 쓰기 경로를 열면 표가 밖에서 부풀려져
+      판독 규칙 자체를 남이 흔들 수 있다 → `logger.warn` → Sentry 경보로 대체.
+      ⚠️ **남은 확인 1건**: 다음 끼니 슬롯 직후 `notification_runs` 를 조회해
+      "배포 직후 재등록 지연" 인지 "구조적 공백" 인지 가를 것. 코드가 아니라 **관측**이다.
+
+---
+
+## ⏸️ 진행 중 (미커밋 — 다른 작업이 이 파일들을 스테이지하지 말 것)
+
+- [ ] **`/ter` 보유기간 파기 워크스트림** — 작업트리에 **미커밋**으로 있다(2026-08-16 확인).
+      마이그레이션 `061`(replied_at·파기 기산점)·`062`·`063`(notified_at) ·
+      `api/cron/ter-retention` · `vercel.json` cron 등록 · `notification-run` 의 `ter_purge` ·
+      `ter-notify` 재작성(NOTIFY_DETAIL 제거·헤더 인젝션 방어·멱등) · 랜딩 개편(ter.html·OG·폰트).
+      리뷰 전이므로 **부분 커밋으로 섞이면 안 된다.** `ter-notify` 재배포(위)가 여기에 물려 있다.
 
 ---
 
@@ -26,6 +41,11 @@
 - [ ] `supabase functions deploy ter-notify` — 배포본이 **version 10(8/11)** 이라 `passLen` 노출 코드가 **운영에 라이브**다.
       ⚠️ **기존 보류 사유("16KB 수기 재입력 위험")는 사실이 아님이 확인됐다** — MCP `get_edge_function` 으로 배포본 전문을 읽었고 `deploy_edge_function` 도 파일 내용을 그대로 받는다. **원문 유실 없이 왕복 가능.**
       함께: `index.ts:223` 의 `message: msg` 제거 · `encodeHeader()` CRLF 제거 · CI 에 `deno check supabase/functions/**/*.ts`
+      ▸ **2026-08-16 실측 보강**: 누출이 로그가 아니라 **응답 본문**이다 —
+        SMTP 실패 시 `creds: { userLen, userHasAt, passLen }` 를 502 바디에 실어 돌려준다.
+        `verify_jwt` 는 켜져 있지만 통과에 필요한 것이 **랜딩 HTML 에 공개된 anon 키**뿐이라
+        사실상 누구나 호출할 수 있다. 커밋된 HEAD 소스는 이미 서버 로그로만 남기도록 고쳐져 있다.
+      ▸ **배포는 사용자 판단으로 보류 중**(2026-08-16) — 아래 `/ter` 워크스트림이 정리된 뒤에 한다.
 - [ ] **Play Console 확인 (리드타임 최장 — 다른 작업보다 먼저)** — health 앱에 **Organization 계정 + D-U-N-S** 가 실제로 요구되는지.
       사실이고 사업자등록이 없으면 **기술로 못 넘는다.**
 - [ ] GA4 속성의 **Google Signals / Ads 연동 상태** — 연동돼 있으면 Apple Tracking=Yes → ATT 필요 + 5.1.3(헬스 데이터 광고 이용 금지) 충돌
@@ -126,7 +146,7 @@
 | `.github/workflows/ci.yml` (tsc·lint·unit·schema-gate) | PR·push·하루 2회 | GitHub Actions |
 | `.github/workflows/smoke.yml` (익명 11 + 인증 6) | 프로덕션 배포 직후·하루 2회 | GitHub Actions |
 | Sentry (`yaksaro` / `javascript-nextjs`) | 런타임 예외 | 이메일 |
-| `notification_runs` (058) | cron 실행마다 | ⚠️ **"행이 없으면 안 돈 것" 은 아직 참이 아니다** — 401·조기5xx 가 기록 전에 반환한다(위 🔴 참조) |
+| `notification_runs` (058) | cron 실행마다 | **행이 없으면 안 돈 것** — PR #66 으로 성립(조회 실패·400 도 영수증을 남긴다). 401 만 예외이며 그건 Sentry 경보로 온다 |
 | `db-gate` (RLS 누수 27단언 등 13종) | ❌ **실행 0회** | 없음 — 위 🟠 참조 |
 
-로컬 전체 검증: `npm run test:e2e:db` (13 스위트, 서버 불필요) · `npm run test:unit` (60) · `npm run build`
+로컬 전체 검증: `npm run test:e2e:db` (13 스위트, 서버 불필요) · `npm run test:unit` (69) · `npm run build`
