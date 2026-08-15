@@ -7,6 +7,17 @@ import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
 //  · 로그인 상태: 즉시 profiles.regular_pharmacy_id 매핑 후 /wallet
 //  · 미로그인:   pending_pharmacy_id 쿠키 저장(7일) + redirect 파라미터로 로그인 유도
 // 쿠키 set/delete는 서버 컴포넌트가 아닌 Route Handler에서만 허용되므로 page가 아닌 route로 구현.
+
+// QR 스캔은 곧 유입인데, 이 라우트는 route handler 라 서버에서 바로 리다이렉트한다
+// → 브라우저가 /store/... 를 렌더하지 않으므로 **여기서는 페이지뷰가 발생하지 않는다.**
+// 태그가 없으면 QR 유입은 착지 페이지의 '직접 방문'에 섞여 영영 구분되지 않는다.
+// 그래서 착지 URL 에 서버가 UTM 을 심는다 — 이미 인쇄돼 나간 QR 도 그대로 동작한다.
+//
+// store_id 는 싣지 않는다. lib/analytics.ts 가 약국 코드를 GA 전송 차단 대상으로
+// 정해 뒀고 UTM 은 그 화이트리스트를 통과하므로, 여기에 넣으면 그 결정을 뒤집게 된다.
+// 약국별 성과는 profiles.regular_pharmacy_id 로 세는 편이 더 정확하다(스캔이 아니라 연결).
+const QR_UTM = 'utm_source=qr&utm_medium=pharmacy_poster'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ store_id: string }> },
@@ -43,7 +54,7 @@ export async function GET(
     await updateRegularPharmacy(supabase, user.id, pharmacy)
 
     const res = NextResponse.redirect(
-      new URL(`/wallet?pharmacy_linked=1&pharmacy_name=${encodeURIComponent(pharmacy.name)}`, origin),
+      new URL(`/wallet?pharmacy_linked=1&pharmacy_name=${encodeURIComponent(pharmacy.name)}&${QR_UTM}`, origin),
     )
     res.cookies.delete('pending_pharmacy_id')
     return res
@@ -52,7 +63,7 @@ export async function GET(
   // 미로그인 → 쿠키 + redirect 파라미터 이중 안전장치
   // (로그인 후 /store/[store_id] 재진입으로 매핑 보장)
   const res = NextResponse.redirect(
-    new URL(`/login?redirect=${encodeURIComponent(`/store/${store_id}`)}`, origin),
+    new URL(`/login?redirect=${encodeURIComponent(`/store/${store_id}`)}&${QR_UTM}`, origin),
   )
   res.cookies.set('pending_pharmacy_id', pharmacy.id, {
     maxAge: 60 * 60 * 24 * 7,

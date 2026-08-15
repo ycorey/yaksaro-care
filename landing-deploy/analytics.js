@@ -68,4 +68,43 @@
 
     gtag('event', 'cta_click', { cta_location: loc, cta_label: label });
   }, { passive: true });
+
+  // ── 크로스도메인 UTM 전달 ──────────────────────────────────────────────────
+  // 랜딩(yaksaro.co.kr)과 앱(care.yaksaro.co.kr)은 **서로 다른 Vercel 프로젝트**라
+  // Vercel Analytics 가 완전히 분리돼 있다. 링크에 UTM 을 실어 보내지 않으면 앱 쪽
+  // 유입이 전부 referrer `yaksaro.co.kr` 하나로 뭉쳐, 블로그에서 온 사람과 카페에서
+  // 온 사람이 구분되지 않는다 — 채널을 늘릴수록 그 한 줄만 커진다.
+  //
+  // GA4 는 앱과 측정 ID 가 같고 서브도메인 쿠키를 공유해 세션이 알아서 이어지므로
+  // 영향이 없다. 이 코드가 메우는 것은 **Vercel Analytics 쪽 단절**이다.
+  var APP_HOST = 'care.yaksaro.co.kr';
+
+  function forwardUtm() {
+    var here = new URLSearchParams(location.search);
+    var carry = [];
+    for (var i = 0; i < ALLOWED.length; i++) {
+      if (here.has(ALLOWED[i])) carry.push([ALLOWED[i], here.get(ALLOWED[i])]);
+    }
+    if (!carry.length) return; // 태그 없이 들어온 방문은 링크를 건드리지 않는다
+
+    var links = document.querySelectorAll('a[href]');
+    for (var j = 0; j < links.length; j++) {
+      var u;
+      try { u = new URL(links[j].href, location.href); } catch { continue; }
+      if (u.hostname !== APP_HOST) continue;
+      // 링크에 이미 박힌 값이 우선 — 수동 지정을 덮지 않는다
+      for (var m = 0; m < carry.length; m++) {
+        if (!u.searchParams.has(carry[m][0])) u.searchParams.set(carry[m][0], carry[m][1]);
+      }
+      links[j].href = u.toString();
+    }
+  }
+
+  // 이 스크립트는 defer 라 파싱 완료 후 실행되지만, 삽입 방식이 바뀌어도
+  // 링크 치환이 조용히 건너뛰어지지 않도록 두 경우를 모두 처리한다.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', forwardUtm);
+  } else {
+    forwardUtm();
+  }
 })();
