@@ -28,6 +28,7 @@
 <!-- 첫 화면에 반드시 쓰이는 두 벌만 preload 한다. 8벌 전부 걸면 서로 대역폭을 빼앗아 오히려 늦다. -->
 <link rel="preload" href="/fonts/w2/Paperlogy-9Black.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/w2/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/brand.generated.css">
 <style>
 @font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-3Light.woff2') format('woff2');font-weight:300;font-display:swap}
 @font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-4Regular.woff2') format('woff2');font-weight:400;font-display:swap}
@@ -38,14 +39,6 @@
 @font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-9Black.woff2') format('woff2');font-weight:900;font-display:swap}
 @font-face{font-family:'Pretendard';src:url('/fonts/w2/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
 
-:root{
-  --green:#0E6E54; --green-dark:#084B3A; --ink:#13261F; --lime:#D9F25C;
-  --off:#FAFAF5; --white:#fff; --muted:#3D4A44;
-  /* --faint 는 #7A7F74 였는데 --off(3.92:1)·--white(4.11:1) 위에서 WCAG AA(4.5:1) 미달이었다.
-     6곳 이상이 쓰는 토큰이라 값 하나만 내리면 전부 해결된다(off 4.51 / white 4.72). */
-  --faint:#70756B; --line:#E2E4DE;
-  --red:#C9423F; --max:1140px;
-}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Paperlogy','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--off);color:var(--ink);
   -webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden;word-break:keep-all;text-wrap:pretty}
