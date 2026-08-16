@@ -62,3 +62,7 @@ _dur_csv_tmp/
 # E2E 임시 산출물 (세션 토큰·스크린샷 — 커밋 금지)
 e2e/.auth/
 e2e/.artifacts/
+
+# Python (landing-deploy 폰트 서브셋 스크립트)
+__pycache__/
+*.pyc
