@@ -11,17 +11,21 @@
 //
 // 알림에 내용을 담지 않는 이유:
 //   메일 발송자가 신청자의 주소·이메일을 실어 나르면 처리방침의 수탁 범위를 넓혀야 한다.
-//   Google 은 수탁자로 등재돼 있지만 위탁업무가 "웹사이트 이용 통계 분석"으로 한정돼 있다.
-//   기본값은 "새 신청 1건 + 시각 + 대시보드 링크"만 보낸다 → 개인정보가 메일을 타지 않는다.
-//   NOTIFY_DETAIL=full 로 켜면 상세를 담지만, **그때는 제5조 위탁업무 내용과
-//   제6조 이전 항목을 먼저 손봐야 한다.**
+//   보내는 것은 "새 신청 1건 + 시각 + 대시보드 링크"뿐이다 → 개인정보가 메일을 타지 않는다.
+//   처리방침 제6조가 이 사실을 그대로 확언한다("신청자의 개인정보는 담지 않습니다").
+//   (제5조 수탁자 표의 Google 위탁업무에는 통계 분석과 함께 알림 메일 발송이 이미 포함돼 있다.)
+//
+//   **NOTIFY_DETAIL=full 분기는 삭제했다(2026-08-16).** 시크릿 한 줄만 바꾸면 제6조가 곧바로
+//   거짓이 되는데 그것을 막는 장치가 주석뿐이었다. 켜도 흔적이 남지 않아 사후 확인도 안 된다.
+//   상세를 담아야 할 일이 생기면 **제5조 위탁업무·제6조 이전항목을 먼저 개정하고** 그때 되살린다.
+//   방침보다 코드가 앞서가지 않게 하는 것이 요점이다.
 //
 // 필요한 시크릿(대시보드 → Edge Functions → Secrets):
 //   GMAIL_USER          발송에 쓸 구글 계정 주소 (SMTP 로그인 = 발신 주소)
 //   GMAIL_APP_PASSWORD  구글 앱 비밀번호 16자리. 계정 비밀번호 아님. 2단계 인증 필요
 //   NOTIFY_TO           (선택) 수신 주소. 기본 admin@yaksaro.co.kr
-//   NOTIFY_DETAIL       (선택) "full" 이면 신청 내용을 담는다 — 방침 개정 후에만 켤 것
 //   SMTP_HOST           (선택) 기본 smtp.gmail.com
+//   (NOTIFY_DETAIL 은 더 이상 읽지 않는다. 남아 있다면 지워도 된다.)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -32,7 +36,6 @@ const SMTP_USER = (Deno.env.get("GMAIL_USER") ?? "").trim().replace(/^["']|["']$
 const SMTP_PASS = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/["']/g, "").replace(/\s+/g, "");
 const NOTIFY_TO = Deno.env.get("NOTIFY_TO") || "admin@yaksaro.co.kr";
 const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
-const DETAIL = (Deno.env.get("NOTIFY_DETAIL") || "").toLowerCase() === "full";
 
 const MAX_AGE_SEC = 300;          // 위조 방지 창(초)
 const SMTP_TIMEOUT_MS = 20000;
@@ -61,9 +64,17 @@ function foldBase64(s: string): string {
 /**
  * 헤더용 RFC 2047 인코디드워드. 한 워드가 75자를 넘으면 안 되므로
  * **문자 경계**를 지키며 UTF-8 45바이트 단위로 쪼개 여러 워드로 접는다.
+ *
+ * 주의 — 여기 CR/LF 가 살아서 들어오면 그대로 **헤더 인젝션**이 된다(Bcc: 주입 → 제3자 복사 발송).
+ * 예전 구현은 `/^[\x00-\x7F]*$/` 로 "ASCII 면 그대로" 통과시켰는데, CR(\x0D)·LF(\x0A) 가
+ * 하필 그 범위 안이라 개행이 무사통과했다. 제어문자를 먼저 걷어낸 뒤에 판정한다.
+ * DB 쪽에도 같은 방어를 세워 뒀다(062: addr !~ '[\r\n]') — 폼을 우회한 INSERT 까지 막으려면
+ * 저장 시점에도 있어야 하기 때문이다. 둘 중 하나만 있으면 안 된다.
  */
-function encodeHeader(s: string): string {
-  if (/^[\x00-\x7F]*$/.test(s)) return s;   // ASCII 뿐이면 그대로
+function encodeHeader(raw: string): string {
+  // CR·LF·NUL 등 헤더를 깨뜨리는 C0 제어문자는 공백으로 치환한다(TAB 은 접힘에 쓰이므로 남긴다).
+  const s = String(raw ?? "").replace(/[\x00-\x08\x0A-\x1F\x7F]/g, " ");
+  if (/^[\x20-\x7E\t]*$/.test(s)) return s;   // 인쇄 가능한 ASCII 뿐이면 그대로
   const enc = new TextEncoder();
   const words: string[] = [];
   let chunk = "";
@@ -248,8 +259,12 @@ async function handle(req: Request): Promise<Response> {
 
   // 본문의 id 를 믿지 않고 service_role 로 원본을 다시 읽는다.
   // anon 키는 랜딩 HTML 에 공개돼 있어 "호출자 신원"으로는 위조를 막지 못하기 때문이다.
+  //
+  // select 는 **쓰는 컬럼만** 가져온다. 알림에 실리는 건 시각뿐인데 예전엔 select=* 로
+  // 주소·이메일·자유기재까지 함수 메모리로 끌어왔다. "개인정보가 메일을 타지 않는다"는 설계는
+  // "DB 밖으로 나가지 않는다"까지 가야 완성된다. 예외 경로에서 우발적으로 노출될 표면도 함께 준다.
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/ter_requests?id=eq.${encodeURIComponent(id)}&select=*`,
+    `${SUPABASE_URL}/rest/v1/ter_requests?id=eq.${encodeURIComponent(id)}&select=created_at,notified_at`,
     { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
   );
   if (!res.ok) {
@@ -265,12 +280,19 @@ async function handle(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ skipped: "stale" }), { status: 200 });
   }
 
+  // 1행 = 1통. 5분 창 안에서는 같은 id 로 몇 번을 불러도 한 번만 보낸다.
+  // 057 의 rate limit 은 INSERT 만 세므로, 자기 행의 id 를 아는 사람이 이 함수를 반복 호출하면
+  // 메일을 폭주시킬 수 있었다(= Gmail 이 막히면 알림 경로 자체가 죽는, 057 이 경고한 그 실패 모드).
+  if (row.notified_at) {
+    console.warn("already notified, skipping", id);
+    return new Response(JSON.stringify({ skipped: "already-notified" }), { status: 200 });
+  }
+
   const when = seoul(row.created_at);
 
-  // ── 기본: 내용 없는 알림. 신청 시각 외에는 아무것도 싣지 않는다 ──────────────
-  let subject = "[약사로 터] 새 신청 1건";
-  let replyTo: string | undefined;
-  let text = [
+  // ── 내용 없는 알림. 신청 시각 외에는 아무것도 싣지 않는다 ────────────────────
+  const subject = "[약사로 터] 새 신청 1건";
+  const text = [
     "약사로 터에 새 신청이 1건 들어왔습니다.",
     `신청 시각: ${when}`,
     "",
@@ -279,7 +301,7 @@ async function handle(req: Request): Promise<Response> {
     "",
     "(개인정보가 메일을 타지 않도록 내용은 담지 않습니다.)",
   ].join("\n");
-  let html = shell(`
+  const html = shell(`
   <p style="margin:0 0 18px"><b style="color:#0E6E54">약사로 터</b>에 새 신청이 <b>1건</b> 들어왔습니다.</p>
   <p style="margin:0 0 18px">신청 시각 ${esc(when)}</p>
   <p style="margin:0 0 18px">
@@ -289,36 +311,10 @@ async function handle(req: Request): Promise<Response> {
     개인정보가 메일을 타지 않도록 신청 내용은 담지 않았습니다.
   </p>`);
 
-  // ── NOTIFY_DETAIL=full: 상세 포함. 처리방침 개정이 선행돼야 한다 ────────────
-  if (DETAIL) {
-    subject = `[약사로 터] 신청 — ${row.addr}`;
-    replyTo = row.email;   // 메일에서 바로 답장하면 신청자에게 간다
-    text = [
-      "[약사로 터] 리포트 신청",
-      `주소·지역: ${row.addr}`,
-      `회신 메일: ${row.email}`,
-      `아는 조건: ${row.note || "(없음)"}`,
-      `신청 시각: ${when}`,
-    ].join("\n");
-    const cell = "padding:9px 12px;border:1px solid #E2E4DE";
-    const head = `${cell};background:#FAFAF5;width:110px`;
-    html = shell(`
-  <p style="margin:0 0 18px"><b style="color:#0E6E54">약사로 터</b> 리포트 신청이 들어왔습니다.</p>
-  <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:560px">
-    <tr><td style="${head}"><b>주소·지역</b></td><td style="${cell}">${esc(row.addr)}</td></tr>
-    <tr><td style="${head}"><b>회신 메일</b></td><td style="${cell}"><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></td></tr>
-    <tr><td style="${head}"><b>아는 조건</b></td><td style="${cell}">${row.note ? esc(row.note).replace(/\n/g, "<br>") : "(없음)"}</td></tr>
-    <tr><td style="${head}"><b>신청 시각</b></td><td style="${cell}">${esc(when)}</td></tr>
-  </table>
-  <p style="margin:18px 0 0;font-size:13.5px;color:#7A7F74">
-    안내한 회신 기한은 3~5일입니다. 회신을 마친 신청은 1년 뒤 파기 대상입니다(처리방침 제2조).
-  </p>`);
-  }
-
   try {
     // 연결이 매달리면 아이솔레이트째 타임아웃되므로 우리가 먼저 끊는다.
     await Promise.race([
-      sendMail({ to: NOTIFY_TO, replyTo, subject, text, html }),
+      sendMail({ to: NOTIFY_TO, subject, text, html }),
       new Promise((_, rej) =>
         setTimeout(() => rej(new Error("smtp: timeout")), SMTP_TIMEOUT_MS)
       ),
@@ -342,7 +338,25 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ sent: true, detail: DETAIL }), {
+  // 발송에 성공한 뒤에만 도장을 찍는다. 먼저 찍으면 실패했을 때 재시도 경로가 막힌다.
+  // 이 UPDATE 가 실패해도 메일은 이미 나갔으므로 200 을 돌려주되, 로그에는 남긴다
+  // (도장이 안 찍힌 행은 재호출 시 한 통 더 갈 수 있다 — 조용히 넘기지 않는다).
+  const stamp = await fetch(
+    `${SUPABASE_URL}/rest/v1/ter_requests?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: SERVICE_ROLE,
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ notified_at: new Date().toISOString() }),
+    },
+  );
+  if (!stamp.ok) console.error("notified_at stamp failed", id, stamp.status, await stamp.text());
+
+  return new Response(JSON.stringify({ sent: true }), {
     headers: { "Content-Type": "application/json" },
   });
 }

@@ -189,7 +189,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
         <StepHeader title={initialTab === 'supplement' ? '영양제 · 보조제' : '일반의약품'} member={member} />
 
         {looksRx && (
-          <div className="rounded-yc-xl border border-yc-green200 bg-yc-green50 px-5 py-4 space-y-3">
+          <div className="rounded-yc-xl border border-yc-green100 bg-yc-green50 px-5 py-4 space-y-3">
             <div className="flex items-start gap-2.5">
               <FileText weight="fill" size={20} className="text-yc-green700 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-yc-neutral800 leading-relaxed break-keep">

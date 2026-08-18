@@ -1,6 +1,8 @@
 // Supabase generate_typescript_types로 생성 (2026-08-11, 마이그레이션 001~055 기준).
 // + 056(pharmacy_todos.due_date)·058(notification_runs)·060(dur_shadow_logs.member_id)만 수기 반영
 // — 운영 information_schema 와 대조해 확인함.
+// + 2026-08-16: ter_requests 에 059(status·status_at·handler_memo)가 빠져 있던 것을 함께 채우고
+//   061(replied_at)·063(notified_at)을 수기 반영. 마이그레이션 적용 후 재생성 권장.
 // 스키마 변경 시 재생성할 것 — 수동 편집 금지.
 //
 // 왜 이 파일이 최신이어야 하는가:
@@ -913,27 +915,42 @@ export type Database = {
           agreed: boolean
           created_at: string
           email: string
+          handler_memo: string | null
           id: string
           note: string | null
+          notified_at: string | null
+          replied_at: string | null
           source: string
+          status: string
+          status_at: string | null
         }
         Insert: {
           addr: string
           agreed?: boolean
           created_at?: string
           email: string
+          handler_memo?: string | null
           id?: string
           note?: string | null
+          notified_at?: string | null
+          replied_at?: string | null
           source?: string
+          status?: string
+          status_at?: string | null
         }
         Update: {
           addr?: string
           agreed?: boolean
           created_at?: string
           email?: string
+          handler_memo?: string | null
           id?: string
           note?: string | null
+          notified_at?: string | null
+          replied_at?: string | null
           source?: string
+          status?: string
+          status_at?: string | null
         }
         Relationships: []
       }
