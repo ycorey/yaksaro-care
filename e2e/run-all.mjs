@@ -32,6 +32,8 @@ const SERVER_STANDALONE = [
   // DB 권한 테스트만으로는 못 잡는 결함 전용 — 2026-08-11 4일 장애가 이 자리의 공백이었다.
   'pharmacy-entry-qa',
   'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
+  // 등록 당일 복용 시작 — 저녁 등록 1일 3회가 오늘은 저녁부터인지(/today 실렌더, 자체 시드)
+  'first-day-slots-qa',
 ]
 // 서버 필요 + 공용 시드 의존(setup/teardown로 감싸야 함).
 const SHARED_SEED = [

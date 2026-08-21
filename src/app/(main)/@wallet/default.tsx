@@ -20,6 +20,7 @@ import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
 import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
+import { effectiveMealSlots, slotsApplicableToday } from '@/lib/meal-slots'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
@@ -34,7 +35,7 @@ export default async function WalletPage() {
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, schedule_type, dow, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
+      .select('id, dose, frequency, dose_amount, doses_per_day, total_days, schedule_type, dow, ingredient, custom_name, prescription_id, has_interaction_warning, meal_times, created_at, drug:drugs(item_name, entp_name, image_url, item_seq, ingredient_name), supplement:supplements(product_name), prescription:user_prescriptions(id, pharmacy_name, pharmacy_address, pharmacy_phone, prescribed_at, duration_days, hospital_name, institution_code, department)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -86,6 +87,10 @@ export default async function WalletPage() {
       dosesPerDay:           med.doses_per_day ?? null,
       totalDays:             med.total_days ?? null,
       mealTimes:             med.meal_times ?? [],
+      // 오늘 실제 배정 끼니(체크 버튼용) — 등록 당일은 지나간 끼니 제외, 폴백 포함.
+      // 서버에서 계산해 내려보낸다(클라 시계로 계산하면 SSR/하이드레이션이 어긋날 수 있다).
+      // mealTimes(복용법 표기)는 그대로 둔다 — 규칙은 오늘의 체크에만 적용된다.
+      todayMeals:            slotsApplicableToday(effectiveMealSlots(med), med.created_at, todayStr),
       scheduleLabel:         scheduleLabelOf(med.schedule_type, med.dow),
       scheduleType:          (med.schedule_type as ScheduleType | null) ?? 'daily',
       hasInteractionWarning: !!(med.has_interaction_warning),

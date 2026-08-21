@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
-import { MEAL_SLOTS, defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { MEAL_SLOTS, defaultMealKeys, slotsApplicableToday, isMeal, type Meal } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
@@ -36,7 +36,7 @@ export default async function TodayPage() {
       .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
-      .select('meal_times, doses_per_day, schedule_type, dow, custom_name, drug:drugs(item_name), supplement:supplements(product_name)')
+      .select('meal_times, doses_per_day, schedule_type, dow, custom_name, created_at, drug:drugs(item_name), supplement:supplements(product_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -70,15 +70,19 @@ export default async function TodayPage() {
   const medTotal = medsData?.length ?? 0
 
   const wd = kstWeekday()
+  let filteredByFirstDay = false   // 등록 당일 규칙이 실제로 끼니를 걷어냈는가 (빈 상태 안내문용)
   for (const med of medsData ?? []) {
     // prn(필요시)·요일 미해당 weekly는 오늘 일정에서 제외 (약지갑에는 그대로 노출)
     if (!isScheduledOnWeekday(med, wd)) continue
     const name = one(med.drug)?.item_name ?? one(med.supplement)?.product_name ?? med.custom_name ?? '약'
-    const times = med.meal_times && med.meal_times.length > 0
-      ? med.meal_times
+    const raw = med.meal_times && med.meal_times.length > 0
+      ? med.meal_times.filter(isMeal)
       : defaultMealKeys(med.doses_per_day ?? 0)
+    // 등록 당일은 등록 시각에 지나간 끼니를 제외 — 저녁에 등록한 1일 3회는 저녁부터
+    const times = slotsApplicableToday(raw, med.created_at, day)  // day = check_date 와 같은 키
+    if (times.length < raw.length) filteredByFirstDay = true
     for (const mt of times) {
-      if (mt in slotCounts) { slotCounts[mt as Meal]++; slotNames[mt as Meal].push(name) }
+      if (mt in slotCounts) { slotCounts[mt]++; slotNames[mt].push(name) }
     }
   }
 
@@ -98,6 +102,7 @@ export default async function TodayPage() {
     <TodayTimeline
       initialSlots={slots}
       hasMeds={medTotal > 0}
+      firstDayEmpty={slots.length === 0 && filteredByFirstDay}
       memberSwitcher={<><MemberSwitcher members={members} activeId={active.id} /><MemberContextBar active={active} /></>}
     />
   )

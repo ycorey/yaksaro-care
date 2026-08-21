@@ -42,10 +42,14 @@ const { data: rxDaily, error: dErr } = await admin.from('user_prescriptions')
   .select('id').single()
 if (dErr) throw new Error('rxDaily: ' + dErr.message)
 
+// created_at 을 어제로 명시 — 이 시드는 "이미 복용 중인 약"을 표현한다. 기본값(now)로 두면
+// 등록 당일 복용 시작 규칙(slotsApplicableToday)이 실행 시각에 지나간 끼니를 걸러,
+// 테스트가 언제 도느냐에 따라 끼니 버튼 수가 달라진다. 당일 규칙 자체는 first-day-slots-qa 가 검증.
+const seededAt = new Date(now - 86_400_000).toISOString()
 const { error: mErr } = await admin.from('user_medications').insert([
-  { user_id: uid, member_id: selfId, prescription_id: rxPrn.id,   custom_name: '리브가PRN',   schedule_type: 'prn',   doses_per_day: 1, total_days: 30, source: 'manual', meal_times: [] },
-  { user_id: uid, member_id: selfId, prescription_id: rxPrn.id,   custom_name: '토파맥스PRN', schedule_type: 'prn',   total_days: 30, source: 'manual', meal_times: [] },
-  { user_id: uid, member_id: selfId, prescription_id: rxDaily.id, custom_name: '매일약A',     schedule_type: 'daily', dose_amount: 1, doses_per_day: 2, total_days: 30, source: 'manual', meal_times: ['morning', 'evening'] },
+  { user_id: uid, member_id: selfId, prescription_id: rxPrn.id,   custom_name: '리브가PRN',   schedule_type: 'prn',   doses_per_day: 1, total_days: 30, source: 'manual', meal_times: [], created_at: seededAt },
+  { user_id: uid, member_id: selfId, prescription_id: rxPrn.id,   custom_name: '토파맥스PRN', schedule_type: 'prn',   total_days: 30, source: 'manual', meal_times: [], created_at: seededAt },
+  { user_id: uid, member_id: selfId, prescription_id: rxDaily.id, custom_name: '매일약A',     schedule_type: 'daily', dose_amount: 1, doses_per_day: 2, total_days: 30, source: 'manual', meal_times: ['morning', 'evening'], created_at: seededAt },
 ])
 if (mErr) throw new Error('meds: ' + mErr.message)
 

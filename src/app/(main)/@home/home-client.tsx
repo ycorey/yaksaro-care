@@ -67,6 +67,11 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
   const doneKeys  = doneMeals
   const overdue   = now ? getOverdueSlot(doneKeys, activeSlotKeys) : null
   const h         = now?.getHours() ?? 0
+  // 약은 있는데 오늘 배정 끼니가 0인 상태 — 등록 당일 늦은 시각 등록(slotsApplicableToday),
+  // PRN 전용, weekly 비해당 요일. 이때 0>=0 을 "모두 완료"로 읽으면 한 알도 안 먹은
+  // 사용자를 축하하게 된다(리뷰 실측) → 완료 카드가 아니라 별도 안내 카드로 분기.
+  // medCount===0(약 없음) 경로는 기존 동작 그대로 둔다.
+  const nothingToday = totalSlots === 0 && medCount > 0
   const allDone   = doneCount >= totalSlots
 
   return (
@@ -109,7 +114,15 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
 
       {/* 상태 알림 카드 → 오늘복약으로 이동 */}
       <Link href="/today" className="block active:scale-[0.99] transition-transform">
-        {!allDone ? (
+        {nothingToday ? (
+          /* 오늘 배정 끼니 0 (등록 당일 늦은 등록·필요시 전용·요일 비해당) — 완료 아님 */
+          <div className="rounded-yc-lg p-5 text-white bg-yc-status-next">
+            <p className="text-white/80 text-sm font-medium">오늘 복약</p>
+            <p className="font-display text-[1.375rem] mt-1">오늘은 예정된 복약이 없어요</p>
+            {/* 원인이 셋(늦은 등록·필요시·요일제)이라 문구는 중립으로 — 약 지갑이 공통 착지 */}
+            <p className="text-white/80 text-sm mt-3">필요시·요일제 약이나 오늘 등록한 약은 약 지갑에서 확인할 수 있어요</p>
+          </div>
+        ) : !allDone ? (
           <div className={`rounded-yc-lg p-5 space-y-3 text-white ${overdue ? 'bg-yc-status-overdue' : 'bg-yc-status-next'}`}>
             <p className="text-white/80 text-sm font-medium">
               {overdue ? '잊지 않으셨죠?' : '다음 복약 시간'}
@@ -166,7 +179,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
             {statKey === 'med' && medCount > 0 && (
               <p className="text-xs font-bold text-yc-green600 mt-2">약 {medCount}종</p>
             )}
-            {statKey === 'today' && (
+            {statKey === 'today' && totalSlots > 0 && (
               <p className="text-xs font-bold text-yc-green600 mt-2">{doneCount} / {totalSlots} 챙김</p>
             )}
           </Link>

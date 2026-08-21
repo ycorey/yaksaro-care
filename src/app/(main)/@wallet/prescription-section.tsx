@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Phone, MapPin, Trash, Check, Plus, CaretRight } from '@phosphor-icons/react'
-import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { type Meal } from '@/lib/meal-slots'
 import { type ScheduleType } from '@/lib/med-schedule'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 import { logger } from '@/lib/logger'
@@ -24,6 +24,7 @@ export type MedCard = {
   dosesPerDay:           number | null
   totalDays:             number | null
   mealTimes:             string[]
+  todayMeals:            Meal[]   // 오늘 실제 배정 끼니(서버 계산 — 등록 당일 규칙·폴백 반영)
   scheduleLabel:         string | null
   scheduleType:          ScheduleType
   hasInteractionWarning: boolean
@@ -152,15 +153,12 @@ function PrescriptionCard({
   const [busyDel, setBusyDel]         = useState(false)
   const [deleted, setDeleted]         = useState(false)
 
-  // 그룹 내 복용 시간 합집합 — PRN(필요시)은 오늘복약·알림에서 제외되므로 끼니 버튼 대상에서도 뺀다.
+  // 그룹 내 오늘 끼니 합집합 — PRN(필요시)은 오늘복약·알림에서 제외되므로 끼니 버튼 대상에서도 뺀다.
   // (전부 PRN인 그룹은 끼니 버튼 자체를 띄우지 않음)
+  // todayMeals 는 서버가 약별로 계산한 값: 폴백(defaultMealKeys) + 등록 당일 지나간 끼니 제외.
+  // 저녁에 등록한 1일 3회 처방은 오늘 저녁·자기 전 버튼만 뜨고, 내일부터 전 끼니가 돌아온다.
   const scheduledMeds = g.meds.filter(m => m.scheduleType !== 'prn')
-  const mealTimesUnion = [...new Set(scheduledMeds.flatMap(m => m.mealTimes ?? []))]
-  const effectiveMealTimes = mealTimesUnion.length > 0
-    ? mealTimesUnion
-    : scheduledMeds.length > 0
-      ? defaultMealKeys(Math.max(0, ...scheduledMeds.map(m => m.dosesPerDay ?? 0)) || 3)
-      : []
+  const effectiveMealTimes = [...new Set(scheduledMeds.flatMap(m => m.todayMeals ?? m.mealTimes ?? []))]
 
   const [isChecked, setIsChecked] = useState(
     () => effectiveMealTimes.some(m => !!serverChecks[m])

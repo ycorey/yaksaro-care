@@ -58,10 +58,12 @@ function fmtElapsed(minutes: number): string {
 export default function TodayTimeline({
   initialSlots,
   hasMeds,
+  firstDayEmpty,
   memberSwitcher,
 }: {
   initialSlots: SlotState[]
   hasMeds: boolean
+  firstDayEmpty?: boolean   // 등록 당일 규칙으로 오늘 끼니가 전부 빠진 경우 (안내문 분기)
   memberSwitcher?: ReactNode
 }) {
   const router = useRouter()
@@ -242,7 +244,12 @@ export default function TodayTimeline({
         <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] py-12 text-center px-6">
           <div className="mb-3 flex justify-center"><Pill weight="light" size={48} className="text-yc-neutral300" /></div>
           <p className="text-lg font-semibold text-yc-neutral900 mb-1">오늘 정해진 복약이 없어요</p>
-          <p className="text-sm text-yc-neutral500">필요시·다른 요일 약은 약 지갑에서 확인할 수 있어요</p>
+          {/* 늦은 시각 등록으로 빈 경우엔 원인을 그대로 말한다 — "필요시 약" 안내는 오답이 된다 */}
+          <p className="text-sm text-yc-neutral500">
+            {firstDayEmpty
+              ? '오늘 등록한 약은 복용 시간이 지나 내일부터 시작해요'
+              : '필요시·다른 요일 약은 약 지갑에서 확인할 수 있어요'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HomeClient from './home-client'
-import { ALL_MEALS, defaultMealKeys } from '@/lib/meal-slots'
+import { ALL_MEALS, defaultMealKeys, slotsApplicableToday, isMeal } from '@/lib/meal-slots'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
@@ -22,7 +22,7 @@ export default async function HomePage() {
   const [{ data: meds }, { data: checks }, { data: profile }] = await Promise.all([
     supabase
       .from('user_medications')
-      .select('id, meal_times, doses_per_day, schedule_type, dow, total_days, ingredient, custom_name, prescription_id, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
+      .select('id, meal_times, doses_per_day, schedule_type, dow, total_days, ingredient, custom_name, prescription_id, created_at, drug:drugs(item_name, ingredient_name), prescription:user_prescriptions(id, prescribed_at, duration_days, hospital_name)')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .is('deleted_at', null)
@@ -53,10 +53,11 @@ export default async function HomePage() {
   const wd = kstWeekday()
   for (const med of meds ?? []) {
     if (!isScheduledOnWeekday(med, wd)) continue   // prn·요일 미해당 weekly 제외
-    const times = med.meal_times && med.meal_times.length > 0
-      ? med.meal_times
+    const raw = med.meal_times && med.meal_times.length > 0
+      ? med.meal_times.filter(isMeal)
       : defaultMealKeys(med.doses_per_day ?? 0)
-    for (const mt of times) activeMealSet.add(mt)
+    // 등록 당일은 등록 시각에 지나간 끼니 제외 (/today와 동일 규칙 — slotsApplicableToday)
+    for (const mt of slotsApplicableToday(raw, med.created_at, todayStr)) activeMealSet.add(mt)  // todayStr = check_date 와 같은 키
   }
   const activeSlotKeys = ALL_MEALS.filter(m => activeMealSet.has(m))
 
