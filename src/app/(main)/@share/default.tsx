@@ -7,6 +7,7 @@ import { getActiveMember } from '@/lib/active-member'
 import { applyMemberScope } from '@/lib/member'
 import MemberSwitcher from '@/components/member-switcher'
 import MemberContextBar from '@/components/member-context-bar'
+import { doseSummary } from '@/lib/med-schedule'
 
 export default async function SharePage() {
   const supabase = await createClient()
@@ -17,7 +18,7 @@ export default async function SharePage() {
 
   const { data: meds } = await supabase
     .from('user_medications')
-    .select('id, custom_name, dose_amount, doses_per_day, total_days, ingredient, prescription_id, drug:drugs(item_name, entp_name), supplement:supplements(product_name)')
+    .select('id, custom_name, dose_amount, doses_per_day, schedule_type, dow, total_days, ingredient, prescription_id, drug:drugs(item_name, entp_name), supplement:supplements(product_name)')
     .eq('user_id', user.id)
     .eq('member_id', active.id)
     .is('deleted_at', null)
@@ -29,11 +30,10 @@ export default async function SharePage() {
   function getName(m: typeof activeMeds[number]) {
     return m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
   }
+  // 복용법 문구는 lib/med-schedule 의 단일 구현을 쓴다 — 여기서만 따로 만들었더니
+  // schedule_type 을 빠뜨려 필요시(PRN) 약이 "하루 1회"로 의사에게 나갔다.
   function getDosage(m: typeof activeMeds[number]) {
-    return [
-      m.dose_amount   ? `1회 ${m.dose_amount}` : null,
-      m.doses_per_day ? `하루 ${m.doses_per_day}회` : null,
-    ].filter(Boolean).join(' · ')
+    return doseSummary(m)
   }
 
   const items = activeMeds.map(m => {
