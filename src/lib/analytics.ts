@@ -79,14 +79,30 @@ export function gtag(...args: GtagArgs) {
   ;(window.gtag as (...a: unknown[]) => void)(...args)
 }
 
+/** TWA(Play 스토어 앱) 실행 시 첫 문서의 referrer 접두사 — twa/twa-manifest.json 의 packageId */
+export const TWA_REFERRER_PREFIX = 'android-app://kr.co.yaksaro.care'
+
 /**
  * 루트 <head> 에 동기 삽입되는 초기화 스니펫.
  * send_page_view:false 로 자동 페이지뷰를 끄고, 초기 page_location 기본값을 정화해 심는다.
+ *
+ * app_channel: 같은 웹앱을 어느 입구로 쓰는지(스토어앱/홈화면PWA/브라우저) 이벤트마다 붙인다.
+ * 웹·앱 병행 전략을 데이터로 판단하기 위한 분류값이며 개인정보가 아니다.
+ *  · twa     — Play 스토어 앱. 실행 첫 문서의 referrer 가 android-app://<패키지> 로 온다.
+ *              이후 하드 내비게이션에서 referrer 가 사라지므로 sessionStorage 로 세션 내 유지.
+ *  · pwa     — 홈 화면 추가(display-mode: standalone, iOS 는 navigator.standalone).
+ *              TWA 도 standalone 이라 twa 판정이 항상 먼저다.
+ *  · browser — 그 외 전부.
+ * ⚠️ GA4 보고서에서 쓰려면 관리→맞춤 정의에 이벤트 범위 측정기준 app_channel 등록 필요(1회).
  */
 export function gaInitSnippet(gaId: string): string {
   return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;
 gtag('js',new Date());
 try{var u=new URL(location.href);var a=${JSON.stringify(ALLOWED_QUERY_KEYS)};var c=new URLSearchParams();u.searchParams.forEach(function(v,k){if(a.indexOf(k)>-1)c.set(k,v)});u.search=c.toString();u.hash='';gtag('set',{page_location:u.toString()});}catch(e){}
+try{var ch='browser';try{if(sessionStorage.getItem('yc_channel')==='twa')ch='twa'}catch(e){}
+if(document.referrer&&document.referrer.indexOf(${JSON.stringify(TWA_REFERRER_PREFIX)})===0){ch='twa';try{sessionStorage.setItem('yc_channel','twa')}catch(e){}}
+if(ch!=='twa'&&(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true))ch='pwa';
+gtag('set',{app_channel:ch});}catch(e){}
 gtag('config',${JSON.stringify(gaId)},{send_page_view:false});`
 }
 
