@@ -119,7 +119,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
           <button
             onClick={prev}
             aria-label="이전 달"
-            className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
+            className="w-11 h-11 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500"
           >
             <CaretLeft weight="bold" size={18} />
           </button>
@@ -130,7 +130,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
             onClick={next}
             disabled={isCurrentMonth}
             aria-label="다음 달"
-            className="w-10 h-10 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
+            className="w-11 h-11 flex items-center justify-center rounded-yc-md active:bg-yc-neutral100 text-yc-neutral500 disabled:opacity-30"
           >
             <CaretRight weight="bold" size={18} />
           </button>
@@ -141,7 +141,7 @@ export default function CalendarClient({ members, activeId }: { members: Member[
           {WEEKDAYS.map((d, i) => (
             <div
               key={d}
-              className={`text-center text-[11px] font-medium pb-1 ${
+              className={`text-center text-xs font-medium pb-1 ${
                 i === 0 ? 'text-yc-error' : i === 6 ? 'text-yc-saturday' : 'text-yc-neutral500'
               }`}
             >
@@ -199,15 +199,15 @@ export default function CalendarClient({ members, activeId }: { members: Member[
 
       {/* 범례 */}
       <div className="flex items-center gap-4 px-1">
-        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+        <div className="flex items-center gap-1.5 text-sm text-yc-neutral500">
           <span className="w-2 h-2 rounded-full bg-yc-green600" />
           완전 복용
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+        <div className="flex items-center gap-1.5 text-sm text-yc-neutral500">
           <span className="w-2 h-2 rounded-full bg-yc-warning" />
           부분 복용
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-yc-neutral500">
+        <div className="flex items-center gap-1.5 text-sm text-yc-neutral500">
           <span className="w-2 h-2 rounded-full border border-yc-neutral300" />
           거름
         </div>

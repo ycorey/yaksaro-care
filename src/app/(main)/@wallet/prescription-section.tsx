@@ -339,8 +339,10 @@ function AddPrescriptionCta() {
         className="flex items-center justify-center gap-1.5 py-4 rounded-yc-lg bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral500 text-sm font-semibold active:opacity-90">
         <Plus weight="bold" size={16} /> 처방전 추가
       </Link>
+      {/* OCR 이 실패한 사용자의 유일한 대안 경로다. text-xs 한 줄에 패딩이 없어
+          실측 328×16px 이었다 — 가장 필요한 순간에 가장 누르기 어려운 요소였다. */}
       <Link href="/medications/add?tab=prescription"
-        className="block text-center text-xs text-yc-neutral500 mt-2.5 active:opacity-70">
+        className="flex items-center justify-center min-h-[48px] text-sm text-yc-neutral500 active:opacity-70">
         직접 입력
       </Link>
     </div>

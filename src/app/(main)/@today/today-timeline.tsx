@@ -201,6 +201,9 @@ export default function TodayTimeline({
   }
 
   const pendingCount = slots.filter(s => !s.checked).length
+  // 아직 시간이 안 된 끼니 수 — 일괄 복용은 이것까지 "먹었다"로 기록한다.
+  // 복약 기록이 목적인 앱이라 그 사실을 버튼에 밝힌다(cur < 0 이면 시각 미확정 → 세지 않는다).
+  const notYetDueCount = cur < 0 ? 0 : slots.filter(s => !s.checked && slotMinutes(s.time) > cur).length
 
   return (
     <div className="space-y-6">
@@ -248,9 +251,18 @@ export default function TodayTimeline({
             <button
               type="button"
               onClick={checkAll}
-              className="w-full min-h-[52px] rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center gap-2"
+              className="w-full min-h-[52px] py-3 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors flex items-center justify-center"
             >
-              <Check weight="bold" size={18} /> 오늘 약 전부 한 번에 복용 ({pendingCount}끼니)
+              <span className="flex flex-col items-center leading-tight">
+                <span className="flex items-center gap-2">
+                  <Check weight="bold" size={18} /> 오늘 약 전부 한 번에 복용 ({pendingCount}끼니)
+                </span>
+                {notYetDueCount > 0 && (
+                  <span className="text-sm font-normal opacity-90 mt-0.5">
+                    아직 시간이 안 된 {notYetDueCount}끼니도 포함돼요
+                  </span>
+                )}
+              </span>
             </button>
           )}
           <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] divide-y divide-yc-neutral100 overflow-hidden">
@@ -286,7 +298,7 @@ export default function TodayTimeline({
                   <button
                     type="button"
                     onClick={() => toggleExpand(s.meal)}
-                    className="flex items-center gap-1 text-base font-semibold text-yc-neutral900 active:opacity-70"
+                    className="flex items-center gap-1 min-h-[44px] text-base font-semibold text-yc-neutral900 active:opacity-70"
                   >
                     약 {s.medCount}개
                     <CaretDown weight="bold" size={14} className={`text-yc-neutral400 transition-transform ${expanded.has(s.meal) ? 'rotate-180' : ''}`} />

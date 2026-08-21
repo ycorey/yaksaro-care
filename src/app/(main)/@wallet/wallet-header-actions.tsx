@@ -7,11 +7,11 @@ export function WalletHeaderActions() {
   return (
     <div className="flex items-center gap-2">
       <Link href="/settings" aria-label="설정"
-        className="w-10 h-10 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
+        className="w-11 h-11 flex items-center justify-center rounded-yc-md bg-yc-neutral100 text-yc-neutral600 active:bg-yc-neutral200">
         <GearSix size={20} />
       </Link>
       <Link href="/medications/add"
-        className="flex items-center gap-1 px-4 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700">
+        className="flex items-center gap-1 px-4 h-11 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700">
         <Plus size={18} /> 추가
       </Link>
     </div>

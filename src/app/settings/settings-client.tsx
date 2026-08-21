@@ -40,7 +40,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       role="switch"
       aria-checked={on}
       onClick={onToggle}
-      className="relative rounded-full flex-shrink-0"
+      className="relative rounded-full flex-shrink-0 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-2"
       style={{
         width: 48,
         height: 28,
@@ -258,13 +258,13 @@ export default function SettingsClient({
               <Bell weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-yc-neutral900">복약 시간 알림</p>
-                <p className="text-xs text-yc-neutral500 mt-0.5">약 드실 시간에 알려드려요</p>
+                <p className="text-sm text-yc-neutral500 mt-0.5">약 드실 시간에 알려드려요</p>
               </div>
             </div>
             <Toggle on={alarmEnabled} onToggle={toggleAlarm} />
           </Row>
         </div>
-        <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
+        <p className="text-sm text-yc-neutral500 mt-2 flex items-start gap-1">
           <span className="flex-shrink-0 mt-0.5">ⓘ</span>
           홈 화면에 앱을 추가하면 알림이 더 잘 도착해요.
         </p>
@@ -282,12 +282,12 @@ export default function SettingsClient({
           ))}
         </div>
         {!alarmEnabled ? (
-          <p className="text-xs text-yc-warningText mt-2 flex items-start gap-1">
+          <p className="text-sm text-yc-warningText mt-2 flex items-start gap-1">
             <span className="flex-shrink-0 mt-0.5">ⓘ</span>
             위 <span className="font-semibold">복약 시간 알림</span>을 먼저 켜면 끼니별로 조절할 수 있어요.
           </p>
         ) : (
-          <p className="text-xs text-yc-neutral500 mt-2 flex items-start gap-1">
+          <p className="text-sm text-yc-neutral500 mt-2 flex items-start gap-1">
             <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
             알림은 이 휴대폰에서만 동작하고, 약 정보는 다른 곳으로 보내지 않아요.
           </p>
@@ -357,14 +357,16 @@ export default function SettingsClient({
       <section className="anim-page" style={{ animationDelay: '250ms' }}>
         <p className="text-sm font-semibold text-yc-neutral600 mb-3">계정</p>
         <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+          {/* 위험 색은 되돌릴 수 없는 쪽에만 쓴다 — 반대로 칠해져 있었더니(로그아웃 빨강 /
+              회원 탈퇴 회색) 색만 보고 누르면 정확히 반대로 갔다. */}
           <button onClick={handleLogout}
-            className="w-full px-5 py-4 text-left text-sm font-medium text-yc-error active:bg-yc-errorBg transition-colors">
+            className="w-full px-5 py-4 text-left text-sm font-medium text-yc-neutral700 active:bg-yc-neutral100 transition-colors min-h-[52px]">
             로그아웃
           </button>
           {/* 약사 계정은 셀프 탈퇴 불가 — CASCADE 로 약국·QR·요청 이력까지 함께 사라진다(API 도 403) */}
           {userRole !== 'pharmacist' && (
             <button onClick={() => setDeleteOpen(true)}
-              className="w-full px-5 py-4 text-left text-sm font-medium text-yc-neutral600 border-t border-yc-neutral200 active:bg-yc-neutral100 transition-colors min-h-[52px]">
+              className="w-full px-5 py-4 text-left text-sm font-medium text-yc-error border-t border-yc-neutral200 active:bg-yc-errorBg transition-colors min-h-[52px]">
               회원 탈퇴
             </button>
           )}
