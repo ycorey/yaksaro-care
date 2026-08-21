@@ -34,7 +34,15 @@ const SERVER_STANDALONE = [
   'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
 ]
 // 서버 필요 + 공용 시드 의존(setup/teardown로 감싸야 함).
-const SHARED_SEED = 'run'
+const SHARED_SEED = [
+  'run',
+  // 풀스크린 모달이 뷰포트를 덮는지(애니메이션 래퍼의 will-change 가 fixed 를 가두지 않는지).
+  // 등록하지 않으면 가드가 아니라 그냥 파일이다 — OCR 검증 모달은 이 검사가 없던 72일 동안
+  // 갇힌 채였고 tsc·lint·단위·기존 e2e 가 전부 초록이었다.
+  'ux-overlay-qa',
+  // 안전영역(홈인디케이터) 회귀 — 헤드리스 기본값 0 에서는 안 나는 부류라 34px 을 주입해 잰다.
+  'ux-safe-area-qa',
+]
 
 const arg = process.argv[2]
 const mode = arg === '--db' ? 'db' : arg === '--ui' ? 'ui' : arg === '--help' ? 'help' : 'all'
@@ -91,7 +99,7 @@ if (mode !== 'db') {
     results.push({ label: 'setup', ok: false, sec: '0' })
     console.log('❌ FAIL  setup — 공용 시드 실패, run.mjs 스킵')
   } else {
-    try { run(SHARED_SEED) }
+    try { for (const s of SHARED_SEED) run(s) }
     finally {
       const td = spawnSync(process.execPath, [HERE + 'teardown.mjs'], { stdio: 'inherit' }).status
       console.log(td === 0 ? '· 공용 시드 정리 완료' : '· ⚠️ teardown 경고(수동 확인 권장)')

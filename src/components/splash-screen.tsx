@@ -7,8 +7,11 @@ import { useEffect, useState } from 'react'
  * 그린 화면에서 ㄹ 마크가 선을 그리며 등장 → 워드마크 상승 → 페이드아웃 후 제거.
  * 클라이언트 내비게이션(App Router)에서는 레이아웃이 리마운트되지 않아 다시 뜨지 않는다.
  *
- * 같은 세션 내 새로고침에는 생략(sessionStorage)하되, standalone(설치형 PWA)
- * 실행은 보통 새 세션이라 매 실행 시 보인다 — "pwa 클릭 시 열리는 연출" 의도에 부합.
+ * 같은 세션 안에서는 생략한다(sessionStorage). 설치형(PWA/TWA)도 예외가 아니다 —
+ * 앱을 새로 실행하면 sessionStorage 가 비어 있어 연출은 그대로 나오고,
+ * **앱 안에서 일어나는 하드 내비게이션**(예: OCR 저장 후 location.replace('/wallet'))에서는
+ * 나오지 않는다. 예전에는 standalone 을 이 검사에서 빼 두어, 저장 한 번에 런치 화면이
+ * 다시 뜨는 바람에 사용자에게 "앱이 처음 화면으로 돌아갔다" 로 보였다.
  */
 const MARK = 'M 22 22 L 78 22 L 78 50 L 22 50 L 22 78 L 78 78'
 
@@ -16,16 +19,11 @@ export default function SplashScreen() {
   const [show, setShow] = useState(true)
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia?.('(display-mode: standalone)').matches ||
-      // iOS Safari 설치형
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true
-
     let seen = false
     try { seen = sessionStorage.getItem('yc_splashed') === '1' } catch {}
 
-    // 설치형은 항상, 브라우저는 세션 첫 진입에만 (즉시 숨김도 비동기로 — 캐스케이드 방지)
-    if (seen && !standalone) {
+    // 세션 첫 진입에만 재생 (즉시 숨김도 비동기로 — 캐스케이드 방지)
+    if (seen) {
       const t = setTimeout(() => setShow(false), 0)
       return () => clearTimeout(t)
     }
