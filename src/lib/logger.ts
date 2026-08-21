@@ -37,10 +37,25 @@ function getReporter(): LogReporter | null {
   return (globalThis as ReporterHost)[REPORTER_KEY] ?? null
 }
 
+// Error 의 메시지에 cause 체인을 이어 붙인다 — undici 의 fetch 실패는 message 가
+// 항상 "fetch failed" 이고 진짜 원인(ENOTFOUND·ETIMEDOUT 등)은 cause 에 있다.
+// 이걸 버렸더니 프로덕션 네트워크 장애의 원인이 로그에 남지 않아
+// 임시 진단 배포까지 필요했다(2026-08-21 OCR 장애).
+function describeError(e: Error): string {
+  const parts: string[] = []
+  let cur: unknown = e
+  for (let i = 0; cur instanceof Error && i < 5; i++) {
+    const code = (cur as NodeJS.ErrnoException).code
+    parts.push(code ? `${cur.message} [${code}]` : cur.message)
+    cur = cur.cause
+  }
+  return parts.join(' ← ')
+}
+
 function emit(level: Level, scope: string, message: string, detail?: unknown) {
   const prefix = `[${scope}] ${message}`
-  // Error는 메시지만 추려 노이즈를 줄인다 (스택은 환경 콘솔이 별도 보존)
-  const payload = detail instanceof Error ? detail.message : detail
+  // Error는 메시지+cause 체인만 추려 노이즈를 줄인다 (스택은 환경 콘솔이 별도 보존)
+  const payload = detail instanceof Error ? describeError(detail) : detail
   if (payload === undefined) console[level](prefix)
   else console[level](prefix, payload)
 
