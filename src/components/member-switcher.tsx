@@ -97,7 +97,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
   return (
     <div className="relative">
       <button onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-3.5 h-10 rounded-full bg-yc-neutral100 active:bg-yc-neutral200 text-sm font-semibold text-yc-neutral700">
+        className="flex items-center gap-1.5 px-3.5 h-11 rounded-full bg-yc-neutral100 active:bg-yc-neutral200 text-sm font-semibold text-yc-neutral700">
         <Users weight="fill" size={15} className="text-yc-green700" />
         {active?.name ?? '본인'}
         <CaretDown size={13} weight="bold" className="text-yc-neutral400" />

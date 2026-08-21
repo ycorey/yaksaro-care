@@ -16,7 +16,12 @@ export default async function MedicationsLayout({ children }: { children: React.
   return (
     <div className="min-h-screen bg-[#EFEBE2]">
       <DashboardNav user={user} profile={profile} />
-      <main className="pb-24 md:pb-0 md:ml-64">
+      {/* 하단 탭바(68px + 안전영역)를 덮을 여백. 고정 pb-24(96px)로 두면
+          홈인디케이터 기기에서 102px 크롬에 마지막 줄이 가린다. */}
+      <main
+        className="md:pb-0 md:ml-64"
+        style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
+      >
         <div className="max-w-[430px] mx-auto px-4 pt-6 pb-10">
           <div className="anim-fwd">{children}</div>
         </div>

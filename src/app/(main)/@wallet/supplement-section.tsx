@@ -73,7 +73,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
           </div>
         </div>
         <Link href="/medications/add?tab=supplement"
-          className="text-xs font-semibold text-yc-green700 bg-yc-green100 active:opacity-90 px-3 py-1.5 rounded-yc-md flex-shrink-0">
+          className="flex items-center text-sm font-semibold text-yc-green700 bg-yc-green100 active:opacity-90 px-3 min-h-[44px] rounded-yc-md flex-shrink-0">
           직접 등록
         </Link>
       </div>

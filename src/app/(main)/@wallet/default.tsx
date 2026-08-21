@@ -19,7 +19,7 @@ import { getLifestyleContent } from '@/lib/lifestyle-info/server'
 import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate'
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
-import { weekdayLabels, type ScheduleType } from '@/lib/med-schedule'
+import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
@@ -69,13 +69,6 @@ export default async function WalletPage() {
   const suppRaws = activeMeds.filter(m => !!m.supplement)
   const rxRaws   = activeMeds.filter(m => !!m.prescription_id && !m.supplement)
   const otcRaws  = activeMeds.filter(m => !m.prescription_id  && !m.supplement)
-
-  // 복용 방식 배지 라벨 (필요시 / 매주 월·목). daily면 null.
-  function scheduleLabelOf(type: string | null | undefined, dow: number[] | null | undefined): string | null {
-    if (type === 'prn') return '필요시'
-    if (type === 'weekly') { const w = weekdayLabels(dow); return w ? `매주 ${w}` : '매주' }
-    return null
-  }
 
   function toCard(med: typeof activeMeds[number]): MedCard {
     const drug = med.drug

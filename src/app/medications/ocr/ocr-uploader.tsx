@@ -445,15 +445,24 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
               <img src={preview} alt="처방전 미리보기" className="max-h-60 mx-auto rounded-yc-md object-contain" />
             </div>
           ) : (
-            <div className="border-2 border-dashed border-yc-neutral200 rounded-yc-lg p-8 text-center">
+            /* 화면에서 가장 강한 행동 유도(카메라 48px + 점선 + 명령형 문구)인데
+               순수 div 라 눌러도 아무 일이 없었다. 모바일엔 드래그앤드롭이 없으므로
+               이 영역은 아무 데서도 쓰이지 않았다 — 첫 탭이 무반응이면 "고장"으로 읽힌다.
+               권장 경로(앨범)로 연결해 화면에서 가장 큰 탭 타깃으로 만든다. */
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="w-full border-2 border-dashed border-yc-neutral200 rounded-yc-lg p-8 text-center active:bg-yc-neutral50 transition-colors"
+            >
               <Camera size={48} weight="light" className="text-yc-neutral400 mx-auto mb-3" />
               <p className="font-medium text-yc-neutral700">처방전 사진을 올려주세요</p>
-            </div>
+              <p className="text-sm text-yc-neutral500 mt-1">눌러서 앨범에서 선택</p>
+            </button>
           )}
 
           <div className="flex items-start gap-2 bg-yc-green50 border border-yc-green100 rounded-yc-md px-4 py-3">
             <Lightbulb weight="fill" size={16} className="text-yc-green600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-yc-neutral600 leading-relaxed">
+            <p className="text-sm text-yc-neutral600 leading-relaxed">
               <span className="font-semibold text-yc-neutral800">① 폰 카메라로 처방전을 먼저 찍고 → ② 아래 &lsquo;앨범에서 선택&rsquo;</span>으로 불러오면 가장 잘 돼요. 처방전 전체가 화면에 가득 차게, 밝은 곳에서 평평하게 펴고 찍어 주세요.
             </p>
           </div>
@@ -493,7 +502,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           >
             <Camera weight="fill" size={20} /> 카메라로 바로 촬영
           </button>
-          <p className="text-xs text-yc-neutral500 leading-relaxed text-center px-2">
+          <p className="text-sm text-yc-neutral500 leading-relaxed text-center px-2">
             일부 휴대폰은 앱 안에서 바로 촬영하면 앱이 재시작되며 사진이 사라질 수 있어요.
             그럴 땐 위 <span className="font-semibold text-yc-neutral700">&lsquo;앨범에서 선택&rsquo;</span>을 이용해 주세요.
           </p>
