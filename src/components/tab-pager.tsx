@@ -166,16 +166,29 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
             className="shrink-0 w-full h-full overflow-y-auto overflow-x-hidden yc-noscrollbar bg-background"
             style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="max-w-[430px] mx-auto px-4 pt-5 pb-28 min-h-full">{panel}</div>
+            {/* 하단 크롬(탭바 68 + 도트띠 32 + 안전영역)보다 여백이 작으면 마지막 콘텐츠가
+                끝까지 스크롤해도 가려진다 — 안전영역을 여백에 포함시킨다. */}
+            <div
+              className="max-w-[430px] mx-auto px-4 pt-5 min-h-full"
+              style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
+            >{panel}</div>
           </div>
         ))}
       </div>
 
       {/* 페이지 도트 — 현재 위치 + "옆으로 넘길 수 있음" 표시. 눌러도 이동하도록 최소 핸들러 부여
-          (실버가 페이지네이션 컨트롤로 오인해 탭했을 때 무반응이면 "고장"으로 읽힘 — 7차 M1) */}
+          (실버가 페이지네이션 컨트롤로 오인해 탭했을 때 무반응이면 "고장"으로 읽힘 — 7차 M1)
+
+          배경 없이 본문 위에 떠 있었더니 두 가지가 동시에 일어났다:
+          ① 스크롤 중 이 띠를 지나는 글자가 도트에 덮였다(캘린더 범례가 통째로 가려져
+             달력의 색점을 해석할 방법이 사라졌다) ② 도트는 실제 버튼이라, 본문 하단을
+             누르려던 탭을 가로채 엉뚱한 탭으로 튀었다.
+          → 흰 배경을 주고 탭바 바로 위에 붙여, 본문 위가 아니라 하단 크롬의 일부가 되게 한다.
+          도트는 하단 탭바(72×67px)와 기능이 겹치는 보조 컨트롤이라 높이 32px 를 허용하되,
+          가로는 44px 로 확보한다. */}
       <div
-        className="md:hidden fixed left-0 right-0 z-40 flex justify-center"
-        style={{ bottom: 'calc(70px + env(safe-area-inset-bottom))' }}
+        className="md:hidden fixed left-0 right-0 z-40 flex justify-center items-center h-8 bg-white"
+        style={{ bottom: 'calc(68px + env(safe-area-inset-bottom))' }}
       >
         {TABS.map((t, i) => (
           <button
@@ -184,7 +197,7 @@ export default function TabPager({ home, wallet, today, calendar, share }: Props
             onClick={() => { if (i !== displayIndex) { setDisplayIndex(i); router.push(t) } }}
             aria-label={`${TAB_LABELS[i]} 탭으로 이동`}
             aria-current={i === displayIndex ? 'page' : undefined}
-            className="p-2 flex items-center justify-center"
+            className="min-w-[44px] h-8 flex items-center justify-center"
           >
             <span
               className={`rounded-full transition-all duration-200 ${

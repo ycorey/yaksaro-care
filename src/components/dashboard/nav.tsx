@@ -91,7 +91,11 @@ export default function DashboardNav({ user, profile }: Props) {
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t border-yc-neutral200 bg-white"
         style={{
-          height: '68px',
+          // 안전영역은 탭 높이에 "더한다". box-sizing:border-box 라 height 를 68px 로 두면
+          // 패딩이 안쪽을 먹어, 홈인디케이터 기기에서 탭 높이가 67px → 33px 로 붕괴한다.
+          // 헤드리스 브라우저는 safe-area 가 0 이라 일반 e2e 로는 잡히지 않는다
+          // (회귀 검사: e2e/ux-safe-area-qa.mjs 가 34px 을 강제 주입해 확인한다).
+          height: 'calc(68px + env(safe-area-inset-bottom))',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -107,7 +111,7 @@ export default function DashboardNav({ user, profile }: Props) {
                 weight={active ? 'fill' : 'light'}
                 color={active ? 'var(--color-yc-green600)' : 'var(--color-yc-neutral500)'}
               />
-              <span className={`text-xs font-semibold leading-none ${active ? 'text-yc-green600' : 'text-yc-neutral500'}`}>
+              <span className={`text-[0.8125rem] font-semibold leading-none ${active ? 'text-yc-green600' : 'text-yc-neutral500'}`}>
                 {label}
               </span>
             </Link>
