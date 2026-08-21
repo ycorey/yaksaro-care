@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Flask, Check } from '@phosphor-icons/react'
 import MedCardItem from './med-card-item'
 import { type MedCard } from './prescription-section'
-import { defaultMealKeys, type Meal } from '@/lib/meal-slots'
+import { type Meal } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
 import { logger } from '@/lib/logger'
 
@@ -24,11 +24,8 @@ function mealsFor(mealTimes: string[]) {
 }
 
 export default function SupplementSection({ meds, serverChecks }: { meds: MedCard[], serverChecks: Record<string, boolean> }) {
-  const mealTimesUnion = [...new Set(meds.flatMap(m => m.mealTimes ?? []))]
-  const maxDoses = Math.max(0, ...meds.map(m => m.dosesPerDay ?? 0)) || 3
-  const activeMeals = mealTimesUnion.length > 0
-    ? mealsFor(mealTimesUnion)
-    : mealsFor(defaultMealKeys(maxDoses))
+  // todayMeals: 서버가 약별로 계산(폴백 + 등록 당일 지나간 끼니 제외 — 처방 카드와 동일 규칙)
+  const activeMeals = mealsFor([...new Set(meds.flatMap(m => m.todayMeals ?? m.mealTimes ?? []))])
 
   const [checks, setChecks] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
@@ -106,7 +103,8 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
                 </li>
               ))}
             </ul>
-            {/* 영양제 일괄 복약 버튼 */}
+            {/* 영양제 일괄 복약 버튼 — 오늘 끼니가 전부 걸러지면(늦은 등록) 빈 구분선을 남기지 않는다 */}
+            {activeMeals.length > 0 && (
             <div className="space-y-2 pt-4 border-t border-yc-green600/20 mt-4">
               {activeMeals.map(({ key, label, done }) => {
                 const Icon = MEAL_ICONS[key]
@@ -127,6 +125,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
                 )
               })}
             </div>
+            )}
             <Link href="/medications/add?tab=supplement"
               className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-yc-green600 font-medium bg-yc-green50 rounded-yc-lg active:opacity-90">
               + 영양제 추가
