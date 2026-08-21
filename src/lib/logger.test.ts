@@ -58,3 +58,23 @@ test('logger: reporter가 던져도 로깅·앱이 깨지지 않음(흡수)', ()
     console.error = orig
   }
 })
+
+test('logger: 콘솔에 Error 의 cause 체인이 남는다 — "fetch failed" 뒤의 진짜 원인', () => {
+  // 회귀(8/21): undici 의 fetch 실패는 message 가 항상 "fetch failed" 이고 진짜 원인
+  // (ENOTFOUND·ETIMEDOUT 등)은 cause 에 있다. emit 이 message 만 추려서 원인이
+  // 로그에 남지 않았고, 프로덕션 장애 진단에 임시 배포까지 필요했다.
+  const orig = { error: console.error, warn: console.warn, info: console.info }
+  const lines: unknown[][] = []
+  console.error = (...a: unknown[]) => { lines.push(a) }
+  console.warn = () => {}; console.info = () => {}
+  try {
+    const inner = Object.assign(new Error('getaddrinfo ENOTFOUND example.com'), { code: 'ENOTFOUND' })
+    const outer = new Error('fetch failed', { cause: inner })
+    logger.error('OCR', '처리 오류', outer)
+    const payload = String(lines[0]?.[1] ?? '')
+    assert.ok(payload.includes('fetch failed'), `겉메시지 없음: ${payload}`)
+    assert.ok(payload.includes('ENOTFOUND'), `cause 유실: ${payload}`)
+  } finally {
+    Object.assign(console, orig)
+  }
+})
