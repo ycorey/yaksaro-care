@@ -61,5 +61,50 @@ export async function GET(req: Request) {
     }
   }
 
+  // ② OpenAI 도달성 — 파이프라인에서 try 없이 최상위로 던지는 유일한 fetch 라 최유력 후보
+  try {
+    const res = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}` },
+      signal: AbortSignal.timeout(15_000),
+    })
+    out.openai = { reachable: true, httpStatus: res.status }
+  } catch (e) {
+    const chain: string[] = []
+    let cur: unknown = e
+    for (let i = 0; cur && i < 5; i++) {
+      const err = cur as { name?: string; message?: string; code?: string; cause?: unknown }
+      chain.push(`${err.name ?? 'Error'}: ${err.message ?? ''}${err.code ? ` [${err.code}]` : ''}`)
+      cur = err.cause
+    }
+    out.openai = { reachable: false, errorChain: chain }
+  }
+
+  // ③ CLOVA 대형 페이로드 — 실제 OCR 는 수 MB base64 를 싣는다. 작은 진단만 통과하고
+  //    큰 본문 전송 중 끊기는 부류(fetch failed)를 배제하기 위해 ~3MB 로 재현한다.
+  if (url) {
+    try {
+      const big = 'A'.repeat(3 * 1024 * 1024)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-OCR-SECRET': secret },
+        body: JSON.stringify({
+          version: 'V2', requestId: 'diag-big', timestamp: Date.now(),
+          images: [{ format: 'jpg', name: 'diag-big', data: big }],
+        }),
+        signal: AbortSignal.timeout(25_000),
+      })
+      out.clovaBig = { reachable: true, httpStatus: res.status, bodyHead: (await res.text()).slice(0, 80) }
+    } catch (e) {
+      const chain: string[] = []
+      let cur: unknown = e
+      for (let i = 0; cur && i < 5; i++) {
+        const err = cur as { name?: string; message?: string; code?: string; cause?: unknown }
+        chain.push(`${err.name ?? 'Error'}: ${err.message ?? ''}${err.code ? ` [${err.code}]` : ''}`)
+        cur = err.cause
+      }
+      out.clovaBig = { reachable: false, errorChain: chain }
+    }
+  }
+
   return NextResponse.json(out)
 }
