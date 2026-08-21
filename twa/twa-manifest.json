@@ -1,0 +1,62 @@
+{
+  "packageId": "kr.co.yaksaro.care",
+  "host": "care.yaksaro.co.kr",
+  "name": "약사로케어",
+  "launcherName": "약사로케어",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#0E6E54",
+  "themeColorDark": "#0E6E54",
+  "navigationColor": "#0E6E54",
+  "navigationColorDark": "#0E6E54",
+  "navigationDividerColor": "#0E6E54",
+  "navigationDividerColorDark": "#0E6E54",
+  "backgroundColor": "#EFEBE2",
+  "enableNotifications": true,
+  "startUrl": "/home",
+  "iconUrl": "https://care.yaksaro.co.kr/icons/icon-512.png",
+  "maskableIconUrl": "https://care.yaksaro.co.kr/icons/maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "yaksaro-care"
+  },
+  "appVersionName": "1.0.0",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "내 약지갑",
+      "shortName": "약지갑",
+      "url": "/wallet",
+      "chosenIconUrl": "https://care.yaksaro.co.kr/icons/icon-192.png"
+    },
+    {
+      "name": "오늘 복약",
+      "shortName": "오늘복약",
+      "url": "/today",
+      "chosenIconUrl": "https://care.yaksaro.co.kr/icons/icon-192.png"
+    },
+    {
+      "name": "처방전 촬영",
+      "shortName": "촬영",
+      "url": "/medications/ocr",
+      "chosenIconUrl": "https://care.yaksaro.co.kr/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://care.yaksaro.co.kr/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://care.yaksaro.co.kr/",
+  "minSdkVersion": 23,
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersionCodeOffset": 0
+}

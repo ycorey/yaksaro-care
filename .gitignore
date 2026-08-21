@@ -66,3 +66,17 @@ e2e/.artifacts/
 # Python (landing-deploy 폰트 서브셋 스크립트)
 __pycache__/
 *.pyc
+
+# TWA (안드로이드 앱 포장)
+# ⚠ 서명 키는 절대 커밋 금지 — 유출되면 남이 이 앱을 사칭해 업데이트할 수 있고,
+#    잃어버리면 스토어에 올린 앱을 영영 업데이트할 수 없다. 백업은 구글드라이브.
+twa/*.keystore
+twa/*.jks
+twa/signing-key-info.txt
+# 빌드 산출물
+twa/app/build/
+twa/build/
+twa/.gradle/
+twa/*.apk
+twa/*.aab
+twa/*.idsig

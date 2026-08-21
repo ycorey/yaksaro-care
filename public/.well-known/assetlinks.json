@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.co.yaksaro.care",
+      "sha256_cert_fingerprints": [
+        "7D:88:ED:DE:69:EE:8F:EB:C6:D2:9F:1A:24:7A:1E:9E:56:AA:61:AE:A5:9F:A8:72:FF:45:0E:DB:35:F2:AB:01"
+      ]
+    }
+  }
+]
