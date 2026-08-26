@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 // 약품 정보 하이브리드 조회 (둘 다 data.go.kr 공식 API, 승인된 키 사용)
 //  1) 의약품 허가정보(DrugPrdtPrmsnInfoService) — 거의 모든 허가 의약품 매칭.
 //     분류·성분·제조사·전문/일반·약 이미지 제공.
 //  2) e약은요(DrbEasyDrugInfoService) — 환자용 효능·효과/사용법/주의 텍스트(일부 약만).
-// 결과는 24시간 캐시.
+//     item_seq 정확 조회 우선, 이름 후보 폴백. 응답은 drug_summaries 에 30일 DB 캐시(065).
+// 결과는 24시간 CDN 캐시.
 
 // ── 성분명 어간 추출: "모사프리드시트르산염이수화물" → "모사프리드" ──
 function ingredientStem(ing: string): string {
@@ -66,18 +68,22 @@ const fetchLicenseByEdi  = (edi: string)      => fetchLicenseQuery('edi_code', e
 
 // ── 2) e약은요 ───────────────────────────────────────────────────────
 type EasyDrugItem = {
-  itemName?:        string
-  efcyQesitm?:      string  // 효능·효과
-  useMethodQesitm?: string  // 사용법
-  atpnQesitm?:      string  // 주의사항
+  itemSeq?:             string
+  itemName?:            string
+  efcyQesitm?:          string  // 효능·효과
+  useMethodQesitm?:     string  // 사용법
+  atpnQesitm?:          string  // 주의사항
+  intrcQesitm?:         string  // 상호작용
+  seQesitm?:            string  // 부작용
+  depositMethodQesitm?: string  // 보관법
 }
 
-async function fetchEasyDrug(itemName: string): Promise<EasyDrugItem | null> {
+async function fetchEasyDrugQuery(param: string, value: string): Promise<EasyDrugItem | null> {
   const key = process.env.MFDS_EASY_DRUG_KEY
   if (!key) return null
   const url = 'https://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList'
     + `?serviceKey=${encodeURIComponent(key)}`
-    + `&itemName=${encodeURIComponent(itemName)}`
+    + `&${param}=${encodeURIComponent(value)}`
     + '&numOfRows=1&pageNo=1&type=json'
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
@@ -87,6 +93,82 @@ async function fetchEasyDrug(itemName: string): Promise<EasyDrugItem | null> {
   } catch {
     return null
   }
+}
+
+const fetchEasyDrug = (itemName: string) => fetchEasyDrugQuery('itemName', itemName)
+
+// e약은요 6필드 요약 — 캐시(drug_summaries)와 외부 응답을 같은 모양으로 수렴
+type EasySummary = {
+  itemName:   string | null
+  efcy:       string | null
+  useMethod:  string | null
+  atpn:       string | null
+  intrc:      string | null
+  sideEffect: string | null
+  storage:    string | null
+}
+
+const EASY_CACHE_DAYS = 30
+
+// 캐시 조회 → 미스 시 itemSeq 정확 조회 → 이름 후보 폴백 → 결과를 캐시에 적재.
+// 결과 없음은 캐싱하지 않는다(신규 등재 시 자연 반영 — evidence 관례).
+// 캐시 적재 키는 응답 자신의 itemSeq — 이름 폴백으로 찾은 요약도 그 약의 것으로 저장돼야 맞다.
+async function resolveEasy(itemSeq: string | null, cands: string[]): Promise<EasySummary | null> {
+  if (itemSeq) {
+    try {
+      const admin = createAdminClient()
+      const { data: hit } = await admin
+        .from('drug_summaries')
+        .select('efficacy, usage, caution, interaction, side_effect, storage')
+        .eq('item_seq', itemSeq)
+        .gt('fetched_at', new Date(Date.now() - EASY_CACHE_DAYS * 864e5).toISOString())
+        .maybeSingle()
+      if (hit) {
+        return {
+          itemName: null,
+          efcy: hit.efficacy, useMethod: hit.usage, atpn: hit.caution,
+          intrc: hit.interaction, sideEffect: hit.side_effect, storage: hit.storage,
+        }
+      }
+    } catch { /* 캐시 조회 실패는 외부 호출로 진행 */ }
+  }
+
+  const item = itemSeq
+    ? (await fetchEasyDrugQuery('itemSeq', itemSeq)) ?? (await findFirst(cands, fetchEasyDrug))
+    : await findFirst(cands, fetchEasyDrug)
+  if (!item) return null
+
+  const summary: EasySummary = {
+    itemName:   item.itemName ?? null,
+    efcy:       item.efcyQesitm ?? null,
+    useMethod:  item.useMethodQesitm ?? null,
+    atpn:       item.atpnQesitm ?? null,
+    intrc:      item.intrcQesitm ?? null,
+    sideEffect: item.seQesitm ?? null,
+    storage:    item.depositMethodQesitm ?? null,
+  }
+
+  if (item.itemSeq) {
+    try {
+      const admin = createAdminClient()
+      const { error } = await admin.from('drug_summaries').upsert(
+        {
+          item_seq:    String(item.itemSeq),
+          efficacy:    summary.efcy,
+          usage:       summary.useMethod,
+          caution:     summary.atpn,
+          interaction: summary.intrc,
+          side_effect: summary.sideEffect,
+          storage:     summary.storage,
+          fetched_at:  new Date().toISOString(),
+        },
+        { onConflict: 'item_seq' },
+      )
+      if (error) logger.warn('drugs/info', 'e약은요 캐시 저장 실패', error.message)
+    } catch { /* 캐시는 best-effort — 응답은 그대로 나간다 */ }
+  }
+
+  return summary
 }
 
 // 후보들을 순서대로 시도해 첫 매칭 반환
@@ -126,12 +208,12 @@ export async function GET(request: Request) {
   const cands = searchCandidates(name ?? '', ingredient)
 
   // 허가정보: item_seq(품목기준코드) > EDI 코드 > 이름 순으로 정확도 우선
-  // e약은요(효능 텍스트): 성분명/약품명 후보로 검색
+  // e약은요(효능 텍스트): DB 캐시 → itemSeq 정확 조회 → 성분명/약품명 후보 폴백
   const [lic, easy] = await Promise.all([
     (itemSeq  ? fetchLicenseQuery('item_seq', itemSeq) : Promise.resolve(null))
       .then(r => r ?? (ediCode ? fetchLicenseByEdi(ediCode) : Promise.resolve(null)))
       .then(r => r ?? findFirst(cands, fetchLicense)),
-    findFirst(cands, fetchEasyDrug),
+    resolveEasy(itemSeq, cands),
   ])
 
   if (!lic && !easy) return NextResponse.json({ found: false })
@@ -157,9 +239,12 @@ export async function GET(request: Request) {
       category:   cleanCategory(lic?.PRDUCT_TYPE),
       classType:  lic?.SPCLTY_PBLC ?? null,
       imageUrl:   lic?.BIG_PRDT_IMG_URL ?? null,
-      efcy:       easy?.efcyQesitm ?? null,
-      useMethod:  easy?.useMethodQesitm ?? null,
-      atpn:       easy?.atpnQesitm ?? null,
+      efcy:       easy?.efcy ?? null,
+      useMethod:  easy?.useMethod ?? null,
+      atpn:       easy?.atpn ?? null,
+      intrc:      easy?.intrc ?? null,
+      sideEffect: easy?.sideEffect ?? null,
+      storage:    easy?.storage ?? null,
     },
     { headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' } }
   )

@@ -25,6 +25,9 @@ type Info = {
   efcy?:      string | null
   useMethod?: string | null
   atpn?:      string | null
+  intrc?:      string | null
+  sideEffect?: string | null
+  storage?:    string | null
 }
 
 export type MedCardItemProps = {
@@ -103,7 +106,7 @@ export default function MedCardItem(p: MedCardItemProps) {
   }
 
   const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays)
-  const hasDetail = info?.found && (info.efcy || info.useMethod || info.atpn)
+  const hasDetail = info?.found && (info.efcy || info.useMethod || info.atpn || info.intrc || info.sideEffect || info.storage)
 
   // 수정 진입 시 현재 값으로 항상 리셋 → 한 번 수정 후 재수정이 막히던 문제 해결
   // (picked가 남아 자동완성 검색이 멈추거나, 직전 편집값이 그대로 남는 현상 방지)
@@ -328,9 +331,15 @@ export default function MedCardItem(p: MedCardItemProps) {
                 </button>
                 {open && (
                   <div className="bg-yc-neutral50 rounded-yc-md px-3 py-2.5 mt-1.5 space-y-2 text-sm text-yc-neutral700 leading-relaxed">
-                    {info?.efcy      && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
-                    {info?.useMethod && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
-                    {info?.atpn      && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
+                    {info?.efcy       && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
+                    {info?.useMethod  && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
+                    {info?.atpn       && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
+                    {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
+                    {info?.sideEffect && <p><span className="font-semibold">부작용 </span>{info.sideEffect}</p>}
+                    {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
+                    <p className="text-xs text-yc-neutral500 pt-1 border-t border-yc-neutral100">
+                      자료: 식품의약품안전처 · 정확한 판단은 담당 약사와 상담하세요
+                    </p>
                   </div>
                 )}
               </div>

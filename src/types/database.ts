@@ -93,6 +93,39 @@ export type Database = {
           },
         ]
       }
+      drug_summaries: {
+        Row: {
+          caution: string | null
+          efficacy: string | null
+          fetched_at: string
+          interaction: string | null
+          item_seq: string
+          side_effect: string | null
+          storage: string | null
+          usage: string | null
+        }
+        Insert: {
+          caution?: string | null
+          efficacy?: string | null
+          fetched_at?: string
+          interaction?: string | null
+          item_seq: string
+          side_effect?: string | null
+          storage?: string | null
+          usage?: string | null
+        }
+        Update: {
+          caution?: string | null
+          efficacy?: string | null
+          fetched_at?: string
+          interaction?: string | null
+          item_seq?: string
+          side_effect?: string | null
+          storage?: string | null
+          usage?: string | null
+        }
+        Relationships: []
+      }
       drugs: {
         Row: {
           barcode: string | null
