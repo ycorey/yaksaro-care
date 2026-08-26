@@ -93,6 +93,57 @@ export type Database = {
           },
         ]
       }
+      drug_identification: {
+        Row: {
+          color_class1: string | null
+          color_class2: string | null
+          drug_shape: string | null
+          form_code_name: string | null
+          image_url: string | null
+          item_seq: string
+          leng_long: number | null
+          leng_short: number | null
+          line_back: string | null
+          line_front: string | null
+          print_back: string | null
+          print_front: string | null
+          thick: number | null
+          updated_at: string
+        }
+        Insert: {
+          color_class1?: string | null
+          color_class2?: string | null
+          drug_shape?: string | null
+          form_code_name?: string | null
+          image_url?: string | null
+          item_seq: string
+          leng_long?: number | null
+          leng_short?: number | null
+          line_back?: string | null
+          line_front?: string | null
+          print_back?: string | null
+          print_front?: string | null
+          thick?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color_class1?: string | null
+          color_class2?: string | null
+          drug_shape?: string | null
+          form_code_name?: string | null
+          image_url?: string | null
+          item_seq?: string
+          leng_long?: number | null
+          leng_short?: number | null
+          line_back?: string | null
+          line_front?: string | null
+          print_back?: string | null
+          print_front?: string | null
+          thick?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drug_summaries: {
         Row: {
           caution: string | null
