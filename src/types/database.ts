@@ -177,6 +177,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dur_single_flags: {
+        Row: {
+          description: string | null
+          flag_type: string
+          group_code: string
+          id: string
+          item_seq: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          flag_type: string
+          group_code?: string
+          id?: string
+          item_seq: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          flag_type?: string
+          group_code?: string
+          id?: string
+          item_seq?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dur_shadow_logs: {
         Row: {
           created_at: string | null

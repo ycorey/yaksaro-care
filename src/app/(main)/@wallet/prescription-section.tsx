@@ -28,6 +28,8 @@ export type MedCard = {
   scheduleLabel:         string | null
   scheduleType:          ScheduleType
   hasInteractionWarning: boolean
+  durElderly:            boolean        // DUR 노인주의 등재 사실(066)
+  durDupGroup:           string | null  // 겹친 효능군명 — 같은 군 약이 2개 이상일 때만
 }
 
 export type HospitalGroup = {
@@ -292,6 +294,7 @@ function PrescriptionCard({
                   initialImage={med.imageUrl} itemSeq={med.itemSeq}
                   doseAmount={med.doseAmount} dosesPerDay={med.dosesPerDay} totalDays={med.totalDays}
                   scheduleLabel={med.scheduleLabel}
+                  durElderly={med.durElderly} durDupGroup={med.durDupGroup}
                 />
               </li>
             ))}

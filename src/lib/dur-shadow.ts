@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkInteractions } from '@/lib/dur'
+import { getDurFlagsByItemSeq, resolveDuplicates } from '@/lib/dur-flags'
 import { logger } from '@/lib/logger'
 import { applyMemberScope, type Member } from '@/lib/member'
 
@@ -27,6 +28,27 @@ export function logDurShadow(
         acc[i.severity] = (acc[i.severity] ?? 0) + 1
         return acc
       }, {} as Record<string, number>)
+
+      // 단일 약 플래그(066) 카운트 합류 — 기존 키(severity 값)와 이름공간이 겹치지 않고,
+      // 값이 0이면 키를 넣지 않아 기존 로그 모양이 변하지 않는다.
+      try {
+        const { data: drugRows } = await admin
+          .from('drugs')
+          .select('item_seq')
+          .in('id', drugIds)
+        const itemSeqs = (drugRows ?? []).map(d => d.item_seq).filter((s): s is string => !!s)
+        if (itemSeqs.length > 0) {
+          const flags = await getDurFlagsByItemSeq(admin, itemSeqs)
+          const elderlyCount = itemSeqs.filter(s => flags.get(s)?.elderly).length
+          const dupGroups = new Set(
+            [...resolveDuplicates(flags, itemSeqs).values()].filter((g): g is string => !!g),
+          )
+          if (elderlyCount > 0) severitySummary.elderly_caution = elderlyCount
+          if (dupGroups.size > 0) severitySummary.efficacy_duplicate = dupGroups.size
+        }
+      } catch (e) {
+        logger.warn('DUR shadow', 'single-flag summary failed', e)
+      }
 
       await admin.from('dur_shadow_logs').insert({
         user_id:           userId,

@@ -43,6 +43,8 @@ export type MedCardItemProps = {
   dosesPerDay:   number | null
   totalDays:     number | null
   scheduleLabel?: string | null  // '필요시' · '매주 월·목' (daily면 없음)
+  durElderly?:   boolean         // DUR 노인주의 등재 사실 — 판정이 아니라 등재 표시(066)
+  durDupGroup?:  string | null   // 겹친 효능군명 — 같은 군 약이 함께 등록됐을 때만
 }
 
 function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
@@ -320,6 +322,18 @@ export default function MedCardItem(p: MedCardItemProps) {
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {info.category && <span className="text-xs bg-yc-neutral100 text-yc-neutral600 rounded-full px-2.5 py-0.5">{info.category}</span>}
                 {info.classType && <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{info.classType}</span>}
+              </div>
+            )}
+
+            {/* DUR 등재 배지 — 판정·지시 아님: 식약처 등재 사실만 표시(066). 상세·출처는 아래 토글 안 */}
+            {(p.durElderly || p.durDupGroup) && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {p.durElderly && (
+                  <span className="text-xs font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-full px-2.5 py-0.5">노인주의 등재</span>
+                )}
+                {p.durDupGroup && (
+                  <span className="text-xs font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-full px-2.5 py-0.5">같은 효능군({p.durDupGroup}) 약이 함께 등록됨</span>
+                )}
               </div>
             )}
 

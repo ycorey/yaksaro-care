@@ -18,6 +18,7 @@
     "etl:ingredients": "node scripts/etl-ingredients.mjs",
     "etl:drug-barcode": "node scripts/etl-drug-barcode.mjs",
     "etl:supplement-barcode": "node scripts/etl-supplement-barcode.mjs",
+    "etl:dur-flags": "node scripts/etl-dur-flags.mjs",
     "smoke": "node scripts/smoke-production.mjs"
   },
   "dependencies": {
