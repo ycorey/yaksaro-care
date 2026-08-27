@@ -50,6 +50,7 @@ const api = async (qs) => {
 }
 
 const manySeqs = []
+let preExisting = []   // 픽스처가 덮어쓴 실데이터 스냅샷 — finally 에서 원복
 const browser = await chromium.launch()
 try {
   // ── 픽스처 시드 (마커 각인 — 실데이터와 격리)
@@ -66,6 +67,12 @@ try {
     manySeqs.push(d.item_seq)
     rows.push({ item_seq: d.item_seq, drug_shape: '팔각형', color_class1: '청록', print_front: 'YKSRMANY', print_back: null })
   }
+  // ⚠️ ETL 적재 후의 테이블에는 빌린 item_seq 에 실데이터가 있을 수 있다 — 덮기 전에 스냅샷.
+  //    (최초 버전은 무조건 delete 로 정리해 실행 7행을 지웠다. 지운 게 아니라 되돌려야 한다.)
+  const { data: snap } = await admin.from('drug_identification').select('*')
+    .in('item_seq', rows.map(r => r.item_seq))
+  preExisting = snap ?? []
+
   const { error: seedErr } = await admin.from('drug_identification').upsert(rows, { onConflict: 'item_seq' })
   if (seedErr) throw new Error('seed: ' + seedErr.message)
 
@@ -123,8 +130,16 @@ try {
   ok(await page.getByText('낱알로 찾기').first().isVisible().catch(() => false), '방법 선택 화면에 진입 카드')
 } finally {
   await browser.close().catch(() => {})
+  // 픽스처 정리: 원래 없던 행만 삭제, 실데이터가 있던 행은 스냅샷으로 원복
   const seeded = [FIX_A.item_seq, FIX_B.item_seq, FIX_C.item_seq, GHOST_SEQ, ...manySeqs]
-  await admin.from('drug_identification').delete().in('item_seq', seeded)
+  const hadReal = new Set(preExisting.map(r => r.item_seq))
+  const toDelete = seeded.filter(s => !hadReal.has(s))
+  if (toDelete.length) await admin.from('drug_identification').delete().in('item_seq', toDelete)
+  if (preExisting.length) {
+    const { error: restoreErr } = await admin.from('drug_identification').upsert(preExisting, { onConflict: 'item_seq' })
+    if (restoreErr) console.error('⚠️ 실데이터 원복 실패 — npm run etl:pill-id 로 재적재 필요:', restoreErr.message)
+    else console.log(`  [정리] 실데이터 ${preExisting.length}행 원복 · 픽스처 ${toDelete.length}행 삭제`)
+  }
   await admin.auth.admin.deleteUser(uid).catch(() => {})
 }
 
