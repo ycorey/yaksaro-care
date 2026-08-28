@@ -95,15 +95,22 @@ async function searchPubmed(query, retmax = 5) {
   } catch { return [] }
 }
 
-async function writeBody(disease, topic, papers) {
-  const user = `질환군: ${disease}\n주제: ${topic}\n\n아래 PubMed 초록들을 근거로, "${disease}를 관리하는 분들"에게 도움이 될 수 있는 ${topic} 관련 일반 정보를 2~3문장으로 작성하세요.\n\n` +
+async function writeContent(disease, topic, papers) {
+  const user = `질환군: ${disease}\n주제: ${topic}\n\n아래 PubMed 초록들을 근거로, "${disease}를 관리하는 분들"에게 도움이 될 수 있는 ${topic} 관련 일반 정보를 작성하세요.\n\n` +
+    `아래 형식으로 정확히 출력하세요(다른 말 없이):\n` +
+    `BODY: (2~3문장 본문)\n` +
+    `SUMMARY: (본문을 2문장·100자 내외로 줄인 요약. 본문에 없는 사실을 넣지 말 것)\n\n` +
     papers.map((p, i) => `[논문 ${i + 1}] ${p.title}\n초록: ${p.abstract || '(없음)'}`).join('\n\n')
   const res = await anthropic.messages.create({
-    model: MODEL, max_tokens: 600,
+    model: MODEL, max_tokens: 800,
     system: SAFETY_SYSTEM,
     messages: [{ role: 'user', content: user }],
   })
-  return res.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
+  const raw = res.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
+  const m = raw.match(/BODY:\s*([\s\S]*?)\s*SUMMARY:\s*([\s\S]*)$/)
+  // 형식을 안 지키면 전체를 본문으로 보고 요약은 포기한다 — 요약 없이도 화면은 동작한다
+  if (!m) return { body: raw, summary: null }
+  return { body: m[1].trim(), summary: m[2].trim() || null }
 }
 
 const PLAN = [
@@ -129,13 +136,17 @@ for (const { disease, topics } of PLAN) {
   for (const { topic, query } of topics) {
     const papers = await searchPubmed(query)
     if (!papers.length) { console.log(`  ⏭  ${disease}/${topic} — 논문 0건, 건너뜀`); skipped++; continue }
-    const body = await writeBody(disease, topic, papers)
+    const { body, summary } = await writeContent(disease, topic, papers)
     if (!passesSafety(body)) { console.log(`  🚫 ${disease}/${topic} — 안전 프리체크 실패, 폐기`); skipped++; continue }
+    // 요약이 게이트에 걸리면 요약만 버린다(본문은 살린다)
+    const summaryOk = summary && passesSafety(summary) ? summary : null
+    if (summary && !summaryOk) console.log(`     ⚠ ${disease}/${topic} — 요약 게이트 실패, 본문만 저장`)
     const sources = papers.map(p => ({ pmid: p.pmid, url: p.url, title: p.title, grade: p.grade, gradeLabel: p.gradeLabel }))
     console.log(`  ✅ ${disease}/${topic} (${papers.length}편) — ${body.slice(0, 50)}…`)
+    if (summaryOk) console.log(`     📝 요약: ${summaryOk}`)
     if (!DRY) {
       const { error } = await supabase.from('lifestyle_content')
-        .upsert({ disease, topic, body_ko: body, sources, updated_at: new Date().toISOString() }, { onConflict: 'disease,topic' })
+        .upsert({ disease, topic, body_ko: body, summary_ko: summaryOk, sources, updated_at: new Date().toISOString() }, { onConflict: 'disease,topic' })
       if (error) { console.log(`     ⚠ upsert 실패: ${error.message}`); skipped++; continue }
     }
     ok++
