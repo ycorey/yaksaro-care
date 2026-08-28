@@ -3,20 +3,21 @@
 
 export function CollapsibleNote({
   label,
-  count,
   quoted = false,
   children,
 }: {
   label: string
-  count?: number
   quoted?: boolean
   children: React.ReactNode
 }) {
   return (
     <details className="group">
+      {/* count(N가지) prop 은 제거했다 — orderedCautions() 는 문장 단위로 나누는데
+          "N가지"는 "확인할 항목 수"로 읽혀 부정확했고(과민증·녹내장 등 7개가 한 문장이면
+          "1"), 분리 실패 시(종결형 없는 원문)는 370자 금기 목록이 "1가지"로 접혀
+          펼침 여부를 결정하는 유일한 단서가 사용자를 열지 않게 만들었다. 어포던스만 남긴다. */}
       <summary className="min-h-[44px] flex items-center gap-1.5 cursor-pointer list-none text-sm font-semibold text-yc-neutral700 marker:content-['']">
         <span>{label}</span>
-        {count != null && <span className="text-yc-neutral500 font-normal">{count}가지</span>}
         <span className="text-yc-green600 ml-auto group-open:hidden">펼치기 ▾</span>
         <span className="text-yc-green600 ml-auto hidden group-open:inline">접기 ▴</span>
       </summary>

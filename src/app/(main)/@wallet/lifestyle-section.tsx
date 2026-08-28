@@ -76,15 +76,14 @@ export default function LifestyleSection({
                       <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.summary_ko}</p>
                       <CollapsibleNote label="자세히 보기">
                         <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
-                        {sourcesBlock}
                       </CollapsibleNote>
                     </>
                   ) : (
-                    <>
-                      <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
-                      {sourcesBlock}
-                    </>
+                    <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
                   )}
+                  {/* 근거(PubMed 링크 + 등급 배지)는 요약 유무와 무관하게 항상 기본 시야에 남는다 —
+                      본문만 접힌다. 헤더의 "항상 출처 + 상담 유도로 닫는다" 계약. */}
+                  {sourcesBlock}
                 </YCCard>
               )
             })}

@@ -402,15 +402,15 @@ export default function MedCardItem(p: MedCardItemProps) {
                         )}
                         {info?.efcy       && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
                         {info?.useMethod  && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
-                        {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
-                        {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
 
-                        {/* 주의사항·부작용이 패널 길이의 대부분(평균 272·268자)이다. 원문은 그대로 두고
-                            문장 단위로 접는다 — 금기 문장이 맨 위로 온다(orderedCautions). */}
+                        {/* 주의사항·부작용(=안전 정보)은 복용법 바로 뒤로 온다 — 접힘은 의도지만
+                            순서가 상호작용·보관법보다 뒤로 밀리는 건 부수효과일 뿐 설계가 아니다.
+                            평균 272·268자로 패널 길이의 대부분. 원문은 그대로 두고 문장 단위로만
+                            접는다 — 금기 문장이 맨 위로 온다(orderedCautions). */}
                         {info?.atpn && (() => {
                           const items = orderedCautions(info.atpn)
                           return (
-                            <CollapsibleNote label="복용 전 확인할 것" count={items.length} quoted>
+                            <CollapsibleNote label="복용 전 확인할 것" quoted>
                               {items.map((s, i) => (
                                 <p key={i} className="text-sm text-yc-neutral700 leading-relaxed">{s}</p>
                               ))}
@@ -421,13 +421,16 @@ export default function MedCardItem(p: MedCardItemProps) {
                         {info?.sideEffect && (() => {
                           const items = orderedCautions(info.sideEffect)
                           return (
-                            <CollapsibleNote label="알려진 부작용" count={items.length} quoted>
+                            <CollapsibleNote label="알려진 부작용" quoted>
                               {items.map((s, i) => (
                                 <p key={i} className="text-sm text-yc-neutral700 leading-relaxed">{s}</p>
                               ))}
                             </CollapsibleNote>
                           )
                         })()}
+
+                        {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
+                        {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
                       </>
                     ) : (
                       // 전문약 다수가 e약은요 비대상 — 앱 실패가 아니라 자료 부재임을 말한다
