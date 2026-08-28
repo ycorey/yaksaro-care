@@ -48,9 +48,15 @@ async function pageAll(table, select) {
 async function main() {
   console.log('━━ 성분 단위 상호작용 커버리지 리포트 ━━\n')
 
-  const rules = await pageAll('ingredient_interactions', 'norm_key_a, norm_key_b')
+  const rules = await pageAll('ingredient_interactions', 'norm_key_a, norm_key_b, dur_ingr_code_a, dur_ingr_code_b')
   const norms = await pageAll('ingredient_norms', 'name_en, norm_key')
-  const positions = await pageAll('drug_ingredients', 'drug_id, name_en')
+  const allPositions = await pageAll('drug_ingredients', 'drug_id, name_en')
+  const drugs = await pageAll('drugs', 'id, is_canceled')
+
+  // 분모는 **정상 약의 성분 위치**다. 취소 품목을 섞으면 커버리지가 실제보다 낮게 나오고,
+  // 계획서의 목표치(72,475 기준)와도 비교가 안 된다.
+  const live = new Set(drugs.filter(d => !d.is_canceled).map(d => d.id))
+  const positions = allPositions.filter(p => live.has(p.drug_id))
 
   if (rules.length === 0) {
     console.log('규칙표가 비어 있다 — npm run etl:dur-pairs 를 먼저 돌릴 것.')
@@ -102,14 +108,22 @@ async function main() {
   }
 
   const fmt = n => n.toLocaleString()
+  // 같은 규칙이 표기 변형만큼 여러 행으로 저장된다(DUR 이 "Itraconazole" 과
+  // "Itraconazole Coated Granules" 를 각각 싣기 때문). 행 수와 규칙 수는 다른 양이다 —
+  // 변형 행은 그 표기를 쓰는 제품에 닿기 위해 필요하므로 결함이 아니다.
+  const codePairs = new Set(rules
+    .filter(r => r.dur_ingr_code_a && r.dur_ingr_code_b)
+    .map(r => [r.dur_ingr_code_a, r.dur_ingr_code_b].sort().join('|')))
+
   console.log('── 규칙 ───────────────────────────────────────')
   console.log(`  규칙 행 수                 ${fmt(rules.length)}`)
+  console.log(`  ↳ DUR 성분코드 쌍 기준     ${fmt(codePairs.size)}  (차이는 같은 규칙의 표기 변형)`)
   console.log(`  양쪽 성분 보유(발동 가능)  ${fmt(usableRules.length)}`)
   console.log(`  한쪽만 보유                ${fmt(halfRules.length)}`)
   console.log(`  양쪽 다 없음               ${fmt(deadRules)}`)
   console.log('\n── 커버리지 ───────────────────────────────────')
-  console.log(`  커버 약 수                 ${fmt(coveredDrugs.size)}`)
-  console.log(`  커버 성분 위치 수          ${fmt(coveredPositions)} / ${fmt(positions.length)}  (${(coveredPositions / positions.length * 100).toFixed(1)}%)`)
+  console.log(`  커버 약 수                 ${fmt(coveredDrugs.size)} / ${fmt(live.size)} 정상 약  (수용 기준 1: ≥14,000)`)
+  console.log(`  커버 성분 위치 수          ${fmt(coveredPositions)} / ${fmt(positions.length)}  (${(coveredPositions / positions.length * 100).toFixed(1)}%, 수용 기준 2: ≥40%)`)
   console.log(`  규칙이 쓰는 고유 성분 키   ${fmt(ruleKeys.size)}  (그중 우리 보유 ${fmt(reachableKeys.size)})`)
   console.log('\n── 손실 ───────────────────────────────────────')
   console.log(`  우리에게 없는 규칙 키      ${fmt(unreachable.length)}`)

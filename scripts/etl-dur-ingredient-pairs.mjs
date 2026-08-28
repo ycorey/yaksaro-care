@@ -83,7 +83,54 @@ function assertShape(items) {
   }
 }
 
+/** 전량 페이징 — .select() 기본 상한(1,000)에 걸리면 조용히 잘린다. */
+async function pageAll(table, select) {
+  const out = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from(table).select(select).range(from, from + 999)
+    if (error) throw new Error(`${table}: ${error.message}`)
+    if (!data?.length) break
+    out.push(...data)
+    if (data.length < 1000) break
+  }
+  return out
+}
+
+/**
+ * ingredient_norms.dur_ingr_code 역적재 — 우리 이름과 DUR 코드를 norm_key 로 잇는다.
+ * 판정에는 쓰지 않는다(추적·대조용). 없으면 없는 대로 둔다.
+ *
+ * codeByKey 를 주지 않으면 이미 적재된 ingredient_interactions 에서 복원한다 —
+ * 50분짜리 재스캔 없이 이 단계만 다시 돌릴 수 있어야 한다(--backfill-only).
+ */
+async function backfillNormCodes(codeByKey) {
+  if (!codeByKey) {
+    codeByKey = new Map()
+    const rules = await pageAll('ingredient_interactions', 'norm_key_a, norm_key_b, dur_ingr_code_a, dur_ingr_code_b')
+    for (const r of rules) {
+      if (r.dur_ingr_code_a && !codeByKey.has(r.norm_key_a)) codeByKey.set(r.norm_key_a, String(r.dur_ingr_code_a))
+      if (r.dur_ingr_code_b && !codeByKey.has(r.norm_key_b)) codeByKey.set(r.norm_key_b, String(r.dur_ingr_code_b))
+    }
+    console.log(`  규칙표에서 성분코드 복원 ${codeByKey.size.toLocaleString()}키`)
+  }
+
+  const norms = await pageAll('ingredient_norms', 'name_en, norm_key, dur_ingr_code')
+  const back = norms
+    .filter(n => !n.dur_ingr_code && codeByKey.has(n.norm_key))
+    .map(n => ({ name_en: n.name_en, norm_key: n.norm_key, dur_ingr_code: codeByKey.get(n.norm_key), rule_version: 'v1', source: 'drug_ingredients' }))
+  for (let i = 0; i < back.length; i += 500) {
+    const { error } = await supabase.from('ingredient_norms').upsert(back.slice(i, i + 500), { onConflict: 'name_en' })
+    if (error) throw new Error(`ingredient_norms 역적재: ${error.message}`)
+  }
+  console.log(`  DUR 성분코드 역적재   ${back.length.toLocaleString()}행 (매핑 전량 ${norms.length.toLocaleString()}행 대조)`)
+}
+
 async function main() {
+  if (process.argv.includes('--backfill-only')) {
+    console.log('━━ DUR 성분코드 역적재만 실행 ━━')
+    await backfillNormCodes(null)
+    return
+  }
   console.log(`━━ DUR 병용금기 → 성분쌍 ETL${DRY ? ' — DRY RUN' : ''} ━━`)
 
   const pairs = new Map()      // "keyA|keyB" → { content, codeA, codeB, nameA, nameB }
@@ -180,17 +227,7 @@ async function main() {
   }
   console.log('')
 
-  // ingredient_norms.dur_ingr_code 역적재 — 우리 이름과 DUR 코드를 norm_key 로 잇는다.
-  // 판정에는 쓰지 않는다(추적·대조용). 없으면 없는 대로 둔다.
-  const { data: norms } = await supabase.from('ingredient_norms').select('name_en, norm_key, dur_ingr_code')
-  const back = (norms ?? [])
-    .filter(n => !n.dur_ingr_code && codeByKey.has(n.norm_key))
-    .map(n => ({ name_en: n.name_en, norm_key: n.norm_key, dur_ingr_code: codeByKey.get(n.norm_key), rule_version: 'v1', source: 'drug_ingredients' }))
-  for (let i = 0; i < back.length; i += 500) {
-    const { error } = await supabase.from('ingredient_norms').upsert(back.slice(i, i + 500), { onConflict: 'name_en' })
-    if (error) throw new Error(`ingredient_norms 역적재: ${error.message}`)
-  }
-  console.log(`  DUR 성분코드 역적재   ${back.length.toLocaleString()}행`)
+  await backfillNormCodes(codeByKey)
 
   const { count } = await supabase.from('ingredient_interactions').select('*', { count: 'exact', head: true })
   console.log(`\n완료 — ingredient_interactions 총 ${(count ?? 0).toLocaleString()}행`)
