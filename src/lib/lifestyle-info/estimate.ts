@@ -3,7 +3,7 @@
 // 입력: 약별 "성분 문자열"(영문 ingredient_name + 한글 ingredient + drug_ingredients 등을 합친 것).
 // 출력: 질환별 추정. 허용목록(disease-map) 매칭만 사용하고, 매칭 없으면 결과에서 빠진다(단정 금지).
 
-import { INGREDIENT_RULES, type Disease } from './disease-map'
+import { INGREDIENT_RULES, type Disease } from './disease-map.ts'
 
 export type MedInput = {
   label: string          // 표시용(약 이름)

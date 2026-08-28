@@ -352,6 +352,7 @@ export type Database = {
           body_ko: string
           disease: string
           sources: Json
+          summary_ko: string | null
           topic: string
           updated_at: string
         }
@@ -359,6 +360,7 @@ export type Database = {
           body_ko: string
           disease: string
           sources?: Json
+          summary_ko?: string | null
           topic: string
           updated_at?: string
         }
@@ -366,6 +368,7 @@ export type Database = {
           body_ko?: string
           disease?: string
           sources?: Json
+          summary_ko?: string | null
           topic?: string
           updated_at?: string
         }

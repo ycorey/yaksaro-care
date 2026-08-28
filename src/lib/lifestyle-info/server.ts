@@ -3,9 +3,9 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import { estimateDiseases, medIngredientText, type DiseaseEstimate } from './estimate'
-import { passesSafetyFrame } from './safety-frame'
-import type { Disease } from './disease-map'
+import { estimateDiseases, medIngredientText, type DiseaseEstimate } from './estimate.ts'
+import { passesSafetyFrame } from './safety-frame.ts'
+import type { Disease } from './disease-map.ts'
 
 export type { DiseaseEstimate }
 
@@ -19,7 +19,28 @@ export type LifestyleSource = {
   grade?: EvidenceGrade
   gradeLabel?: string
 }
-export type LifestyleTip = { disease: string; topic: string; body_ko: string; sources: LifestyleSource[] }
+export type LifestyleTip = {
+  disease: string; topic: string; body_ko: string
+  summary_ko: string | null   // 안전 게이트 통과분만. null 이면 본문을 편다
+  sources: LifestyleSource[]
+}
+
+type LifestyleRow = {
+  disease: string; topic: string; body_ko: string
+  summary_ko: string | null; sources: unknown
+}
+
+/** 행 → 표시 모델. 요약은 본문과 같은 안전 게이트를 통과해야 채택된다. */
+export function toLifestyleTip(r: LifestyleRow): LifestyleTip {
+  return {
+    disease: r.disease,
+    topic: r.topic,
+    body_ko: r.body_ko,
+    // 실패하면 null → 화면은 본문을 편다. 요약이 걸렸다고 정보가 사라지면 안 된다.
+    summary_ko: r.summary_ko && passesSafetyFrame(r.summary_ko) ? r.summary_ko : null,
+    sources: ((r.sources as LifestyleSource[]) ?? []).filter((s) => s && s.url),
+  }
+}
 
 // 활성 멤버 약 → 질환 추정(확신 high만; 모호/저신뢰는 표시 생략).
 export async function getEstimatedDiseases(
@@ -54,15 +75,10 @@ export async function getLifestyleContent(
   if (diseases.length === 0) return []
   const { data } = await supabase
     .from('lifestyle_content')
-    .select('disease, topic, body_ko, sources')
+    .select('disease, topic, body_ko, summary_ko, sources')
     .in('disease', diseases)
 
   return (data ?? [])
     .filter((r) => passesSafetyFrame(r.body_ko as string))
-    .map((r) => ({
-      disease: r.disease as string,
-      topic: r.topic as string,
-      body_ko: r.body_ko as string,
-      sources: ((r.sources as unknown as LifestyleSource[]) ?? []).filter((s) => s && s.url),
-    }))
+    .map((r) => toLifestyleTip(r as unknown as LifestyleRow))
 }

@@ -5,6 +5,7 @@
 import { YCCard } from '@/components/yc/yc-card'
 import { SectionHeader } from '@/components/yc/section-header'
 import { EvidenceGradeBadge } from '@/components/yc/evidence-grade-badge'
+import { CollapsibleNote } from '@/components/yc/collapsible-note'
 import { CONSULT_CLOSING, diseaseGroupLead } from '@/lib/lifestyle-info/safety-frame'
 import type { DiseaseEstimate, LifestyleTip } from '@/lib/lifestyle-info/server'
 
@@ -47,31 +48,46 @@ export default function LifestyleSection({
             {/* 약/질환군 주어 — 개인 진단 아님 */}
             <p className="text-base text-yc-neutral600 leading-relaxed break-keep">{diseaseGroupLead(disease)}</p>
 
-            {list.map((tip) => (
-              <YCCard key={tip.topic} variant="brand" className="px-5 py-4 space-y-2">
-                <p className="text-sm font-bold text-yc-green700">{tip.topic}</p>
-                <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
-                {tip.sources.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5">
-                    {tip.sources.slice(0, 3).map((s, i) => (
-                      <span key={s.pmid || i} className="inline-flex items-center gap-1">
-                        {s.grade && <EvidenceGradeBadge grade={s.grade} label={s.gradeLabel} />}
-                        <a
-                          // 스킴 검증 — 현재 값은 service_role 로만 적재되는 PubMed URL 이지만,
-                          // 앵커 href 는 javascript:·data: 가 실행되는 지점이라 렌더 직전에 거른다.
-                          href={/^https?:\/\//i.test(s.url ?? '') ? s.url : '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium text-yc-green700 underline underline-offset-2 active:opacity-70"
-                        >
-                          근거 {i + 1} ↗
-                        </a>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </YCCard>
-            ))}
+            {list.map((tip) => {
+              const sourcesBlock = tip.sources.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5">
+                  {tip.sources.slice(0, 3).map((s, i) => (
+                    <span key={s.pmid || i} className="inline-flex items-center gap-1">
+                      {s.grade && <EvidenceGradeBadge grade={s.grade} label={s.gradeLabel} />}
+                      <a
+                        // 스킴 검증 — 현재 값은 service_role 로만 적재되는 PubMed URL 이지만,
+                        // 앵커 href 는 javascript:·data: 가 실행되는 지점이라 렌더 직전에 거른다.
+                        href={/^https?:\/\//i.test(s.url ?? '') ? s.url : '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-yc-green700 underline underline-offset-2 active:opacity-70"
+                      >
+                        근거 {i + 1} ↗
+                      </a>
+                    </span>
+                  ))}
+                </div>
+              )
+              return (
+                <YCCard key={tip.topic} variant="brand" className="px-5 py-4 space-y-2">
+                  <p className="text-sm font-bold text-yc-green700">{tip.topic}</p>
+                  {tip.summary_ko ? (
+                    <>
+                      <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.summary_ko}</p>
+                      <CollapsibleNote label="자세히 보기">
+                        <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
+                        {sourcesBlock}
+                      </CollapsibleNote>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-base text-yc-neutral800 leading-relaxed break-keep">{tip.body_ko}</p>
+                      {sourcesBlock}
+                    </>
+                  )}
+                </YCCard>
+              )
+            })}
 
             {/* 상담 유도 닫기 (otc-section 안전 패턴) */}
             <div className="rounded-yc-lg bg-yc-green50 border border-yc-green100 px-4 py-3">
