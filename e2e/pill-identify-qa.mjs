@@ -115,7 +115,7 @@ try {
   ok(await page.getByText('낱알로 찾기').first().isVisible().catch(() => false), '낱알 화면 진입')
   await page.getByRole('button', { name: '원형', exact: true }).click()
   await page.getByRole('button', { name: '하양', exact: true }).click()
-  await page.getByPlaceholder('예: TYLENOL, 마크, 숫자').fill('YKSRAA')
+  await page.getByPlaceholder('예: TYLENOL, 숫자').fill('YKSRAA')
   await page.getByRole('button', { name: '약 찾기' }).click()
   // isVisible 은 즉시 검사(타임아웃 옵션 무시) — 렌더 대기는 waitFor 로 해야 한다
   const card = page.getByRole('button').filter({ hasText: FIX_A.name }).first()

@@ -55,6 +55,11 @@ try {
   ok(a.status === 200 && a.json?.found === true, `HTTP 200 found=true (got ${a.status})`)
   ok(!!a.json?.efcy, 'efcy 존재')
   ok('intrc' in (a.json ?? {}) && 'sideEffect' in (a.json ?? {}) && 'storage' in (a.json ?? {}), '신규 3필드 키 존재')
+  // 허가정보 정체성 — 필드 "존재"만 보면 다른 약의 값이어도 통과한다. 허가정보 API 는
+  // item_seq 필터를 지원하지 않아(전체 1행 반환) 한때 모든 약이 혈액대용제·전문의약품으로
+  // 표시됐다(2026-08-27). 분류가 이 약의 것인지까지 본다.
+  ok(a.json?.classType === '일반의약품', `classType 정체성 (got ${a.json?.classType})`)
+  ok((a.json?.category ?? '').includes('해열'), `category 정체성 (got ${a.json?.category})`)
   const row1 = await cacheRow(LISTED)
   ok(!!row1, 'drug_summaries 행 생성')
   ok(!!row1?.efficacy, '캐시 행에 efficacy 저장')
@@ -65,10 +70,14 @@ try {
   const row2 = await cacheRow(LISTED)
   ok(row1?.fetched_at === row2?.fetched_at, `fetched_at 불변 (${row1?.fetched_at})`)
 
-  console.log('[C] 미등재 → 그 키로 미캐싱')
+  console.log('[C] 미등재 → 그 키로 미캐싱 + 마스터 밖 약 외부 폴백 생존')
   await admin.from('drug_summaries').delete().eq('item_seq', UNLISTED)
   const c = await get(`item_seq=${UNLISTED}&name=${encodeURIComponent('타이레놀정500밀리그람')}`)
   ok(c.status === 200, `HTTP 200 (무해한 응답, got ${c.status})`)
+  // 198700157 은 drugs 마스터에도 없다(실측 2026-08-27) — DB-first 도입 후 유일하게
+  // 외부 이름-폴백 경로를 지나는 케이스라, 그 경로의 생존을 여기서 겸사 검증한다.
+  ok(c.json?.found === true && c.json?.classType === '일반의약품',
+     `마스터 밖 약도 외부 이름 폴백으로 해석 (found=${c.json?.found}, classType=${c.json?.classType})`)
   const rowU = await cacheRow(UNLISTED)
   ok(!rowU, '미등재 item_seq 로는 캐시 행 없음')
 } finally {

@@ -42,6 +42,9 @@ const SERVER_STANDALONE = [
   // 낱알식별(067) — 검색 6계약 + 위저드→AddForm 합류. 합성 마커(YKSR*) 픽스처라
   // 실데이터 적재 전에도 돌고, 적재 후에도 실데이터와 섞이지 않는다 (자체 시드)
   'pill-identify-qa',
+  // 지갑 안전 신호·착지 피드백 — DUR 배지 탭→등재 내용·헤더 점·OTC 중복 칩·?added= 토스트.
+  // 토스트는 전체 문서 로드로 검증(자식 effect 가 Toaster 구독보다 먼저 도는 유실 경로) (자체 시드)
+  'wallet-signal-qa',
 ]
 // 서버 필요 + 공용 시드 의존(setup/teardown로 감싸야 함).
 const SHARED_SEED = [
