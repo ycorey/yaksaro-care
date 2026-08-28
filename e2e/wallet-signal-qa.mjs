@@ -135,6 +135,10 @@ try {
   // 펼치면 본문이 나온다
   await cautionToggle.click()
   ok(await cautionBody.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false), '펼치면 주의사항 본문 표시')
+  // 가시성만으로는 부족하다 — 래퍼 div(className="pt-1.5 space-y-1.5")는 패딩만으로도
+  // 높이가 생겨, items.map()이 <p>를 0개 렌더해도(orderedCautions 공백 반환·매핑 결함 등)
+  // waitFor visible 은 통과한다. 내용이 실제로 있는지까지 본다(픽스처 caution 필드 실측 370자).
+  ok(((await cautionBody.textContent()) ?? '').trim().length > 20, '펼치면 주의사항 본문 표시(내용 있음)')
 
   // 앱이 쓴 문구에는 음성 판정 어구가 없다 — 원문 인용 블록은 제외한다
   // (원문에는 용량 수치와 "복용하지 마십시오" 가 정당하게 들어 있고, 출처 푸터의
