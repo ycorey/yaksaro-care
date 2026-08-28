@@ -10,7 +10,9 @@
  *   Phase 3: DUR 병용금기   → interactions 테이블 (+ drugs.ingredient_code 업데이트)
  */
 
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs'
+// writeFileSync/existsSync/unlinkSync 는 DUR 단계의 체크포인트용이었다 — 그 단계가
+// 동결되면서 함께 빠졌다(다른 단계는 체크포인트를 쓰지 않는다).
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { createClient } from '@supabase/supabase-js'
 
@@ -168,142 +170,21 @@ async function etlSupplements() {
 
 // ── Phase 3: DUR 병용금기 ─────────────────────────────────────────
 //
-// 페이지 단위 스트리밍 방식: 메모리에 전체를 쌓지 않고 페이지마다 즉시 DB upsert.
-// 체크포인트 파일(.etl-dur-checkpoint.json)로 중단 시 해당 페이지부터 재개.
+// ⚠️ 동결됨 — 이 경로는 더 이상 실행되지 않는다.
+//
+// 068(성분 단위 상호작용) 적용 시점부터 interactions 테이블은 동결이다. 이 함수는
+// 성분쌍을 제품쌍으로 전개해 그 테이블에 써 왔고, 그대로 두면 npm run etl(인자 없음)이
+// 전 단계를 도는 과정에서 동결 기준선을 조용히 움직인다.
+//
+// 동결 기준선(2026-08-28): interactions 305,005행 / md5 d041087f4f064706edda05f1f2743e0f
+// 대체 경로: npm run etl:dur-pairs (scripts/etl-dur-ingredient-pairs.mjs)
+//            성분쌍을 사실 그대로 ingredient_interactions 에 적재하고 제품 매칭은 조회 시점에 조인한다.
+//
+// 부수효과였던 drugs.ingredient_code 갱신도 함께 멈춘다 — 그 컬럼은 src/ 에 소비처가 0개다(실측).
 async function etlDurInteractions() {
-  console.log('\n━━ [Phase 3] DUR 병용금기 → interactions ━━')
-
-  const CHUNK = 200
-  const checkpointFile = resolve(process.cwd(), '.etl-dur-checkpoint.json')
-
-  // 체크포인트 복원
-  let startPage = 1
-  let totalInserted = 0
-  let totalUpdated  = 0
-  try {
-    const cp = JSON.parse(readFileSync(checkpointFile, 'utf-8'))
-    startPage      = (cp.page || 0) + 1
-    totalInserted  = cp.inserted  || 0
-    totalUpdated   = cp.updated   || 0
-    console.log(`  체크포인트 복원 → ${cp.page}페이지 완료, ${startPage}페이지부터 재개`)
-  } catch {
-    console.log('  새로 시작')
-  }
-
-  // drugs 전체 맵 로딩 (Supabase 기본 limit=1000이므로 페이지네이션 필수)
-  console.log('  drug 맵 로딩...')
-  const seqToId = {}
-  {
-    let offset = 0
-    const BATCH = 1000
-    while (true) {
-      const { data, error } = await supabase
-        .from('drugs').select('id, item_seq').range(offset, offset + BATCH - 1)
-      if (error) throw new Error(error.message)
-      if (!data?.length) break
-      for (const d of data) seqToId[d.item_seq] = d.id
-      if (data.length < BATCH) break
-      offset += BATCH
-    }
-  }
-  console.log(`  drug 맵: ${Object.keys(seqToId).length.toLocaleString()}건`)
-
-  let page = startPage, total = 0
-
-  while (true) {
-    const url = `${BASE}/1471000/DURPrdlstInfoService03/getUsjntTabooInfoList03`
-      + `?serviceKey=${KEY}&numOfRows=${ROWS}&pageNo=${page}&type=json`
-
-    const json = await fetchJson(url)
-    const body = json?.body
-    if (!body) throw new Error('DUR 응답 body 없음')
-
-    if (page === 1 || (startPage > 1 && page === startPage)) {
-      total = Number(body.totalCount) || 0
-      if (startPage === 1) console.log(`  DUR 병용금기 총 ${total.toLocaleString()}건`)
-    }
-    if (total === 0) total = Number(body.totalCount) || 1
-
-    const items = toArr(body?.items)
-    if (items.length === 0) break
-
-    // 이번 페이지 interactions 빌드
-    const interactionMap = new Map()
-    const ingrUpdates    = new Map()  // item_seq → ingrCode
-
-    for (const i of items) {
-      if (!i.ITEM_SEQ || !i.INGR_CODE) continue
-      const itemSeq    = String(i.ITEM_SEQ)
-      const ingrCode   = String(i.INGR_CODE)
-      const mixItemSeq = i.MIXTURE_ITEM_SEQ ? String(i.MIXTURE_ITEM_SEQ) : null
-      const mixIngrCode= i.MIXTURE_INGR_CODE ? String(i.MIXTURE_INGR_CODE) : null
-      const ingrName   = i.INGR_NAME   || null
-      const mixIngrName= i.MIXTURE_INGR_NAME || null
-      const content    = i.PROHBT_CONTENT || null
-
-      // ingredient_code 업데이트 대상 수집
-      if (!ingrUpdates.has(itemSeq)) ingrUpdates.set(itemSeq, ingrCode)
-      if (mixItemSeq && mixIngrCode && !ingrUpdates.has(mixItemSeq)) ingrUpdates.set(mixItemSeq, mixIngrCode)
-
-      // interactions 생성
-      if (!mixItemSeq) continue
-      const aId = seqToId[itemSeq]
-      const bId = seqToId[mixItemSeq]
-      if (!aId || !bId || aId === bId) continue
-
-      const [drug_a_id, drug_b_id] = aId < bId ? [aId, bId] : [bId, aId]
-      const key = `${drug_a_id}|${drug_b_id}`
-      if (!interactionMap.has(key)) {
-        interactionMap.set(key, {
-          drug_a_id,
-          drug_b_id,
-          severity:    'contraindicated',
-          description: [ingrName, mixIngrName].filter(Boolean).join(' ↔ ') || content || null,
-          source:      'dur_api',
-          updated_at:  new Date().toISOString(),
-        })
-      }
-    }
-
-    // interactions upsert
-    const rows = [...interactionMap.values()]
-    for (let k = 0; k < rows.length; k += CHUNK) {
-      const { error } = await supabase
-        .from('interactions')
-        .upsert(rows.slice(k, k + CHUNK), { onConflict: 'drug_a_id,drug_b_id', ignoreDuplicates: true })
-      if (error) throw new Error(`interactions upsert: ${error.message}`)
-    }
-    totalInserted += rows.length
-
-    // ingredient_code 업데이트 (매칭되는 약만)
-    const updEntries = [...ingrUpdates.entries()]
-    for (let k = 0; k < updEntries.length; k += CHUNK) {
-      const seqs = updEntries.slice(k, k + CHUNK).map(([s]) => s)
-      const { data: matched } = await supabase.from('drugs').select('id, item_seq').in('item_seq', seqs)
-      if (matched?.length) {
-        await Promise.all(matched.map(d =>
-          supabase.from('drugs')
-            .update({ ingredient_code: ingrUpdates.get(d.item_seq), updated_at: new Date().toISOString() })
-            .eq('id', d.id)
-        ))
-        totalUpdated += matched.length
-      }
-    }
-
-    const maxPage = Math.ceil(total / ROWS)
-    bar('DUR', page, maxPage, totalInserted)
-
-    // 체크포인트 저장
-    writeFileSync(checkpointFile, JSON.stringify({ page, inserted: totalInserted, updated: totalUpdated }))
-
-    if (page >= maxPage || items.length < ROWS) break
-    page++
-    await sleep(DELAY)
-  }
-
-  // 완료 — 체크포인트 삭제
-  if (existsSync(checkpointFile)) unlinkSync(checkpointFile)
-  console.log(`\n  완료: interactions ${totalInserted.toLocaleString()}건 / ingredient_code ${totalUpdated.toLocaleString()}건 업데이트`)
+  console.log('\n━━ [Phase 3] DUR 병용금기 — 동결됨 ━━')
+  console.log('  interactions 는 068 적용 시점부터 동결이다. 이 단계는 아무것도 쓰지 않는다.')
+  console.log('  성분쌍 적재는 npm run etl:dur-pairs 를 쓸 것.')
 }
 
 // ── 실행 ──────────────────────────────────────────────────────────

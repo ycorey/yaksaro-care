@@ -8,7 +8,11 @@
  *   3) CSV 고유 성분쌍 × 우리 drugs(성분별) 교차곱 → interactions
  *   (+ 제품단위 EDI 직접 매칭도 병행)
  *
- * 모드: 기본 DRY RUN(측정만) / UPSERT=1 시 interactions 적재.
+ * ⚠️ 2026-08-28 — **측정 전용으로 전환.** interactions 는 068 적용 시점부터 동결이라
+ *    적재 경로를 제거했다(사유는 main() 끝의 주석). 여기 남은 숫자는 "CSV 로 얼마나
+ *    커버되는가"를 재는 용도이지, 적재 예고가 아니다.
+ *
+ * 모드: 측정만. UPSERT=1 을 줘도 거부하고 종료코드 1 로 끝난다.
  * 실행: node scripts/etl-dur-from-csv.mjs ["<csv경로>"]
  */
 import { createReadStream, readFileSync } from 'fs'
@@ -139,15 +143,28 @@ async function main() {
   console.log(`  성분코드 부여된 우리 drugs: ${drugsWithCode} / ${n}`)
   console.log(`  ★ 생성 가능한 고유 interactions 쌍: ${pairKeys.size.toLocaleString()} (제품단위 추가분 ${prodLevel})`)
 
-  if (!UPSERT) { console.log('\n  (DRY RUN — 적재하려면 UPSERT=1)'); return }
-
-  const all = [...pairKeys].map(key => { const [drug_a_id, drug_b_id] = key.split('|'); return { drug_a_id, drug_b_id, severity: 'contraindicated', description: pairDesc.get(key), source: 'dur_api', updated_at: new Date().toISOString() } })
-  const CHUNK = 500; let up = 0
-  for (let i = 0; i < all.length; i += CHUNK) {
-    const { error } = await supabase.from('interactions').upsert(all.slice(i, i + CHUNK), { onConflict: 'drug_a_id,drug_b_id', ignoreDuplicates: true })
-    if (error) throw new Error(`interactions upsert: ${error.message}`)
-    up += Math.min(CHUNK, all.length - i); process.stdout.write(`\r  적재 ${up}/${all.length}   `)
+  // 적재 경로 제거됨 — 이 스크립트는 이제 **측정 전용**이다.
+  //
+  // 왜: interactions 는 068 적용 시점부터 동결이다(기준선 305,005행 /
+  // md5 d041087f4f064706edda05f1f2743e0f). 위 교차곱은 성분쌍을 제품쌍으로 전개해
+  // 그 테이블에 써 왔으므로 그대로 두면 UPSERT=1 한 번에 기준선이 움직인다.
+  //
+  // 왜 ingredient_interactions 로 갈아끼우지 않았나(계획서는 재작성을 지시했다):
+  //   이 스크립트의 성분쌍은 **심평원 성분코드**(c[1]·c[7])로 잡힌다. 새 규칙표의
+  //   norm_key 는 식약처 **성분 영문명**에서 파생된 값이라 어휘가 다르고, 둘을 이으려면
+  //   심평원코드 → 영문명 다리가 필요하다. 그 다리는 이 저장소에 없다.
+  //   게다가 입력 CSV(_dur_csv_tmp/…)도 저장소에 없어서 재작성해도 **검증할 수단이 없다.**
+  //   검증 못 하는 적재 코드를 넣는 것보다 측정만 남기는 편이 정직하다.
+  //
+  // 되살리려면: CSV 를 확보하고 심평원코드↔영문명 매핑을 만든 뒤,
+  //   ingredient_interactions 에 source='hira_csv' 로 넣는다(중복은 unique 가 흡수한다).
+  if (UPSERT) {
+    console.log('\n  ⚠️ UPSERT=1 이 지정됐지만 이 스크립트는 더 이상 적재하지 않는다.')
+    console.log('     interactions 는 068 적용 시점부터 동결이다.')
+    console.log('     성분쌍 적재는 npm run etl:dur-pairs 를 쓸 것.')
+    process.exitCode = 1
+    return
   }
-  console.log(`\n  ✅ 완료. interactions 쌍 ${all.length.toLocaleString()}건 upsert`)
+  console.log('\n  (측정 전용 — 이 스크립트는 아무것도 쓰지 않는다)')
 }
 main().catch(e => { console.error('\n에러:', e.message); process.exit(1) })
