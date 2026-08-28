@@ -352,6 +352,8 @@ export type Database = {
           body_ko: string
           disease: string
           sources: Json
+          // 069_lifestyle_summary.sql 미적용 상태에서 수동 추가 — 069 적용 후
+          // supabase gen types 재생성 시 자동 생성본으로 대체된다(대조 필요).
           summary_ko: string | null
           topic: string
           updated_at: string
@@ -360,7 +362,7 @@ export type Database = {
           body_ko: string
           disease: string
           sources?: Json
-          summary_ko?: string | null
+          summary_ko?: string | null   // 수동 추가 — Row 주석 참고
           topic: string
           updated_at?: string
         }
@@ -368,7 +370,7 @@ export type Database = {
           body_ko?: string
           disease?: string
           sources?: Json
-          summary_ko?: string | null
+          summary_ko?: string | null   // 수동 추가 — Row 주석 참고
           topic?: string
           updated_at?: string
         }
