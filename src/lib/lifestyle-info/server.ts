@@ -6,6 +6,9 @@ import type { Database } from '@/types/database'
 import { estimateDiseases, medIngredientText, type DiseaseEstimate } from './estimate.ts'
 import { passesSafetyFrame } from './safety-frame.ts'
 import type { Disease } from './disease-map.ts'
+// 상대경로 + .ts 확장자 — 이 파일은 단위 테스트가 node --test 로 직접 실행되고,
+// 그 러너는 tsconfig 의 '@/' 경로 별칭을 해석하지 않는다(ERR_MODULE_NOT_FOUND 로 실패).
+import { logger } from '../logger.ts'
 
 export type { DiseaseEstimate }
 
@@ -73,10 +76,15 @@ export async function getLifestyleContent(
   diseases: Disease[],
 ): Promise<LifestyleTip[]> {
   if (diseases.length === 0) return []
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('lifestyle_content')
     .select('disease, topic, body_ko, summary_ko, sources')
     .in('disease', diseases)
+
+  // 조회 실패는 화면을 막지 않는다 — 섹션만 조용히 사라지는 게 현재 동작이고 그건 맞다.
+  // 바뀌는 건 "아무도 모른다"에서 "경보가 뜬다"뿐이다(069 summary_ko 컬럼 미적용 배포 시
+  // PostgREST 42703 로 data 가 null 이 되는데, 그걸 그대로 [] 로 삼키면 무증상이 된다).
+  if (error) logger.error('lifestyle-info', 'lifestyle_content query error', error.message)
 
   return (data ?? [])
     .filter((r) => passesSafetyFrame(r.body_ko as string))
