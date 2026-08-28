@@ -320,6 +320,11 @@ a[href]:active,
 .yc-noscrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .yc-noscrollbar::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
+/* CollapsibleNote(<details>/<summary>) 삼각형 마커 제거 — list-none + marker:content-['']는
+ * 최신 브라우저는 지우지만, iOS Safari 16 미만은 ::-webkit-details-marker로 그린다(추정,
+ * 기기 실측 안 됨). 저장소에 <details>를 쓰는 곳이 이 컴포넌트뿐이라 전역 선택자로 충분하다. */
+summary::-webkit-details-marker { display: none; }
+
 /* 상태 알림 카드 그라데이션 (Home/Today) — hex는 디자인 시스템 레이어에만 둔다 */
 .bg-yc-status-next    { background: linear-gradient(135deg, #0E6E54, #084B3A); }
 .bg-yc-status-overdue { background: linear-gradient(135deg, #C77A12, #9A5A06); box-shadow: 0 8px 18px rgba(154,90,6,0.25); }
