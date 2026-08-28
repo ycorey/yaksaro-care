@@ -121,6 +121,31 @@ try {
   ok(await tyCard.getByText('해열.진통.소염제', { exact: false }).first().waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false), '분류 배지(해열.진통.소염제)')
   ok(await tyCard.locator('span.text-xs', { hasText: '일반의약품' }).first().isVisible().catch(() => false), '전문/일반 배지(일반의약품)')
 
+  console.log('[J] 약 정보 패널 — 긴 필드는 접혀 있고, 펼치면 원문이 나온다')
+  // 기본 상태: 접힌 라벨은 보이고 본문은 안 보인다
+  const cautionToggle = tyCard.locator('summary', { hasText: '복용 전 확인할 것' }).first()
+  ok(await cautionToggle.isVisible().catch(() => false), '주의사항 접힘 라벨 표시')
+  const cautionBody = tyCard.locator('[data-quoted="mfds"]').first()
+  ok(!(await cautionBody.isVisible().catch(() => false)), '기본 상태에서 주의사항 본문 미노출')
+
+  // 터치 타겟
+  const sBox = await cautionToggle.boundingBox()
+  ok(!!sBox && sBox.height >= 44, `접힘 라벨 터치 타겟 44px+ (got ${Math.round(sBox?.height ?? 0)}px)`)
+
+  // 펼치면 본문이 나온다
+  await cautionToggle.click()
+  ok(await cautionBody.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false), '펼치면 주의사항 본문 표시')
+
+  // 앱이 쓴 문구에는 음성 판정 어구가 없다 — 원문 인용 블록은 제외한다
+  // (원문에는 용량 수치와 "복용하지 마십시오" 가 정당하게 들어 있고, 출처 푸터의
+  //  "식품의약품안전처" 도 "안전" 부분문자열을 포함하므로 판정 어구로 좁혀서 본다)
+  const appText = await tyCard.evaluate(el => {
+    const clone = el.cloneNode(true)
+    clone.querySelectorAll('[data-quoted="mfds"]').forEach(n => n.remove())
+    return clone.textContent || ''
+  })
+  ok(!/안전합니다|안전해요|검출되지 않|이상 없습니다|문제 없습니다/.test(appText), '앱 문구에 음성 판정 어구 없음')
+
   console.log('[D] /wallet?added=otc — 토스트 + 섹션 스크롤 (전체 로드)')
   // networkidle 대기는 sonner 토스트 수명(4s)을 소진한다 — commit 직후부터 지켜본다
   await page.goto(`${BASE}/wallet?added=otc`, { waitUntil: 'commit' })
