@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Flask, Pill, Check } from '@phosphor-icons/react'
+import { orderedCautions } from '@/lib/drug-text'
+import { CollapsibleNote } from '@/components/yc/collapsible-note'
 
 type DrugHit = { id: string; item_seq: string | null; item_name: string; entp_name: string | null; image_url: string | null; source: 'db' | 'api' }
 type SuppHit = { id: string; product_name: string; company_name: string | null }
@@ -400,10 +402,32 @@ export default function MedCardItem(p: MedCardItemProps) {
                         )}
                         {info?.efcy       && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
                         {info?.useMethod  && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
-                        {info?.atpn       && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
                         {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
-                        {info?.sideEffect && <p><span className="font-semibold">부작용 </span>{info.sideEffect}</p>}
                         {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
+
+                        {/* 주의사항·부작용이 패널 길이의 대부분(평균 272·268자)이다. 원문은 그대로 두고
+                            문장 단위로 접는다 — 금기 문장이 맨 위로 온다(orderedCautions). */}
+                        {info?.atpn && (() => {
+                          const items = orderedCautions(info.atpn)
+                          return (
+                            <CollapsibleNote label="복용 전 확인할 것" count={items.length} quoted>
+                              {items.map((s, i) => (
+                                <p key={i} className="text-sm text-yc-neutral700 leading-relaxed">{s}</p>
+                              ))}
+                            </CollapsibleNote>
+                          )
+                        })()}
+
+                        {info?.sideEffect && (() => {
+                          const items = orderedCautions(info.sideEffect)
+                          return (
+                            <CollapsibleNote label="알려진 부작용" count={items.length} quoted>
+                              {items.map((s, i) => (
+                                <p key={i} className="text-sm text-yc-neutral700 leading-relaxed">{s}</p>
+                              ))}
+                            </CollapsibleNote>
+                          )
+                        })()}
                       </>
                     ) : (
                       // 전문약 다수가 e약은요 비대상 — 앱 실패가 아니라 자료 부재임을 말한다
