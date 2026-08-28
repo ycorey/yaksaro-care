@@ -93,6 +93,90 @@ export type Database = {
           },
         ]
       }
+      drug_identification: {
+        Row: {
+          color_class1: string | null
+          color_class2: string | null
+          drug_shape: string | null
+          form_code_name: string | null
+          image_url: string | null
+          item_seq: string
+          leng_long: number | null
+          leng_short: number | null
+          line_back: string | null
+          line_front: string | null
+          print_back: string | null
+          print_front: string | null
+          thick: number | null
+          updated_at: string
+        }
+        Insert: {
+          color_class1?: string | null
+          color_class2?: string | null
+          drug_shape?: string | null
+          form_code_name?: string | null
+          image_url?: string | null
+          item_seq: string
+          leng_long?: number | null
+          leng_short?: number | null
+          line_back?: string | null
+          line_front?: string | null
+          print_back?: string | null
+          print_front?: string | null
+          thick?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color_class1?: string | null
+          color_class2?: string | null
+          drug_shape?: string | null
+          form_code_name?: string | null
+          image_url?: string | null
+          item_seq?: string
+          leng_long?: number | null
+          leng_short?: number | null
+          line_back?: string | null
+          line_front?: string | null
+          print_back?: string | null
+          print_front?: string | null
+          thick?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      drug_summaries: {
+        Row: {
+          caution: string | null
+          efficacy: string | null
+          fetched_at: string
+          interaction: string | null
+          item_seq: string
+          side_effect: string | null
+          storage: string | null
+          usage: string | null
+        }
+        Insert: {
+          caution?: string | null
+          efficacy?: string | null
+          fetched_at?: string
+          interaction?: string | null
+          item_seq: string
+          side_effect?: string | null
+          storage?: string | null
+          usage?: string | null
+        }
+        Update: {
+          caution?: string | null
+          efficacy?: string | null
+          fetched_at?: string
+          interaction?: string | null
+          item_seq?: string
+          side_effect?: string | null
+          storage?: string | null
+          usage?: string | null
+        }
+        Relationships: []
+      }
       drugs: {
         Row: {
           barcode: string | null
@@ -141,6 +225,36 @@ export type Database = {
           item_name?: string
           item_seq?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dur_single_flags: {
+        Row: {
+          description: string | null
+          flag_type: string
+          group_code: string
+          id: string
+          item_seq: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          flag_type: string
+          group_code?: string
+          id?: string
+          item_seq: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          flag_type?: string
+          group_code?: string
+          id?: string
+          item_seq?: string
+          source?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -238,6 +352,7 @@ export type Database = {
           body_ko: string
           disease: string
           sources: Json
+          summary_ko: string | null
           topic: string
           updated_at: string
         }
@@ -245,6 +360,7 @@ export type Database = {
           body_ko: string
           disease: string
           sources?: Json
+          summary_ko?: string | null   // 수동 추가 — Row 주석 참고
           topic: string
           updated_at?: string
         }
@@ -252,6 +368,7 @@ export type Database = {
           body_ko?: string
           disease?: string
           sources?: Json
+          summary_ko?: string | null   // 수동 추가 — Row 주석 참고
           topic?: string
           updated_at?: string
         }

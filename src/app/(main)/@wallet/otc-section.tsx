@@ -35,6 +35,8 @@ export default function OtcSection({
 
   const visibleMeds = meds.filter(m => !deletedIds.has(m.id))
   const hasAnyWarning = visibleMeds.some(m => m.hasInteractionWarning)
+  // 효능군중복(066)은 처방+OTC 조합에서 생기는 신호인데 OTC 칩이 버리면 반쪽만 뜬다
+  const hasAnyDup = visibleMeds.some(m => !!m.durDupGroup)
 
   return (
     <div className="bg-white rounded-yc-xl border border-yc-neutral100 shadow-[var(--yc-shadow-sm)] overflow-hidden">
@@ -52,12 +54,12 @@ export default function OtcSection({
               key={med.id}
               style={{ animationDelay: `${i * 50}ms` }}
               className={`flex items-center gap-1.5 border rounded-full px-4 py-2 shadow-[var(--yc-shadow-sm)] anim-page ${
-                med.hasInteractionWarning
+                med.hasInteractionWarning || med.durDupGroup
                   ? 'bg-yc-warningBg border-yc-warning/40'
                   : 'bg-white border-yc-neutral200'
               }`}
             >
-              {med.hasInteractionWarning && (
+              {(med.hasInteractionWarning || med.durDupGroup) && (
                 <Warning weight="fill" size={14} className="text-yc-warning flex-shrink-0" />
               )}
               <Pill weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0" />
@@ -84,14 +86,15 @@ export default function OtcSection({
         )}
       </div>
 
-      {/* 상호작용 경고 배너 — 규제 준수: 안전 표현만 (복용중단/처방변경 권고 금지) */}
-      {hasAnyWarning && (
+      {/* 안전 정보 배너 — 규제 준수: 사실·상담 유도만 (복용중단/처방변경 권고 금지) */}
+      {(hasAnyWarning || hasAnyDup) && (
         <div className="mx-4 mb-4 rounded-yc-lg bg-yc-warningBg border border-yc-warning/30 px-4 py-4">
           <div className="flex items-start gap-2">
             <Warning weight="fill" size={16} className="text-yc-warning flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-yc-warningText leading-relaxed flex-1">
-              알려진 상호작용 정보가 있습니다. 처방약과 함께 복용 전 단골약사님과 상담해보세요.
-            </p>
+            <div className="text-sm text-yc-warningText leading-relaxed flex-1 space-y-1">
+              {hasAnyWarning && <p>알려진 상호작용 정보가 있습니다. 처방약과 함께 복용 전 단골약사님과 상담해보세요.</p>}
+              {hasAnyDup && <p>같은 효능군 약이 함께 등록돼 있어요. 복용 전 단골약사님과 상담해보세요.</p>}
+            </div>
           </div>
           {regularPharmacyPhone && (
             <a

@@ -68,7 +68,8 @@ export async function addMedication(formData: FormData) {
       prescriptionId = rx?.id ?? null
     }
 
-    await supabase.from('user_medications').insert({
+    // 실패를 흘리면 redirect가 "성공처럼" 보인다 — 저장 실패는 반드시 클라이언트로 던진다
+    const { error: rxInsertError } = await supabase.from('user_medications').insert({
       user_id:         user.id,
       member_id:       active.id,
       drug_id:         resolvedDrugId,
@@ -84,8 +85,13 @@ export async function addMedication(formData: FormData) {
       started_at:      today,
       source:          'manual',
     })
+    if (rxInsertError) throw new Error(rxInsertError.message)
 
-    redirect('/wallet')
+    // 병원·일수 없이 저장한 약은 처방 그룹이 아니라 일반의약품 섹션으로 간다 —
+    // 착지 화면이 어느 섹션에 담겼는지 말해 줘야 한다(약명은 URL에 싣지 않는다).
+    // 단 이 경로는 **전문의약품일 수 있다**(처방탭 검색은 전문약을 그대로 반환하고
+    // 병원·일수는 선택 입력이다) → "일반의약품" 이라는 약사법상 분류 용어로 선언하지 않는다.
+    redirect(`/wallet?added=${prescriptionId ? 'rx' : 'rx-loose'}`)
   }
 
   // ── 약국 일반약 / 영양제 ─────────────────────────────────────────────
@@ -114,5 +120,5 @@ export async function addMedication(formData: FormData) {
     checkOtcInteraction(user.id, active.id, resolvedDrugId, data.id)
   }
 
-  redirect('/wallet')
+  redirect(`/wallet?added=${supplementId ? 'supp' : 'otc'}`)
 }

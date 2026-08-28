@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
 import BoxOcrAddFlow from './box-ocr-scanner'
+import PillSearchFlow from './pill-search'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
 import { BackButton } from '../back-button'
@@ -79,6 +80,9 @@ function PrescriptionMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/add?method=photo&tab=otc" iconBg="bg-yc-green50"
           icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="박스 사진으로 찾기" desc="일반약 박스를 찍어 이름으로 찾아요" />
+        <MethodCard href="/medications/add?method=pill" iconBg="bg-yc-green50"
+          icon={<AddIcon name="pill" className="text-yc-green700" />}
+          title="낱알로 찾기" desc="약 모양·색·글자로 찾아요" />
         <MethodCard href="/medications/add?tab=prescription" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="약 이름·용법을 직접 적어요" />
@@ -158,6 +162,11 @@ export default async function AddMedicationPage({
   // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (일반약·건기식 모두 OCR로 통일. 바코드는 v2 보류)
   if (method === 'photo') {
     return <BoxOcrAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
+  }
+
+  // Screen 2e: 낱알로 찾기 — 모양·색·각인 검색 → 기존 등록 폼 합류
+  if (method === 'pill') {
+    return <PillSearchFlow member={active} />
   }
 
   // Screen 2a: 처방약·일반약 방법 선택

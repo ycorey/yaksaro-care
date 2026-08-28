@@ -152,7 +152,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
         + (med.ingredient ? `&ingredient=${encodeURIComponent(med.ingredient)}` : '')
         + (med.edi_code ? `&edi_code=${encodeURIComponent(med.edi_code)}` : '')
       fetch(`/api/drugs/info?${q}`)
-        .then(r => r.json())
+        // 429·5xx 는 { error } 바디를 준다 — r.ok 를 안 보면 그 바디가 DrugInfo 로 저장돼
+        // "정보 없음" 카드가 조용히 뜬다(못 물은 것과 물었는데 없는 것은 다르다).
+        .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() })
         .then((d: DrugInfo) => setInfo(prev => ({ ...prev, [i]: d })))
         .catch(() => setInfo(prev => ({ ...prev, [i]: { found: false } })))
     })
