@@ -13,7 +13,7 @@ test('종결어미 기준으로 문장을 나눈다', () => {
   assert.match(s[2], /주의하십시오\.$/)
 })
 
-test('재조립하면 원문과 같다 — 누락·변조 0', () => {
+test('단일 공백으로 정규화되어 재조립하면 원문과 같다', () => {
   const s = splitSentences(ATPN)
   assert.equal(s.join(' '), ATPN)
 })
@@ -54,6 +54,30 @@ test('빈 값은 빈 배열', () => {
   assert.deepEqual(splitSentences(''), [])
   assert.deepEqual(splitSentences(null), [])
   assert.deepEqual(orderedCautions(undefined), [])
+})
+
+test('종결형으로 끝나지 않는 꼬리가 있어도 한 글자도 잃지 않는다', () => {
+  const t = '이 약을 복용하지 마십시오. 운전 시 주의하십시오. 참고: 임의 부가 안내문구(마침표 없음)'
+  const s = splitSentences(t)
+  assert.equal(s.length, 3)
+  assert.match(s[2], /참고/)  // 꼬리가 3번째 항목으로 포함됨
+  // 재조립 시 모든 글자가 보존되어야 함
+  const reassembled = s.join(' ')
+  assert.ok(reassembled.includes('참고: 임의 부가 안내문구(마침표 없음)'))
+  // 원문의 모든 단어가 재조립된 텍스트에 포함되어야 함
+  assert.ok(t.split(' ').every(word => reassembled.includes(word)))
+})
+
+test('여러 공백은 단일 공백으로 정규화되어 재조립된다', () => {
+  const t = '이 약을 복용하지 마십시오.  의사와 상의하십시오.'  // 마침표 다음 공백 2칸
+  const s = splitSentences(t)
+  assert.equal(s.length, 2)
+  const reassembled = s.join(' ')
+  // 여러 공백이 단일 공백으로 정규화됨
+  assert.equal(reassembled, '이 약을 복용하지 마십시오. 의사와 상의하십시오.')
+  // 하지만 글자는 완전히 보존됨
+  assert.ok(reassembled.includes('복용하지 마십시오'))
+  assert.ok(reassembled.includes('의사와 상의하십시오'))
 })
 
 test('반복 호출이 같은 결과를 낸다', () => {

@@ -9,17 +9,45 @@
 // 마침표 앞 음절이 한국어 종결형일 때만 자른다. 마침표 전부를 기준으로 자르면
 // `1일 5회(75 mg/kg)`·`3.0~3.7` 같은 용량·비율 표기가 문장을 쪼갠다.
 // 관찰된 종결형: …마십시오. …상의하십시오. …주의하십시오. …합니다. …있습니다.
-// match를 사용해 마침표를 포함한 문장들을 추출한다.
+// matchAll을 사용해 마침표를 포함한 문장들을 추출하고, 매치되지 않은 꼬리를 보존한다.
 // .*? 는 임의의 문자(마침표 포함)를 non-greedy로 매칭하므로 소수점 표기를 보존한다.
-const SENTENCE_PATTERN = /.*?[다요오]\.(?:\s+|$)/g
+//
+// 재조립: join(' ')을 사용하면 단일 공백으로 정규화된다. 원본의 여러 공백은
+// 단일 공백으로 통합되지만, 글자는 한 글자도 손실되지 않는다.
+// (e약은요 원문이 항상 단일 공백으로 형식화되므로 실무상 영향 없음)
+const SENTENCE_PATTERN = /.*?[다요오]\.(\s*)/g
 
 export function splitSentences(text: string | null | undefined): string[] {
   if (!text) return []
   const normalized = String(text).replace(/\r?\n+/g, ' ')
-  const sentences = normalized.match(SENTENCE_PATTERN) || []
-  return sentences
-    .map(s => s.trim())
-    .filter(Boolean)
+
+  // matchAll로 모든 매치를 추적하면서 인덱스도 기록
+  const matches = Array.from(normalized.matchAll(SENTENCE_PATTERN))
+
+  if (matches.length === 0) {
+    return [normalized].filter(Boolean)
+  }
+
+  const sentences: string[] = []
+
+  // 각 매치된 문장을 추가 (공백은 정규화: join(' ')용으로 단일 공백 가정)
+  for (const match of matches) {
+    const fullText = match[0]  // 마침표 + 뒤따르는 공백
+    const whitespace = match[1]  // capture group 1: 마침표 뒤 공백
+    const sentenceWithoutWhitespace = fullText.slice(0, fullText.length - whitespace.length)
+    // 공백을 trim하면 단일 공백으로 정규화됨 (join(' ')과 호환)
+    sentences.push(sentenceWithoutWhitespace.trim())
+  }
+
+  // 종결형으로 끝나지 않는 꼬리 텍스트 보존 (Critical fix)
+  const lastMatch = matches[matches.length - 1]
+  const endIndex = lastMatch.index + lastMatch[0].length
+  if (endIndex < normalized.length) {
+    const tail = normalized.slice(endIndex).trim()
+    if (tail) sentences.push(tail)
+  }
+
+  return sentences.filter(Boolean)
 }
 
 // 어미 매칭만 한다 — 의미 해석이 아니라 결정론적 분류다.
