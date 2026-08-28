@@ -251,8 +251,10 @@ function PrescriptionCard({
             노인주의는 일부러 제외 — 등재 1,980품목에 상용약이 많아 상시 점등되면 신호가치가 죽는다(경보 피로).
             중복은 '조합에서 생기는' 신호라 접힌 상태에서도 존재를 알려야 한다. */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
+          {/* aria-label 에 "안전"을 쓰지 않는다 — 스크린리더가 그대로 읽고, 점이 없는 옆 카드가
+              "이건 괜찮다"로 읽힌다. 우리는 정보의 존재만 말하고 판정은 하지 않는다. */}
           {g.meds.some(m => m.hasInteractionWarning || !!m.durDupGroup) && (
-            <span className="w-1.5 h-1.5 rounded-full bg-yc-warning" aria-label="안전 정보 있음" />
+            <span className="w-1.5 h-1.5 rounded-full bg-yc-warning" aria-label="함께 볼 정보 있음" />
           )}
           <CaretRight weight="bold" size={16}
             className={`text-yc-neutral300 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />

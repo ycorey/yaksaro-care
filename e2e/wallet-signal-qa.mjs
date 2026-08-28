@@ -84,7 +84,9 @@ try {
 
   console.log('[B] 접힌 헤더 점 — 효능군중복 점등')
   await page.goto(`${BASE}/wallet`, { waitUntil: 'networkidle' })
-  ok(await page.locator('[aria-label="안전 정보 있음"]').first().isVisible().catch(() => false), '접힌 상태에서 점 표시')
+  // 라벨에 "안전"을 쓰지 않는다(판정 금지) — 이 단언이 문구 회귀도 함께 지킨다
+  ok(await page.locator('[aria-label="함께 볼 정보 있음"]').first().isVisible().catch(() => false), '접힌 상태에서 점 표시')
+  ok(await page.locator('[aria-label*="안전"]').count() === 0, 'aria-label 에 "안전" 없음')
 
   console.log('[C] OTC 칩 — 중복 warning + 배너')
   ok(await page.getByText('같은 효능군 약이 함께 등록돼 있어요', { exact: false }).first().isVisible().catch(() => false), 'OTC 배너 문구')
