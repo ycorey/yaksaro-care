@@ -368,6 +368,9 @@ a[href]:active,
     font-family: var(--font-sans);
     font-feature-settings: 'kern' 1;
     word-break: keep-all;
+    /* keep-all 은 "어린이타이레놀산160밀리그램" 같은 긴 제품명을 한 단어로 취급해
+       카드 폭을 넘긴다 — 넘칠 때만 강제 개행하는 보완이 반드시 함께 있어야 한다. */
+    overflow-wrap: break-word;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

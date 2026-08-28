@@ -21,7 +21,7 @@ import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
 import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
 import { effectiveMealSlots, slotsApplicableToday } from '@/lib/meal-slots'
-import { getDurFlagsByItemSeq, resolveDuplicates } from '@/lib/dur-flags'
+import { getDurFlagsByItemSeq, resolveDuplicates, sanitizeElderlyNote } from '@/lib/dur-flags'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
 export default async function WalletPage() {
@@ -110,6 +110,8 @@ export default async function WalletPage() {
       scheduleType:          (med.schedule_type as ScheduleType | null) ?? 'daily',
       hasInteractionWarning: !!(med.has_interaction_warning),
       durElderly:            !!(drug?.item_seq && durFlags.get(drug.item_seq)?.elderly),
+      // 원문은 처방자용 지시로 끝난다 — 사실 서술로 정제하고, 정제 못 하면 배지만 남긴다
+      durElderlyNote:        sanitizeElderlyNote(drug?.item_seq ? durFlags.get(drug.item_seq)?.elderlyNote : null),
       durDupGroup:           (drug?.item_seq && durDups.get(drug.item_seq)) || null,
     }
   }
@@ -235,19 +237,19 @@ export default async function WalletPage() {
       <RefillCard items={refillItems} hasB2BPharmacy={hasB2BPharmacy} isSelfMember={active.is_self} />
 
       {/* ── 섹션 1: 처방의약품 ── */}
-      <div className="space-y-3">
+      <div id="sec-rx" className="space-y-3">
         <SectionHeader label="처방의약품" count={rxCount} showDot={false} />
         <PrescriptionSection groups={prescriptionGroups} serverChecks={serverChecks} />
       </div>
 
       {/* ── 섹션 2: 일반의약품 ── */}
-      <div className="space-y-3">
+      <div id="sec-otc" className="space-y-3">
         <SectionHeader label="일반의약품" count={otcCount} showDot={false} />
         <OtcSection meds={otcCards} regularPharmacyPhone={regularPharmacyPhone} />
       </div>
 
       {/* ── 섹션 3: 영양보조제 ── */}
-      <div className="space-y-3">
+      <div id="sec-supp" className="space-y-3">
         <SectionHeader label="영양보조제" count={suppCount} showDot={false} />
         <SupplementSection meds={supplementCards} serverChecks={serverChecks} />
       </div>

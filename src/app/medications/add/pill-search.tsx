@@ -10,9 +10,10 @@ import type { Member } from '@/lib/member'
 // 낱알로 찾기 — 모양·색·각인으로 drug_identification(067)을 검색해 기존 등록 플로우에 합류.
 // 선택 결과는 BoxOcrAddFlow 와 같은 방식으로 AddForm(initialSelected)에 인라인 전달한다.
 
-// 적재 실데이터(25,360행) distinct 와 대조 완료(2026-08-27) — 항목 일치, 순서는 빈도순
+// 적재 실데이터(25,360행) distinct 와 대조 완료(2026-08-27) — 항목 일치, 순서는 빈도순.
+// 단 '기타'만 맨 끝 — 소거법 선택지("다 봤는데 없다")라 구체 모양 스캔 중간에 끼면 흐름이 끊긴다.
 // (원형 39%·타원형 29%·장방형 27% 가 전체의 94%. 색 복합값("노랑, 투명")은 포함 매칭으로 잡힌다)
-const SHAPES = ['원형', '타원형', '장방형', '기타', '팔각형', '사각형', '삼각형', '마름모형', '육각형', '오각형', '반원형']
+const SHAPES = ['원형', '타원형', '장방형', '팔각형', '사각형', '삼각형', '마름모형', '육각형', '오각형', '반원형', '기타']
 const COLORS = ['하양', '분홍', '노랑', '주황', '갈색', '파랑', '연두', '초록', '빨강', '회색', '보라', '청록', '자주', '검정', '남색', '투명']
 
 type Candidate = {
@@ -26,7 +27,7 @@ export default function PillSearchFlow({ member }: { member: Member }) {
   const [colors, setColors] = useState<string[]>([])
   const [print, setPrint]   = useState('')
   const [busy, setBusy]     = useState(false)
-  const [result, setResult] = useState<{ items: Candidate[]; more: boolean } | null>(null)
+  const [result, setResult] = useState<{ items: Candidate[]; more: boolean; error?: boolean } | null>(null)
   const [selected, setSelected] = useState<Selected | null>(null)
 
   function toggleColor(c: string) {
@@ -44,9 +45,10 @@ export default function PillSearchFlow({ member }: { member: Member }) {
       if (print.trim()) qs.set('print', print.trim())
       const res = await fetch(`/api/drugs/identify?${qs}`)
       const data = await res.json()
-      setResult(res.ok ? { items: data.items ?? [], more: !!data.more } : { items: [], more: false })
+      // 서버 실패(429·500)를 "빈 결과"로 뭉개면 사용자 조건 탓이 된다 — 상태를 가른다
+      setResult(res.ok ? { items: data.items ?? [], more: !!data.more } : { items: [], more: false, error: true })
     } catch {
-      setResult({ items: [], more: false })
+      setResult({ items: [], more: false, error: true })
     } finally {
       setBusy(false)
     }
@@ -64,8 +66,11 @@ export default function PillSearchFlow({ member }: { member: Member }) {
     return (
       <div className="space-y-5 anim-scale-in">
         <div className="flex items-center gap-2">
-          <button onClick={() => setSelected(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-yc-neutral600" aria-label="뒤로">
-            ‹
+          {/* 한 화면 전의 BackButton(흰 원형 ←)과 같은 어포던스 — 동작만 검색 결과 복귀 */}
+          <button onClick={() => setSelected(null)}
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 text-lg active:bg-yc-neutral50 flex-shrink-0"
+            aria-label="검색 결과로 돌아가기">
+            ←
           </button>
           <h1 className="text-xl font-bold text-yc-neutral900 flex-1">약 등록</h1>
           <MemberContextBadge member={member} />
@@ -124,13 +129,13 @@ export default function PillSearchFlow({ member }: { member: Member }) {
         <p className="text-base font-semibold text-yc-neutral900 mb-2">새겨진 글자 <span className="text-sm font-normal text-yc-neutral500">(선택)</span></p>
         <input
           value={print} onChange={e => setPrint(e.target.value)}
-          placeholder="예: TYLENOL, 마크, 숫자"
+          placeholder="예: TYLENOL, 숫자"
           className="w-full rounded-yc-md border border-yc-neutral200 px-4 py-3 text-base text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:border-yc-green600"
         />
       </div>
 
       <button onClick={search} disabled={!canSearch || busy}
-        className="w-full min-h-[52px] rounded-yc-lg bg-yc-green600 text-white text-base font-semibold flex items-center justify-center gap-2 disabled:bg-yc-neutral200 disabled:text-yc-neutral400 active:bg-yc-green700 transition-colors">
+        className="w-full min-h-[52px] rounded-yc-lg bg-yc-green600 text-white text-base font-semibold flex items-center justify-center gap-2 disabled:bg-yc-neutral200 disabled:text-yc-neutral600 active:bg-yc-green700 transition-colors">
         {busy ? <CircleNotch size={20} className="animate-spin" /> : <MagnifyingGlass size={20} weight="bold" />}
         약 찾기
       </button>
@@ -143,8 +148,13 @@ export default function PillSearchFlow({ member }: { member: Member }) {
               결과가 20개가 넘어요 — 새겨진 글자나 색을 더 골라 주세요.
             </p>
           )}
-          {result.items.length === 0 ? (
-            <p className="text-sm text-yc-neutral500 text-center py-6">조건에 맞는 약을 찾지 못했어요. 조건을 바꿔 다시 찾아보세요.</p>
+          {result.error ? (
+            <p className="text-sm text-yc-neutral600 text-center py-6">잠시 문제가 있어요. 조건은 그대로 두고 &lsquo;약 찾기&rsquo;를 다시 눌러 주세요.</p>
+          ) : result.items.length === 0 ? (
+            <p className="text-sm text-yc-neutral500 text-center py-6">
+              조건에 맞는 약을 찾지 못했어요. 조건을 바꿔 다시 찾아보세요.
+              <span className="block mt-1 text-yc-neutral600">이름 검색이나 약 상자 촬영으로도 찾을 수 있어요.</span>
+            </p>
           ) : (
             <ul className="space-y-2">
               {result.items.map(c => (

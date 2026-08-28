@@ -2,7 +2,8 @@
 
 import type React from 'react'
 import { useState, useEffect, useRef } from 'react'
-import { Hospital, Pill, Flask } from '@phosphor-icons/react'
+import { Hospital, Pill, Flask, X } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 import { addMedication } from './actions'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
@@ -56,7 +57,9 @@ function ScheduleField({ type, dow, onType, onDow }: {
         </div>
       )}
       {type === 'weekly' && dow.length === 0 && (
-        <p className="text-xs text-yc-warning">복용 요일을 1개 이상 선택하세요. (선택 안 하면 오늘 복약·알림에 표시되지 않아요)</p>
+        // 저장을 막는 검증 메시지다 — yc-warning(#E8A817) 을 페이지 배경 위에 직접 쓰면 1.76:1 로
+        // 사실상 안 보인다(실측). 다른 경고 문구와 같이 warningText/warningBg 조합으로 통일.
+        <p className="text-sm text-yc-warningText bg-yc-warningBg rounded-yc-md px-3 py-2">복용 요일을 1개 이상 선택하세요. (선택 안 하면 오늘 복약·알림에 표시되지 않아요)</p>
       )}
       {type === 'prn' && (
         <p className="text-xs text-yc-neutral500">필요할 때만 복용 — 알림·오늘 복약에는 표시되지 않고 약 지갑에만 담겨요.</p>
@@ -76,7 +79,7 @@ function MealTimePicker({ value, onChange }: { value: string[]; onChange: (v: st
             onClick={() => onChange(on ? value.filter(v => v !== s.meal) : [...value, s.meal])}
             className={`${BTN_BASE} flex-col gap-1 py-3 h-auto ${on ? BTN_ACTIVE : BTN_INACTIVE}`}>
             <Icon weight="fill" size={14} />
-            <span className="text-xs">{s.label}</span>
+            <span className="text-sm">{s.label}</span>
           </button>
         )
       })}
@@ -164,11 +167,11 @@ function DrugSearch({
         <div className="flex-1 min-w-0">
           <p className="font-bold text-yc-neutral900 text-base truncate">{selected.name}</p>
           {'sub' in selected && selected.sub && <p className="text-xs text-yc-neutral500 truncate mt-0.5">{selected.sub}</p>}
-          {selected.type === 'custom' && <p className="text-xs text-yc-warning mt-0.5">직접 입력</p>}
+          {selected.type === 'custom' && <p className="text-xs text-yc-warningText mt-0.5">직접 입력</p>}
         </div>
-        <button type="button" onClick={onClear}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-yc-infoBg text-yc-blue500 text-lg flex-shrink-0">
-          ×
+        <button type="button" onClick={onClear} aria-label="선택 해제"
+          className="w-11 h-11 -my-1.5 -mr-1.5 flex items-center justify-center rounded-full text-yc-blue500 active:bg-yc-blue500/10 flex-shrink-0">
+          <X size={16} />
         </button>
       </div>
     )
@@ -195,22 +198,22 @@ function DrugSearch({
               {drugs.map(d => (
                 <button key={d.id} type="button"
                   onClick={() => { onSelect(d, 'drug'); setQuery(''); setOpen(false) }}
-                  className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
+                  className="w-full text-left px-4 py-3 active:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
-                  <Pill weight="fill" size={16} className="text-yc-blue500 flex-shrink-0" />
+                  <Pill weight="fill" size={16} className="text-yc-neutral400 flex-shrink-0" />
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
                     {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                   </span>
                   {d.source === 'api' && (
-                    <span className="text-[10px] bg-yc-infoBg text-yc-blue500 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
+                    <span className="text-xs text-yc-neutral600 bg-yc-neutral100 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
                   )}
                 </button>
               ))}
               {supps.map(s => (
                 <button key={s.id} type="button"
                   onClick={() => { onSelect(s, 'supplement'); setQuery(''); setOpen(false) }}
-                  className="w-full text-left px-4 py-3 hover:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
+                  className="w-full text-left px-4 py-3 active:bg-yc-neutral50 flex items-center gap-3 border-b border-yc-neutral100 last:border-0"
                 >
                   <Flask weight="fill" size={16} className="text-yc-green700 flex-shrink-0" />
                   <span className="min-w-0">
@@ -279,6 +282,10 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
     setSaving(true)
     try {
       await addMedication(formData)
+    } catch {
+      // redirect()는 여기로 throw되지 않는다(프레임워크가 내비게이션으로 처리) —
+      // 이 catch에 오는 것은 실제 저장 실패뿐. 폼을 유지해 재시도할 수 있게 한다.
+      toast.error('저장하지 못했어요. 잠시 후 다시 시도해 주세요')
     } finally {
       setSaving(false)
     }
@@ -464,7 +471,7 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
 
       {/* ── 저장 버튼 ── */}
       <button type="submit" disabled={saving || !canSubmit}
-        className={`w-full ${BTN_H} rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors`}>
+        className={`w-full ${BTN_H} rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 disabled:bg-yc-neutral200 disabled:text-yc-neutral600 disabled:cursor-not-allowed transition-colors`}>
         {saving ? '저장 중...' : '복약 목록에 추가'}
       </button>
     </form>

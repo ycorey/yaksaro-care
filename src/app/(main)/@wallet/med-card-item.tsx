@@ -19,6 +19,7 @@ type Picked  = {
 
 type Info = {
   found:      boolean
+  itemName?:  string | null   // 조회된 품목명 — 이름 폴백이 형제 품목을 물어왔는지 가리는 근거
   category?:  string | null
   classType?: string | null
   imageUrl?:  string | null
@@ -44,6 +45,7 @@ export type MedCardItemProps = {
   totalDays:     number | null
   scheduleLabel?: string | null  // '필요시' · '매주 월·목' (daily면 없음)
   durElderly?:   boolean         // DUR 노인주의 등재 사실 — 판정이 아니라 등재 표시(066)
+  durElderlyNote?: string | null // 식약처 등재 사유를 **정제한** 문장(sanitizeElderlyNote — 처방자용 투여 지시 절단). 원문 아님
   durDupGroup?:  string | null   // 겹친 효능군명 — 같은 군 약이 함께 등록됐을 때만
 }
 
@@ -59,6 +61,7 @@ function buildDosage(amount: number | null, perDay: number | null, days: number 
 export default function MedCardItem(p: MedCardItemProps) {
   const router = useRouter()
   const [info, setInfo]   = useState<Info | null>(null)
+  const [loadError, setLoadError] = useState(false)
   const [image, setImage] = useState<string | null>(p.initialImage)
   const [open, setOpen]   = useState(false)
 
@@ -96,15 +99,29 @@ export default function MedCardItem(p: MedCardItemProps) {
   }, [name, mode, p.isCustom, picked])
 
   // 약 상세 정보는 토글 클릭 시점에만 조회 (N+1 방지)
+  const infoInFlight = useRef(false)
   function fetchInfoIfNeeded() {
-    if (info !== null) return
+    if (info !== null || infoInFlight.current) return   // in-flight 가드 — 연속 탭이 쿼터를 이중 소모하지 않게
+    infoInFlight.current = true
+    setLoadError(false)
     const q = `name=${encodeURIComponent(p.name)}`
       + (p.ingredient ? `&ingredient=${encodeURIComponent(p.ingredient)}` : '')
       + (p.itemSeq    ? `&item_seq=${encodeURIComponent(p.itemSeq)}`      : '')
     fetch(`/api/drugs/info?${q}`)
-      .then(r => r.json())
-      .then((d: Info) => { setInfo(d); if (d.imageUrl && !image) setImage(d.imageUrl) })
-      .catch(() => setInfo({ found: false }))
+      .then(async r => {
+        if (!r.ok) throw new Error(String(r.status))    // 429·5xx = "못 물었다" — found:false("물었는데 없다")와 가른다
+        const d: Info = await r.json()
+        setInfo(d)
+        // 직접입력 약은 item_seq 가 없어 **이름 부분일치**로 조회된다 — 형제 품목이 잡히면
+        // 그 약의 사진이 이 카드에 붙는다. 실버 UX 에서 사진은 약을 식별하는 앵커라
+        // 오귀속 비용이 가장 크므로, 확정 연결(drug_id/item_seq)된 약에만 채택한다.
+        // (설명 텍스트는 패널 안에서 "아래 정보는 'X' 기준이에요" 로 출처를 밝히고 보여준다.)
+        if (d.imageUrl && !image && !p.isCustom) setImage(d.imageUrl)
+      })
+      // 실패를 found:false 로 굳히면 일시 장애가 "자료 없음"으로 오표시되고 재시도가 막힌다
+      // (info 를 null 로 남겨야 다음 시도가 다시 조회한다)
+      .catch(() => setLoadError(true))
+      .finally(() => { infoInFlight.current = false })
   }
 
   const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays)
@@ -253,7 +270,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                           {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                         </span>
                         {d.source === 'api' && (
-                          <span className="text-[10px] text-yc-neutral600 bg-yc-neutral100 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
+                          <span className="text-xs text-yc-neutral600 bg-yc-neutral100 px-1.5 py-0.5 rounded flex-shrink-0">처방</span>
                         )}
                       </button>
                     ))}
@@ -292,11 +309,11 @@ export default function MedCardItem(p: MedCardItemProps) {
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={save} disabled={busy}
-                className="flex-1 h-10 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:opacity-90 disabled:opacity-50">
+                className="flex-1 h-11 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:opacity-90 disabled:opacity-50">
                 {busy ? '저장 중…' : '저장'}
               </button>
               <button onClick={() => setMode('view')} disabled={busy}
-                className="flex-1 h-10 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-semibold active:bg-yc-neutral100">
+                className="flex-1 h-11 rounded-yc-md border border-yc-neutral300 text-yc-neutral600 text-sm font-semibold active:bg-yc-neutral100">
                 취소
               </button>
             </div>
@@ -317,40 +334,81 @@ export default function MedCardItem(p: MedCardItemProps) {
               </p>
             )}
 
-            {/* 분류 배지 */}
-            {info?.found && (info.category || info.classType) && (
+            {/* 분류 배지 — 직접입력 약은 이름 부분일치 결과라 이 카드의 분류라고 단정할 수 없다(위 setImage 주석) */}
+            {info?.found && !p.isCustom && (info.category || info.classType) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {info.category && <span className="text-xs bg-yc-neutral100 text-yc-neutral600 rounded-full px-2.5 py-0.5">{info.category}</span>}
                 {info.classType && <span className="text-xs bg-yc-neutral100 text-yc-neutral500 rounded-full px-2.5 py-0.5">{info.classType}</span>}
               </div>
             )}
 
-            {/* DUR 등재 배지 — 판정·지시 아님: 식약처 등재 사실만 표시(066). 상세·출처는 아래 토글 안 */}
+            {/* DUR 등재 배지 — 판정·지시 아님: 식약처 등재 사실만 표시(066). 상세·출처는 아래 토글 안.
+                066 의 유일한 표면이라 장식 칩 예외가 아닌 본문 기준(text-sm)을 적용 — 긴 문장이라
+                2줄로 꺾일 수 있어 rounded-full 대신 rounded-yc-md. 탭하면 토글이 열려 상세로 잇는다. */}
             {(p.durElderly || p.durDupGroup) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {p.durElderly && (
-                  <span className="text-xs font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-full px-2.5 py-0.5">노인주의 등재</span>
+                  <button type="button" onClick={() => { setOpen(true); fetchInfoIfNeeded() }} aria-expanded={open}
+                    className="text-sm font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-yc-md px-2.5 py-2 min-h-[44px] flex items-center leading-snug text-left">
+                    노인주의 등재
+                  </button>
                 )}
                 {p.durDupGroup && (
-                  <span className="text-xs font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-full px-2.5 py-0.5">같은 효능군({p.durDupGroup}) 약이 함께 등록됨</span>
+                  <button type="button" onClick={() => { setOpen(true); fetchInfoIfNeeded() }} aria-expanded={open}
+                    className="text-sm font-semibold text-yc-warningText bg-yc-warningBg border border-yc-warning/30 rounded-yc-md px-2.5 py-2 min-h-[44px] flex items-center leading-snug text-left">
+                    같은 효능군({p.durDupGroup}) 약이 함께 등록됨
+                  </button>
                 )}
               </div>
             )}
 
-            {/* 효능 토글 */}
-            {hasDetail && (
+            {/* 효능 토글 — 버튼을 hasDetail 로 가리면 안 된다: 정보 조회(fetchInfoIfNeeded)가
+                이 버튼 클릭에서만 발화하므로, 조회 결과로 버튼을 가리면 첫 조회를 일으킬 경로가
+                없어진다. 건기식은 e약은요 비대상이라 제외. */}
+            {!p.isSupplement && (
               <div className="mt-2">
                 <button onClick={() => { setOpen(o => !o); fetchInfoIfNeeded() }} className="text-sm text-yc-green600 font-medium min-h-[44px] flex items-center">
                   {open ? '닫기 ▲' : 'ⓘ 이 약은 어떤 약인가요? ▼'}
                 </button>
                 {open && (
                   <div className="bg-yc-neutral50 rounded-yc-md px-3 py-2.5 mt-1.5 space-y-2 text-sm text-yc-neutral700 leading-relaxed">
-                    {info?.efcy       && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
-                    {info?.useMethod  && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
-                    {info?.atpn       && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
-                    {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
-                    {info?.sideEffect && <p><span className="font-semibold">부작용 </span>{info.sideEffect}</p>}
-                    {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
+                    {/* DUR 등재 사실은 패널 '맨 위' 고정 — 배지를 탭해 여기까지 온 사람이 찾는 내용이다.
+                        아래에 두면 e약은요 장문 6필드가 로드되는 순간 읽던 문장이 화면 밖으로 밀린다. */}
+                    {(p.durElderlyNote || p.durDupGroup) && (
+                      <div className="space-y-1 pb-1 border-b border-yc-neutral100">
+                        {p.durElderlyNote && <p><span className="font-semibold">노인주의 등재 내용 </span>{p.durElderlyNote}</p>}
+                        {p.durDupGroup && (
+                          <p><span className="font-semibold">효능군 중복 </span>같은 효능군({p.durDupGroup}) 약이 함께 등록되어 있어요. 중복 복용 여부는 담당 약사와 상담하세요.</p>
+                        )}
+                      </div>
+                    )}
+                    {loadError ? (
+                      <div>
+                        <p className="text-yc-neutral600">정보를 불러오지 못했어요.</p>
+                        <button onClick={fetchInfoIfNeeded} className="text-sm text-yc-green600 font-semibold min-h-[44px] flex items-center">
+                          다시 시도
+                        </button>
+                      </div>
+                    ) : info === null ? (
+                      <p className="text-yc-neutral500">약 정보를 불러오는 중…</p>
+                    ) : hasDetail ? (
+                      <>
+                        {/* 065 는 itemSeq 미스 시 약품명·성분 어간으로 폴백한다 — 형제 용량·유사명
+                            품목의 설명이 이 카드 것으로 귀속되지 않도록 출처 품목을 밝힌다. */}
+                        {info?.itemName && info.itemName !== p.name && (
+                          <p className="text-xs text-yc-neutral500">아래 정보는 &lsquo;{info.itemName}&rsquo; 기준이에요</p>
+                        )}
+                        {info?.efcy       && <p><span className="font-semibold">효능·효과 </span>{info.efcy}</p>}
+                        {info?.useMethod  && <p><span className="font-semibold">복용법 </span>{info.useMethod}</p>}
+                        {info?.atpn       && <p><span className="font-semibold">주의사항 </span>{info.atpn}</p>}
+                        {info?.intrc      && <p><span className="font-semibold">상호작용 </span>{info.intrc}</p>}
+                        {info?.sideEffect && <p><span className="font-semibold">부작용 </span>{info.sideEffect}</p>}
+                        {info?.storage    && <p><span className="font-semibold">보관법 </span>{info.storage}</p>}
+                      </>
+                    ) : (
+                      // 전문약 다수가 e약은요 비대상 — 앱 실패가 아니라 자료 부재임을 말한다
+                      <p className="text-yc-neutral500">이 약은 쉬운 설명 자료가 없어요.</p>
+                    )}
                     <p className="text-xs text-yc-neutral500 pt-1 border-t border-yc-neutral100">
                       자료: 식품의약품안전처 · 정확한 판단은 담당 약사와 상담하세요
                     </p>

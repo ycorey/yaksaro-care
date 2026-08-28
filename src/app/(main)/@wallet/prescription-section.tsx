@@ -29,6 +29,7 @@ export type MedCard = {
   scheduleType:          ScheduleType
   hasInteractionWarning: boolean
   durElderly:            boolean        // DUR 노인주의 등재 사실(066)
+  durElderlyNote:        string | null  // 등재 사유를 **정제한** 문장(sanitizeElderlyNote) — 원문이 아니다(투여 지시 절단됨)
   durDupGroup:           string | null  // 겹친 효능군명 — 같은 군 약이 2개 이상일 때만
 }
 
@@ -246,10 +247,12 @@ function PrescriptionCard({
           )}
         </div>
 
-        {/* 우측: 경고점(상호작용) + 쉐브론 */}
+        {/* 우측: 경고점(상호작용·효능군중복) + 쉐브론.
+            노인주의는 일부러 제외 — 등재 1,980품목에 상용약이 많아 상시 점등되면 신호가치가 죽는다(경보 피로).
+            중복은 '조합에서 생기는' 신호라 접힌 상태에서도 존재를 알려야 한다. */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
-          {g.meds.some(m => m.hasInteractionWarning) && (
-            <span className="w-1.5 h-1.5 rounded-full bg-yc-warning" aria-label="상호작용 정보 있음" />
+          {g.meds.some(m => m.hasInteractionWarning || !!m.durDupGroup) && (
+            <span className="w-1.5 h-1.5 rounded-full bg-yc-warning" aria-label="안전 정보 있음" />
           )}
           <CaretRight weight="bold" size={16}
             className={`text-yc-neutral300 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
@@ -294,7 +297,7 @@ function PrescriptionCard({
                   initialImage={med.imageUrl} itemSeq={med.itemSeq}
                   doseAmount={med.doseAmount} dosesPerDay={med.dosesPerDay} totalDays={med.totalDays}
                   scheduleLabel={med.scheduleLabel}
-                  durElderly={med.durElderly} durDupGroup={med.durDupGroup}
+                  durElderly={med.durElderly} durElderlyNote={med.durElderlyNote} durDupGroup={med.durDupGroup}
                 />
               </li>
             ))}
@@ -312,15 +315,15 @@ function PrescriptionCard({
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-yc-neutral500">{g.meds.length}개 모두 삭제?</span>
                   <button onClick={deleteAll} disabled={busyDel}
-                    className="text-sm font-semibold text-yc-error px-3 py-1.5 rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
+                    className="text-sm font-semibold text-yc-error px-3 min-h-[44px] rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
                     {busyDel ? '삭제 중…' : '예, 삭제'}
                   </button>
                   <button onClick={() => setConfirmDel(false)} disabled={busyDel}
-                    className="text-sm text-yc-neutral500 px-3 py-1.5 rounded-yc-md active:bg-yc-neutral100">아니오</button>
+                    className="text-sm text-yc-neutral500 px-3 min-h-[44px] rounded-yc-md active:bg-yc-neutral100">아니오</button>
                 </div>
               ) : (
                 <button onClick={() => setConfirmDel(true)}
-                  className="w-full h-10 rounded-yc-md border border-yc-error/20 text-yc-error/70 text-sm font-medium active:bg-yc-errorBg flex items-center justify-center gap-1.5">
+                  className="w-full h-11 rounded-yc-md border border-yc-error/20 text-yc-error/70 text-sm font-medium active:bg-yc-errorBg flex items-center justify-center gap-1.5">
                   <Trash size={15} /> 이 처방전 약 {g.meds.length}개 모두 삭제
                 </button>
               )}
