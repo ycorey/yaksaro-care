@@ -1,25 +1,31 @@
 @echo off
-REM DUR 성분쌍 ETL 자동 재개 래퍼 (Windows 예약 작업용)
+REM DUR ingredient-pair ETL auto-resume wrapper (Windows Scheduled Task)
 REM
-REM 왜 필요한가: getUsjntTabooInfoList03 은 797,416건이고 페이지 상한이 500 이라 1,595콜이다.
-REM 개발계정 일일 한도가 1,000콜이라 한 번에 못 끝낸다 — 한도에 걸리면 스크립트가
-REM 체크포인트를 남기고 정상 종료하므로, 이 래퍼가 다음 날 이어서 돌린다.
+REM ASCII ONLY. cmd.exe parses .cmd files using the system ANSI codepage (CP949 here),
+REM so UTF-8 Korean text is mangled into garbage that cmd tries to run as commands.
+REM The previous version of this file had Korean REM lines and was broken end to end --
+REM even the `if not exist` guard failed to parse. Verified 2026-08-29 by running both
+REM the old and new content: both produced "not recognized as an internal or external
+REM command" for every line containing Korean. Keep this file ASCII.
+REM Rationale in Korean lives in scripts/etl-dur-ingredient-pairs.mjs header.
 REM
-REM 체크포인트가 남아있을 때만 실행 -> 전량 완료(체크포인트 삭제) 후엔 자동 no-op.
-REM DUR_DELAY 를 늘려 속도제한(429)을 피한다.
+REM Runs only when a checkpoint exists -> automatic no-op once the scan completes
+REM (the ETL deletes its checkpoint on full completion).
+REM DUR_DELAY is raised to avoid API rate limiting (429).
 REM
-REM 2026-08-28: 대상을 etl-dur-ingredient.mjs -> etl-dur-ingredient-pairs.mjs 로 교체.
-REM   옛 스크립트는 성분쌍을 제품쌍으로 전개해 interactions 에 썼는데, 그 테이블은
-REM   068 적용 시점부터 동결이다. 래퍼를 그대로 두면 예약 작업이 동결을 깬다.
+REM 2026-08-28: retargeted from etl-dur-ingredient.mjs to etl-dur-ingredient-pairs.mjs.
+REM   The old script expanded ingredient pairs into product pairs and wrote them to
+REM   `interactions`, which is frozen as of migration 068. Leaving the wrapper pointed
+REM   at it would let a scheduled task break the freeze.
 
 cd /d "E:\Projects\yaksaro-care"
 
 if not exist ".etl-dur-ingr-pairs-checkpoint.json" (
-  echo [%date% %time%] checkpoint 없음 - ETL 완료/미시작, 건너뜀 >> dur-etl-cron.log
+  echo [%date% %time%] no checkpoint - ETL complete or not started, skipping >> dur-etl-cron.log
   exit /b 0
 )
 
-echo [%date% %time%] DUR 성분쌍 ETL 재개 시작 >> dur-etl-cron.log
+echo [%date% %time%] resuming DUR ingredient-pair ETL >> dur-etl-cron.log
 set DUR_DELAY=400
 "C:\Program Files\nodejs\node.exe" --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts\etl-dur-ingredient-pairs.mjs >> dur-etl-cron.log 2>&1
-echo [%date% %time%] DUR 성분쌍 ETL 종료 (exit %errorlevel%) >> dur-etl-cron.log
+echo [%date% %time%] DUR ingredient-pair ETL finished (exit %errorlevel%) >> dur-etl-cron.log
