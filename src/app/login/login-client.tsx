@@ -44,7 +44,9 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
   const deleted      = searchParams.get('deleted') === '1'
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
-  const [consentError, setConsentError] = useState(false)  // 동의 없이 로그인 시도 → 강조
+  const [age14, setAge14] = useState(false)
+  // 게이트(동의·연령) 미충족 상태로 로그인 시도 → 해당 체크박스를 강조한다
+  const [consentError, setConsentError] = useState(false)
   const [showEmail, setShowEmail] = useState(false)
   const [emailState, emailAction, emailPending] = useActionState<EmailLoginState, FormData>(
     signInWithEmail,
@@ -65,10 +67,11 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
 
   async function handleOAuthSignIn(provider: string) {
     // 동의 미체크 시: 버튼을 죽이지 말고(무반응 방지) 명확히 안내 + 체크박스 강조
-    if (!consented) {
+    if (!consented || !age14) {
       setConsentError(true)
-      toast.error('먼저 [필수] 동의에 체크해 주세요')
-      document.getElementById('consent-check')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      toast.error('먼저 [필수] 항목에 체크해 주세요')
+      document.getElementById(consented ? 'age14-check' : 'consent-check')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     setLoading(provider)
@@ -178,7 +181,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             // 하이드레이션 전에도 제출값에 실리므로, JS 없이도 동의 없는 로그인이 성립하지 않는다.
             form="email-login-form"
             checked={consented}
-            onChange={e => { setConsented(e.target.checked); if (e.target.checked) setConsentError(false) }}
+            onChange={e => { setConsented(e.target.checked); if (e.target.checked && age14) setConsentError(false) }}
             className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError ? 'ring-2 ring-red-400' : ''}`}
           />
           <span className="text-sm text-yc-neutral600 leading-relaxed">
@@ -187,8 +190,30 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             <Link href="/privacy" className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
           </span>
         </label>
+        {/* 만 14세 확인 — 처리방침 제13조가 "만 14세 미만 아동의 회원가입을 받지 않습니다" 라고
+            선언하는데 확인하는 코드가 없었다. 선언과 구현을 맞춘다.
+            민감정보 동의와 **합치지 않는다** — §23 은 별도 동의를 요구하고, 연령은 동의가 아니라
+            사실의 진술이라 한 체크박스에 묶으면 어느 쪽도 깨끗하지 않다. */}
+        <label
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl p-3 -m-3 transition-colors ${
+            consentError && !age14 ? 'bg-red-50 ring-1 ring-red-300' : ''
+          }`}
+        >
+          <input
+            id="age14-check"
+            type="checkbox"
+            name="age14"
+            form="email-login-form"
+            checked={age14}
+            onChange={e => { setAge14(e.target.checked); if (e.target.checked && consented) setConsentError(false) }}
+            className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError && !age14 ? 'ring-2 ring-red-400' : ''}`}
+          />
+          <span className="text-sm text-yc-neutral600 leading-relaxed">
+            <span className="font-semibold text-yc-neutral900">[필수] 만 14세 이상입니다</span>
+          </span>
+        </label>
         <p className={`mb-5 text-xs font-medium h-4 transition-colors ${consentError ? 'text-red-600' : 'text-transparent'}`}>
-          로그인하려면 위 [필수] 동의에 체크해 주세요.
+          로그인하려면 위 [필수] 항목에 체크해 주세요.
         </p>
 
         {/* 소셜 로그인 버튼 3종 */}

@@ -87,9 +87,22 @@ try {
   const { data: mid } = await admin.from('profiles').select('consent_health').eq('id', uid).single()
   check('거절된 시도는 동의를 남기지 않는다', mid?.consent_health === false, String(mid?.consent_health))
 
+  // 동의만 켜고 연령 확인은 끈 채 제출 — 처리방침 제13조("만 14세 미만 가입 안 받음")를
+  // 코드가 실제로 지키는지. 선언만 있고 확인이 없으면 그 조항은 글자일 뿐이다.
+  await page.locator('#consent-check').check()
+  await page.locator('#login-email').fill(email)
+  await page.locator('#login-password').fill(password)
+  await page.getByRole('button', { name: '로그인' }).click()
+  await page.waitForTimeout(2500)
+  check('연령 미확인 제출 → /login 에 머문다', new URL(page.url()).pathname === '/login', page.url())
+  const ageMsg = await page.locator('form#email-login-form').innerText()
+  check('만 14세 확인을 요구한다', ageMsg.includes('14세'),
+    ageMsg.split('\n').find(l => l.includes('14세')) ?? '')
+
   // ── [C] 동의하고 로그인 → 들어가지고, 기록이 남는다 ──────────────
   console.log('\n[C] 정상 로그인 + 동의 기록')
   await page.locator('#consent-check').check()
+  await page.locator('#age14-check').check()
   await page.locator('#login-email').fill(email)
   await page.locator('#login-password').fill(password)
   await page.getByRole('button', { name: '로그인' }).click()
@@ -109,6 +122,7 @@ try {
   await page2.getByRole('button', { name: '이메일로 로그인' }).click()
   await page2.locator('#login-email').waitFor({ state: 'visible', timeout: 5000 })
   await page2.locator('#consent-check').check()
+  await page2.locator('#age14-check').check()
   await page2.locator('#login-email').fill(email)
   await page2.locator('#login-password').fill('wrong-' + password)
   await page2.getByRole('button', { name: '로그인' }).click()

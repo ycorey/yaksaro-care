@@ -42,9 +42,13 @@ export async function signInWithEmail(
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
   const consented = formData.get('consent') === 'on'
+  // 처리방침 제13조가 "만 14세 미만 아동의 회원가입을 받지 않습니다" 라고 선언하는데
+  // 확인하는 코드가 없었다. 선언과 구현을 맞춘다.
+  const age14 = formData.get('age14') === 'on'
 
   if (!email || !password) return { error: '이메일과 비밀번호를 입력해 주세요.' }
   if (!consented) return { error: '먼저 [필수] 민감정보 수집·이용 동의에 체크해 주세요.' }
+  if (!age14) return { error: '만 14세 이상만 이용할 수 있어요. [필수] 연령 확인에 체크해 주세요.' }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })

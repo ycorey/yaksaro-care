@@ -158,6 +158,42 @@ try {
   for (const href of ['/privacy', '/terms', '/permissions', '/account-deletion']) {
     check(`설정에서 ${href} 로 갈 수 있다`, settings.includes(`'${href}'`))
   }
+
+  // ── [E] manifest · 아이콘 ────────────────────────────────────────
+  console.log('\n[E] manifest · 아이콘')
+  const mf = JSON.parse(readFileSync(ROOT + 'public/manifest.webmanifest', 'utf8'))
+
+  // `id` 는 반드시 예전 암묵값(start_url)과 같아야 한다. 다른 값을 넣는 순간 브라우저는
+  // **다른 앱**으로 보고, 이미 설치된 사용자의 앱이 고아가 된다(업데이트가 도달하지 않는다).
+  check('manifest.id === start_url (설치 고아 방지)', mf.id === mf.start_url, `${mf.id} / ${mf.start_url}`)
+
+  // manifest 가 가리키는 아이콘이 실제로 있는가. 없으면 설치 프롬프트가 조용히 안 뜬다.
+  const missing = mf.icons.map(i => i.src).filter(src => !existsSync(ROOT + 'public' + src))
+  check('manifest 아이콘 파일이 모두 존재', missing.length === 0, missing.join(', ') || `${mf.icons.length}개`)
+
+  const purposes = new Set(mf.icons.flatMap(i => String(i.purpose ?? 'any').split(/\s+/)))
+  check('maskable 아이콘이 192·512 둘 다 있다',
+    purposes.has('maskable') &&
+    mf.icons.filter(i => String(i.purpose).includes('maskable')).length >= 2)
+
+  // maskable 두 장이 **같은 그림**이어야 한다. 192 는 배포 중인 512 를 축소해 만들었는데,
+  // 누가 `gen-pwa-icons.mjs` 를 돌려 512 만 갈아끼우면 둘이 조용히 어긋난다
+  // (그 스크립트는 지금 배포본을 재현하지 못한다 — 마크 크기가 다르다. 스크립트 상단 경고 참조).
+  const { default: sharp } = await import('sharp')
+  const [a, b] = await Promise.all([
+    sharp(ROOT + 'public/icons/maskable-512.png').resize(64, 64).removeAlpha().raw().toBuffer(),
+    sharp(ROOT + 'public/icons/maskable-192.png').resize(64, 64).removeAlpha().raw().toBuffer(),
+  ])
+  let worst = 0
+  for (let i = 0; i < a.length; i++) worst = Math.max(worst, Math.abs(a[i] - b[i]))
+  check('maskable 192 와 512 가 같은 그림', worst <= 24, `최대 채널차 ${worst}`)
+
+  // 설치된 앱 안에서 "앱 설치하세요" 배너는 웹 래퍼임을 자백하는 것이다.
+  // 빌드 플래그로는 못 나눈다 — **웹 배포 = 앱 갱신**이라 같은 번들이 둘 다에 나간다.
+  // 갈라야 할 축은 빌드가 아니라 런타임(display-mode)이고, 배너는 이미 그렇게 하고 있다.
+  const banner = readFileSync(ROOT + 'src/components/pwa/install-banner.tsx', 'utf8')
+  check('설치 배너가 standalone 을 검사해 앱 안에서는 뜨지 않는다',
+    banner.includes('display-mode: standalone'))
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {
