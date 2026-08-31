@@ -21,6 +21,11 @@
 
 drop policy if exists "interactions_read" on public.interactions;
 
+-- 068 의 성분 규칙표도 같은 성격이다(DUR 등재 원문 보관). 소비 코드가 아직 0건이라
+-- 지금 닫아 두면 나중에 화면이 붙을 때 "이미 열려 있었다" 는 상태를 물려받지 않는다.
+-- (068 브랜치가 머지되기 전이면 아래 두 줄은 아무 것도 하지 않는다 — 표가 없으면 no-op.)
+drop policy if exists "ingredient_interactions_read" on public.ingredient_interactions;
+
 -- 남은 권한을 확인하고 싶으면:
 --   select policyname, roles, cmd from pg_policies where tablename = 'interactions';
 -- (0행이어야 한다. RLS 는 켜진 채로 두어 service_role 외에는 아무도 못 읽는다.)

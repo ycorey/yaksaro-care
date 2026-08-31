@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { LegalBackBar } from '@/components/yc/legal-back-bar'
+import { LegalBackBar, LegalBottomExit } from '@/components/yc/legal-back-bar'
 
 export const metadata = { title: '이용약관 · 약사로케어' }
 
@@ -135,9 +134,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-10">
-          <Link href="/login" className="text-sm text-yc-green600 underline underline-offset-2">
-            ← 로그인으로 돌아가기
-          </Link>
+          <LegalBottomExit />
         </div>
       </div>
     </div>

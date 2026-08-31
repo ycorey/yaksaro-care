@@ -4,6 +4,7 @@ import { type Meal, isMeal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import { logger } from '@/lib/logger'
 import { dbError } from '@/lib/api-error'
+import { requireHealthConsent } from '@/lib/require-consent'
 
 function today() {
   return new Date().toISOString().split('T')[0]
@@ -37,6 +38,10 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // §23 — 화면 게이트만으로는 **처리**가 막히지 않는다. 만들거나 바꾸는 경로는 여기서도 막는다.
+  const consent = await requireHealthConsent(supabase, user.id)
+  if (!consent.ok) return consent.response
 
   const { meal_time, is_checked } = await request.json() as { meal_time: Meal; is_checked: boolean }
   if (!isMeal(meal_time)) {

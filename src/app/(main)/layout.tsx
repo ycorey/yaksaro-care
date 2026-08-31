@@ -23,7 +23,7 @@ export default async function MainLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, full_name, role, font_size, consent_health')
     .eq('id', user.id)
@@ -31,11 +31,14 @@ export default async function MainLayout({
   if (profile?.role === 'pharmacist') redirect('/pharmacy')
 
   // §23 동의 게이트 — `consent_health` 가 처음으로 **실제로 무언가를 막는 값**이 된다.
-  // 그 전까지 이 컬럼은 프로필·설정의 ✓/✗ 표시에만 쓰였고(조건 사용 0건),
-  // 로그인 화면의 [필수] 체크는 클라이언트 상태라 서버가 강제하지 못했다.
-  // 기존 가입자는 `/login` 을 다시 지나지 않아 영원히 미동의로 남는 문제도 여기서 닫힌다.
   // 설정(`/settings`)은 일부러 게이트 밖에 둔다 — 동의하지 않는 사용자도 로그아웃·탈퇴·
   // 처리방침에는 닿을 수 있어야 한다.
+  //
+  // ⚠️ **판독 실패를 '미동의' 로 강등하지 않는다.** 강등하면 DB 장애 한 번에 전 사용자가
+  //    빠져나갈 수 없는 동의 화면에 갇힌다. 판독 실패는 '동의 안 함' 이 아니라 '모름' 이고,
+  //    같은 저장소가 `pharmacy/(app)/layout.tsx:26` 과 `api/profile/delete/route.ts` 에
+  //    이미 같은 교훈을 적어 뒀다 — 여기서 그걸 재현했었다.
+  if (profileError) throw new Error(`동의 상태 확인 실패: ${profileError.code} ${profileError.message}`)
   if (!profile?.consent_health) redirect('/consent')
 
   // 글자 크기 복원 — 루트의 FOUC 스크립트는 localStorage 만 읽어서, 로그아웃 후 재로그인이나

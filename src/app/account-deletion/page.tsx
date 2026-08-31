@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LegalBackBar } from '@/components/yc/legal-back-bar'
+import { LegalBackBar, LegalBottomExit } from '@/components/yc/legal-back-bar'
 
 export const metadata = {
   title: '계정 삭제 요청 · 약사로케어',
@@ -103,9 +103,7 @@ export default function AccountDeletionPage() {
           <Link href="/privacy" className="text-sm text-yc-green600 underline underline-offset-2">
             개인정보 처리방침
           </Link>
-          {/* 예전엔 "로그인으로 돌아가기" 였는데 목적지가 틀렸다 — 로그인 사용자가 누르면
-              proxy 가 /home 으로 보내, 설정에서 출발한 사람이 설정으로 못 돌아왔다.
-              되돌아가기는 상단 백 바(router.back())가 담당한다. */}
+          <LegalBottomExit />
         </div>
       </div>
     </div>

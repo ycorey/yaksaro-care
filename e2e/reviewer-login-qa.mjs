@@ -39,8 +39,11 @@ try {
   try {
     await fetch(BASE + '/login', { signal: AbortSignal.timeout(4000) })
   } catch {
-    console.log(`⚠️  서버(${BASE})에 연결할 수 없습니다. npm run build && npm run start 후 다시 실행하세요.`)
-    process.exit(0)
+    // 스토어 게이트는 안 돈 것과 통과한 것이 같지 않다 → 초록 스킵 대신 실패시킨다
+    // (store-readiness-qa 와 같은 이유. 다른 e2e 의 exit 0 관례를 여기선 따르지 않는다.)
+    console.error(`❌ 서버(${BASE})에 연결할 수 없어 심사자 입구를 검증하지 못했습니다.`)
+    console.error('   npm run build && npm run start 후 다시 실행하세요.')
+    process.exit(1)
   }
 
   // 운영팀이 심사용 계정을 발급하는 것과 같은 경로(service_role 생성).

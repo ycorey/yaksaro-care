@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { getActiveMember } from '@/lib/active-member'
 import { redactPii, hasResidualRrn } from '@/lib/redact-pii'
 import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
+import { requireHealthConsent } from '@/lib/require-consent'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
 export const maxDuration = 60
@@ -348,6 +349,10 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // §23 — 화면 게이트만으로는 **처리**가 막히지 않는다. 만들거나 바꾸는 경로는 여기서도 막는다.
+  const consent = await requireHealthConsent(supabase, user.id)
+  if (!consent.ok) return consent.response
 
   const { active } = await getActiveMember(supabase, user.id)
 

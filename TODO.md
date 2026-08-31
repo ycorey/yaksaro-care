@@ -18,14 +18,13 @@
 
 ## 🔒 사용자만 할 수 있는 일 (내가 대신 못 함)
 
-- [ ] `supabase functions deploy ter-notify` — 배포본이 **version 10(8/11)** 이라 `passLen` 노출 코드가 **운영에 라이브**다.
-      ▸ 누출은 로그가 아니라 **응답 본문**이다 — SMTP 실패 시 `creds: { userLen, userHasAt, passLen }` 를 502 바디로 돌려준다.
-        `verify_jwt` 는 켜져 있지만 통과에 필요한 것이 **랜딩 HTML 에 공개된 anon 키**뿐이라 사실상 누구나 호출할 수 있다.
-        커밋된 HEAD 소스는 이미 서버 로그로만 남기도록 고쳐져 있다.
-      ▸ **보류 사유는 해소됐다(2026-08-21 확인)** — "`/ter` 워크스트림이 정리된 뒤" 라는 조건이었는데 그 워크스트림은
-        **PR #69 로 머지됐고 061~063 도 운영 적용이 확인된다**(`list_migrations`: `20260815191901`/`191912`/`191925`).
-        원문 유실 위험도 없다(MCP `get_edge_function` 으로 배포본 전문을 읽을 수 있고 `deploy_edge_function` 은 파일 내용을 그대로 받는다).
-      함께: `index.ts:223` 의 `message: msg` 제거 · `encodeHeader()` CRLF 제거 · CI 에 `deno check supabase/functions/**/*.ts`
+- [x] ~~`supabase functions deploy ter-notify`~~ — **이미 배포돼 있다(2026-08-31 실측).**
+      배포본 **version 11 / 2026-08-15**, 응답 본문에 `creds` 없음(서버 로그로만 남긴다).
+      ⚠️ 이 항목이 "version 10(8/11) 이라 `passLen` 이 운영에 라이브" 라고 적혀 있던 것은 **사실이 아니었다.**
+      2026-08-31 재감사에서 배포본을 실제로 읽어 확인했다. 그 전 회차 감사는 이 문장을
+      **실측 없이 채택**했고, 그 결과 "지금 라이브인 자격 노출" 이 두 번 보고됐다.
+      → 남은 것: `index.ts:223` 의 `message: msg` 제거 · `encodeHeader()` CRLF 제거 ·
+        CI 에 `deno check supabase/functions/**/*.ts` (전부 노출과 무관한 정리 항목)
 - [ ] **Play Console 확인 (리드타임 최장 — 다른 작업보다 먼저)** — health 앱에 **Organization 계정 + D-U-N-S** 가 실제로 요구되는지.
       사실이고 사업자등록이 없으면 **기술로 못 넘는다.** (TWA 포장은 이미 끝나 이제 행정만 남았다.)
 - [ ] GA4 속성의 **Google Signals / Ads 연동 상태** — 연동돼 있으면 Apple Tracking=Yes → ATT 필요 + 5.1.3(헬스 데이터 광고 이용 금지) 충돌
@@ -74,8 +73,12 @@
 - [x] manifest — `id` 추가(값은 예전 암묵값 `/home` 과 동일해야 설치가 고아가 안 된다) · maskable-192
 - [x] 앱 내 비의료기기 고지 — 설정(상시) + 약 지갑 하단
 - [x] 로그인 후 처리방침·약관 링크 — 설정 [안내] 구역
-- [x] 만 14세 확인 — 이메일 경로는 **서버가** 거절하고, 소셜 경로는 클라이언트 가드였다.
-      → 2026-08-31 `/consent` 게이트로 **두 경로 모두 서버가 강제**하게 마감(레이아웃에서 미동의 차단)
+- [~] 만 14세 확인 — **부분.** 이메일 경로는 서버가 거절한다(`login/actions.ts`).
+      소셜 경로는 여전히 클라이언트 가드뿐이다 — `login-client.tsx` 가 `consent=1` 만 싣고
+      `age14` 는 싣지 않아, 콜백이 동의를 찍고 나면 `/consent` 게이트를 **지나지 않는다.**
+      그리고 연령은 **기록되는 컬럼이 없다**(`consent_age`/`age14` grep 0건).
+      → 서버 강제·기록을 완결하려면 컬럼 추가 마이그레이션이 선행. 그 전까지 "두 경로 모두
+        서버가 강제" 라고 적지 말 것 — 실제로 두 번 그렇게 적었다가 감사에서 두 번 잡혔다.
 - [x] `/medications` → `/medications/add`
 - [x] **§23 동의가 실제로 기록된다** (작업 중 발견) — 로그인 화면의 [필수] 체크는
       어디에도 저장되지 않았다(`signInWithOAuth` 가 `options.data` 를 넘기지 않아

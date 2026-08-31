@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LegalBackBar } from '@/components/yc/legal-back-bar'
+import { LegalBackBar, LegalBottomExit } from '@/components/yc/legal-back-bar'
 
 export const metadata = {
   title: '접근권한 안내 · 약사로케어',
@@ -98,7 +98,7 @@ export default function PermissionsPage() {
           <Link href="/privacy" className="text-sm text-yc-green600 underline underline-offset-2">
             개인정보 처리방침
           </Link>
-          {/* 되돌아가기는 상단 백 바(router.back())가 담당한다 — 로그인 전/후 목적지가 다르다 */}
+          <LegalBottomExit />
         </div>
       </div>
     </div>

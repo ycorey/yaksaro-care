@@ -273,6 +273,23 @@ try {
   const settingsOpen = await statusOf('/settings', gCookie)
   check('설정은 게이트 밖 — 로그아웃·탈퇴 경로가 살아 있다', settingsOpen === 200, `HTTP ${settingsOpen}`)
 
+  // 화면만 막고 **처리**는 안 막으면 §23 을 지킨 게 아니다.
+  // 감사 실측(2026-08-31): `consent_health` 를 보는 API 라우트가 44개 중 0곳이었다 —
+  // OCR 업로드·복약 일괄 저장이 인증만 통과하면 그대로 동작했다.
+  for (const [path, body] of [
+    ['/api/medications/bulk', '{}'],
+    ['/api/meal-checks', '{}'],
+  ]) {
+    const res = await fetch(new URL(path, BASE), {
+      method: 'POST',
+      headers: { cookie: gCookie, 'content-type': 'application/json' },
+      body,
+    })
+    const j = await res.json().catch(() => ({}))
+    check(`★미동의 사용자는 ${path} 로 처리도 못 한다`,
+      res.status === 403 && j?.code === 'consent_required', `HTTP ${res.status} ${j?.code ?? ''}`)
+  }
+
   // 동의를 채우면 통과해야 한다 — 막기만 하고 열리지 않으면 그건 게이트가 아니라 벽이다.
   await admin.from('profiles').update({ consent_health: true, consent_health_at: new Date().toISOString() }).eq('id', gateUid)
   const afterHome = await statusOf('/home', gCookie)

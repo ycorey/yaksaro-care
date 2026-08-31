@@ -1,34 +1,66 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { signOutAndPurge } from '@/lib/purge'
 import { acceptHealthConsent, type ConsentState } from './actions'
 
 // 동의 게이트 화면. 로그인 화면의 체크박스와 **같은 문구**를 쓴다 —
 // 두 곳의 동의 문언이 갈리면 어느 쪽에 동의한 것인지 말할 수 없게 된다.
 //
-// 터치 타겟은 52px 이상(실버 세대 대상). 체크박스 행을 `py-4` 로 두는 이유다.
-export default function ConsentClient({ userName }: { userName: string | null }) {
+// 이 화면이 실제로 만나는 사람은 대부분 **신규가 아니라 기존 사용자**다.
+// 동의 기록이 없던 시절에 가입해 미동의로 남은 계정이고, 그들은 갑자기
+// 탭 어디를 눌러도 여기로 되돌아오는 경험을 한다. 그래서 이 화면은 셋을 말해야 한다:
+//   ① 왜 여기로 왔는지  ② 이미 등록한 약은 어떻게 되는지  ③ 동의하지 않으면 어떻게 나가는지
+export default function ConsentClient({
+  userName, hasMedications, next,
+}: {
+  userName: string | null
+  hasMedications: boolean
+  next: string | null
+}) {
+  const router = useRouter()
   const [consented, setConsented] = useState(false)
   const [age14, setAge14] = useState(false)
+  const [leaving, setLeaving] = useState(false)
   const [state, formAction, pending] = useActionState<ConsentState, FormData>(
     acceptHealthConsent,
     { error: null },
   )
 
+  async function handleLogout() {
+    setLeaving(true)
+    await signOutAndPurge().catch(() => {})
+    router.push('/login')
+  }
+
   return (
     <div className="min-h-screen bg-yc-pageBg px-5 py-10">
       <div className="mx-auto w-full max-w-[430px]">
-        <h1 className="font-display text-2xl text-yc-neutral900 mb-2">
-          {userName ? `${userName}님, ` : ''}시작하기 전에
+        <h1 className="font-display text-2xl text-yc-neutral900 mb-3">
+          {userName ? `${userName}님, ` : ''}동의가 한 가지 필요해요
         </h1>
-        <p className="text-sm text-yc-neutral600 leading-relaxed mb-8">
-          약사로케어는 복약 정보를 다루기 때문에, 법에 따라 아래 동의를 받은 뒤에만
-          약 정보를 보여 드릴 수 있어요.
+
+        {/* ① 왜 여기로 왔는지 — 조용한 리다이렉트만 겪으면 "앱이 고장났다" 로 읽힌다 */}
+        <p className="text-base text-yc-neutral700 leading-relaxed mb-3">
+          복약 정보는 법에서 <b>민감정보</b>로 정한 항목이라, 동의를 받은 뒤에만 보여 드릴 수 있어요.
+          그래서 약 지갑·오늘 복약 화면이 이 안내로 되돌아옵니다.
         </p>
 
+        {/* ② 이미 등록한 약은 어떻게 되는지 */}
+        {hasMedications && (
+          <div className="mb-6 rounded-2xl border border-yc-green100 bg-yc-green50 px-5 py-4">
+            <p className="text-sm text-yc-neutral700 leading-relaxed">
+              <b>이미 등록하신 약은 그대로 있어요.</b> 지워지지 않았고, 동의하시면 바로 다시 보입니다.
+            </p>
+          </div>
+        )}
+
         <form action={formAction}>
-          <label className="flex items-start gap-3 py-4 cursor-pointer">
+          {next && <input type="hidden" name="next" value={next} />}
+
+          <label className="flex items-start gap-3 py-4 min-h-[52px] cursor-pointer">
             <input
               id="consent-check"
               type="checkbox"
@@ -44,7 +76,7 @@ export default function ConsentClient({ userName }: { userName: string | null })
             </span>
           </label>
 
-          <label className="flex items-start gap-3 py-4 cursor-pointer">
+          <label className="flex items-start gap-3 py-4 min-h-[52px] cursor-pointer">
             <input
               id="age14-check"
               type="checkbox"
@@ -67,32 +99,42 @@ export default function ConsentClient({ userName }: { userName: string | null })
 
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || leaving}
             className="mt-6 w-full min-h-[56px] rounded-2xl bg-yc-green600 text-white font-bold text-base disabled:opacity-50 active:scale-[0.99] transition-transform"
           >
-            {pending ? '저장 중…' : '동의하고 시작하기'}
+            {pending ? '저장 중…' : '동의하고 계속하기'}
           </button>
         </form>
 
-        {/* 동의하지 않을 자유가 실제로 있어야 동의다. 나가는 길을 같은 화면에 둔다. */}
-        <div className="mt-8 space-y-3 text-center">
-          <p className="text-sm text-yc-neutral500 leading-relaxed">
+        {/* ③ 동의하지 않을 자유가 실제로 있어야 동의다.
+            예전엔 "동의하지 않으셔도 됩니다" 라고 적어 놓고 나가는 버튼이 없었다. */}
+        <div className="mt-8 rounded-2xl border border-yc-neutral200 bg-white px-5 py-4">
+          <p className="text-sm text-yc-neutral600 leading-relaxed mb-3">
             동의하지 않으셔도 됩니다. 다만 복약 정보를 다루는 기능은 이용할 수 없어요.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/privacy" target="_blank" rel="noopener noreferrer"
-              className="text-sm text-yc-green600 underline underline-offset-2 py-2">
-              개인정보 처리방침
-            </Link>
-            <Link href="/settings"
-              className="text-sm text-yc-neutral500 underline underline-offset-2 py-2">
-              설정
-            </Link>
-            <Link href="/account-deletion"
-              className="text-sm text-yc-neutral500 underline underline-offset-2 py-2">
-              계정 삭제
-            </Link>
-          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={pending || leaving}
+            className="w-full min-h-[52px] rounded-xl border border-yc-neutral200 text-base font-semibold text-yc-neutral700 active:bg-yc-neutral50 disabled:opacity-50"
+          >
+            {leaving ? '로그아웃 중…' : '동의하지 않고 로그아웃'}
+          </button>
+        </div>
+
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+            className="min-h-[52px] flex items-center text-sm text-yc-green600 underline underline-offset-2">
+            개인정보 처리방침
+          </Link>
+          <Link href="/settings"
+            className="min-h-[52px] flex items-center text-sm text-yc-neutral500 underline underline-offset-2">
+            설정
+          </Link>
+          <Link href="/account-deletion"
+            className="min-h-[52px] flex items-center text-sm text-yc-neutral500 underline underline-offset-2">
+            계정 삭제
+          </Link>
         </div>
       </div>
     </div>
