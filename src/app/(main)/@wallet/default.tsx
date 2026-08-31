@@ -263,7 +263,7 @@ export default async function WalletPage() {
 
       {/* ── 지난 약(복약 이력) ── */}
       <Link href="/medications/history"
-        className="block text-center text-sm font-semibold text-yc-neutral500 active:text-yc-green600 py-3">
+        className="flex min-h-[52px] items-center justify-center text-base font-semibold text-yc-neutral500 active:text-yc-green600">
         지난 약 보기 →
       </Link>
 

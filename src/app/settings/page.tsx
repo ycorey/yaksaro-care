@@ -24,7 +24,7 @@ export default async function SettingsPage() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 pt-1">
         <Link href="/wallet"
-          className="w-11 h-11 flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 active:bg-yc-neutral50">
+          className="w-[52px] h-[52px] flex items-center justify-center rounded-full bg-white shadow-[var(--yc-shadow-sm)] text-yc-neutral700 active:bg-yc-neutral50">
           ←
         </Link>
         <h1 className="font-display text-xl text-yc-neutral900">설정</h1>

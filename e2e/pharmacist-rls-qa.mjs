@@ -13,6 +13,7 @@
 // 실행: node --experimental-strip-types e2e/pharmacist-rls-qa.mjs
 import { createClient } from '@supabase/supabase-js'
 import { loadEnv } from './_env.mjs'
+import { consentedPatientMeta } from './_seed-meta.mjs'
 
 const { URL_, ANON, SERVICE } = loadEnv()
 const admin = createClient(URL_, SERVICE, { auth: { autoRefreshToken: false, persistSession: false } })
@@ -87,7 +88,9 @@ try {
 
   // 3) 환자 U + 멤버(본인/가족)
   const uEmail = `e2e-rls-patient+${now}@yaksaro-e2e.test`, uPw = pw()
-  const { data: uUser, error: uErr } = await admin.auth.admin.createUser({ email: uEmail, password: uPw, email_confirm: true })
+  // 환자 U 는 §23 에 동의한 실사용자다 — 071 이후 `pharmacist_can_view` 가 그 동의를 AND 조건으로 본다.
+  // (약사 P·Q 에는 넣지 않는다 — 환자용 동의를 약사 행에 찍으면 의미가 오염된다.)
+  const { data: uUser, error: uErr } = await admin.auth.admin.createUser({ email: uEmail, password: uPw, email_confirm: true, user_metadata: consentedPatientMeta() })
   if (uErr) throw new Error('createUser U: ' + uErr.message)
   patientUid = uUser.user.id
 
@@ -188,6 +191,27 @@ try {
   check('철회 직후 → 처방 0건(즉시 차단)', dRevoked.rx === 0, `rx=${dRevoked.rx}`)
   check('철회 직후 → 약 0건', dRevoked.med === 0, `med=${dRevoked.med}`)
   check('철회 직후 → 체크로그 0건', dRevoked.log === 0, `log=${dRevoked.log}`)
+
+  // ── D2. §23 미동의: 단골+공개동의가 모두 켜져 있어도 건강정보 동의가 없으면 0건 (071) ──
+  //
+  // 071 이전에는 `pharmacist_can_view()` 가 `consent_pharmacist_view` 만 봤다. 그래서
+  // §23 동의 게이트(2026-08-31)를 세운 뒤 이런 상태가 성립했다 —
+  // **본인은 게이트에 막혀 자기 복약을 못 보는데 약사는 본다.** 운영 실측 2명이 그랬다.
+  // 상위 동의(§23) 없이 하위 동의(약국 공개)만으로 열려 있으면 안 된다.
+  console.log('\n[D2] §23 미동의(consent_health=false) + 공개동의 O')
+  await setRegular(ph1, true)
+  await admin.from('profiles').update({ consent_health: true }).eq('id', patientUid)
+  const d2Open = await pharmacistSees(pClient, patientUid)
+  check('§23 동의 O → 조회 열림(양성 재확인)', d2Open.rx === 2, `rx=${d2Open.rx}`)
+
+  await admin.from('profiles').update({ consent_health: false, consent_health_at: null }).eq('id', patientUid)
+  const d2 = await pharmacistSees(pClient, patientUid)
+  check('★§23 미동의 → 처방 0건(공개동의가 켜져 있어도)', d2.rx === 0, `rx=${d2.rx}`)
+  check('★§23 미동의 → 약 0건', d2.med === 0, `med=${d2.med}`)
+  check('★§23 미동의 → 체크로그 0건', d2.log === 0, `log=${d2.log}`)
+  check('★§23 미동의 → profile 0건', d2.profile === 0, `profile=${d2.profile}`)
+  // 원복 — 아래 시나리오들이 동의 상태를 전제한다
+  await admin.from('profiles').update({ consent_health: true, consent_health_at: new Date().toISOString() }).eq('id', patientUid)
 
   // ── E. 쓰기 차단: 약사는 SELECT 전용 — 환자 처방 UPDATE 시도는 0행 영향(RLS) ──
   console.log('\n[E] 약사 쓰기 차단(SELECT 전용)')

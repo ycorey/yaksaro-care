@@ -308,7 +308,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
                   autoComplete="username"
                   required
                   autoFocus
-                  className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                  className="w-full h-[52px] px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
                 />
               </div>
               <div>
@@ -321,7 +321,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                  className="w-full h-[52px] px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
                 />
               </div>
 
@@ -350,12 +350,12 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             바로 위에 [필수] 체크박스가 둘 있는데 묵시 동의가 함께 서 있으면
             체크가 정말 필요한지 알 수 없고, §22 별도 동의의 취지와도 어긋난다.
             → 동의는 체크박스로만 받고, 여기는 읽을 곳을 가리키기만 한다. */}
-        <p className="mt-8 text-center text-xs text-yc-neutral500 leading-relaxed px-2">
+        <p className="mt-8 flex flex-wrap justify-center gap-x-4 text-center text-sm text-yc-neutral500 leading-relaxed px-2">
           <Link href="/privacy" target="_blank" rel="noopener noreferrer"
-            className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
+            className="inline-flex min-h-[52px] items-center text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
           {' '}·{' '}
           <Link href="/terms" target="_blank" rel="noopener noreferrer"
-            className="text-yc-neutral500 underline underline-offset-2">이용약관</Link>
+            className="inline-flex min-h-[52px] items-center text-yc-neutral500 underline underline-offset-2">이용약관</Link>
         </p>
       </div>
     </div>

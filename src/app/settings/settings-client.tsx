@@ -41,7 +41,9 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       role="switch"
       aria-checked={on}
       onClick={onToggle}
-      className="relative rounded-full flex-shrink-0 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-2"
+      // 스위치 자체는 28px 이지만 before 의사요소가 위아래로 12px 씩 넓혀 **히트영역 52px** 을 만든다.
+      // (실버 세대 요건. 예전 -inset-y-2 는 44px 이라 미달이었다 — 눈에 안 보이는 미달이라 실측으로만 잡힌다.)
+      className="relative rounded-full flex-shrink-0 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-3"
       style={{
         width: 48,
         height: 28,
@@ -239,7 +241,7 @@ export default function SettingsClient({
         <div className="flex gap-2">
           {FONT_SIZE_OPTIONS.map(f => (
             <button key={f.key} type="button" onClick={() => changeFontSize(f.key)}
-              className={`flex-1 py-3.5 rounded-yc-lg text-sm transition-colors shadow-[var(--yc-shadow-sm)] ${
+              className={`flex-1 min-h-[52px] rounded-yc-lg text-base transition-colors shadow-[var(--yc-shadow-sm)] ${
                 fontSize === f.key
                   ? 'bg-yc-green600 text-white font-semibold'
                   : 'bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral50'
@@ -355,16 +357,18 @@ export default function SettingsClient({
               <span className="text-yc-neutral700">건강정보 수집·이용 동의</span>
             </div>
             {consentHealth ? (
-              <p className="mt-2 text-xs text-yc-neutral500 leading-relaxed">
+              <p className="mt-2 text-sm text-yc-neutral500 leading-relaxed">
                 동의를 철회하면 등록한 약과 복약 기록을 함께 파기해야 합니다.{' '}
-                <Link href="/account-deletion" className="text-yc-green600 underline underline-offset-2">
+                <Link href="/account-deletion"
+                  className="inline-flex min-h-[52px] items-center text-sm text-yc-green600 underline underline-offset-2">
                   철회·삭제 방법 보기
                 </Link>
               </p>
             ) : (
-              <p className="mt-2 text-xs text-yc-neutral500 leading-relaxed">
+              <p className="mt-2 text-sm text-yc-neutral500 leading-relaxed">
                 아직 동의하지 않아 복약 정보를 볼 수 없어요.{' '}
-                <Link href="/consent" className="text-yc-green600 underline underline-offset-2">
+                <Link href="/consent"
+                  className="inline-flex min-h-[52px] items-center text-sm text-yc-green600 underline underline-offset-2">
                   지금 동의하기
                 </Link>
               </p>

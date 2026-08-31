@@ -21,9 +21,14 @@
 
 drop policy if exists "interactions_read" on public.interactions;
 
--- 068 의 성분 규칙표도 같은 성격이다(DUR 등재 원문 보관). 소비 코드가 아직 0건이라
+-- 068 의 성분 규칙표도 같은 성격이다(DUR 등재 원문 보관). 표와 정책 모두 **운영에 실재하고**
+-- (068 은 2026-08-31 적용됨), 이 브랜치에는 소비 코드가 0건이다.
 -- 지금 닫아 두면 나중에 화면이 붙을 때 "이미 열려 있었다" 는 상태를 물려받지 않는다.
--- (068 브랜치가 머지되기 전이면 아래 두 줄은 아무 것도 하지 않는다 — 표가 없으면 no-op.)
+--
+-- ⚠️ `feat/interaction-engine-3a` 를 머지할 때 주의: 그 브랜치의
+--    `src/lib/interactions-ingredient.ts` 는 넘겨받은 클라이언트로 이 표를 읽는다.
+--    **service_role(admin) 로 호출할 것** — `interactions` 소비처 2곳과 같은 방식이다.
+--    사용자 클라이언트로 부르면 이 정책이 없어 0행이 돌아온다(조용히 빈 결과).
 drop policy if exists "ingredient_interactions_read" on public.ingredient_interactions;
 
 -- 남은 권한을 확인하고 싶으면:
