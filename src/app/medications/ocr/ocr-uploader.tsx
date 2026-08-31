@@ -18,6 +18,10 @@ type Medicine = {
   meal_times:    string[]
   drug_id?:      string | null   // 검색-교체 시 부착되는 정식 품목 식별자 (DB drugs.id)
   item_seq?:     string | null   // 허가정보 품목기준코드 (source='api' 교체분)
+  // 서버가 이름으로 마스터를 찾았으나 **함량이 갈려** 자동 채택하지 않은 후보들.
+  // 5mg·2.5mg 중 하나를 앱이 임의로 고르면 사용자의 약이 다른 용량으로 기록된다 →
+  // 여기서 사용자가 직접 고른다. 고르지 않으면 custom_name 으로 남는다(퇴행 아님).
+  candidates?:   { id: string; item_name: string }[]
   unit?:         string | null   // 단위 (정/캡슐/포 등)
   schedule_type?: 'daily' | 'prn' | 'weekly'  // 복용 방식
   dow?:          number[]        // weekly 요일 (0=일~6=토)
@@ -336,6 +340,17 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
       item_seq: p.item_seq,
     }))
     setNameSearchOpen(false)
+  }
+
+  // 함량 후보 선택 — 서버가 "여럿이라 못 고른다"고 내려준 후보 중 사용자가 직접 고른다.
+  // 고른 순간 정식 drug_id 가 붙어 DUR·e약은요·낱알식별이 모두 살아난다.
+  function pickCandidate(i: number, cand: { id: string; item_name: string }) {
+    setResult(prev => prev && ({
+      ...prev,
+      medicines: prev.medicines.map((m, idx) =>
+        idx === i ? { ...m, name: cand.item_name, drug_id: cand.id, item_seq: null, candidates: [] } : m
+      ),
+    }))
   }
 
   // 수정 저장 — result.medicines[i]에 반영(빈칸은 null)
@@ -657,6 +672,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                     med.days          ? `${med.days}일분` : null,
                   ].filter(Boolean).join(' · ')
                   const editing = editIdx === i
+                  const cands = med.candidates ?? []
 
                   return (
                     <div key={i} className="bg-white border border-yc-neutral200 rounded-yc-lg px-5 py-4">
@@ -778,6 +794,24 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                             </p>
                             {med.ingredient && (
                               <p className="text-sm text-yc-neutral500 mt-0.5">({med.ingredient})</p>
+                            )}
+                            {/* 함량이 갈려 앱이 고르지 않은 경우 — 임의 선택은 복용량 오기록이므로 사용자가 고른다 */}
+                            {!med.drug_id && cands.length > 0 && (
+                              <div className="mt-2 rounded-yc-md bg-yc-warningBg border border-yc-warning/30 px-3 py-2.5">
+                                <p className="text-sm font-semibold text-yc-warningText">함량을 골라 주세요</p>
+                                <p className="text-xs text-yc-neutral600 mt-0.5">
+                                  같은 이름의 약이 {cands.length}가지예요. 처방전에 적힌 것과 같은 것을 눌러 주세요.
+                                </p>
+                                <div className="flex flex-col gap-1.5 mt-2">
+                                  {cands.map(cd => (
+                                    <button key={cd.id} type="button" onClick={() => pickCandidate(i, cd)}
+                                      className="w-full text-left min-h-[52px] px-3 py-2 rounded-yc-md bg-white border border-yc-neutral200 text-sm font-medium text-yc-neutral900 active:bg-yc-neutral100 break-keep">
+                                      {cd.item_name}
+                                    </button>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-yc-neutral500 mt-2">모르겠으면 그냥 두세요 — 약 이름만 저장돼요.</p>
+                              </div>
                             )}
                             {dosage ? (
                               <p className="text-sm font-medium text-yc-neutral700 mt-2">{dosage}</p>

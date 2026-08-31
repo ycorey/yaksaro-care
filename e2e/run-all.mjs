@@ -39,6 +39,10 @@ const SERVER_STANDALONE = [
   // ⚠️ 이 테스트가 덮는 것은 **이메일 경로뿐**이다 — OAuth 콜백의 `?consent=1` 기록은
   //    실제 공급자 코드가 필요해 여기서 밟지 못한다(수동 확인 대상).
   'reviewer-login-qa',
+  // 영양제 "직접 입력" — 등록 자체가 불가능한 상태로 조용히 살아 있던 경로.
+  // 저장 버튼이 죽어 있는데 화면은 정상으로 보여 눈·타입·기존 e2e 가 전부 놓쳤다.
+  // 그래서 폼 렌더가 아니라 **DB 에 행이 생기는지**까지 본다.
+  'add-supplement-qa',
   'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
   // 등록 당일 복용 시작 — 저녁 등록 1일 3회가 오늘은 저녁부터인지(/today 실렌더, 자체 시드)
   'first-day-slots-qa',

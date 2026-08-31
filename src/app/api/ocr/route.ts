@@ -5,6 +5,7 @@ import { getActiveMember } from '@/lib/active-member'
 import { redactPii, hasResidualRrn } from '@/lib/redact-pii'
 import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 import { requireHealthConsent } from '@/lib/require-consent'
+import { resolveDrugByName } from '@/lib/drug-name-resolve'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
 export const maxDuration = 60
@@ -43,6 +44,12 @@ type ParsedMedicine = {
   dose_amount:   number | null   // 1회 투약량
   doses_per_day: number | null   // 1일 투여횟수
   days:          number | null   // 총 투약일수
+}
+
+// 검수 화면으로 내려보내는 약 1건. 파싱 결과 + 마스터 매칭 결과.
+type MedicineOut = ParsedMedicine & {
+  drug_id:    string | null                        // 자동 채택된 `drugs.id` (없으면 null)
+  candidates: { id: string; item_name: string }[]  // 함량이 갈려 사용자가 골라야 하는 후보
 }
 
 type ParsedPrescription = {
@@ -424,8 +431,28 @@ export async function POST(request: Request) {
     )
   }
 
-  const names   = parsed.medicines.map(m => m.name)
-  const maxDays = parsed.medicines.reduce((mx, m) => (m.days && m.days > mx ? m.days : mx), 0) || null
+  // ── 마스터 매칭: 검수 화면에 들어가기 전에 `drugs` 행을 붙인다 ─────────
+  // EDI 코드가 없거나 역조회가 실패한 약은 이름으로만 남는데, 그대로 저장하면
+  // custom_name 이 되어 DUR·e약은요·낱알식별이 전부 불발한다(운영 53행이 그 상태였다).
+  // 함량까지 확정되면 자동 채택하고, 함량이 갈리면 후보를 내려보내 **사용자가 고르게** 한다.
+  const resolvedMeds: MedicineOut[] = await Promise.all(
+    parsed.medicines.map(async (m): Promise<MedicineOut> => {
+      const r = await resolveDrugByName(supabase, m.name)
+      if (r.kind === 'unique') {
+        return {
+          ...m,
+          // 공식 품목명으로 표시 교정(함량 보존). `탈리부틴정200일리그램` → `탈리부틴정200밀리그램`
+          name:       officialDisplayName(r.match.item_name) ?? m.name,
+          ingredient: extractIngredient(r.match.item_name) ?? m.ingredient,
+          drug_id:    r.match.id,
+          candidates: [],
+        }
+      }
+      return { ...m, drug_id: null, candidates: r.options.map(o => ({ id: o.id, item_name: o.item_name })) }
+    }),
+  )
+  const names   = resolvedMeds.map(m => m.name)
+  const maxDays = resolvedMeds.reduce((mx, m) => (m.days && m.days > mx ? m.days : mx), 0) || null
 
   // 4. user_prescriptions에 저장 — 본인 행 insert이므로 user 토큰 + RLS로 충분.
   // 0건 추출(하드실패 포함)이면 행을 만들지 않는다 — UI가 재촬영만 안내하므로 orphan 처방행 방지.
@@ -451,7 +478,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     prescription_id: prescriptionId,
-    medicines:       parsed.medicines,
+    medicines:       resolvedMeds,
     pharmacy_name:   parsed.pharmacy_name,
   })
 }
