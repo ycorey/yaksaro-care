@@ -9,6 +9,7 @@ export interface HealthTip {
 export const HEALTH_TIPS: HealthTip[] = [
   { emoji: '💧', text: '약은 충분한 물 한 컵(200ml)과 함께 드시면 식도에 달라붙지 않아요.' },
   { emoji: '🕐', text: '매일 같은 시간에 약을 드시면 잊지 않고 효과도 더 안정적이에요.' },
+  // yc-allow-phrase: '안전해요' 는 **물 vs 커피·우유** 비교이지 복약 조합에 대한 판정이 아니다.
   { emoji: '🍵', text: '약을 커피·녹차·우유와 함께 드시면 흡수가 달라질 수 있어요. 물이 가장 안전해요.' },
   { emoji: '🛏️', text: '잠들기 전 약은 누운 채로 드시지 말고, 앉아서 물과 함께 드세요.' },
   { emoji: '📦', text: '약은 직사광선과 습기를 피해 서늘한 곳에 보관하면 더 오래가요.' },

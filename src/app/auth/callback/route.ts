@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
-import { logger } from '@/lib/logger'
+import { recordHealthConsent } from '@/lib/health-consent'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
@@ -57,13 +57,13 @@ export async function GET(request: Request) {
       //
       // 기록 실패로 로그인을 막지는 않는다 — 이미 인증된 사용자를 되돌려보내면 들어올 길이 없다.
       // `.eq('consent_health', false)` 로 최초 동의 시각을 재로그인이 덮어쓰지 않게 한다.
+      //
+      // ⚠️ 이 경로는 **게이트가 아니다.** `consent=1` 이 없어도 세션은 발급된다 —
+      //    OAuth 는 공급자에게 다녀온 뒤라 여기서 되돌릴 것이 없기 때문이다.
+      //    동의를 실제로 강제하는 곳은 `/consent` 게이트다((main)·medications 레이아웃).
+      //    여기는 "체크하고 왔다" 는 사실을 **기록**하는 자리다.
       if (searchParams.get('consent') === '1') {
-        const { error: consentError } = await supabase
-          .from('profiles')
-          .update({ consent_health: true, consent_health_at: new Date().toISOString() })
-          .eq('id', user.id)
-          .eq('consent_health', false)
-        if (consentError) logger.warn('auth', '민감정보 동의 기록 실패', consentError.message)
+        await recordHealthConsent(supabase, user.id)
       }
 
       // QR 매핑: 쿠키 우선, 없으면 URL 쿼리 파라미터(인앱 브라우저 쿠키 유실 폴백)

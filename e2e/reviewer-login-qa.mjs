@@ -65,8 +65,13 @@ try {
   console.log('\n[A] 이메일 입구')
   await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
   const toggle = page.getByRole('button', { name: '이메일로 로그인' })
-  await toggle.waitFor({ state: 'visible', timeout: 15000 })
-  check('로그인 화면에 "이메일로 로그인" 이 있다', true)
+  // 대기는 필요하다(렌더 전에 세면 플레이크). 다만 waitFor 는 실패 시 throw 하므로
+  // 그 뒤에 `check(…, true)` 를 두면 **아무것도 검증하지 않는 장식 단언**이 된다.
+  // → 대기 실패를 삼켜 FAIL 로 떨어뜨리고, 실제 상태를 세어 단언한다.
+  const appeared = await toggle.waitFor({ state: 'visible', timeout: 15000 }).then(() => true, () => false)
+  const toggleCount = await toggle.count()
+  check('로그인 화면에 "이메일로 로그인" 이 정확히 하나 노출된다', appeared && toggleCount === 1,
+    `노출=${appeared} 개수=${toggleCount}`)
 
   await toggle.click()
   const emailInput = page.locator('#login-email')

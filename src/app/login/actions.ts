@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { logger } from '@/lib/logger'
+import { recordHealthConsent } from '@/lib/health-consent'
 
 // 이메일+비밀번호 로그인 — 심사자용 입구.
 //
@@ -21,19 +21,6 @@ import { logger } from '@/lib/logger'
 // 기록이 어긋나 있었다.
 
 export type EmailLoginState = { error: string | null }
-
-/** 동의를 profiles 에 남긴다. 실패해도 로그인은 막지 않는다 — 이미 인증된 사용자를
- *  기록 실패로 되돌려보내면 들어올 방법이 사라진다. 대신 로그를 남겨 추적한다.
- *  (`consent_health`·`consent_health_at` 는 046 에서 authenticated 에 UPDATE 가 부여돼 있다.) */
-export async function recordHealthConsent(userId: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
-    .from('profiles')
-    .update({ consent_health: true, consent_health_at: new Date().toISOString() })
-    .eq('id', userId)
-    .eq('consent_health', false)   // 최초 동의 시각을 나중 로그인이 덮어쓰지 않게
-  if (error) logger.warn('auth', '민감정보 동의 기록 실패', error.message)
-}
 
 export async function signInWithEmail(
   _prev: EmailLoginState,
@@ -56,13 +43,15 @@ export async function signInWithEmail(
   // 어느 쪽이 틀렸는지 알려주지 않는다 — 계정 존재 여부가 새면 그 자체가 정보다.
   if (error || !data.user) return { error: '이메일 또는 비밀번호가 올바르지 않습니다.' }
 
-  await recordHealthConsent(data.user.id)
-
-  // 약사 계정이 이 입구로 들어오면 약국 대시보드로 보낸다.
-  // 판독이 실패하면 '약사가 아님' 이 아니라 '모름' 이므로 환자 홈으로 보낸다 —
+  // 역할을 먼저 읽는다 — 약사 계정에 **환자용** 민감정보 동의를 찍으면 의미가 오염된다.
+  // 판독이 실패하면 '약사가 아님' 이 아니라 '모름' 이므로 환자 홈으로 보낸다.
   // `/pharmacy` 는 자체 가드가 있어 잘못 보내도 막히지만, 그 반대는 막을 것이 없다.
   const { data: profile } = await supabase
     .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
+
+  if (profile?.role !== 'pharmacist') {
+    await recordHealthConsent(supabase, data.user.id)
+  }
 
   redirect(profile?.role === 'pharmacist' ? '/pharmacy' : '/home')
 }

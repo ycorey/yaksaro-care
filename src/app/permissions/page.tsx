@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LogoMark } from '@/components/yc/logo'
+import { LegalBackBar } from '@/components/yc/legal-back-bar'
 
 export const metadata = {
   title: '접근권한 안내 · 약사로케어',
@@ -47,10 +47,7 @@ export default function PermissionsPage() {
   return (
     <div className="min-h-screen bg-yc-pageBg px-6 py-10">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <LogoMark size={40} />
-          <h1 className="font-display text-2xl text-yc-neutral900">접근권한 안내</h1>
-        </div>
+        <LegalBackBar title="접근권한 안내" />
 
         <p className="text-sm text-yc-neutral500 leading-relaxed mb-8">
           약사로케어는 아래 기능을 쓸 때만 단말기 접근권한을 요청합니다. 권한은 처음 그 기능을 사용할 때
@@ -101,9 +98,7 @@ export default function PermissionsPage() {
           <Link href="/privacy" className="text-sm text-yc-green600 underline underline-offset-2">
             개인정보 처리방침
           </Link>
-          <Link href="/settings" className="text-sm text-yc-green600 underline underline-offset-2">
-            설정으로 돌아가기
-          </Link>
+          {/* 되돌아가기는 상단 백 바(router.back())가 담당한다 — 로그인 전/후 목적지가 다르다 */}
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { loadEnv } from './_env.mjs'
+import { consentedPatientMeta } from './_seed-meta.mjs'
 
 const { URL_, ANON, SERVICE } = loadEnv()
 const BASE = process.env.QR_SIM_BASE || 'http://localhost:3000'
@@ -78,7 +79,7 @@ try {
   pharmacistUid = phUser.user.id
 
   const paEmail = `e2e-entry-patient+${now}@yaksaro-e2e.test`, paPw = pw()
-  const { data: paUser, error: e2 } = await admin.auth.admin.createUser({ email: paEmail, password: paPw, email_confirm: true })
+  const { data: paUser, error: e2 } = await admin.auth.admin.createUser({ email: paEmail, password: paPw, email_confirm: true , user_metadata: consentedPatientMeta() })
   if (e2) throw new Error('createUser 환자: ' + e2.message)
   patientUid = paUser.user.id
 

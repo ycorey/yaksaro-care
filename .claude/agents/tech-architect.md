@@ -44,8 +44,7 @@ RLS 정책:
   drugs/
     search/      → GET: 약품 검색 (식약처 DB + 로컬)
     [id]/        → GET: 약품 상세
-  interactions/
-    check/       → POST: 복용약 목록 → DUR API + 캐시 → 상호작용 결과
+  (interactions/check 는 두지 않는다 — 2026-08-31 삭제. 아래 "상호작용 분석 엔진" 참조)
   profile/
     medications/ → GET/POST/DELETE: 복용약 관리
   pharmacies/
@@ -70,13 +69,14 @@ RLS 정책:
 ```
 입력: user_medications (사용자 복용약 목록)
 처리:
-  1. 캐시 확인: interactions 테이블에서 약품 쌍 조회
-     → 캐시 있고 1주일 미경과: 캐시 반환
-  2. 캐시 미스: 심평원 DUR API 호출
-     → 병용금기, 연령금기, 임부금기, 효능군중복 조회
-  3. 결과 저장: interactions 캐시 업데이트
-  4. 위험도 분류: 금기(RED), 주의(YELLOW), 안전(GREEN)
-출력: 상호작용 목록 + 위험도 + 설명 (법적 표현 준수)
+  1. interactions 테이블에서 약품 쌍 조회 (ETL 로 미리 적재)
+  2. 결과를 dur_shadow_logs 에 fire-and-forget 기록 — 절대 await 하지 않는다
+출력: **사용자에게 직접 노출하지 않는다.** 백엔드 shadow 로직 전용.
+
+⛔ 위험도 다단계(RED/YELLOW/GREEN)를 설계하지 않는다.
+   "안전(GREEN)" 같은 **음성 판정**이 식약처 웰니스(비의료기기) 판정과
+   Play 건강앱 정책에 동시에 걸린다 — `/interactions` 가 이것 때문에 삭제됐다(2026-08-31).
+   사용자에게 보이는 것은 약 지갑의 "정보 있음 + 약사 상담" 형태뿐이다(`src/lib/dur-flags.ts`).
 ```
 
 ## 출력 프로토콜
@@ -93,7 +93,7 @@ RLS 정책:
 ## 4. RLS 정책 (SQL)
 ## 5. API 구조
 ## 6. OCR 처리 플로우
-## 7. 상호작용 분석 엔진 구조
+## 7. 상호작용 shadow 로직 구조 (사용자 노출면 없음)
 ## 8. 보안 설계 (암호화, RLS, 처방전 이미지 보호)
 ## 9. PharmMatch 재사용 가능 컴포넌트 목록
 ```

@@ -110,5 +110,6 @@ DUR 판정 결과를 사용자에게 보여야 한다면 **약 지갑의 "정보
 ## 검증 방법
 
 1. OCR 업로드 후 Supabase Dashboard → `dur_shadow_logs` 테이블에 행 생성 확인
-2. `/interactions` 페이지가 flag=false 시 nav에서 사라지는지 확인
+2. 환자 대면 상호작용 화면이 **없는지** 확인 — `/interactions`·`/api/interactions/check` 는 삭제됐다.
+   회귀 가드가 이미 있다: `node e2e/store-readiness-qa.mjs` (로그인 세션에서 404 + 음성 판정 어휘 0건)
 3. shadow log 실패해도 OCR 정상 완료되는지 확인

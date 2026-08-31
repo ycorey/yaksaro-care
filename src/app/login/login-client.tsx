@@ -169,7 +169,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
 
         {/* 민감정보 동의 — 개인정보보호법 §23 (건강·복약정보) */}
         <label
-          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl p-3 -m-3 transition-colors ${
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl px-3 py-4 -mx-3 min-h-[52px] transition-colors ${
             consentError ? 'bg-red-50 ring-1 ring-red-300' : ''
           }`}
         >
@@ -187,7 +187,11 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           <span className="text-sm text-yc-neutral600 leading-relaxed">
             <span className="font-semibold text-yc-neutral900">[필수] 민감정보 수집·이용 동의</span><br />
             처방전·복약이력·건강기능식품 정보를 수집하여 복약관리 서비스 제공에 활용하는 것에 동의합니다.{' '}
-            <Link href="/privacy" className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
+            {/* 새 탭으로 연다 — 같은 탭으로 보내면 standalone 에선 뒤로가기가 없고,
+                돌아와도 consented·age14 가 useState 라 전부 초기화돼 취득 게이트에서 이탈한다.
+                링크가 체크박스 조준선 위에 있어 오탭 확률도 낮지 않다. */}
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+              className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
           </span>
         </label>
         {/* 만 14세 확인 — 처리방침 제13조가 "만 14세 미만 아동의 회원가입을 받지 않습니다" 라고
@@ -195,7 +199,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             민감정보 동의와 **합치지 않는다** — §23 은 별도 동의를 요구하고, 연령은 동의가 아니라
             사실의 진술이라 한 체크박스에 묶으면 어느 쪽도 깨끗하지 않다. */}
         <label
-          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl p-3 -m-3 transition-colors ${
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl px-3 py-4 -mx-3 min-h-[52px] transition-colors ${
             consentError && !age14 ? 'bg-red-50 ring-1 ring-red-300' : ''
           }`}
         >
@@ -212,9 +216,16 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             <span className="font-semibold text-yc-neutral900">[필수] 만 14세 이상입니다</span>
           </span>
         </label>
-        <p className={`mb-5 text-xs font-medium h-4 transition-colors ${consentError ? 'text-red-600' : 'text-transparent'}`}>
-          로그인하려면 위 [필수] 항목에 체크해 주세요.
-        </p>
+        {/* 조건부 렌더 + role="alert" — 예전엔 text-transparent 로 상시 존재해
+            스크린리더가 평소에도 읽고, 정작 오류 시엔 통지가 없었다.
+            자리를 비워 두는 대신 min-h 로 레이아웃 점프만 막는다. */}
+        <div className="mb-5 min-h-[1rem]">
+          {consentError && (
+            <p role="alert" className="text-xs font-medium text-red-600">
+              로그인하려면 위 [필수] 항목에 체크해 주세요.
+            </p>
+          )}
+        </div>
 
         {/* 소셜 로그인 버튼 3종 */}
         <div className="space-y-3">
@@ -334,13 +345,17 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           )}
         </div>
 
-        {/* 약관 동의 안내 */}
+        {/* 약관 링크.
+            예전 문구는 "시작하면 … 에 동의합니다" 라는 **묵시 동의** 선언이었다.
+            바로 위에 [필수] 체크박스가 둘 있는데 묵시 동의가 함께 서 있으면
+            체크가 정말 필요한지 알 수 없고, §22 별도 동의의 취지와도 어긋난다.
+            → 동의는 체크박스로만 받고, 여기는 읽을 곳을 가리키기만 한다. */}
         <p className="mt-8 text-center text-xs text-yc-neutral500 leading-relaxed px-2">
-          시작하면{' '}
-          <Link href="/privacy" className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
-          {' '}및{' '}
-          <Link href="/terms" className="text-yc-neutral500 underline underline-offset-2">이용약관</Link>
-          에 동의합니다.
+          <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+            className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
+          {' '}·{' '}
+          <Link href="/terms" target="_blank" rel="noopener noreferrer"
+            className="text-yc-neutral500 underline underline-offset-2">이용약관</Link>
         </p>
       </div>
     </div>

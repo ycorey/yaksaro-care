@@ -54,8 +54,13 @@ async function statusOf(path, cookie) {
 }
 
 // src/ 안의 .ts/.tsx 를 훑는다. 주석까지 포함해 보는 대신, 금칙은 화면 문구로만 좁혀 오탐을 없앤다.
+// 예외 표식. 오탐을 없애려고 정규식을 좁히면 진짜 위반도 함께 빠져나간다.
+// 대신 **예외를 코드 옆에 근거와 함께 남기게** 하고, 개수를 보고해 조용히 쌓이지 않게 한다.
+const ALLOW_MARK = 'yc-allow-phrase'
+
 function scanSrc() {
   const hits = []
+  let exempt = 0
   const walk = (dir) => {
     for (const name of readdirSync(dir)) {
       const p = dir + '/' + name
@@ -63,36 +68,51 @@ function scanSrc() {
       if (!/\.(ts|tsx)$/.test(name)) continue
       if (/\.test\.ts$/.test(name)) continue      // 단위 테스트는 금칙을 일부러 담는다
       const text = readFileSync(p, 'utf8')
-      text.split('\n').forEach((line, i) => {
-        for (const phrase of BANNED) {
-          if (line.includes(phrase)) hits.push(`${p.slice(ROOT.length)}:${i + 1} «${phrase}»`)
+      const lines = text.split('\n')
+      lines.forEach((line, i) => {
+        for (const re of BANNED) {
+          const m = line.match(re)
+          if (!m) continue
+          // 표식은 같은 줄이나 **바로 윗줄**에 둘 수 있다 — 코드에서 근거 주석은 보통 위에 붙는다.
+          if (line.includes(ALLOW_MARK) || (lines[i - 1] ?? '').includes(ALLOW_MARK)) { exempt++; continue }
+          hits.push(`${p.slice(ROOT.length)}:${i + 1} «${m[0]}»`)
         }
       })
     }
   }
   walk(ROOT + 'src')
-  return hits
+  return { hits, exempt }
 }
 
 // 음성 판정 — "없다/괜찮다"고 단언하는 문구. 이 앱은 의료기기가 아니므로 생산해선 안 된다.
 // (긍정 표시는 "정보 있음 + 약사 상담" 형태로만 허용 — dur-flags.ts 관례)
+// 정확 문자열 6종이었을 때 "안전해요"·"이상 없어요"·"괜찮습니다" 가 전부 통과했다.
+// 한국어는 어미·조사가 갈리므로 문자열 목록으로는 못 막는다.
 const BANNED = [
-  '검출되지 않았습니다',
-  '발견되지 않았습니다',
-  '상호작용이 없습니다',
-  '안전합니다',
-  '이상이 없습니다',
-  '문제가 없습니다',
+  /검출되지\s*않(았습니다|았어요|음)/,
+  /발견되지\s*않(았습니다|았어요|음)/,
+  /상호작용이?\s*없(습니다|어요|음)/,
+  /안전(합니다|해요|함|하십니다)/,
+  /이상\s*(이|은)?\s*없(습니다|어요|음)/,
+  /문제\s*(가|는)?\s*없(습니다|어요|음)/,
+  /괜찮(습니다|아요|음)/,
+  /정상(입니다|이에요|임)/,
+  /부작용\s*(이|은)?\s*없(습니다|어요|음)/,
 ]
 
 let patientUid = null
+let gateUid = null
 
 try {
+  // 서버가 없으면 **실패한다.** 다른 e2e 관례(exit 0 스킵)를 여기선 따르지 않는다 —
+  // 이건 출시 게이트라, 안 돌았는데 초록으로 집계되면 "규제 노출이 닫혔다" 는 결론이
+  // 아무 근거 없이 기록된다. 안 돈 것과 통과한 것은 같지 않다.
   try {
     await fetch(BASE + '/login', { signal: AbortSignal.timeout(4000) })
   } catch {
-    console.log(`⚠️  서버(${BASE})에 연결할 수 없습니다. npm run dev 후 다시 실행하세요.`)
-    process.exit(0)
+    console.error(`❌ 서버(${BASE})에 연결할 수 없어 스토어 게이트를 검증하지 못했습니다.`)
+    console.error('   npm run build && npm run start 후 다시 실행하세요.')
+    process.exit(1)
   }
 
   // ── [A] HTTP — 로그인 세션에서도 닫혀 있는가 ────────────────────
@@ -103,6 +123,9 @@ try {
   const { data: paUser, error: e1 } = await admin.auth.admin.createUser({ email: paEmail, password: paPw, email_confirm: true })
   if (e1) throw new Error('createUser 환자: ' + e1.message)
   patientUid = paUser.user.id
+  // 신규 계정은 consent_health=false 로 시작하고, 이제 그 값이 **실제로 앱을 막는다**([G]).
+  // 여기 [A]~[E] 는 "동의한 보통 사용자" 관점의 검사이므로 동의를 채워 둔다.
+  await admin.from('profiles').update({ consent_health: true, consent_health_at: new Date().toISOString() }).eq('id', patientUid)
   const cookie = await sessionCookie(paEmail, paPw)
 
   // 세션이 실제로 유효한지 먼저 증명한다 — 안 그러면 아래 404 가 "인증 실패라 404" 일 수 있다.
@@ -113,7 +136,11 @@ try {
   check('★/interactions → 404 (로그인 사용자도 못 연다)', s1 === 404, String(s1))
 
   const s2 = await statusOf('/api/interactions/check', cookie)
-  check('★/api/interactions/check → 404 (DUR 원문 JSON 노출 차단)', s2 === 404, String(s2))
+  // ⚠️ 문구를 정확히 쓴다. 이 단언이 증명하는 것은 **앱 라우트가 사라졌다**는 것뿐이다.
+  //    "DUR 원문 JSON 노출 차단" 이라고 적었던 것은 과장이었다 — 001 의 `interactions_read`
+  //    정책이 남아 있어 로그인 사용자는 anon key 로 PostgREST 에서 그대로 읽을 수 있다.
+  //    좁히는 마이그레이션은 070 이고, 아래 [F] 가 적용 여부를 실측해 보고한다.
+  check('★/api/interactions/check → 404 (앱 라우트 제거)', s2 === 404, String(s2))
 
   // ── [B] 소스 — 같은 문구가 다른 화면으로 돌아오는가 ──────────────
   console.log('\n[B] 음성 판정 어휘 · 라우트 파일')
@@ -124,8 +151,9 @@ try {
   const proxy = readFileSync(ROOT + 'src/lib/supabase/proxy.ts', 'utf8')
   check("보호경로에서 '/interactions' 제거됨", !proxy.includes("'/interactions'"))
 
-  const hits = scanSrc()
-  check('★음성 판정 문구 0건', hits.length === 0, hits.length ? hits.join(' | ') : `금칙 ${BANNED.length}종 스캔`)
+  const { hits, exempt } = scanSrc()
+  check('★음성 판정 문구 0건', hits.length === 0,
+    hits.length ? hits.join(' | ') : `금칙 ${BANNED.length}종 스캔 · 근거 붙은 예외 ${exempt}건`)
 
   // ── [C] 로그인 없이 열려야 하는 페이지 ──────────────────────────
   // 심사자는 계정 없이 이 셋을 연다. 보호경로에 잘못 들어가면 307 이 되고,
@@ -194,12 +222,68 @@ try {
   const banner = readFileSync(ROOT + 'src/components/pwa/install-banner.tsx', 'utf8')
   check('설치 배너가 standalone 을 검사해 앱 안에서는 뜨지 않는다',
     banner.includes('display-mode: standalone'))
+
+  // ── [F] DUR 원문의 PostgREST 잔여 노출 ───────────────────────────
+  // 라우트를 지운 것으로 "원문 노출을 막았다" 고 말할 수 없다. 표는 그대로 있고
+  // 001 의 `interactions_read` 정책이 로그인 사용자 전원에게 SELECT 를 준다.
+  console.log('\n[F] DUR 표 직접 접근')
+  // ⚠️ 상태코드로 판정하면 안 된다 — PostgREST 는 RLS 가 행을 전부 걸러도 **200 + []** 를 준다.
+  //    행 수를 봐야 "못 읽는다" 를 증명할 수 있다.
+  const anonRead = await fetch(`${URL_}/rest/v1/interactions?select=drug_a_id&limit=1`, {
+    headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+  })
+  const anonRows = anonRead.ok ? (await anonRead.json()).length : -1
+  check('비로그인(anon)은 interactions 행을 못 받는다', anonRows === 0,
+    `HTTP ${anonRead.status} · ${anonRows}행`)
+
+  // 로그인 사용자는? 이건 게이트가 아니라 **실측 보고**다. 070 을 적용하면 막힌다.
+  const { data: { session } } = await createClient(URL_, ANON, { auth: { persistSession: false } })
+    .auth.signInWithPassword({ email: paEmail, password: paPw })
+  const authRead = await fetch(`${URL_}/rest/v1/interactions?select=drug_a_id&limit=1`, {
+    headers: { apikey: ANON, Authorization: `Bearer ${session?.access_token ?? ANON}` },
+  })
+  const authRows = authRead.ok ? (await authRead.json()).length : -1
+  if (authRows > 0) {
+    console.log('  · 알려진 격차 — 로그인 사용자는 PostgREST 로 interactions 를 읽을 수 있다(HTTP 200).')
+    console.log('    막으려면 supabase/migrations/070_interactions_service_role_only.sql 을 SQL Editor 에서 적용.')
+    console.log('    (소비처 2곳은 모두 service_role 이라 적용해도 앱 동작은 그대로다.)')
+  } else {
+    console.log(`  · 070 적용됨 — 로그인 사용자도 interactions 행을 못 받는다(HTTP ${authRead.status} · ${authRows}행).`)
+  }
+
+  // ── [G] §23 동의 게이트가 실제로 막는가 ──────────────────────────
+  // `consent_health` 는 오랫동안 프로필의 ✓/✗ 표시에만 쓰였다(조건 사용 0건).
+  // 동의를 "받는다" 고 적어 놓고 아무것도 막지 않으면 그건 동의가 아니라 장식이다.
+  console.log('\n[G] §23 동의 게이트')
+  const gEmail = `e2e-gate+${now}@yaksaro-e2e.test`, gPw = pw()
+  const { data: gUser, error: gErr } = await admin.auth.admin.createUser({ email: gEmail, password: gPw, email_confirm: true })
+  if (gErr) throw new Error('createUser 게이트: ' + gErr.message)
+  gateUid = gUser.user.id
+  const gCookie = await sessionCookie(gEmail, gPw)
+
+  const { data: gProfile } = await admin.from('profiles').select('consent_health').eq('id', gateUid).maybeSingle()
+  check('신규 계정은 미동의로 시작한다(대조군)', gProfile?.consent_health === false, String(gProfile?.consent_health))
+
+  for (const path of ['/home', '/wallet', '/medications/add']) {
+    const s = await statusOf(path, gCookie)
+    check(`★미동의 사용자는 ${path} 에 못 들어간다`, s === 307, `HTTP ${s}`)
+  }
+  const consentPage = await statusOf('/consent', gCookie)
+  check('미동의 사용자에게 /consent 는 열린다', consentPage === 200, `HTTP ${consentPage}`)
+  const settingsOpen = await statusOf('/settings', gCookie)
+  check('설정은 게이트 밖 — 로그아웃·탈퇴 경로가 살아 있다', settingsOpen === 200, `HTTP ${settingsOpen}`)
+
+  // 동의를 채우면 통과해야 한다 — 막기만 하고 열리지 않으면 그건 게이트가 아니라 벽이다.
+  await admin.from('profiles').update({ consent_health: true, consent_health_at: new Date().toISOString() }).eq('id', gateUid)
+  const afterHome = await statusOf('/home', gCookie)
+  check('★동의하면 통과한다', afterHome === 200, `HTTP ${afterHome}`)
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {
-  if (patientUid) {
-    await admin.from('members').delete().eq('owner_id', patientUid)
-    await admin.auth.admin.deleteUser(patientUid)
+  for (const uid of [patientUid, gateUid]) {
+    if (!uid) continue
+    await admin.from('members').delete().eq('owner_id', uid)
+    await admin.auth.admin.deleteUser(uid)
   }
   console.log('\n[정리] 임시 환자 삭제 완료')
 }

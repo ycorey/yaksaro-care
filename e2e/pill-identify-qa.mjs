@@ -14,6 +14,7 @@ import { chromium } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { loadEnv } from './_env.mjs'
+import { consentedPatientMeta } from './_seed-meta.mjs'
 
 const BASE = 'http://localhost:3000'
 const { URL_, ANON, SERVICE } = loadEnv()
@@ -34,7 +35,7 @@ const ok = (cond, label) => {
 // ── 임시 유저 + 세션쿠키
 const email = `e2e-pillid+${Date.now()}@yaksaro-e2e.test`
 const password = 'E2e!' + Math.random().toString(36).slice(2) + 'Aa9'
-const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true })
+const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true , user_metadata: consentedPatientMeta() })
 if (cErr) throw new Error('createUser: ' + cErr.message)
 const uid = created.user.id
 

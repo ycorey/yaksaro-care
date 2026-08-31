@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LogoMark } from '@/components/yc/logo'
+import { LegalBackBar } from '@/components/yc/legal-back-bar'
 
 export const metadata = {
   title: '계정 삭제 요청 · 약사로케어',
@@ -72,10 +72,7 @@ export default function AccountDeletionPage() {
   return (
     <div className="min-h-screen bg-yc-pageBg px-6 py-10">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <LogoMark size={40} />
-          <h1 className="font-display text-2xl text-yc-neutral900">계정 삭제 요청</h1>
-        </div>
+        <LegalBackBar title="계정 삭제 요청" />
 
         <p className="text-sm text-yc-neutral500 leading-relaxed mb-8">
           약사로케어(약사로케어 · <code className="text-xs">kr.co.yaksaro.care</code>) 계정과 저장된 정보를 삭제하는 방법입니다.
@@ -106,9 +103,9 @@ export default function AccountDeletionPage() {
           <Link href="/privacy" className="text-sm text-yc-green600 underline underline-offset-2">
             개인정보 처리방침
           </Link>
-          <Link href="/login" className="text-sm text-yc-green600 underline underline-offset-2">
-            로그인으로 돌아가기
-          </Link>
+          {/* 예전엔 "로그인으로 돌아가기" 였는데 목적지가 틀렸다 — 로그인 사용자가 누르면
+              proxy 가 /home 으로 보내, 설정에서 출발한 사람이 설정으로 못 돌아왔다.
+              되돌아가기는 상단 백 바(router.back())가 담당한다. */}
         </div>
       </div>
     </div>

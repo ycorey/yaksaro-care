@@ -343,6 +343,10 @@ export default function SettingsClient({
               {userRole === 'pharmacist' ? '약사' : '환자·보호자'}
             </p>
           </div>
+          {/* 예전엔 ✓/✗ 표시뿐이고 핸들러가 0이었다 — 처리방침 제9조는 "[설정] 에서 직접"
+              철회할 수 있다고 적는데 누를 것이 없었다. 이제 상태에 따라 갈 곳을 준다.
+              ⚠️ 철회는 **파기를 동반**한다(처리방침 제4조). 복약 정보만 골라 지우는 경로는
+              아직 없으므로, 있는 그대로 회원 탈퇴를 가리킨다 — 없는 기능을 있는 척하지 않는다. */}
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 text-sm">
               <span className={consentHealth ? 'text-yc-green600' : 'text-yc-error'}>
@@ -350,6 +354,21 @@ export default function SettingsClient({
               </span>
               <span className="text-yc-neutral700">건강정보 수집·이용 동의</span>
             </div>
+            {consentHealth ? (
+              <p className="mt-2 text-xs text-yc-neutral500 leading-relaxed">
+                동의를 철회하면 등록한 약과 복약 기록을 함께 파기해야 합니다.{' '}
+                <Link href="/account-deletion" className="text-yc-green600 underline underline-offset-2">
+                  철회·삭제 방법 보기
+                </Link>
+              </p>
+            ) : (
+              <p className="mt-2 text-xs text-yc-neutral500 leading-relaxed">
+                아직 동의하지 않아 복약 정보를 볼 수 없어요.{' '}
+                <Link href="/consent" className="text-yc-green600 underline underline-offset-2">
+                  지금 동의하기
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>
