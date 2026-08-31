@@ -126,6 +126,19 @@ try {
 
   const hits = scanSrc()
   check('★음성 판정 문구 0건', hits.length === 0, hits.length ? hits.join(' | ') : `금칙 ${BANNED.length}종 스캔`)
+
+  // ── [C] 로그인 없이 열려야 하는 페이지 ──────────────────────────
+  // 심사자는 계정 없이 이 셋을 연다. 보호경로에 잘못 들어가면 307 이 되고,
+  // Play 는 "계정 삭제 요청 URL" 이 열리지 않으면 **제출 자체를 거부**한다.
+  console.log('\n[C] 비로그인 공개 페이지')
+  for (const [path, why] of [
+    ['/account-deletion', 'Play Data safety 계정 삭제 요청 URL'],
+    ['/privacy', 'Play 필수 — 공개 URL(PDF 아님)'],
+    ['/terms', '이용약관'],
+  ]) {
+    const s = await statusOf(path, null)
+    check(`${path} → 200 (${why})`, s === 200, String(s))
+  }
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {

@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useActionState, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { signInWithEmail, type EmailLoginState } from './actions'
 import { track } from '@/lib/analytics'
 import { createClient } from '@/lib/supabase/client'
 import { Pill } from '@phosphor-icons/react'
@@ -44,6 +45,11 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
   const [consentError, setConsentError] = useState(false)  // 동의 없이 로그인 시도 → 강조
+  const [showEmail, setShowEmail] = useState(false)
+  const [emailState, emailAction, emailPending] = useActionState<EmailLoginState, FormData>(
+    signInWithEmail,
+    { error: null },
+  )
 
   const [supabase] = useState(() => createClient())
 
@@ -92,6 +98,10 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
     const qp = new URLSearchParams()
     if (pendingPharmacyId) qp.set('store_id', pendingPharmacyId)
     if (safeNext) qp.set('next', safeNext)
+    // §23 동의를 콜백까지 실어 보낸다. 여기 도달했다는 건 위 체크가 켜져 있다는 뜻이고,
+    // OAuth 는 `options.data` 를 raw_user_meta_data 로 넘겨주지 않아 가입 트리거가 읽을 값이
+    // 없다 → 지금까지 체크는 버튼만 열고 아무 데도 남지 않았다(실측 6/7 이 false).
+    qp.set('consent', '1')
     const redirectTo = qp.toString() ? `${callbackBase}?${qp.toString()}` : callbackBase
 
     // 카카오는 비즈니스 인증 없이 account_email scope 요청 시 KOE205 에러
@@ -163,6 +173,10 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           <input
             id="consent-check"
             type="checkbox"
+            name="consent"
+            // 폼 바깥의 체크박스를 아래 이메일 폼에 묶는다(HTML `form` 속성).
+            // 하이드레이션 전에도 제출값에 실리므로, JS 없이도 동의 없는 로그인이 성립하지 않는다.
+            form="email-login-form"
             checked={consented}
             onChange={e => { setConsented(e.target.checked); if (e.target.checked) setConsentError(false) }}
             className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError ? 'ring-2 ring-red-400' : ''}`}
@@ -232,6 +246,67 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
               </>
             )}
           </button>
+        </div>
+
+        {/* 이메일 로그인 — 소셜을 쓸 수 없는 사용자와 스토어 심사자용 입구.
+            평소엔 접어 두어 소셜 CTA 와 경쟁하지 않게 한다. */}
+        <div className="mt-6">
+          {!showEmail ? (
+            <button
+              type="button"
+              onClick={() => setShowEmail(true)}
+              className="w-full text-center text-sm text-yc-neutral500 underline underline-offset-4 py-2"
+            >
+              이메일로 로그인
+            </button>
+          ) : (
+            <form id="email-login-form" action={emailAction} className="space-y-3">
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-yc-neutral700 mb-1.5">
+                  이메일
+                </label>
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  autoFocus
+                  className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-yc-neutral700 mb-1.5">
+                  비밀번호
+                </label>
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full h-12 px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                />
+              </div>
+
+              {emailState.error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                  {emailState.error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={emailPending}
+                className="w-full h-14 rounded-2xl bg-yc-green600 text-white font-bold text-base disabled:opacity-50 active:scale-[0.99] transition-transform"
+              >
+                {emailPending ? '로그인 중…' : '로그인'}
+              </button>
+              <p className="text-xs text-yc-neutral500 text-center leading-relaxed">
+                이메일 계정은 운영팀에서 발급합니다. 처음이시면 위 소셜 로그인으로 시작해 주세요.
+              </p>
+            </form>
+          )}
         </div>
 
         {/* 약관 동의 안내 */}
