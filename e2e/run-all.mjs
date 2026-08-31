@@ -31,6 +31,9 @@ const SERVER_STANDALONE = [
   // 약사·환자가 실제로 화면에 도달하는지 HTTP 로 확인(리다이렉트 홉을 세어 루프 감지).
   // DB 권한 테스트만으로는 못 잡는 결함 전용 — 2026-08-11 4일 장애가 이 자리의 공백이었다.
   'pharmacy-entry-qa',
+  // 스토어 제출 선결 조건 — `/interactions` 가 로그인 사용자에게 열려 있던 자리.
+  // 링크를 지우는 것으로는 닫히지 않고, 읽지 않는 플래그도 가드가 아니다 → HTTP 로 404 를 증명한다.
+  'store-readiness-qa',
   'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
   // 등록 당일 복용 시작 — 저녁 등록 1일 3회가 오늘은 저녁부터인지(/today 실렌더, 자체 시드)
   'first-day-slots-qa',

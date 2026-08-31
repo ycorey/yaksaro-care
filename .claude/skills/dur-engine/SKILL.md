@@ -89,26 +89,23 @@ if (matchedDrugIds.length >= 2) {
 }
 ```
 
-## Step 4: Feature Flag
+## Step 4: 환자 대면 노출 금지
 
-`/interactions` 페이지의 레이아웃 또는 nav 항목을 feature flag로 감싼다:
+`/interactions` 페이지와 `/api/interactions/check` 는 **2026-08-31 에 삭제됐다.** 되살리지 않는다.
 
-```typescript
-// src/components/dashboard/nav.tsx 수정
-// NEXT_PUBLIC_SHOW_INTERACTIONS=true 일 때만 nav에 표시
-const navItems = [
-  { href: '/dashboard', label: '복약 프로필', icon: '💊' },
-  { href: '/medications/add', label: '약 추가', icon: '➕' },
-  { href: '/medications/ocr', label: '처방전 촬영', icon: '📸' },
-  ...(process.env.NEXT_PUBLIC_SHOW_INTERACTIONS === 'true'
-    ? [{ href: '/interactions', label: '상호작용', icon: '⚠️' }]
-    : []),
-  { href: '/wallet', label: '내 약 지갑', icon: '💊' },
-  { href: '/profile', label: '내 정보', icon: '👤' },
-]
-```
+그 화면은 `병용금기`·`안전` 배지와 "검출되지 않았습니다"(음성 판정)를 면책 없이 표시했고,
+네비게이션 링크만 없었을 뿐 **로그인 사용자가 URL 로 직접 열 수 있었다.**
+`NEXT_PUBLIC_SHOW_INTERACTIONS` 로 감싸는 방식은 채택했다가 폐기했다 —
+**그 플래그를 읽는 코드가 `src/` 에 한 줄도 없었다.** 읽지 않는 플래그는 가드가 아니다.
 
-`.env.local`에 `NEXT_PUBLIC_SHOW_INTERACTIONS=false` 추가.
+DUR 판정 결과를 사용자에게 보여야 한다면 **약 지갑의 "정보 있음 + 약사 상담" 형태만** 쓴다
+(`src/lib/dur-flags.ts` 관례). 지켜야 할 것 셋:
+
+- **음성 판정을 생산하지 않는다** — "없습니다/안전합니다/검출되지 않았습니다" 금지. 무표시이거나 "정보 있음".
+- **등재 원문을 그대로 싣지 않는다** — 식약처 원문은 처방자용 텍스트다. 용량·일수 등 숫자가 든 문장은 차단한다.
+- **약사 상담으로 종결한다.**
+
+회귀 가드는 `e2e/store-readiness-qa.mjs` 가 HTTP 404 와 음성 판정 어휘 0건을 함께 단언한다.
 
 ## 검증 방법
 

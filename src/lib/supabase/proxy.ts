@@ -67,7 +67,7 @@ export async function updateSession(request: NextRequest) {
   // ── 환자(B2C 앱) 영역 ─────────────────────────────────────────────────
   // /store/[id]는 QR 진입점(route handler) — 미로그인도 도달해야 쿠키 저장+로그인 유도가
   // 동작하므로 protectedPaths에서 제외(자체적으로 로그인 리다이렉트 처리).
-  const protectedPaths = ['/dashboard', '/medications', '/profile', '/wallet', '/interactions', '/today', '/calendar', '/home', '/share']
+  const protectedPaths = ['/dashboard', '/medications', '/profile', '/wallet', '/today', '/calendar', '/home', '/share']
   if (!user && protectedPaths.some(p => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }

@@ -82,7 +82,6 @@ description: 약사로 케어 V1 Core 개발 오케스트레이터. "V1 구현�
 ### 다음 단계
 1. `npm run dev`로 로컬 확인
 2. Supabase Dashboard에서 마이그레이션 실행
-3. .env.local에 NEXT_PUBLIC_SHOW_INTERACTIONS=false 추가
 4. ETL DUR 재실행 (내일 오전, API 한도 리셋 후)
 ```
 

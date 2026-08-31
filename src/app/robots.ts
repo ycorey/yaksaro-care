@@ -13,7 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         '/medications',
         '/profile',
         '/settings',
-        '/interactions',
         '/pharmacy',
         '/store/',
         '/api/',
