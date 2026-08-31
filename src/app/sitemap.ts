@@ -10,5 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Play Data safety 의 계정 삭제 요청 URL — 심사자가 색인 없이도 열 수 있어야 하고,
     // 공개 페이지임을 robots/sitemap 양쪽에서 일관되게 선언한다.
     { url: `${base}/account-deletion`, changeFrequency: 'yearly', priority: 0.3 },
+    // 정보통신망법 §22조의2 접근권한 고지 — 스토어 등록정보에서도 링크할 수 있게 공개 페이지로 둔다.
+    { url: `${base}/permissions`, changeFrequency: 'yearly', priority: 0.3 },
   ]
 }

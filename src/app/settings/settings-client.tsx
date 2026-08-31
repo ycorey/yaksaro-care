@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { signOutAndPurge } from '@/lib/purge'
 import {
@@ -373,6 +374,41 @@ export default function SettingsClient({
         </div>
         <p className="text-xs text-yc-neutral500 mt-3 text-center leading-relaxed">
           개인정보 열람·정정 요청은 admin@yaksaro.co.kr 으로 문의하세요.
+        </p>
+      </section>
+
+      {/* ── 안내 ──
+          로그인 후에는 약관·처리방침에 닿을 길이 없었다(`/login` 에만 있었다).
+          Apple 5.1.1(i)·Play 모두 **앱 안에서** 처리방침에 닿을 것을 요구한다.
+          접근권한 안내는 정보통신망법 §22조의2, 계정 삭제 안내는 Play Data safety 의
+          필수 필드가 가리키는 페이지다. */}
+      <section className="anim-page" style={{ animationDelay: '300ms' }}>
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">안내</p>
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+          {[
+            { href: '/terms', label: '이용약관' },
+            { href: '/privacy', label: '개인정보 처리방침' },
+            { href: '/permissions', label: '접근권한 안내' },
+            { href: '/account-deletion', label: '계정 삭제 안내' },
+          ].map((item, i) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`block px-5 py-4 text-sm font-medium text-yc-neutral700 active:bg-yc-neutral100 transition-colors min-h-[52px] ${
+                i > 0 ? 'border-t border-yc-neutral100' : ''
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* 비의료기기 고지 — 식약처 「의료기기와 개인용 건강관리(웰니스) 제품 판단기준」 Ⅴ-3 권고이자
+            Play 건강앱 정책 요건. 스토어 설명 첫 문단에도 같은 취지가 들어간다.
+            음성 판정을 만들지 않는다 — "이상 없다" 가 아니라 "판단하지 않는다" 로 끝낸다. */}
+        <p className="text-xs text-yc-neutral500 mt-4 leading-relaxed">
+          약사로케어는 의료기기가 아닙니다. 질병의 진단·치료·예방에 사용할 수 없고, 등록된 정보로
+          질병 유무를 판단하지 않습니다. 복용 여부와 방법에 대한 판단이 필요하면 약사·의사와 상담해 주세요.
         </p>
       </section>
 

@@ -135,9 +135,28 @@ try {
     ['/account-deletion', 'Play Data safety 계정 삭제 요청 URL'],
     ['/privacy', 'Play 필수 — 공개 URL(PDF 아님)'],
     ['/terms', '이용약관'],
+    ['/permissions', '정보통신망법 §22조의2 접근권한 고지'],
   ]) {
     const s = await statusOf(path, null)
     check(`${path} → 200 (${why})`, s === 200, String(s))
+  }
+
+  // ── [D] 비의료기기 고지 ──────────────────────────────────────────
+  // 식약처 웰니스 판단기준 Ⅴ-3 권고이자 Play 건강앱 요건(스토어 설명 첫 문단에도 같은 취지).
+  // 리팩터링 중 조용히 사라지기 쉬운 종류의 문구라 파일 단위로 못 박는다.
+  console.log('\n[D] 비의료기기 고지')
+  for (const [file, where] of [
+    ['src/app/settings/settings-client.tsx', '설정(상시)'],
+    ['src/app/(main)/@wallet/default.tsx', '약 지갑 하단'],
+  ]) {
+    const t = readFileSync(ROOT + file, 'utf8')
+    check(`${where}에 "의료기기가 아닙니다" 고지`, t.includes('의료기기가 아닙니다'), file)
+  }
+
+  // 앱 안에서 처리방침에 닿을 수 있어야 한다(Apple 5.1.1(i)·Play). 예전엔 `/login` 에만 있었다.
+  const settings = readFileSync(ROOT + 'src/app/settings/settings-client.tsx', 'utf8')
+  for (const href of ['/privacy', '/terms', '/permissions', '/account-deletion']) {
+    check(`설정에서 ${href} 로 갈 수 있다`, settings.includes(`'${href}'`))
   }
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
