@@ -80,3 +80,6 @@ twa/.gradle/
 twa/*.apk
 twa/*.aab
 twa/*.idsig
+# Android SDK 경로 — 머신마다 다르다. bubblewrap 은 ~/.bubblewrap/config.json 을 쓰지만
+# gradle 직접 실행에는 이 파일이 필요해 2026-09-01 에 로컬 생성했다.
+twa/local.properties
