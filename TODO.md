@@ -257,9 +257,17 @@
 - [ ] `api/medications/bulk` `maxDuration` **0건 실측** + 타임아웃 8s/5s 통일 — **5회 연속 이월**
 - [ ] 앱 문의처 `mailto:` 아님 · `store_id` 문자셋(운영 코드 `yc-jl2zm4` 에 `l`) — **인쇄물에 남는 값이라 다음 약국 발급 전이 가장 싸다**
 - [~] `.gitattributes` — **2026-09-01 신설.** `* text=auto eol=lf` + `*.bat/*.cmd` CRLF + 바이너리 17종 명시.
-      ▸ **남은 것: 재정규화.** 실측 **추적 파일 457개**(tsx 118·ts 109·mjs 84·md 50·sql 44…)가 인덱스에 CRLF 다.
-        `git add --renormalize .` 은 457개짜리 커밋이라 열린 PR 과 전부 충돌한다 → **PR 0건일 때 단독 커밋으로.**
-        지금 끊은 것은 "새로 들어오는 것" 이고, 재발 조건은 그것만으로 끊긴다
+      ▸ ~~남은 것: 재정규화 457파일~~ — **그런 일은 없다. 내(Claude) 측정이 틀렸다(2026-09-01 당일 정정).**
+        `git ls-files --eol` 실측: `i/lf w/crlf` 392 · `i/lf w/lf` 198 · `i/-text`(바이너리) 74 · `i/none` 5.
+        **`i/` 열이 전부 `lf` — 저장소 안에 CRLF 는 0개다.** `git add --renormalize .` 도 0파일을 낸다.
+        `core.autocrlf=true` 가 이미 커밋 시 LF 로 바꿔 저장하고 체크아웃 시 CRLF 로 풀고 있었다.
+        `w/crlf` 는 Windows 정상 동작이고 오히려 그래야 맞다.
+        ⚠️ 457 은 `git grep` 이 **워킹트리(디스크 위 파일)** 를 센 값이었고, 뒤이어 잰 74 는 **바이너리 파일**이었다
+        (png·keystore·apk 안의 CR 바이트). 두 번 다 저장소 내용이 아니라 디스크를 재고 있었다.
+        **줄바꿈을 잴 때는 `git grep` 이 아니라 `git ls-files --eol` 을 쓸 것** — 전자는 워킹트리를, 후자는 양쪽을 보여준다.
+        ▸ 그래서 `.gitattributes` 는 **기존 문제를 고친 것이 아니라 앞으로를 못박은 것**이다.
+          `core.autocrlf` 설정에 의존하지 않고 저장소가 스스로 규칙을 갖게 되므로 다른 머신·다른 사람이 참여해도 깨지지 않는다.
+          그 값은 그대로 유효하다
 - [ ] 레거시 테이블 `prescriptions`·`pharmacy_patients` DROP(0행·참조 0, 비가역이라 보류) · `_workspace/eval_*` 누적 정리
 - [ ] 머지 완료된 원격 브랜치 정리 — `docs/policy-effective-date`·`fix/dur-member-scope` 는 스쿼시 머지 잔재다
 
