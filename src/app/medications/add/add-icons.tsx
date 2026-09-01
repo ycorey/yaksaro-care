@@ -2,7 +2,7 @@
 
 import {
   Camera, QrCode, PencilSimple, Pill, Flask,
-  MagnifyingGlass, Barcode, ClipboardText, Lock,
+  MagnifyingGlass, ClipboardText, Lock,
 } from '@phosphor-icons/react'
 
 const ICON_MAP = {
@@ -12,7 +12,6 @@ const ICON_MAP = {
   pill:      Pill,
   flask:     Flask,
   search:    MagnifyingGlass,
-  barcode:   Barcode,
   clipboard: ClipboardText,
   lock:      Lock,
 } as const
