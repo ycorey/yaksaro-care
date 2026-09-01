@@ -5,12 +5,19 @@
 //
 // 증명 목표
 //   [A] 제약 — 역순·자기쌍·중복·NULL 이 실제로 **거부된다**(선언 확인이 아니라 거부 재현)
-//   [B] RLS  — 익명은 행이 있어도 0건 / 로그인 사용자는 읽힌다 / 양쪽 다 못 쓴다
+//   [B] RLS  — ingredient_norms 는 로그인 사용자에게 열려 있고 / ingredient_interactions 는
+//              **아무에게도 열려 있지 않다**(070) / 양쪽 다 못 쓴다
 //   [C] 동결 — interactions 행 수·체크섬이 068 시점 기준선과 같다
 //   [D] 매핑 — ingredient_norms 가 drug_ingredients 를 실제로 덮는다
 //
-// [B] 의 양방향이 핵심이다. 익명 차단만 보면 "정책이 모두를 막는" 경우를 놓치고,
+// [B] 의 양방향이 핵심이다. "전부 0건" 만 보면 정책이 모두를 막는 경우와 구분되지 않고,
 // 그러면 조회가 조용히 빈 결과를 내면서 화면은 정상처럼 보인다.
+// → 그래서 ingredient_norms(열림, 1행)를 대조군으로 함께 잰다. 그 줄이 살아 있어야만
+//   ingredient_interactions 의 0행이 "닫혀서 0" 이라는 증거가 된다.
+//
+// ⚠️ 2026-09-01: ingredient_interactions 쪽 단언이 **뒤집혔다.** 070 이
+//    `drop policy "ingredient_interactions_read"` 로 이 표를 service_role 전용으로 좁혔다.
+//    그 전 버전은 "로그인 사용자는 읽는다(=1행)" 를 단언했고, 070 적용 후 실패한다.
 //
 // 방법: service_role 로 탐침 행을 심고 익명·로그인 토큰으로 실측한 뒤 전량 회수한다.
 //       탐침 키에 __e2e_ 접두를 달아 실데이터와 섞이지 않는다.
@@ -74,7 +81,7 @@ async function main() {
   }
 
   // ── [B] RLS — 양방향 ──────────────────────────────────────────
-  console.log('\n[B] RLS — 익명 차단 + 로그인 허용 + 양쪽 쓰기 금지')
+  console.log('\n[B] RLS — norms 는 로그인에 열림(대조군) · interactions 는 070 으로 전면 차단 · 양쪽 쓰기 금지')
   {
     await admin.from('ingredient_norms')
       .insert({ name_en: NORM, norm_key: `${P}key`, source: 'e2e' })
@@ -96,7 +103,7 @@ async function main() {
       .insert({ norm_key_a: `${P}x`, norm_key_b: `${P}y` })
     check('익명은 쓸 수 없다', !!aw.error, aw.error?.code ?? '썼다')
 
-    // 로그인 사용자 — 정책이 모두를 막고 있지 않은지
+    // 로그인 사용자 — norms 가 열려 있는지(대조군) + interactions 가 닫혀 있는지(070)
     const email = `ii_qa_${Date.now()}@example.com`
     const password = 'E2e!' + Math.random().toString(36).slice(2) + 'Aa9'
     const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true })
@@ -109,8 +116,16 @@ async function main() {
 
     const un = await user.from('ingredient_norms').select('name_en').like('name_en', `${P}%`)
     const ui = await user.from('ingredient_interactions').select('norm_key_a').like('norm_key_a', `${P}%`)
+    // ingredient_norms 는 070 대상이 아니다 — 여기가 대조군이다.
+    // 이 줄이 1행이어야만 아래의 0행이 "닫혀서 0" 이라는 증거가 된다(로그인이 죽어서 0 이 아니라).
     check('로그인 사용자는 ingredient_norms 를 읽는다', (un.data?.length ?? 0) === 1, `rows=${un.data?.length} err=${un.error?.message ?? '-'}`)
-    check('로그인 사용자는 ingredient_interactions 를 읽는다', (ui.data?.length ?? 0) === 1, `rows=${ui.data?.length} err=${ui.error?.message ?? '-'}`)
+    // ⚠️ 2026-09-01 뒤집힘. 이 줄은 원래 "로그인 사용자는 읽는다(=1행)" 였다.
+    //    070 이 `drop policy "ingredient_interactions_read"` 로 이 표를 service_role 전용으로
+    //    좁혔다 — DUR 등재 원문 보관표라 소비 코드가 붙기 전에 닫아 둔다는 판단이다.
+    //    따라서 지금은 **로그인 사용자도 0행**이 정답이다.
+    //    ※ 이 브랜치의 소비 코드(interactions-ingredient.ts)는 반드시 service_role(admin)로
+    //      호출할 것. 사용자 클라이언트로 부르면 에러 없이 조용히 0행이 온다(070 주석 참조).
+    check('로그인 사용자도 ingredient_interactions 를 못 읽는다 (070)', (ui.data?.length ?? 0) === 0, `rows=${ui.data?.length} err=${ui.error?.message ?? '-'}`)
 
     const uw = await user.from('ingredient_interactions')
       .insert({ norm_key_a: `${P}p`, norm_key_b: `${P}q` })
