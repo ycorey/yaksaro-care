@@ -11,7 +11,7 @@
 | 항목 | 왜 |
 |---|---|
 | **사업자 개발자 계정** 개설($25) + 신원 확인 | 개인 계정은 12명×14일 테스터 룰에 걸린다. Health 카테고리에 조직 계정이 요구된다는 보도가 있으나 **Google 공식 도움말에서는 확인되지 않았다** — 계정 개설 화면에서 실측하고 결과를 이 표에 적을 것 |
-| **서명 키 백업**(`twa/android.keystore`) | 미커밋이다. **잃으면 같은 앱으로 두 번 다시 업데이트할 수 없다** |
+| ~~**서명 키 백업**(`twa/android.keystore`)~~ | ✅ **2026-09-01 완료** — Google Drive(`ycorey@gmail.com` / "클로드코드 웹앱개발용"). 2,772 B 원본 일치 확인 |
 | ~~`.aab` 산출~~ | ✅ **2026-09-01 완료** — `twa/yaksaro-care-release.aab` · 1,219,232 B · `jar verified.` |
 
 ---
@@ -106,8 +106,17 @@ Play 건강앱 정책은 규제 승인이 없는 앱에 이 고지를 **설명 �
 ## 4. 남은 것
 
 - [ ] 사업자 개발자 계정 + Health 카테고리 계정 요건 실측
-- [ ] 서명 키 백업 — **아직이다.** `twa/android.keystore` 는 gitignore 되어 저장소에도 없다.
-      잃으면 `kr.co.yaksaro.care` 를 같은 앱으로 두 번 다시 업데이트할 수 없다
+- [x] **서명 키 백업 — 2026-09-01 완료** (사용자가 직접 업로드).
+      Google Drive(`ycorey@gmail.com`) → 내 드라이브 → **"클로드코드 웹앱개발용"** → `android.keystore`
+      `https://drive.google.com/file/d/1Hg5wvTYPGH6W-2oBYeyW-ggxgBjFjdCl/view`
+      **2,772 바이트 — 로컬 원본과 일치 확인.** `application/octet-stream` 으로 올라가 Google 형식 변환 없음.
+      메타 메모는 `twa/signing-key-info.txt`(gitignore, 비밀번호 미포함).
+      ⚠️ **비밀번호는 백업에 포함돼 있지 않다 — 그게 맞다.** 키스토어만 있고 비밀번호가 없으면
+      서명할 수 없으므로, 비밀번호를 파일과 **다른 곳**(비밀번호 관리자·종이)에 두는 것이 남은 절반이다.
+      ⚠️ 정정: 이 문서와 TODO 가 반복해 온 "잃으면 두 번 다시 업데이트할 수 없다" 는 **과장이었다.**
+      그 문장이 참인 것은 레거시 자체 관리 서명 키다. Play App Signing 에 등록되면 이 파일은
+      **업로드 키**가 되고 분실 시 재설정을 요청할 수 있다(며칠 소요, 앱은 죽지 않는다).
+      → 앱 생성 시 **Play App Signing 등록 여부를 확인**해 이 문장을 확정할 것
 - [x] **`.aab` 산출 — 2026-09-01 완료.** `twa/yaksaro-care-release.aab` · 1,219,232 B · `jarsigner -verify` → `jar verified.`
       경로: `./gradlew bundleRelease`(미서명 1,176,138 B) → `jarsigner -signedjar … yaksaro-care`
       ⚠️ **gradle 은 서명하지 않는다**(`app/build.gradle` 에 `signingConfig` 없음 — bubblewrap 이 빌드 후 별도로 한다).
