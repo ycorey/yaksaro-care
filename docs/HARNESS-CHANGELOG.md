@@ -95,3 +95,54 @@
 - **§23 민감정보 동의가 어디에도 저장되지 않던 것을 고침** — 실측 환자 7명 중 6명 `consent_health=false`.
 - 신설 e2e: `store-readiness-qa`(22) · `reviewer-login-qa`(14). `qr-social-sim` 에 OAuth 동의 전달 단언 추가.
 - 제출 폼 답안: `docs/play-submission.md`.
+
+### 2026-09-01 — Play 출시 자산 완성 + 상시 RLS 게이트 신설 + 틀린 서술 8건 정정 (PR #74~#79)
+
+**산출물**
+- `.aab` **서명 완료** — `./gradlew bundleRelease`(미서명 1,176,138 B) → `jarsigner -signedjar`(1,219,232 B) → `jar verified.`
+  ⚠️ gradle 은 서명하지 않는다(`app/build.gradle` 에 `signingConfig` 없음 — bubblewrap 이 빌드 후 별도로 한다).
+  다시 빌드하면 또 미서명본이 나온다. 경고 `self-signed`·`PKIX path building failed` 는 **정상**(업로드 키는 자체 서명·CA 체인 없음).
+- 서명본에서 인증서를 직접 뽑아(`unzip META-INF/*.RSA` → `keytool -printcert`) `assetlinks.json` 과 **문자 단위 일치** 확인.
+- 키스토어 Google Drive 백업(2,772 B 원본 일치·변환 없음). 메타 메모 `twa/signing-key-info.txt`(gitignore·비밀번호 미포함).
+- `064_prescription_diagnoses.sql` 저장소 회수 — `migrations/` 의 063→065 점프 해소. **내용 무수정**(운영 DDL 과 문자 단위로 같아야 원장이다).
+
+**`rls-gate` 신설 — db-gate 가 안 돈 진짜 이유는 조건절이 아니었다**
+`gh secret list` 실측: 저장소 시크릿 4개뿐이고 db-gate 가 요구하는 `TEST_SUPABASE_*` 3종·`PROD_SUPABASE_REF` 는 **하나도 없다.**
+조건절을 뒤집으면 fail-closed 가드에서 죽어 매 실행이 빨간불이 될 뿐이다 — **workflow_dispatch 실행으로 확인**(`npm ci` 통과 후 첫 스텝에서 사망).
+선행조건은 테스트 Supabase 프로젝트이며 사람 몫이다. → 시드가 필요 없는 단언만 떼어 지금 있는 시크릿으로 돌린다.
+`e2e/rls-readonly-qa.mjs` + `ci.yml` 잡 `rls-gate`(push·PR·하루 2회). service_role 없음 — 안전은 `embed-integrity-qa` 와 같이 **쓰기 능력을 주지 않는 것**으로 보장.
+불변식: *환자 0명인 카나리 약사는 환자 행을 정확히 0건 본다* — 070·064·051/053·071 을 지킨다.
+**대조군이 먼저다**(로그인·본인 행·`dur_single_flags`>0). 로그인이 실패하면 모든 표가 0건이 되어 누수 단언 5개가 거짓 통과한다.
+운영 첫 실행 **11/11 PASS**(대조군 9,028행이 살아 있는 상태에서 누수 6건 전부 0행). 신설 당일 PR #74·#77·#78·#79 를 실제로 통과시켰다.
+
+**PR #74 — 머지하면 e2e 가 깨질 상태였다**
+`interaction-ingredient-qa:113` 이 *"로그인 사용자는 `ingredient_interactions` 를 읽는다(=1행)"* 를 단언하는데 **070 이 그 정책을 drop** 했다.
+그 PR 이 테스트를 `run-all.mjs` 에 등록하므로 `npm run test:e2e` 가 통째로 깨진다.
+**#74 의 CI 가 3일간 초록이던 이유가 정확히 db-gate 가 skipping 이기 때문**이라, 이 발견 자체가 그 공백의 실례다.
+단언을 뒤집고 대조군(`ingredient_norms`, 070 대상 아님)은 살려 머지.
+
+**접근권한 고지가 없는 기능을 광고하고 있었다**
+`permissions/page.tsx` 는 Play 제출용 법적 고지인데 카메라 사유에 *"바코드를 스캔합니다"* 가 있었다 — **앱에 진입점이 없다.**
+그 페이지 머리말이 *"없는 권한을 적으면 그것도 거짓 고지다"* 라고 적어 놓고 **방향만 반대인 같은 잘못**을 하고 있었다.
+근거 주석도 도달 불가 파일(`barcode-scanner.tsx(getUserMedia)`)을 가리켰다. 실측 — `getUserMedia` 호출은 **살아 있는 코드에 0건**,
+실제 카메라는 `<input capture="environment">`(OS 카메라 위임), **merged manifest 에 CAMERA 선언 없음**(`POST_NOTIFICATIONS` 하나뿐).
+문구 삭제 + 근거 교체 + 미사용 `barcode` 아이콘 제거. **카메라 항목 자체는 남겼다** — 과소 고지가 과다 고지보다 나쁘다.
+
+**정정된 서술 8건** (전부 이날 실측이 뒤집은 것)
+1. db-gate 원인은 `if:` 조건절이 아니라 시크릿 부재 · 2. `POST_NOTIFICATIONS` 는 "선언일 뿐"이 아니라 merged manifest 33행에 병합돼 있었다 ·
+3. unit 80 → **170** · 4. `.aab` 미생성 → 서명까지 완료 · 5. "키스토어 잃으면 두 번 다시 업데이트 불가" 는 **과장**(Play App Signing 하에서 업로드 키는 재설정 가능) ·
+6·7. **저장소에 CRLF 는 0개다** — "457개"는 `git grep` 이 워킹트리를 센 값, 재측정한 "74개"는 바이너리 파일이었다.
+`git add --renormalize .` 이 0파일을 낸 것이 처음부터 정답이었는데 그걸 의심하고 두 번 더 틀린 방법으로 쟀다.
+→ `.gitattributes` 주석에 **"줄바꿈은 `git ls-files --eol` 로 잰다"** 를 박았다. 그 파일의 근거도 바뀐다 —
+기존 파일을 고치는 것이 아니라 `core.autocrlf` 라는 **개인 설정 의존**을 없애는 것이다(10차 H1 의 `.env.local` 은 추적 대상이 아니라 막지 못한다).
+8. 박스 OCR 의 **28%→94% 는 처방전 수치다** — 아래.
+
+**미해결로 남긴 것 — 박스 OCR 인식률은 측정된 적이 없다**
+박스 OCR 은 완전히 구현돼 있다(`BoxOcrAddFlow` → `/api/ocr/product`(CLOVA+GPT, **이미지·DB 저장 없음**) → `/api/drugs/search` → `AddForm`).
+그러나 `d9555af` 의 28%→94% 는 **처방전 경로 수치**이고 박스 경로를 한 줄도 안 건드렸다.
+`resolveDrugByName` 사용처는 `/api/ocr`·`/api/medications/bulk` 2곳뿐 — 박스는 **단순 `ilike`** 만 탄다(함량·계열·표시 교정 전부 미적용).
+건기식은 `supplements.product_name` = 식약처 `PRDUCT` = **품목제조신고 제품명**이라 박스 인쇄 브랜드명과 다르다.
+보강 증거: 검색에 이미 `(전량수출용)` 제외 필터가 있고, 바코드는 46,002건 중 **0건** — 그 DB 는 소비자 접점 식별자를 갖고 있지 않다.
+→ 실측(박스 10~20장) 없이는 판단 불가. 그리고 **박스 OCR 경로의 e2e 는 0건**이다(단위는 79건 있다).
+
+**`git blame` 주의:** 이날 문서 정정이 많다. 코드 변경은 `permissions/page.tsx`·`add-icons.tsx`·`interaction-ingredient-qa.mjs` 세 파일뿐이다.
