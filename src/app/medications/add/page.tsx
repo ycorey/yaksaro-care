@@ -113,7 +113,7 @@ function SupplementMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/add?method=photo&tab=supplement" iconBg="bg-yc-green50"
           icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="박스 사진으로 찾기" desc="영양제 박스를 찍어 이름으로 찾아요" />
-        <MethodCard href="/medications/add?tab=supplement" iconBg="bg-yc-green50"
+        <MethodCard href="/medications/add?tab=supplement&entry=manual" iconBg="bg-yc-green50"
           icon={<AddIcon name="pencil" className="text-yc-green700" />}
           title="직접 입력" desc="브랜드·복용 시간 적기" />
       </div>
@@ -122,7 +122,7 @@ function SupplementMethodScreen({ member }: { member: Member }) {
 }
 
 // ── Screen 3: 폼 (직접 입력) ─────────────────────────────────────────
-function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc' | 'supplement'; member: Member }) {
+function FormScreen({ initialTab, member, manualEntry = false }: { initialTab: 'prescription' | 'otc' | 'supplement'; member: Member; manualEntry?: boolean }) {
   const title = initialTab === 'supplement' ? '영양제 · 보조제'
     : initialTab === 'otc' ? '일반의약품'
     : '처방약 · 일반약'
@@ -141,7 +141,7 @@ function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc'
           </div>
         </Link>
       )}
-      <AddForm initialTab={initialTab} />
+      <AddForm initialTab={initialTab} manualEntry={manualEntry} />
     </div>
   )
 }
@@ -150,16 +150,16 @@ function FormScreen({ initialTab, member }: { initialTab: 'prescription' | 'otc'
 export default async function AddMedicationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; type?: string; method?: string }>
+  searchParams: Promise<{ tab?: string; type?: string; method?: string; entry?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { tab, type, method } = await searchParams
+  const { tab, type, method, entry } = await searchParams
   const { active } = await getActiveMember(supabase, user.id)
 
-  // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (일반약·건기식 모두 OCR로 통일. 바코드는 v2 보류)
+  // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (일반약·건기식 모두 OCR로 통일)
   if (method === 'photo') {
     return <BoxOcrAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
   }
@@ -175,10 +175,10 @@ export default async function AddMedicationPage({
   // Screen 2b: 영양제·보조제 방법 선택
   if (type === 'supplement') return <SupplementMethodScreen member={active} />
 
-  // Screen 3: 직접 입력 폼
+  // Screen 3: 직접 입력 폼 (entry=manual — 검색 자동완성 없이 이름을 바로 입력)
   if (tab) {
     const initialTab = tab === 'supplement' ? 'supplement' : tab === 'otc' ? 'otc' : 'prescription'
-    return <FormScreen initialTab={initialTab} member={active} />
+    return <FormScreen initialTab={initialTab} member={active} manualEntry={entry === 'manual'} />
   }
 
   // Screen 1: 타입 선택 (기본)

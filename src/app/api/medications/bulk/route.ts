@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
+import { resolveDrugByName } from '@/lib/drug-name-resolve'
 import { logDurShadow } from '@/lib/dur-shadow'
 import { logSupplementInteractionShadow } from '@/lib/supplement-interaction/shadow'
 import { logger } from '@/lib/logger'
 import { getActiveMember } from '@/lib/active-member'
 import { dbError } from '@/lib/api-error'
+import { requireHealthConsent } from '@/lib/require-consent'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // §23 — 화면 게이트만으로는 **처리**가 막히지 않는다. 만들거나 바꾸는 경로는 여기서도 막는다.
+  const consent = await requireHealthConsent(supabase, user.id)
+  if (!consent.ok) return consent.response
 
   const { active } = await getActiveMember(supabase, user.id)
 
@@ -67,21 +73,15 @@ export async function POST(request: Request) {
         drugRow = data
       }
       if (!drugRow) {
-        // 이름 폴백: 정확 일치 우선 → 부분 일치
-        const { data: exact } = await supabase.from('drugs').select('id')
-          .eq('item_name', m.name)
-          .eq('is_canceled', false)
-          .limit(1).maybeSingle()
-        drugRow = exact
-      }
-      if (!drugRow) {
-        // 부분 일치는 후보가 유일할 때만 채택 — 동일계열·타함량 약을 무근거로
-        // 첫 행에 부착하는 오매칭 방지 (여러 건이면 custom_name으로 남기는 게 안전)
-        const { data: parts } = await supabase.from('drugs').select('id')
-          .ilike('item_name', `%${m.name}%`)
-          .eq('is_canceled', false)
-          .limit(2)
-        if (parts && parts.length === 1) drugRow = parts[0]
+        // 이름 폴백 — 규칙은 drug-name-match.ts(순수/단위테스트), 조회는 drug-name-resolve.ts.
+        // 예전에는 `item_name` 정확일치 → `%이름%` 부분일치가 유일할 때만 채택이었는데,
+        // 마스터 이름이 `콩코르정5밀리그램(비소프롤롤푸마르산염)` 처럼 함량+성분명을 달고 있어
+        // OCR 이 남긴 `콩코르정` 은 접두일 뿐이라 후보가 여럿 → 전부 버려졌다(운영 53행).
+        // 지금은 함량까지 맞아떨어질 때만 채택하고, 함량이 갈리면 여기서 고르지 않는다 —
+        // 5mg 과 2.5mg 중 아무거나 붙이면 사용자의 약이 다른 용량으로 기록된다.
+        // (검수 화면이 후보를 띄워 사용자가 고르고, 고른 결과는 위의 drug_id 경로로 들어온다.)
+        const byName = await resolveDrugByName(supabase, m.name)
+        if (byName.kind === 'unique') drugRow = { id: byName.match.id }
       }
       const data = drugRow
 

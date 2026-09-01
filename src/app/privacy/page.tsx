@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { LogoMark } from '@/components/yc/logo'
+import { LegalBackBar, LegalBottomExit } from '@/components/yc/legal-back-bar'
 
 export const metadata = { title: '개인정보 처리방침 · 약사로케어' }
 
@@ -151,7 +150,8 @@ const SECTIONS: Section[] = [
         kind: 'ul',
         items: [
           '복약 정보 열람·정정·삭제: [약 지갑] 화면에서 직접',
-          '민감정보(건강정보) 처리 동의 철회 및 단골약국 공개 동의 철회: [설정] 화면에서 직접',
+          '단골약국 공개 동의 철회: [설정] 화면에서 직접',
+          '민감정보(건강정보) 처리 동의 철회: 철회 시 복약 정보를 함께 파기해야 하므로 [설정] → [회원 탈퇴] 로 처리합니다. 방법은 [설정] → [계정 삭제 안내] 에서 확인하실 수 있습니다.',
           '회원 탈퇴(전체 개인정보 파기): [설정] → [회원 탈퇴] 에서 직접',
           '그 밖의 열람·정정 요청: 제12조의 문의처로 요청',
         ],
@@ -233,10 +233,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-yc-pageBg px-6 py-10">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <LogoMark size={40} />
-          <h1 className="font-display text-2xl text-yc-neutral900">개인정보 처리방침</h1>
-        </div>
+        <LegalBackBar title="개인정보 처리방침" />
 
         <div className="space-y-8">
           {SECTIONS.map(section => (
@@ -260,9 +257,7 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <div className="mt-10">
-          <Link href="/login" className="text-sm text-yc-green600 underline underline-offset-2">
-            ← 로그인으로 돌아가기
-          </Link>
+          <LegalBottomExit />
         </div>
       </div>
     </div>

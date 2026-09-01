@@ -117,10 +117,11 @@ try {
     await page.getByRole('button', { name: /카카오톡으로 바로 시작/ }).click().catch(() => {})
     await page.waitForTimeout(800)
     check('동의 없이 클릭 → 안내 토스트 노출(무반응 아님)',
-      await page.getByText('먼저 [필수] 동의에 체크해 주세요').isVisible().catch(() => false))
+      await page.getByText('먼저 [필수] 항목에 체크해 주세요').isVisible().catch(() => false))
     check('동의 없이 클릭 → OAuth로 안 넘어감(안내만)', !authorizeCalled && page.url().includes('/login'))
     // 동의 체크 후 다시 클릭하면 이번엔 OAuth 진행
     await page.locator('input#consent-check').check().catch(() => {})
+    await page.locator('input#age14-check').check().catch(() => {})
     await page.getByRole('button', { name: /카카오톡으로 바로 시작/ }).click().catch(() => {})
     await page.waitForTimeout(1200)
     check('동의 체크 후 클릭 → OAuth authorize 진행', authorizeCalled)
@@ -142,7 +143,8 @@ try {
     check(`[${provider}] QR→로그인 유도(/login&redirect 보존)`, page.url().includes('/login') && page.url().includes('redirect='), page.url().slice(-60))
 
     // 동의 체크 후 소셜 버튼 클릭
-    await page.locator('input[type=checkbox]').first().check().catch(() => {})
+    await page.locator('input#consent-check').check().catch(() => {})
+    await page.locator('input#age14-check').check().catch(() => {})
     const btnName = provider === 'google' ? /구글 아이디로 바로 시작/ : /카카오톡으로 바로 시작/
     await page.getByRole('button', { name: btnName }).click().catch(() => {})
     await page.waitForTimeout(1500)
@@ -154,6 +156,10 @@ try {
       check(`[${provider}] redirect_to에 next=/store/:id (쿠키 유실 대비 폴백)`, dec.includes(`next=/store/${storeId}`) || dec.includes(`next=%2Fstore%2F${storeId}`), dec.slice(0, 120))
       check(`[${provider}] redirect_to에 store_id=약국UUID (쿠키 경로)`, dec.includes(`store_id=${pharmacyId}`))
       check(`[${provider}] redirect_to가 /auth/callback 대상`, dec.includes('/auth/callback'))
+      // §23 동의 전달 — OAuth 는 `options.data` 를 raw_user_meta_data 로 넘기지 않아
+      // 가입 트리거가 동의를 읽을 수 없다. 그래서 콜백까지 쿼리로 실어 보내고 거기서 기록한다.
+      // 실제 기록은 유효한 provider code 가 필요해 못 밟지만, **전달이 끊기는 것**은 여기서 잡힌다.
+      check(`[${provider}] redirect_to에 consent=1 (§23 동의 전달)`, dec.includes('consent=1'), dec.slice(0, 120))
     }
     await ctx.close()
   }

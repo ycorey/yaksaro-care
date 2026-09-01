@@ -34,7 +34,7 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 `src/proxy.ts`가 Next.js middleware 역할을 한다 (`middleware.ts`가 아님 — Next.js 16.2.6 컨벤션). 모든 요청에서 `src/lib/supabase/proxy.ts`의 `updateSession()`을 호출하여 세션 쿠키를 갱신한다.
 
-보호 경로: `/dashboard`, `/medications`, `/profile`, `/wallet`, `/interactions`, `/store`
+보호 경로: `/dashboard`, `/medications`, `/profile`, `/wallet`, `/today`, `/calendar`, `/home`, `/share`
 
 **로그인/회원가입은 Server Action 방식만 사용한다.** `react-hook-form` 클라이언트 방식은 모바일에서 하이드레이션 전 GET 제출 버그가 있어 제거됨.
 
@@ -56,7 +56,7 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 
 - `src/lib/dur.ts` — `checkInteractions(supabase, drugIds[])`: interactions 테이블 직접 쿼리 (ETL로 미리 적재된 데이터)
 - `src/lib/dur-shadow.ts` — `logDurShadow()`: OCR 완료 후 fire-and-forget으로 호출. **절대 `await` 없이 호출할 것** — 사용자 응답을 차단하면 안 됨
-- ⚠️ `/interactions` 페이지는 **가드가 없다.** `NEXT_PUBLIC_SHOW_INTERACTIONS` 는 `.env.example` 에만 있고 **`src/` 어디서도 읽지 않는다**(2026-08-12 실측). 네비게이션 링크만 없을 뿐 `proxy.ts:70` 이 보호경로로 유지하고 있어 **로그인 사용자가 URL 로 직접 열 수 있다.** 그 화면은 `병용금기`·`안전` 배지와 "검출되지 않았습니다"(음성 판정)를 면책 없이 표시하므로, 스토어 등록·의료기기(웰니스) 판정에 그대로 걸린다 → 차단 필요. 노출된 DUR 은 약지갑의 "정보 있음 + 약사 상담" 형태만 유지할 것
+- ⛔ **환자 대면 상호작용 화면은 만들지 않는다.** `/interactions` 페이지와 `/api/interactions/check` 는 **2026-08-31 에 삭제됐다** — 링크만 없었을 뿐 로그인 사용자가 URL 로 열 수 있었고, `병용금기`·`안전` 배지와 "검출되지 않았습니다"(음성 판정)를 면책 없이 표시해 Play 건강앱 정책·식약처 웰니스(비의료기기) 판정에 동시에 걸렸다. `NEXT_PUBLIC_SHOW_INTERACTIONS` 플래그 방식은 폐기했다 — **읽는 코드가 `src/` 에 0건이라 가드가 아니었다.** 노출 가능한 DUR 은 약 지갑의 "정보 있음 + 약사 상담" 형태뿐이다(`src/lib/dur-flags.ts`). 회귀 가드: `e2e/store-readiness-qa.mjs`
 
 ### DB 핵심 테이블
 
@@ -152,12 +152,11 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 아래 "최근" 목록만 5건으로 유지한다.
 
 **최근:**
-- **2026-08-22** — 등록 당일 복용 시작 — 저녁에 등록한 1일 3회는 오늘 저녁부터 (실사용 요청)
-- **2026-08-26** — 의약품 정보 3종 — e약은요 DB 캐시(065)·DUR 노인주의/효능군중복(066)·낱알식별(067)
 - **2026-08-27** — 3종 실사용 시뮬레이션(프로덕션+Playwright 390×844) → 숨은 결함 3건 수정
 - **2026-08-28** — 자문 3렌즈 + ultraqa 반영 21건 — DUR 등재 원문의 **투여 지시 제거**(sanitizeElderlyNote)·신호 도달률·완주 피드백
 - **2026-08-28** — ultraqa 검증 재개(저비용 모델) — 수정본 역공격에서 4건 추가(직접입력 약 사진 오귀속·이미지 되쓰기·QA 플레이크)
 - **2026-08-28** — 3렌즈 독립 스윕 — 검증 문구 대비 1.76:1 수정·OCR 화면 `r.ok` 일관화·**저장 완주 e2e 신설**(저장소에 0개였다)
+- **2026-08-31** — Play 출시 선결 — `/interactions` 삭제·심사자 입구·§23 동의 기록(6/7이 미기록이었다)·고지 3종
 
 <!-- BEGIN:nextjs-agent-rules -->
 

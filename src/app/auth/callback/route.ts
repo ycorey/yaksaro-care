@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { updateRegularPharmacy } from '@/lib/regular-pharmacy'
+import { recordHealthConsent } from '@/lib/health-consent'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
@@ -46,6 +47,24 @@ export async function GET(request: Request) {
       const provider   = user.app_metadata?.provider ?? ''
       const marker     = isNewUser && provider ? `yc_su=${encodeURIComponent(provider)}` : ''
       const withMarker = (url: string) => (marker ? `${url}${url.includes('?') ? '&' : '?'}${marker}` : url)
+
+      // §23 민감정보 동의 기록 — 로그인 화면의 [필수] 체크가 `?consent=1` 로 실려 온다.
+      //
+      // 이 한 줄이 없던 동안 그 체크박스는 **버튼을 여는 클라이언트 상태일 뿐**이었다.
+      // `signInWithOAuth` 는 `options.data` 를 raw_user_meta_data 로 넘기지 않으므로
+      // 가입 트리거(`handle_new_user`)가 읽을 값이 없었고, 모든 계정이 기본값 false 로 남았다
+      // (2026-08-31 실측: 환자 7명 중 6명 false). 처리방침 제4조의 선언과 기록이 어긋난 상태였다.
+      //
+      // 기록 실패로 로그인을 막지는 않는다 — 이미 인증된 사용자를 되돌려보내면 들어올 길이 없다.
+      // `.eq('consent_health', false)` 로 최초 동의 시각을 재로그인이 덮어쓰지 않게 한다.
+      //
+      // ⚠️ 이 경로는 **게이트가 아니다.** `consent=1` 이 없어도 세션은 발급된다 —
+      //    OAuth 는 공급자에게 다녀온 뒤라 여기서 되돌릴 것이 없기 때문이다.
+      //    동의를 실제로 강제하는 곳은 `/consent` 게이트다((main)·medications 레이아웃).
+      //    여기는 "체크하고 왔다" 는 사실을 **기록**하는 자리다.
+      if (searchParams.get('consent') === '1') {
+        await recordHealthConsent(supabase, user.id)
+      }
 
       // QR 매핑: 쿠키 우선, 없으면 URL 쿼리 파라미터(인앱 브라우저 쿠키 유실 폴백)
       // 로그인 시 signInWithOAuth의 redirectTo에 ?store_id=xxx를 태워 보냈으므로

@@ -126,7 +126,7 @@ function Stepper({
 
 // ── 약품 검색 드롭다운 ────────────────────────────────────────────────
 function DrugSearch({
-  mode, otcOnly = false, selected, onSelect, onClear, onCustom, initialQuery = '',
+  mode, otcOnly = false, selected, onSelect, onClear, onCustom, initialQuery = '', manualOnly = false,
 }: {
   mode: 'drug' | 'supplement'
   otcOnly?: boolean
@@ -135,6 +135,8 @@ function DrugSearch({
   onClear: () => void
   onCustom?: (name: string) => void
   initialQuery?: string
+  // '직접 입력' 진입(카드에서 온 경우) — 검색 자동완성을 띄우지 않고 이름을 바로 받는다.
+  manualOnly?: boolean
 }) {
   const [query, setQuery]     = useState(initialQuery)
   const [results, setResults] = useState<{ drugs: DrugHit[]; supplements: SuppHit[] } | null>(null)
@@ -142,6 +144,7 @@ function DrugSearch({
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    if (manualOnly) return  // 직접 입력 모드에서는 검색 API를 호출하지 않는다
     if (!query || selected) {
       // 초기화도 비동기로 — 동기 setState 캐스케이드 방지
       const t = setTimeout(() => { setResults(null); setOpen(false) }, 0)
@@ -156,7 +159,7 @@ function DrugSearch({
       setOpen(true)
     }, 150)
     return () => { if (debounce.current) clearTimeout(debounce.current) }
-  }, [query, selected, otcOnly])
+  }, [query, selected, otcOnly, manualOnly])
 
   if (selected) {
     return (
@@ -172,6 +175,26 @@ function DrugSearch({
         <button type="button" onClick={onClear} aria-label="선택 해제"
           className="w-11 h-11 -my-1.5 -mr-1.5 flex items-center justify-center rounded-full text-yc-blue500 active:bg-yc-blue500/10 flex-shrink-0">
           <X size={16} />
+        </button>
+      </div>
+    )
+  }
+
+  // '직접 입력' 카드로 들어온 경우 — 자동완성 없이 이름만 받아 바로 onCustom
+  if (manualOnly && onCustom) {
+    return (
+      <div className="space-y-2">
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder={mode === 'supplement' ? '예: OO제약 비타민D 1000IU' : '예: 타이레놀정 500mg'}
+          className={INPUT}
+          autoComplete="off"
+        />
+        <button type="button" disabled={!query.trim()}
+          onClick={() => { onCustom(query.trim()); setQuery('') }}
+          className={`w-full ${BTN_H} rounded-yc-md text-sm font-semibold transition-colors ${query.trim() ? 'bg-yc-green600 text-white active:bg-yc-green700' : 'bg-yc-neutral100 text-yc-neutral400 cursor-not-allowed'}`}>
+          이 이름으로 추가
         </button>
       </div>
     )
@@ -249,7 +272,7 @@ function DrugSearch({
 }
 
 // ── 메인 폼 ──────────────────────────────────────────────────────────
-export default function AddForm({ initialTab, initialSelected = null, initialQuery = '' }: { initialTab: TabType; initialSelected?: Selected | null; initialQuery?: string }) {
+export default function AddForm({ initialTab, initialSelected = null, initialQuery = '', manualEntry = false }: { initialTab: TabType; initialSelected?: Selected | null; initialQuery?: string; manualEntry?: boolean }) {
   const tab = initialTab  // 진입 탭에 고정 (변경 없음)
   const [selected, setSelected] = useState<Selected | null>(initialSelected)
   const [saving, setSaving]     = useState(false)
@@ -439,8 +462,8 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
         <div className="space-y-5">
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yc-neutral700">영양제 이름 *</p>
-            <DrugSearch mode="supplement" selected={selected} initialQuery={initialQuery}
-              onSelect={handleDrugSelect} onClear={clearSelected} />
+            <DrugSearch mode="supplement" selected={selected} initialQuery={initialQuery} manualOnly={manualEntry}
+              onSelect={handleDrugSelect} onClear={clearSelected} onCustom={n => setSelected({ type: 'custom', name: n })} />
           </div>
 
           <div className="space-y-2">

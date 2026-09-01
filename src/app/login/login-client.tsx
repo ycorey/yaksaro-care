@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useActionState, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { signInWithEmail, type EmailLoginState } from './actions'
 import { track } from '@/lib/analytics'
 import { createClient } from '@/lib/supabase/client'
 import { Pill } from '@phosphor-icons/react'
@@ -43,7 +44,14 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
   const deleted      = searchParams.get('deleted') === '1'
   const [loading, setLoading]   = useState<string | null>(null)
   const [consented, setConsented] = useState(false)
-  const [consentError, setConsentError] = useState(false)  // 동의 없이 로그인 시도 → 강조
+  const [age14, setAge14] = useState(false)
+  // 게이트(동의·연령) 미충족 상태로 로그인 시도 → 해당 체크박스를 강조한다
+  const [consentError, setConsentError] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
+  const [emailState, emailAction, emailPending] = useActionState<EmailLoginState, FormData>(
+    signInWithEmail,
+    { error: null },
+  )
 
   const [supabase] = useState(() => createClient())
 
@@ -59,10 +67,11 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
 
   async function handleOAuthSignIn(provider: string) {
     // 동의 미체크 시: 버튼을 죽이지 말고(무반응 방지) 명확히 안내 + 체크박스 강조
-    if (!consented) {
+    if (!consented || !age14) {
       setConsentError(true)
-      toast.error('먼저 [필수] 동의에 체크해 주세요')
-      document.getElementById('consent-check')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      toast.error('먼저 [필수] 항목에 체크해 주세요')
+      document.getElementById(consented ? 'age14-check' : 'consent-check')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     setLoading(provider)
@@ -92,6 +101,10 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
     const qp = new URLSearchParams()
     if (pendingPharmacyId) qp.set('store_id', pendingPharmacyId)
     if (safeNext) qp.set('next', safeNext)
+    // §23 동의를 콜백까지 실어 보낸다. 여기 도달했다는 건 위 체크가 켜져 있다는 뜻이고,
+    // OAuth 는 `options.data` 를 raw_user_meta_data 로 넘겨주지 않아 가입 트리거가 읽을 값이
+    // 없다 → 지금까지 체크는 버튼만 열고 아무 데도 남지 않았다(실측 6/7 이 false).
+    qp.set('consent', '1')
     const redirectTo = qp.toString() ? `${callbackBase}?${qp.toString()}` : callbackBase
 
     // 카카오는 비즈니스 인증 없이 account_email scope 요청 시 KOE205 에러
@@ -156,26 +169,63 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
 
         {/* 민감정보 동의 — 개인정보보호법 §23 (건강·복약정보) */}
         <label
-          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl p-3 -m-3 transition-colors ${
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl px-3 py-4 -mx-3 min-h-[52px] transition-colors ${
             consentError ? 'bg-red-50 ring-1 ring-red-300' : ''
           }`}
         >
           <input
             id="consent-check"
             type="checkbox"
+            name="consent"
+            // 폼 바깥의 체크박스를 아래 이메일 폼에 묶는다(HTML `form` 속성).
+            // 하이드레이션 전에도 제출값에 실리므로, JS 없이도 동의 없는 로그인이 성립하지 않는다.
+            form="email-login-form"
             checked={consented}
-            onChange={e => { setConsented(e.target.checked); if (e.target.checked) setConsentError(false) }}
+            onChange={e => { setConsented(e.target.checked); if (e.target.checked && age14) setConsentError(false) }}
             className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError ? 'ring-2 ring-red-400' : ''}`}
           />
           <span className="text-sm text-yc-neutral600 leading-relaxed">
             <span className="font-semibold text-yc-neutral900">[필수] 민감정보 수집·이용 동의</span><br />
             처방전·복약이력·건강기능식품 정보를 수집하여 복약관리 서비스 제공에 활용하는 것에 동의합니다.{' '}
-            <Link href="/privacy" className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
+            {/* 새 탭으로 연다 — 같은 탭으로 보내면 standalone 에선 뒤로가기가 없고,
+                돌아와도 consented·age14 가 useState 라 전부 초기화돼 취득 게이트에서 이탈한다.
+                링크가 체크박스 조준선 위에 있어 오탭 확률도 낮지 않다. */}
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+              className="text-yc-green600 underline underline-offset-2">개인정보 처리방침</Link>
           </span>
         </label>
-        <p className={`mb-5 text-xs font-medium h-4 transition-colors ${consentError ? 'text-red-600' : 'text-transparent'}`}>
-          로그인하려면 위 [필수] 동의에 체크해 주세요.
-        </p>
+        {/* 만 14세 확인 — 처리방침 제13조가 "만 14세 미만 아동의 회원가입을 받지 않습니다" 라고
+            선언하는데 확인하는 코드가 없었다. 선언과 구현을 맞춘다.
+            민감정보 동의와 **합치지 않는다** — §23 은 별도 동의를 요구하고, 연령은 동의가 아니라
+            사실의 진술이라 한 체크박스에 묶으면 어느 쪽도 깨끗하지 않다. */}
+        <label
+          className={`flex items-start gap-3 mb-2 cursor-pointer rounded-xl px-3 py-4 -mx-3 min-h-[52px] transition-colors ${
+            consentError && !age14 ? 'bg-red-50 ring-1 ring-red-300' : ''
+          }`}
+        >
+          <input
+            id="age14-check"
+            type="checkbox"
+            name="age14"
+            form="email-login-form"
+            checked={age14}
+            onChange={e => { setAge14(e.target.checked); if (e.target.checked && consented) setConsentError(false) }}
+            className={`mt-0.5 w-5 h-5 rounded accent-yc-green600 flex-shrink-0 ${consentError && !age14 ? 'ring-2 ring-red-400' : ''}`}
+          />
+          <span className="text-sm text-yc-neutral600 leading-relaxed">
+            <span className="font-semibold text-yc-neutral900">[필수] 만 14세 이상입니다</span>
+          </span>
+        </label>
+        {/* 조건부 렌더 + role="alert" — 예전엔 text-transparent 로 상시 존재해
+            스크린리더가 평소에도 읽고, 정작 오류 시엔 통지가 없었다.
+            자리를 비워 두는 대신 min-h 로 레이아웃 점프만 막는다. */}
+        <div className="mb-5 min-h-[1rem]">
+          {consentError && (
+            <p role="alert" className="text-xs font-medium text-red-600">
+              로그인하려면 위 [필수] 항목에 체크해 주세요.
+            </p>
+          )}
+        </div>
 
         {/* 소셜 로그인 버튼 3종 */}
         <div className="space-y-3">
@@ -234,13 +284,78 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           </button>
         </div>
 
-        {/* 약관 동의 안내 */}
-        <p className="mt-8 text-center text-xs text-yc-neutral500 leading-relaxed px-2">
-          시작하면{' '}
-          <Link href="/privacy" className="text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
-          {' '}및{' '}
-          <Link href="/terms" className="text-yc-neutral500 underline underline-offset-2">이용약관</Link>
-          에 동의합니다.
+        {/* 이메일 로그인 — 소셜을 쓸 수 없는 사용자와 스토어 심사자용 입구.
+            평소엔 접어 두어 소셜 CTA 와 경쟁하지 않게 한다. */}
+        <div className="mt-6">
+          {!showEmail ? (
+            <button
+              type="button"
+              onClick={() => setShowEmail(true)}
+              className="w-full text-center text-sm text-yc-neutral500 underline underline-offset-4 py-2"
+            >
+              이메일로 로그인
+            </button>
+          ) : (
+            <form id="email-login-form" action={emailAction} className="space-y-3">
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-yc-neutral700 mb-1.5">
+                  이메일
+                </label>
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  autoFocus
+                  className="w-full h-[52px] px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-yc-neutral700 mb-1.5">
+                  비밀번호
+                </label>
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full h-[52px] px-4 rounded-xl border border-yc-neutral200 bg-white text-yc-neutral900 placeholder:text-yc-neutral400 focus:outline-none focus:ring-2 focus:ring-yc-green600 focus:border-transparent"
+                />
+              </div>
+
+              {emailState.error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                  {emailState.error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={emailPending}
+                className="w-full h-14 rounded-2xl bg-yc-green600 text-white font-bold text-base disabled:opacity-50 active:scale-[0.99] transition-transform"
+              >
+                {emailPending ? '로그인 중…' : '로그인'}
+              </button>
+              <p className="text-xs text-yc-neutral500 text-center leading-relaxed">
+                이메일 계정은 운영팀에서 발급합니다. 처음이시면 위 소셜 로그인으로 시작해 주세요.
+              </p>
+            </form>
+          )}
+        </div>
+
+        {/* 약관 링크.
+            예전 문구는 "시작하면 … 에 동의합니다" 라는 **묵시 동의** 선언이었다.
+            바로 위에 [필수] 체크박스가 둘 있는데 묵시 동의가 함께 서 있으면
+            체크가 정말 필요한지 알 수 없고, §22 별도 동의의 취지와도 어긋난다.
+            → 동의는 체크박스로만 받고, 여기는 읽을 곳을 가리키기만 한다. */}
+        <p className="mt-8 flex flex-wrap justify-center gap-x-4 text-center text-sm text-yc-neutral500 leading-relaxed px-2">
+          <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+            className="inline-flex min-h-[52px] items-center text-yc-neutral500 underline underline-offset-2">개인정보 처리방침</Link>
+          {' '}·{' '}
+          <Link href="/terms" target="_blank" rel="noopener noreferrer"
+            className="inline-flex min-h-[52px] items-center text-yc-neutral500 underline underline-offset-2">이용약관</Link>
         </p>
       </div>
     </div>

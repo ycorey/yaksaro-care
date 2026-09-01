@@ -95,12 +95,12 @@ export default function PharmacyLink({ initialName }: { initialName: string | nu
         </div>
         {initialName ? (
           <button onClick={unlink} disabled={busy}
-            className="text-sm text-yc-neutral500 active:text-yc-error px-3 min-h-[44px] rounded-yc-md active:bg-yc-errorBg flex-shrink-0 disabled:opacity-50">
+            className="text-sm text-yc-neutral500 active:text-yc-error px-3 min-h-[52px] rounded-yc-md active:bg-yc-errorBg flex-shrink-0 disabled:opacity-50">
             해제
           </button>
         ) : (
           <button onClick={() => setOpen(o => !o)}
-            className="text-sm font-semibold text-yc-green700 px-3 min-h-[44px] rounded-yc-md bg-yc-green50 active:opacity-90 flex-shrink-0">
+            className="text-sm font-semibold text-yc-green700 px-3 min-h-[52px] rounded-yc-md bg-yc-green50 active:opacity-90 flex-shrink-0">
             {open ? '닫기' : '약국 등록'}
           </button>
         )}
@@ -140,7 +140,7 @@ export default function PharmacyLink({ initialName }: { initialName: string | nu
                   className="flex-1 h-11 px-3 border border-yc-neutral200 rounded-yc-md text-sm tracking-wider focus:outline-none focus:border-yc-green600"
                 />
                 <button onClick={linkByCode} disabled={linking || !code.trim()}
-                  className="h-11 px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50 flex-shrink-0">
+                  className="h-[52px] px-4 rounded-yc-md bg-yc-green600 text-white text-sm font-semibold active:bg-yc-green700 disabled:opacity-50 flex-shrink-0">
                   {linking ? '등록 중…' : '등록'}
                 </button>
               </div>

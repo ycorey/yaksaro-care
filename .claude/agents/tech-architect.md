@@ -44,8 +44,7 @@ RLS 정책:
   drugs/
     search/      → GET: 약품 검색 (식약처 DB + 로컬)
     [id]/        → GET: 약품 상세
-  interactions/
-    check/       → POST: 복용약 목록 → DUR API + 캐시 → 상호작용 결과
+  (interactions/check 는 두지 않는다 — 2026-08-31 삭제. 아래 "상호작용 분석 엔진" 참조)
   profile/
     medications/ → GET/POST/DELETE: 복용약 관리
   pharmacies/
@@ -70,13 +69,14 @@ RLS 정책:
 ```
 입력: user_medications (사용자 복용약 목록)
 처리:
-  1. 캐시 확인: interactions 테이블에서 약품 쌍 조회
-     → 캐시 있고 1주일 미경과: 캐시 반환
-  2. 캐시 미스: 심평원 DUR API 호출
-     → 병용금기, 연령금기, 임부금기, 효능군중복 조회
-  3. 결과 저장: interactions 캐시 업데이트
-  4. 위험도 분류: 금기(RED), 주의(YELLOW), 안전(GREEN)
-출력: 상호작용 목록 + 위험도 + 설명 (법적 표현 준수)
+  1. interactions 테이블에서 약품 쌍 조회 (ETL 로 미리 적재)
+  2. 결과를 dur_shadow_logs 에 fire-and-forget 기록 — 절대 await 하지 않는다
+출력: **사용자에게 직접 노출하지 않는다.** 백엔드 shadow 로직 전용.
+
+⛔ 위험도 다단계(RED/YELLOW/GREEN)를 설계하지 않는다.
+   "안전(GREEN)" 같은 **음성 판정**이 식약처 웰니스(비의료기기) 판정과
+   Play 건강앱 정책에 동시에 걸린다 — `/interactions` 가 이것 때문에 삭제됐다(2026-08-31).
+   사용자에게 보이는 것은 약 지갑의 "정보 있음 + 약사 상담" 형태뿐이다(`src/lib/dur-flags.ts`).
 ```
 
 ## 출력 프로토콜
@@ -93,7 +93,7 @@ RLS 정책:
 ## 4. RLS 정책 (SQL)
 ## 5. API 구조
 ## 6. OCR 처리 플로우
-## 7. 상호작용 분석 엔진 구조
+## 7. 상호작용 shadow 로직 구조 (사용자 노출면 없음)
 ## 8. 보안 설계 (암호화, RLS, 처방전 이미지 보호)
 ## 9. PharmMatch 재사용 가능 컴포넌트 목록
 ```
@@ -120,7 +120,7 @@ schema-design.md reference 파일을 읽어 ERD 설계 시 활용한다.
 - **QR 매핑 FK:** `pharmacies(store_id)` ↔ `profiles.regular_pharmacy_id` 로 단골약국을 연결한다. QR 진입 쿠키 키는 `pending_store_id`가 아니라 **`pending_pharmacy_id`**이며, 값은 해석된 `pharmacy.id`(UUID)다.
 
 ### 2) DUR 검색 엔진의 백엔드 격리 (Shadow Architecture)
-- `/api/interactions/check`(및 `/interactions` 페이지)를 환자 앱 전면에 노출하지 않는다. 현재 `NEXT_PUBLIC_SHOW_INTERACTIONS=false`로 네비게이션에서 숨긴 상태를 유지하며, DUR은 **백엔드 shadow 로직으로만** 운용한다.
+- `/api/interactions/check` 와 `/interactions` 페이지는 **삭제됐다**(2026-08-31). 되살리지 않는다 — DUR 은 **백엔드 shadow 로직으로만** 운용하고, 사용자에게 보이는 것은 약 지갑의 "정보 있음 + 약사 상담" 형태뿐이다.
 - `/api/ocr` 성공으로 `user_prescriptions`에 적재되는 순간, DUR 모듈을 **fire-and-forget(비동기, `await` 없음)**로 돌려 매핑·상호작용 결과를 `dur_shadow_logs`에 조용히 적재한다.
 - shadow 처리의 에러/지연(Latency)이 메인 OCR 응답 속도에 **절대 영향을 주지 않도록** 호출을 격리한다 (응답 반환 후 백그라운드 실행, 결과를 기다리지 않음).
   - **현재 상태:** `src/lib/dur.ts`(`checkInteractions`)·`src/lib/dur-shadow.ts`(`logDurShadow`)가 이미 구현돼 `/api/ocr`에서 fire-and-forget으로 호출 중이다. 신규 모듈을 새로 만들기보다 이 인터페이스를 재사용·확장한다.

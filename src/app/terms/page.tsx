@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { LogoMark } from '@/components/yc/logo'
+import { LegalBackBar, LegalBottomExit } from '@/components/yc/legal-back-bar'
 
 export const metadata = { title: '이용약관 · 약사로케어' }
 
@@ -111,10 +110,7 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-yc-pageBg px-6 py-10">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <LogoMark size={40} />
-          <h1 className="font-display text-2xl text-yc-neutral900">이용약관</h1>
-        </div>
+        <LegalBackBar title="이용약관" />
 
         <div className="space-y-8">
           {SECTIONS.map(section => (
@@ -138,9 +134,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-10">
-          <Link href="/login" className="text-sm text-yc-green600 underline underline-offset-2">
-            ← 로그인으로 돌아가기
-          </Link>
+          <LegalBottomExit />
         </div>
       </div>
     </div>

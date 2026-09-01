@@ -331,6 +331,7 @@ export default function BoxOcrAddFlow({ initialTab, member }: { initialTab: TabT
 
       <div className="flex flex-col justify-center gap-4 min-h-[45vh]">
         <p className="text-sm text-yc-neutral600 break-keep">
+          {/* yc-allow-phrase: '괜찮아요' 는 **무엇을 찍어도 되는지**에 대한 안내이지 안전 판정이 아니다. */}
           제품 박스의 <b>이름이 잘 보이게</b> 정면에서 찍어 주세요. 바코드가 없거나 영양제도 괜찮아요.
         </p>
 

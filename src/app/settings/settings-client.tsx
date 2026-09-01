@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { signOutAndPurge } from '@/lib/purge'
 import {
@@ -40,7 +41,9 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       role="switch"
       aria-checked={on}
       onClick={onToggle}
-      className="relative rounded-full flex-shrink-0 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-2"
+      // 스위치 자체는 28px 이지만 before 의사요소가 위아래로 12px 씩 넓혀 **히트영역 52px** 을 만든다.
+      // (실버 세대 요건. 예전 -inset-y-2 는 44px 이라 미달이었다 — 눈에 안 보이는 미달이라 실측으로만 잡힌다.)
+      className="relative rounded-full flex-shrink-0 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-3"
       style={{
         width: 48,
         height: 28,
@@ -238,7 +241,7 @@ export default function SettingsClient({
         <div className="flex gap-2">
           {FONT_SIZE_OPTIONS.map(f => (
             <button key={f.key} type="button" onClick={() => changeFontSize(f.key)}
-              className={`flex-1 py-3.5 rounded-yc-lg text-sm transition-colors shadow-[var(--yc-shadow-sm)] ${
+              className={`flex-1 min-h-[52px] rounded-yc-lg text-base transition-colors shadow-[var(--yc-shadow-sm)] ${
                 fontSize === f.key
                   ? 'bg-yc-green600 text-white font-semibold'
                   : 'bg-white text-yc-neutral700 font-semibold active:bg-yc-neutral50'
@@ -342,6 +345,10 @@ export default function SettingsClient({
               {userRole === 'pharmacist' ? '약사' : '환자·보호자'}
             </p>
           </div>
+          {/* 예전엔 ✓/✗ 표시뿐이고 핸들러가 0이었다 — 처리방침 제9조는 "[설정] 에서 직접"
+              철회할 수 있다고 적는데 누를 것이 없었다. 이제 상태에 따라 갈 곳을 준다.
+              ⚠️ 철회는 **파기를 동반**한다(처리방침 제4조). 복약 정보만 골라 지우는 경로는
+              아직 없으므로, 있는 그대로 회원 탈퇴를 가리킨다 — 없는 기능을 있는 척하지 않는다. */}
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 text-sm">
               <span className={consentHealth ? 'text-yc-green600' : 'text-yc-error'}>
@@ -349,6 +356,23 @@ export default function SettingsClient({
               </span>
               <span className="text-yc-neutral700">건강정보 수집·이용 동의</span>
             </div>
+            {consentHealth ? (
+              <p className="mt-2 text-sm text-yc-neutral500 leading-relaxed">
+                동의를 철회하면 등록한 약과 복약 기록을 함께 파기해야 합니다.{' '}
+                <Link href="/account-deletion"
+                  className="inline-flex min-h-[52px] items-center text-sm text-yc-green600 underline underline-offset-2">
+                  철회·삭제 방법 보기
+                </Link>
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-yc-neutral500 leading-relaxed">
+                아직 동의하지 않아 복약 정보를 볼 수 없어요.{' '}
+                <Link href="/consent"
+                  className="inline-flex min-h-[52px] items-center text-sm text-yc-green600 underline underline-offset-2">
+                  지금 동의하기
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -373,6 +397,41 @@ export default function SettingsClient({
         </div>
         <p className="text-xs text-yc-neutral500 mt-3 text-center leading-relaxed">
           개인정보 열람·정정 요청은 admin@yaksaro.co.kr 으로 문의하세요.
+        </p>
+      </section>
+
+      {/* ── 안내 ──
+          로그인 후에는 약관·처리방침에 닿을 길이 없었다(`/login` 에만 있었다).
+          Apple 5.1.1(i)·Play 모두 **앱 안에서** 처리방침에 닿을 것을 요구한다.
+          접근권한 안내는 정보통신망법 §22조의2, 계정 삭제 안내는 Play Data safety 의
+          필수 필드가 가리키는 페이지다. */}
+      <section className="anim-page" style={{ animationDelay: '300ms' }}>
+        <p className="text-sm font-semibold text-yc-neutral600 mb-3">안내</p>
+        <div className="bg-white rounded-yc-lg shadow-[var(--yc-shadow-sm)] overflow-hidden">
+          {[
+            { href: '/terms', label: '이용약관' },
+            { href: '/privacy', label: '개인정보 처리방침' },
+            { href: '/permissions', label: '접근권한 안내' },
+            { href: '/account-deletion', label: '계정 삭제 안내' },
+          ].map((item, i) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`block px-5 py-4 text-sm font-medium text-yc-neutral700 active:bg-yc-neutral100 transition-colors min-h-[52px] ${
+                i > 0 ? 'border-t border-yc-neutral100' : ''
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* 비의료기기 고지 — 식약처 「의료기기와 개인용 건강관리(웰니스) 제품 판단기준」 Ⅴ-3 권고이자
+            Play 건강앱 정책 요건. 스토어 설명 첫 문단에도 같은 취지가 들어간다.
+            음성 판정을 만들지 않는다 — "이상 없다" 가 아니라 "판단하지 않는다" 로 끝낸다. */}
+        <p className="text-xs text-yc-neutral500 mt-4 leading-relaxed">
+          약사로케어는 의료기기가 아닙니다. 질병의 진단·치료·예방에 사용할 수 없고, 등록된 정보로
+          질병 유무를 판단하지 않습니다. 복용 여부와 방법에 대한 판단이 필요하면 약사·의사와 상담해 주세요.
         </p>
       </section>
 

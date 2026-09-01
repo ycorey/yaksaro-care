@@ -263,9 +263,18 @@ export default async function WalletPage() {
 
       {/* ── 지난 약(복약 이력) ── */}
       <Link href="/medications/history"
-        className="block text-center text-sm font-semibold text-yc-neutral500 active:text-yc-green600 py-3">
+        className="flex min-h-[52px] items-center justify-center text-base font-semibold text-yc-neutral500 active:text-yc-green600">
         지난 약 보기 →
       </Link>
+
+      {/* 비의료기기 고지 — 약 지갑은 DUR 등재 정보·생활 관리 정보가 함께 놓이는 유일한 화면이라,
+          "이 앱이 무엇을 판단하지 않는가" 를 여기서 한 번 말해 둔다.
+          식약처 웰니스 판단기준 Ⅴ-3 권고이자 Play 건강앱 요건이고, 설정 화면에도 같은 문구가 있다.
+          ⚠️ 음성 판정을 만들지 않는다 — "이상 없다" 가 아니라 "판단하지 않는다" 로 끝낸다. */}
+      <p className="text-xs text-yc-neutral500 leading-relaxed text-center px-4 pb-2">
+        약사로케어는 의료기기가 아닙니다. 질병의 진단·치료·예방에 사용할 수 없고,
+        등록된 정보로 질병 유무를 판단하지 않습니다. 판단이 필요하면 약사·의사와 상담해 주세요.
+      </p>
     </div>
   )
 }

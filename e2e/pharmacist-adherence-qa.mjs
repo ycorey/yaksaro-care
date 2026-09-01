@@ -83,7 +83,9 @@ try {
   check('동의 OFF: 약사A 로그 0건', (await pharmSees(phaC)).length === 0)
 
   // 동의 ON + 단골 세팅
-  await admin.from('profiles').update({ regular_pharmacy_id: pharmacyA, consent_pharmacist_view: true }).eq('id', patUid)
+  // 071 이후 약사 열람은 §23 동의를 AND 조건으로 요구한다 — 실사용자라면 그 동의가 선행한다.
+  await admin.from('profiles').update({ regular_pharmacy_id: pharmacyA, consent_pharmacist_view: true,
+    consent_health: true, consent_health_at: new Date().toISOString() }).eq('id', patUid)
 
   // T2: 동의 ON → 약사A는 self 로그만(가족 제외)
   console.log('\n[T2] 동의 후 — 약사A는 self 로그만')

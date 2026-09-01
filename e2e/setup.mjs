@@ -5,6 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { loadEnv } from './_env.mjs'
+import { consentedPatientMeta } from './_seed-meta.mjs'
 
 const { URL_, ANON, SERVICE } = loadEnv()
 const admin = createClient(URL_, SERVICE, { auth: { autoRefreshToken: false, persistSession: false } })
@@ -15,7 +16,7 @@ const email = `e2e-test+${now}@yaksaro-e2e.test`
 const password = 'E2e!' + Math.random().toString(36).slice(2) + 'Aa9'
 
 // 1) 확인된 유저 생성
-const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true })
+const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, password, email_confirm: true , user_metadata: consentedPatientMeta() })
 if (cErr) throw new Error('createUser: ' + cErr.message)
 const uid = created.user.id
 

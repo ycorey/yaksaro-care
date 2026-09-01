@@ -43,7 +43,6 @@ MVP 정의 대비 구현 현황과 누락 기능을 식별하고, B2C/B2B 준비
 - 단골 환자 복약 현황 대시보드
 
 ### 5. 누락/반쪽 기능
-- `/interactions` 페이지 숨김 상태 (SHOW_INTERACTIONS=false)
 - PWA 설정 (manifest.json, service worker)
 - 푸시 알림 미구현
 - ETL DUR 데이터 적재 완료 여부
