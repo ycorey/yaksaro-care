@@ -12,7 +12,7 @@
 |---|---|
 | **사업자 개발자 계정** 개설($25) + 신원 확인 | 개인 계정은 12명×14일 테스터 룰에 걸린다. Health 카테고리에 조직 계정이 요구된다는 보도가 있으나 **Google 공식 도움말에서는 확인되지 않았다** — 계정 개설 화면에서 실측하고 결과를 이 표에 적을 것 |
 | **서명 키 백업**(`twa/android.keystore`) | 미커밋이다. **잃으면 같은 앱으로 두 번 다시 업데이트할 수 없다** |
-| `.aab` 산출 | 지금은 `twa/yaksaro-care.apk`(에뮬레이터 검증용)뿐. Play 업로드는 App Bundle |
+| ~~`.aab` 산출~~ | ✅ **2026-09-01 완료** — `twa/yaksaro-care-release.aab` · 1,219,232 B · `jar verified.` |
 
 ---
 
@@ -106,20 +106,34 @@ Play 건강앱 정책은 규제 승인이 없는 앱에 이 고지를 **설명 �
 ## 4. 남은 것
 
 - [ ] 사업자 개발자 계정 + Health 카테고리 계정 요건 실측
-- [ ] 서명 키 백업
-- [ ] `.aab` 산출 → 내부 테스트 트랙
+- [ ] 서명 키 백업 — **아직이다.** `twa/android.keystore` 는 gitignore 되어 저장소에도 없다.
+      잃으면 `kr.co.yaksaro.care` 를 같은 앱으로 두 번 다시 업데이트할 수 없다
+- [x] **`.aab` 산출 — 2026-09-01 완료.** `twa/yaksaro-care-release.aab` · 1,219,232 B · `jarsigner -verify` → `jar verified.`
+      경로: `./gradlew bundleRelease`(미서명 1,176,138 B) → `jarsigner -signedjar … yaksaro-care`
+      ⚠️ **gradle 은 서명하지 않는다**(`app/build.gradle` 에 `signingConfig` 없음 — bubblewrap 이 빌드 후 별도로 한다).
+         다시 빌드하면 또 미서명본이 나온다.
+      ⚠️ 경고 `self-signed` · `PKIX path building failed` 는 **정상** — 업로드 키는 자체 서명이어야 하고 CA 체인이 없다.
+      ✅ 인증서 지문을 `.aab` 에서 직접 뽑아 `assetlinks.json` 과 문자 단위 일치 확인:
+         `7D:88:ED:DE:69:EE:8F:EB:C6:D2:9F:1A:24:7A:1E:9E:56:AA:61:AE:A5:9F:A8:72:FF:45:0E:DB:35:F2:AB:01`
+- [ ] 내부 테스트 트랙 업로드
 - [ ] **`versionCode` 증가 규칙** — `twa/app/build.gradle:60` 이 `versionCode 1` 고정이라
       **두 번째 업로드가 거부된다.** Bubblewrap 은 `twa-manifest.json` 의 `appVersionCode` 를
       쓰므로 거기서 올리고 재생성할 것(직접 편집하면 두 파일이 어긋난다)
-- [ ] **마이그레이션 070·071 적용**(SQL Editor) — 070: `interactions` 원문을 service_role 전용으로.
-      071: 약사 열람에 §23 동의를 AND 조건으로(지금은 **본인은 못 보는데 약사는 본다** — 실측 2명)
+- [x] ~~**마이그레이션 070·071 적용**(SQL Editor)~~ — **운영 적용 완료**(커밋 `d094f0f`).
+      070: `interactions`·`ingredient_interactions` 원문을 service_role 전용으로.
+      071: 약사 열람에 §23 동의를 AND 조건으로(그 전에는 **본인은 못 보는데 약사는 본다** — 실측 2명).
+      **회귀 가드 신설**(2026-09-01): `e2e/rls-readonly-qa.mjs` + `ci.yml` 잡 `rls-gate` 가
+      푸시·PR·하루 2회 운영 대상으로 실측한다. 첫 실행 **11/11 PASS**
+      (대조군 `dur_single_flags` 9,028행이 살아 있는 상태에서 누수 단언 6개 전부 0행)
 - [ ] 스크린샷·특성 그래픽
 - [ ] **`POST_NOTIFICATIONS` 실기기 확인** — `AndroidManifest.xml:26` 선언은 있다.
       남은 건 Android 13+ 실기기에서 알림 1건 실수신. targetSdk 33+ 는 런타임 권한이
       없으면 **예외 없이 조용히 안 뜬다**(048·PR#50·PR#51 과 같은 서명)
-- [ ] **출시 후** `assetlinks.json` 지문 재확인 — 지금 값은 로컬 업로드 키 지문이다.
-      Play App Signing 이 재서명하면 달라지고, 틀려도 크래시 없이 **주소창 남은
-      Custom Tab 으로 조용히 폴백**한다
+- [ ] **출시 후** `assetlinks.json` 지문 재확인 — 위에서 대조한 `7D:88:…:AB:01` 은 *업로드 키* 지문이고,
+      **Play App Signing 이 재서명하면 최종 앱의 지문은 달라진다.** 틀려도 크래시 없이
+      **주소창 남은 Custom Tab 으로 조용히 폴백**해 눈치채기 어렵다.
+      → Play Console → 설정 → 앱 무결성 → **앱 서명 키 인증서**의 SHA-256 을 확인해 다르면
+        `public/.well-known/assetlinks.json` 배열에 **추가**할 것(교체 아님 — 둘 다 두면 로컬 빌드도 계속 동작) 후 재배포·실기기 확인
 - [ ] 약사 대시보드 앱 내 노출 — **manifest scope 로는 못 뺀다**(아래)
 
 ### 왜 약사 화면을 앱에서 못 뺐는가

@@ -108,18 +108,27 @@
       스크립트 상단에 경고를 남겼다 — 확정은 스토어 자산 라운드에서
 
 ### Google Play — 남은 것
-- [~] **`.aab`** — **빌드는 2026-09-01 완료.** `twa/app/build/outputs/bundle/release/app-release.aab`
-      (1,176,138 B · `./gradlew bundleRelease` · BUILD SUCCESSFUL 1m11s). `twa/local.properties` 를 그때 만들었다.
-      ⚠️ **서명이 없다** — `jarsigner -verify` → `jar is unsigned`. `app/build.gradle` 에 `signingConfig` 가 없어
-      gradle 은 서명하지 않는다(bubblewrap 이 빌드 후 별도로 한다). 키스토어 비밀번호가 필요하므로 **사용자 몫**.
-      ⚠️ `versionCode 1` — Play 는 같은 값을 두 번 받지 않는다. 다음 업로드부터 올릴 것
+- [x] **`.aab` — 2026-09-01 서명까지 완료.** `twa/yaksaro-care-release.aab` · **1,219,232 B** · `jarsigner -verify` → **`jar verified.`**
+      경로: `./gradlew bundleRelease`(미서명 1,176,138 B) → `jarsigner -signedjar`(사용자가 비밀번호 입력).
+      `twa/local.properties`(SDK 경로)를 그때 만들었고 gitignore 에 넣었다.
+      ⚠️ **gradle 은 서명하지 않는다** — `app/build.gradle` 에 `signingConfig` 가 없다(bubblewrap 이 빌드 후 별도로 한다).
+      다음에 다시 빌드하면 또 미서명본이 나온다. `jarsigner` 단계를 잊지 말 것.
+      ⚠️ 경고 2종(`self-signed` · `PKIX path building failed`)은 **정상이다** — Play 업로드 키는 자체 서명이어야 하고 CA 체인이 없다.
+      ⚠️ `versionCode 1` — Play 는 같은 값을 두 번 받지 않는다. 다음 업로드부터 `twa-manifest.json` 의 `appVersionCode` 를 올릴 것
 - [x] ~~`AndroidManifest.xml` 직접 확인~~ — **2026-09-01 확인.** `POST_NOTIFICATIONS` 가 merged manifest 33행에
       실제로 병합돼 있다. "선언일 뿐" 이라던 서술은 매니페스트 병합까지는 틀렸다
 - [ ] **`POST_NOTIFICATIONS` 실기기 수신** — 위로 매니페스트는 확인됐고 **남은 건 Android 13+ 실기기 알림 1건**이다.
       targetSdk 33+ 는 런타임 승인이 없으면 **예외 없이 조용히 안 뜬다**.
       **048·PR#50·PR#51 과 같은 서명("등록은 됐는데 안 온다")**
-- [ ] **`assetlinks.json` 지문 ↔ Play App Signing 인증서 SHA-256 재확인** — 지금 배포된 값은 로컬 업로드 키 지문(`7D:88:…:AB:01`)이다.
-      Play 가 재서명하면 지문이 달라지고, 틀려도 크래시 없이 **주소창 남은 Custom Tab 으로 조용히 폴백**한다 → 출시 후 실기기 재확인
+- [~] **`assetlinks.json` 지문 ↔ Play App Signing 인증서 SHA-256**
+      ✅ **업로드 키 쪽은 2026-09-01 대조 완료.** 서명된 `.aab` 에서 인증서를 직접 뽑아
+      (`unzip META-INF/*.RSA` → `keytool -printcert`) `public/.well-known/assetlinks.json` 과 **문자 단위 일치** 확인:
+      `7D:88:ED:DE:69:EE:8F:EB:C6:D2:9F:1A:24:7A:1E:9E:56:AA:61:AE:A5:9F:A8:72:FF:45:0E:DB:35:F2:AB:01`
+      → 지금 이 번들을 직접 설치하면 주소창 없이 뜬다.
+      ▸ **남은 것 (출시 후):** Play App Signing 이 **재서명하면 최종 앱의 지문이 달라진다.** 위 값은 *업로드 키* 지문이다.
+        틀려도 크래시 없이 **주소창 남은 Custom Tab 으로 조용히 폴백**하므로 눈치채기 어렵다 →
+        Play Console → 설정 → 앱 무결성 → **앱 서명 키 인증서**의 SHA-256 을 확인해 다르면
+        `assetlinks.json` 배열에 **추가**할 것(교체 아님 — 둘 다 두면 로컬 빌드도 계속 동작한다) 후 재배포·실기기 확인
 - [ ] 스토어 자산 — 스크린샷 4장+·특성그래픽 1024×500(현재 **0개**) · 설명문(의료기기 표현 금지 표로 자가 검수)
 - [ ] Play 건강앱 선언 · Data safety 폼(복약·처방 텍스트=**Health info**, 처방전 원본 이미지는 즉시 파기라 ephemeral 예외로 "수집" 아님, **단골약국 열람(opt-in)은 "Shared" 로 볼 여지**)
 - [ ] 개발자 계정 $25 + 전화번호 검증(2026-09 전면 의무화) · 개인 계정이면 **테스터 12명×14일** 후 프로덕션 신청
