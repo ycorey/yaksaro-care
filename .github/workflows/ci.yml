@@ -70,9 +70,52 @@ jobs:
           fi
           node e2e/embed-integrity-qa.mjs
 
-  # DB/RLS 실측 게이트(약사 토큰 누수·단골 코드 등 11종). 실 DB에 임시 유저를 시드·삭제하므로
+  # 약사 토큰 RLS 누수 — **읽기 전용** 상시 게이트.
+  #
+  # 아래 db-gate 는 2026-09-01 까지 **한 번도 돌지 않았다**(실측: workflow_dispatch 0건).
+  # 그리고 `if:` 를 뒤집어도 돌지 않는다 — TEST_SUPABASE_* / PROD_SUPABASE_REF 시크릿이
+  # 하나도 없어 첫 스텝의 fail-closed 가드에서 죽는다. 진짜 원인은 조건절이 아니라
+  # **테스트 Supabase 프로젝트의 부재**다.
+  #
+  # 그래서 시드가 필요 없는 단언만 떼어내 지금 있는 시크릿으로 돌린다.
+  # schema-gate 가 증명한 방식 그대로 — 쓰기 능력을 아예 주지 않는 것으로 안전을 보장한다.
+  # 필요 시크릿: SUPABASE_URL / SUPABASE_ANON_KEY / SMOKE_PHARMACIST_EMAIL / _PASSWORD (전부 기존 값)
+  rls-gate:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'schedule' || github.repository == 'ycorey/yaksaro-care' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      # embed-integrity 와 달리 @supabase/supabase-js 가 필요하다(세션 토큰으로 질의한다).
+      - run: npm ci
+      - name: 약사 토큰 누수 (읽기 전용)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SMOKE_PHARMACIST_EMAIL:        ${{ secrets.SMOKE_PHARMACIST_EMAIL }}
+          SMOKE_PHARMACIST_PASSWORD:     ${{ secrets.SMOKE_PHARMACIST_PASSWORD }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "::warning::SUPABASE_URL/ANON_KEY 시크릿 미설정 — RLS 게이트를 건너뜁니다."
+            exit 0
+          fi
+          node e2e/rls-readonly-qa.mjs
+
+  # DB/RLS 실측 게이트(약사 토큰 누수·단골 코드 등 14종). 실 DB에 임시 유저를 시드·삭제하므로
   # 운영 DB가 아닌 "테스트/스테이징 Supabase"를 대상으로만 실행할 것 → 수동 트리거(workflow_dispatch).
   # 필요 시크릿(테스트 DB): TEST_SUPABASE_URL / TEST_SUPABASE_ANON_KEY / TEST_SUPABASE_SERVICE_ROLE_KEY
+  #
+  # ⚠️ 이 잡은 2026-09-01 까지 **실행 0회**다. 그리고 아래 `if:` 를 뒤집어도 돌지 않는다 —
+  #    실측(`gh secret list`): 저장소에 있는 시크릿은 SMOKE_PHARMACIST_EMAIL / _PASSWORD /
+  #    SUPABASE_ANON_KEY / SUPABASE_URL **4개뿐**이고, 위에 적힌 TEST_SUPABASE_* 3종과
+  #    PROD_SUPABASE_REF 는 **하나도 없다.** 아래 "운영 DB 차단 가드" 스텝이 fail-closed 라
+  #    조건절만 고치면 매 실행이 빨간불이 될 뿐이다.
+  #    진짜 선행조건은 **테스트/스테이징 Supabase 프로젝트를 만들고 시크릿 4개를 넣는 것**이며,
+  #    그건 사람만 할 수 있다. 그때까지의 공백은 위 `rls-gate`(시드 없는 읽기 전용 단언)가 메운다.
+  #    조건절을 손대기 전에 시크릿부터 확인할 것 — 세 번째로 같은 자리를 헛짚지 않도록 적어 둔다.
   db-gate:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
