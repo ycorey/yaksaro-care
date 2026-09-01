@@ -2,7 +2,9 @@
 
 > 기준: 11차 종합 평가(2026-08-12) + 앱스토어 적합성 평가(2026-08-12) + **모바일 실렌더 UX 감사(2026-08-21)**
 > 리포트: `_workspace/eval/final-evaluation.md` · `_workspace/eval_appstore/final-appstore-assessment.md` · `_workspace/eval/01b_ux-audit-mobile-2026-08-21.md`
-> **현행화 실측: 2026-08-21.** `main` 클린 · 열린 PR 0 · 미커밋 0 · CI·프로덕션 스모크 초록 · Critical 0.
+> **현행화 실측: 2026-09-01** (이전 회차 2026-08-21). 작업 기록: `_workspace/worklog/2026-09-01.md`
+> 이날 상태: **열린 PR 2건(#75 대기 · #74 보류)** · `feat/play-release` 가 main 보다 9커밋 앞 · unit 170/170 · build 통과.
+> 이날 정정된 서술 4건: db-gate 원인 · `POST_NOTIFICATIONS` 매니페스트 · unit 80 → 170 · `.aab` 미생성.
 > 11차 High 6 중 **2건 해소**(PR #66) · 8/21 감사 High 4건 **전부 해소**(8d35c1c).
 > 이 문서는 **남은 것**만 적는다 — 끝난 일의 이력은 `CLAUDE.md` 변경 이력에 있다.
 
@@ -10,7 +12,16 @@
 
 ## 🔴 지금
 
-- (없음) — `/interactions` 규제 노출은 **2026-08-31 해소.** 라우트·API 삭제,
+- **PR #74 는 지금 머지하면 e2e 가 깨진다** (2026-09-01 발견). `feat/ingredient-interactions` 가 추가하는
+  `e2e/interaction-ingredient-qa.mjs:113` 이 *"로그인 사용자는 `ingredient_interactions` 를 읽는다(=1행)"* 를 단언하는데,
+  **070 이 그 표의 정책을 drop 해 service_role 전용으로 좁혔다** → 로그인 사용자는 0행을 받는다.
+  그 PR 이 이 테스트를 `run-all.mjs` 에 등록하므로 `npm run test:e2e` 가 통째로 깨진다.
+  **#74 의 CI 가 초록인 이유는 db-gate 가 skipping 이기 때문**이다(아래 🟠 참조 — 아무도 안 보는 자리였다).
+  → 고칠 곳은 한 줄이다: 그 단언을 **"로그인 사용자도 0행"** 으로 뒤집고 이유(070)를 적을 것.
+  (`ingredient_norms` 는 070 대상이 아니라 112행 단언은 그대로 유효하다.)
+  ※ 그 PR 은 본문에서 **수용 기준 1·2 의 폐기 여부**도 리뷰 결정으로 남겨 두었다 — 제품 판단이라 사람이 정해야 한다.
+
+- ~~`/interactions` 규제 노출~~ — **2026-08-31 해소.** 라우트·API 삭제,
   보호경로·robots 정리, 되살리라고 지시하던 하네스 문서 5곳 반전,
   회귀 가드 `e2e/store-readiness-qa.mjs`.
 
@@ -97,9 +108,15 @@
       스크립트 상단에 경고를 남겼다 — 확정은 스토어 자산 라운드에서
 
 ### Google Play — 남은 것
-- [ ] **`.aab` 미생성** — 현재 `twa/yaksaro-care.apk`(에뮬레이터 검증용)뿐이다. Play 업로드는 **App Bundle** 이라 번들 산출 필요
-- [ ] **`POST_NOTIFICATIONS` 실기기 검증** — `twa-manifest.json` 의 `enableNotifications: true` 는 **선언일 뿐**이다.
-      targetSdk 33+ 는 이 권한이 없으면 **알림이 예외 없이 조용히 안 뜬다** → `AndroidManifest.xml` 직접 확인 + Android 13+ 실기기로 알림 1건 수신.
+- [~] **`.aab`** — **빌드는 2026-09-01 완료.** `twa/app/build/outputs/bundle/release/app-release.aab`
+      (1,176,138 B · `./gradlew bundleRelease` · BUILD SUCCESSFUL 1m11s). `twa/local.properties` 를 그때 만들었다.
+      ⚠️ **서명이 없다** — `jarsigner -verify` → `jar is unsigned`. `app/build.gradle` 에 `signingConfig` 가 없어
+      gradle 은 서명하지 않는다(bubblewrap 이 빌드 후 별도로 한다). 키스토어 비밀번호가 필요하므로 **사용자 몫**.
+      ⚠️ `versionCode 1` — Play 는 같은 값을 두 번 받지 않는다. 다음 업로드부터 올릴 것
+- [x] ~~`AndroidManifest.xml` 직접 확인~~ — **2026-09-01 확인.** `POST_NOTIFICATIONS` 가 merged manifest 33행에
+      실제로 병합돼 있다. "선언일 뿐" 이라던 서술은 매니페스트 병합까지는 틀렸다
+- [ ] **`POST_NOTIFICATIONS` 실기기 수신** — 위로 매니페스트는 확인됐고 **남은 건 Android 13+ 실기기 알림 1건**이다.
+      targetSdk 33+ 는 런타임 승인이 없으면 **예외 없이 조용히 안 뜬다**.
       **048·PR#50·PR#51 과 같은 서명("등록은 됐는데 안 온다")**
 - [ ] **`assetlinks.json` 지문 ↔ Play App Signing 인증서 SHA-256 재확인** — 지금 배포된 값은 로컬 업로드 키 지문(`7D:88:…:AB:01`)이다.
       Play 가 재서명하면 지문이 달라지고, 틀려도 크래시 없이 **주소창 남은 Custom Tab 으로 조용히 폴백**한다 → 출시 후 실기기 재확인
@@ -127,10 +144,17 @@
 
 ## 🟠 11차 High 잔여 3건 (+ 위 `ter-notify` 배포 1건은 사용자 몫)
 
-- [ ] **`db-gate` 를 실제로 돌게** — **재실측 2026-08-21: 여전히 실행 0회.** `ci.yml` 이 `if: github.event_name == 'workflow_dispatch'`
-      인데 dispatch 실행 0건이고, 스케줄 실행에서는 `db-gate: skipped` 로 확인된다(같은 워크플로의 `quality`·`schema-gate` 는 success).
-      → 14종(약사 RLS 누수 **27단언** 포함)이 아무도 안 보는 상태.
-      `schema-gate` 가 증명한 해법 복제: **쓰기 불가능한 자격증명만 주고 "무엇이 0건인가" 만 단언하는 읽기 전용 잡**을 운영 대상 상시로 분리. 시드가 필요한 단언만 test DB
+- [~] **`db-gate` 를 실제로 돌게** — **2026-09-01: 원인 진단을 정정하고, 공백은 메웠다.**
+      ⚠️ **`if:` 조건절은 원인이 아니었다.** `gh secret list` 실측 — 저장소 시크릿은 **4개뿐**이다
+      (`SMOKE_PHARMACIST_EMAIL`·`_PASSWORD`·`SUPABASE_ANON_KEY`·`SUPABASE_URL`).
+      db-gate 가 요구하는 `TEST_SUPABASE_URL`/`_ANON_KEY`/`_SERVICE_ROLE_KEY`·`PROD_SUPABASE_REF` 는 **하나도 없다.**
+      조건절만 뒤집으면 첫 스텝의 fail-closed 가드에서 죽어 **매 실행이 빨간불**이 될 뿐이다.
+      → 진짜 선행조건은 **테스트/스테이징 Supabase 프로젝트 생성 + 시크릿 4개**이고, 그건 🔒 사용자 몫이다.
+      ✅ 그때까지의 공백은 **`rls-gate`** 가 메운다(2026-09-01 신설, `e2e/rls-readonly-qa.mjs`).
+      시드 없이 성립하는 단언만 — `schema-gate` 가 증명한 대로 **쓰기 능력을 아예 주지 않는 것**으로 안전을 보장한다.
+      불변식: *환자 0명인 카나리 약사는 환자 행을 정확히 0건 본다.* 070·064·051/053·071 을 지킨다.
+      대조군(로그인·본인 행·`dur_single_flags`>0)이 먼저 — 로그인이 실패하면 모든 표가 0건이 되어 누수 단언이 거짓 통과한다.
+      ▸ **남은 것:** 시드가 필요한 나머지 단언(약사 RLS 누수 27단언 등)은 여전히 test DB 를 기다린다
 - [ ] **약사 회신 화면 진입점** — **재실측: `home-client.tsx:179` 하나뿐**(나머지 참조는 푸시 알림 URL 2곳과 주석).
       `isB2B` 일 때만 렌더되는데 연결 해제는 확인 없이 한 탭(`pharmacy-link.tsx:77-85`) → **되살린 화면에 도달할 방법이 사라진다.**
       설정에 "지난 요청·회신 보기" 상시 링크(5줄) + 해제 확인
@@ -197,7 +221,10 @@
 - [ ] 컬럼 드리프트 CI 게이트 — 재생성 규약이 수기 패치로 퇴행했던 자리(9차 근본 조력자의 재발 경로). **게이트는 아직 없다.**
       2026-08-28 실측(운영 카탈로그 대조): 069 적용 후 재생성본과 대조해 **컬럼 드리프트 0**, 수동 패치 3줄은 자동 생성본과 문자 단위 일치라 주석 회수.
       **"타입이 선언하는데 DB 에 없는" 방향은 0건** — 8/11 장애를 만든 유형은 현재 없다. 남은 차이는 `prescription_diagnoses` 한 테이블뿐이고,
-      그건 운영에 064 가 적용됐는데 코드가 `feat/prescription-kcd` 에 미커밋인 데서 온다(이 브랜치의 부채가 아니다). 059~063 누락 서술은 실측과 달라 정정함
+      그건 운영에 064 가 적용됐는데 코드가 `feat/prescription-kcd` 에 미커밋인 데서 온다(이 브랜치의 부채가 아니다). 059~063 누락 서술은 실측과 달라 정정함.
+      ▸ **2026-09-01: 064 마이그레이션 파일만 저장소로 회수했다**(내용 무수정 — 운영 DDL 과 문자 단위로 같아야 원장이다).
+        `migrations/` 의 063→065 점프는 해소. `database.ts` 에 `prescription_diagnoses` 가 없는 것은 여전히 정상이다 —
+        KCD **기능 코드**는 브랜치에 그대로 두었고(2단계가 통계청 마스터 파일 대기), 회수한 것은 스키마 원장뿐이다
 - [ ] 약사 대시보드 처방 변경 이력 · OCR 이름 폴백 유사도 · 프록시 role → JWT claim
 - [ ] **"오늘" 규약 UTC→KST 통일** — 화면 3곳·`/api/meal-checks` 의 하루가 **UTC 자정(=KST 09:00)** 에 넘어간다
       (2026-08-22 리뷰에서 확인된 기존 결함): KST 00~09시의 복약 체크가 **전날 `check_date`** 로 남고,
@@ -214,7 +241,10 @@
 - [ ] `@calendar` 오류를 빈 상태("기록 없음")로 표시 — **5회 연속 이월**(약사 화면은 고쳐졌다)
 - [ ] `api/medications/bulk` `maxDuration` **0건 실측** + 타임아웃 8s/5s 통일 — **5회 연속 이월**
 - [ ] 앱 문의처 `mailto:` 아님 · `store_id` 문자셋(운영 코드 `yc-jl2zm4` 에 `l`) — **인쇄물에 남는 값이라 다음 약국 발급 전이 가장 싸다**
-- [ ] `.gitattributes` `* text=auto eol=lf` — **여전히 파일 부재 실측.** 10차 H1(CRLF 로 e2e 16종 침묵)의 근본 조건이 그대로다
+- [~] `.gitattributes` — **2026-09-01 신설.** `* text=auto eol=lf` + `*.bat/*.cmd` CRLF + 바이너리 17종 명시.
+      ▸ **남은 것: 재정규화.** 실측 **추적 파일 457개**(tsx 118·ts 109·mjs 84·md 50·sql 44…)가 인덱스에 CRLF 다.
+        `git add --renormalize .` 은 457개짜리 커밋이라 열린 PR 과 전부 충돌한다 → **PR 0건일 때 단독 커밋으로.**
+        지금 끊은 것은 "새로 들어오는 것" 이고, 재발 조건은 그것만으로 끊긴다
 - [ ] 레거시 테이블 `prescriptions`·`pharmacy_patients` DROP(0행·참조 0, 비가역이라 보류) · `_workspace/eval_*` 누적 정리
 - [ ] 머지 완료된 원격 브랜치 정리 — `docs/policy-effective-date`·`fix/dur-member-scope` 는 스쿼시 머지 잔재다
 
@@ -224,8 +254,9 @@
 
 | 무엇 | 언제 | 실패 시 신호 | 2026-08-21 실측 |
 |------|------|--------------|-----------------|
-| `ci.yml` `quality`(tsc·lint·unit·build) | push·PR·하루 2회 | GitHub Actions | success (unit 80/80) |
+| `ci.yml` `quality`(tsc·lint·unit·build) | push·PR·하루 2회 | GitHub Actions | success (**unit 170/170** — 2026-09-01 실측. 옛 표의 80 은 낡은 값) |
 | `ci.yml` `schema-gate`(운영 스키마 임베드 정합) | push·PR·하루 2회 | GitHub Actions | success |
+| `ci.yml` `rls-gate`(약사 토큰 누수 — 읽기 전용) | push·PR·하루 2회 | GitHub Actions | **2026-09-01 신설 — 첫 실행 대기.** 머지 후 첫 CI 가 곧 검증이다 |
 | `smoke.yml`(익명 11 + 인증 6) | 프로덕션 배포 직후·하루 2회 | GitHub Actions | success |
 | Sentry (`yaksaro` / `javascript-nextjs`) | 런타임 예외 | 이메일 | 동작 중 · 소스맵 미적용(위 🧹) |
 | `notification_runs`(058) | cron 실행마다 | **행이 없으면 안 돈 것** | 8/16~20 **하루 6행**(끼니4+리필1+`ter_purge`1) 빠짐없이 · `failed` 0 |
