@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendPushToUser } from '@/lib/push'
 import { passesSafetyFrame } from '@/lib/lifestyle-info/safety-frame'
@@ -38,14 +38,15 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: '전송에 실패했어요. 다시 시도해주세요' }, { status: 500 })
   if (!data) return NextResponse.json({ error: '이미 처리됐거나 답장할 수 없는 요청이에요' }, { status: 409 })
 
-  // 환자에게 푸시 (fire-and-forget)
+  // 환자에게 푸시 — 응답은 막지 않되 완료는 보장(after). `void` 로 띄우면 응답 후 인스턴스
+  // 회수 시 푸시가 조용히 사라진다(api/meal-checks 와 같은 결함 계열, 2026-09-05).
   // 회신 원문은 푸시 본문에 싣지 않는다 — 잠금화면은 기기를 든 사람 누구에게나 보인다.
   // (passesSafetyFrame 이 복약·진단 문구를 막지만, 노출 자체를 없애는 편이 확실하다)
-  void sendPushToUser(data.patient_id as string, {
+  after(() => sendPushToUser(data.patient_id as string, {
     title: '단골약국에서 답이 왔어요',
     body: '앱에서 내용을 확인해주세요',
     url: '/medications/pharmacy-request',   // 회신 내용이 있는 화면으로 직행(설정 하단까지 찾아 들어가지 않게)
-  }).catch(() => {})
+  }).catch(() => {}))
 
   return NextResponse.json({ ok: true })
 }
