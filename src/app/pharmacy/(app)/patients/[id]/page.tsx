@@ -8,14 +8,7 @@ import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharm
 import { summarizeAdherence } from '@/lib/adherence'
 import PharmacyAdherenceSection from './pharmacy-adherence-section'
 import { ownedPharmacyId } from '@/lib/pharmacy-auth'
-
-function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
-  return [
-    amount ? `1회 ${amount}` : null,
-    perDay ? `1일 ${perDay}회` : null,
-    days   ? `${days}일분` : null,
-  ].filter(Boolean).join(' · ')
-}
+import { buildDosage } from '@/lib/dosage'
 
 type MedRow = {
   id: string

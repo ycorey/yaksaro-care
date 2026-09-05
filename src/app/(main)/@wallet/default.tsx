@@ -20,6 +20,7 @@ import { estimateDiseases, rowsToMedInputs } from '@/lib/lifestyle-info/estimate
 import RefillCard from '@/components/refill-card'
 import { computeRefillSoon } from '@/lib/refill'
 import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
+import { buildDoctorDosage } from '@/lib/dosage'
 import { effectiveMealSlots, slotsApplicableToday } from '@/lib/meal-slots'
 import { getDurFlagsByItemSeq, resolveDuplicates, sanitizeElderlyNote } from '@/lib/dur-flags'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
@@ -187,10 +188,7 @@ export default async function WalletPage() {
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
   // 의사·약사 보여주기(제시 모드)용 데이터 — 약지갑 데이터 재사용
-  const doctorDosage = (m: MedCard) => [
-    m.doseAmount  ? `1회 ${m.doseAmount}` : null,
-    m.dosesPerDay ? `하루 ${m.dosesPerDay}회` : null,
-  ].filter(Boolean).join(' · ')
+  const doctorDosage = (m: MedCard) => buildDoctorDosage(m.doseAmount, m.dosesPerDay)
   const doctorData: DoctorData = {
     prescriptionGroups: prescriptionGroups.length > 0
       ? prescriptionGroups.map(g => ({ hospitalName: g.hospitalName, meds: g.meds.map(m => ({ name: m.name, dosage: doctorDosage(m) })) }))

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { buildDosage } from '@/lib/dosage'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Flask, Pill, Check } from '@phosphor-icons/react'
@@ -49,14 +50,6 @@ export type MedCardItemProps = {
   durElderly?:   boolean         // DUR 노인주의 등재 사실 — 판정이 아니라 등재 표시(066)
   durElderlyNote?: string | null // 식약처 등재 사유를 **정제한** 문장(sanitizeElderlyNote — 처방자용 투여 지시 절단). 원문 아님
   durDupGroup?:  string | null   // 겹친 효능군명 — 같은 군 약이 함께 등록됐을 때만
-}
-
-function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
-  return [
-    amount ? `1회 ${amount}` : null,
-    perDay ? `1일 ${perDay}회` : null,
-    days   ? `${days}일분` : null,
-  ].filter(Boolean).join(' · ')
 }
 
 // 약 카드: 사진 + 이름(성분명) + 용법 + 분류/효능 + 수정·삭제.

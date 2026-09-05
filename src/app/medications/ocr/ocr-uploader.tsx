@@ -667,7 +667,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                 {result.medicines.map((med, i) => {
                   const di     = info[i]
                   const dosage = [
-                    med.dose_amount   ? `1회 ${med.dose_amount}${med.unit ?? ''}` : null,
+                    // unit 은 OCR 이 뽑아낼 때만 있다. 없을 때 '' 로 두면 "1회 1" 로 끊겨 읽힌다 —
+                    // 있으면 **실제 제형이므로 그것을 쓰고**, 없을 때만 기본 단위로 떨어진다(lib/dosage.ts 주석).
+                    med.dose_amount   ? `1회 ${med.dose_amount}${med.unit ?? '정'}` : null,
                     med.doses_per_day ? `1일 ${med.doses_per_day}회` : null,
                     med.days          ? `${med.days}일분` : null,
                   ].filter(Boolean).join(' · ')
