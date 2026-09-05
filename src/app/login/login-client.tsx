@@ -134,7 +134,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
             <Pill weight="fill" size={64} className="text-yc-green600" />
           </div>
           <h1 className="font-display text-3xl text-yc-neutral900">약사로케어</h1>
-          <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 복약 주치의</p>
+          <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 디지털 약 지갑</p>
         </div>
 
         {/* 탈퇴 완료 — 에러가 아니므로 붉은 배너가 아니라 중립 톤으로 */}
