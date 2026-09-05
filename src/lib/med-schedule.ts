@@ -51,7 +51,8 @@ type DoseMed = SchedMed & {
  */
 export function doseSummary(med: DoseMed): string {
   const parts: string[] = []
-  if (med.dose_amount != null) parts.push(`1회 ${med.dose_amount}`)
+  // 기본 단위 "정" 의 근거·한계는 lib/dosage.ts 주석 참조(제형 컬럼이 없다)
+  if (med.dose_amount != null) parts.push(`1회 ${med.dose_amount}정`)
 
   const type = med.schedule_type ?? 'daily'
   if (type === 'prn') {

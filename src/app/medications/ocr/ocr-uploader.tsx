@@ -602,7 +602,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <div className="bg-yc-neutral50 border border-yc-neutral100 rounded-yc-md px-4 py-3 text-center">
             <p className="text-xs text-yc-neutral500 leading-relaxed flex items-start justify-center gap-1">
               <Lock weight="fill" size={13} className="flex-shrink-0 mt-0.5" />
-              <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.</span>
+              <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 비식별화(X 처리)하고 원본은 바로 파기합니다.</span>
             </p>
           </div>
         </div>
@@ -667,7 +667,9 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
                 {result.medicines.map((med, i) => {
                   const di     = info[i]
                   const dosage = [
-                    med.dose_amount   ? `1회 ${med.dose_amount}${med.unit ?? ''}` : null,
+                    // unit 은 OCR 이 뽑아낼 때만 있다. 없을 때 '' 로 두면 "1회 1" 로 끊겨 읽힌다 —
+                    // 있으면 **실제 제형이므로 그것을 쓰고**, 없을 때만 기본 단위로 떨어진다(lib/dosage.ts 주석).
+                    med.dose_amount   ? `1회 ${med.dose_amount}${med.unit ?? '정'}` : null,
                     med.doses_per_day ? `1일 ${med.doses_per_day}회` : null,
                     med.days          ? `${med.days}일분` : null,
                   ].filter(Boolean).join(' · ')

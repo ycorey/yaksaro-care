@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { buildDosage } from '@/lib/dosage'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Flask, Pill, Check } from '@phosphor-icons/react'
@@ -46,17 +47,10 @@ export type MedCardItemProps = {
   dosesPerDay:   number | null
   totalDays:     number | null
   scheduleLabel?: string | null  // '필요시' · '매주 월·목' (daily면 없음)
+  scheduleType?:  'daily' | 'prn' | 'weekly' | null  // 용법 문구가 PRN 에 '1일 N회' 를 찍지 않도록
   durElderly?:   boolean         // DUR 노인주의 등재 사실 — 판정이 아니라 등재 표시(066)
   durElderlyNote?: string | null // 식약처 등재 사유를 **정제한** 문장(sanitizeElderlyNote — 처방자용 투여 지시 절단). 원문 아님
   durDupGroup?:  string | null   // 겹친 효능군명 — 같은 군 약이 함께 등록됐을 때만
-}
-
-function buildDosage(amount: number | null, perDay: number | null, days: number | null) {
-  return [
-    amount ? `1회 ${amount}` : null,
-    perDay ? `1일 ${perDay}회` : null,
-    days   ? `${days}일분` : null,
-  ].filter(Boolean).join(' · ')
 }
 
 // 약 카드: 사진 + 이름(성분명) + 용법 + 분류/효능 + 수정·삭제.
@@ -126,7 +120,9 @@ export default function MedCardItem(p: MedCardItemProps) {
       .finally(() => { infoInFlight.current = false })
   }
 
-  const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays)
+  // 호출부가 scheduleType 을 안 넘겨도 배지 문구로 PRN 을 알 수 있다 — 둘 중 하나면 충분
+  const scheduleType = p.scheduleType ?? (p.scheduleLabel === '필요시' ? 'prn' : null)
+  const dosage    = buildDosage(p.doseAmount, p.dosesPerDay, p.totalDays, { scheduleType })
   const hasDetail = info?.found && (info.efcy || info.useMethod || info.atpn || info.intrc || info.sideEffect || info.storage)
 
   // 수정 진입 시 현재 값으로 항상 리셋 → 한 번 수정 후 재수정이 막히던 문제 해결

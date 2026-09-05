@@ -18,17 +18,17 @@ test('필요시 약은 doses_per_day 가 없어도 "필요시"라고 말한다',
 })
 
 test('매일 약은 기존 표기를 유지한다', () => {
-  assert.equal(doseSummary({ schedule_type: 'daily', dose_amount: 1, doses_per_day: 2 }), '1회 1 · 하루 2회')
+  assert.equal(doseSummary({ schedule_type: 'daily', dose_amount: 1, doses_per_day: 2 }), '1회 1정 · 하루 2회')
 })
 
 test('schedule_type 이 없으면 매일로 본다(기존 데이터 호환)', () => {
-  assert.equal(doseSummary({ dose_amount: 1, doses_per_day: 2 }), '1회 1 · 하루 2회')
+  assert.equal(doseSummary({ dose_amount: 1, doses_per_day: 2 }), '1회 1정 · 하루 2회')
 })
 
 test('매주 약은 요일을 밝힌다', () => {
   assert.equal(
     doseSummary({ schedule_type: 'weekly', dow: [1, 4], dose_amount: 1, doses_per_day: 2 }),
-    '1회 1 · 매주 월·목 · 하루 2회',
+    '1회 1정 · 매주 월·목 · 하루 2회',
   )
 })
 
@@ -41,7 +41,7 @@ test('아무 정보도 없으면 빈 문자열 — 없는 사실을 지어내지
 })
 
 test('용량만 있으면 용량만 표기한다', () => {
-  assert.equal(doseSummary({ dose_amount: 2 }), '1회 2')
+  assert.equal(doseSummary({ dose_amount: 2 }), '1회 2정')
 })
 
 // 기존 헬퍼 회귀 방어 (지금까지 테스트가 없었다)

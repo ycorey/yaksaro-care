@@ -75,7 +75,7 @@ export default function AccountDeletionPage() {
         <LegalBackBar title="계정 삭제 요청" />
 
         <p className="text-sm text-yc-neutral500 leading-relaxed mb-8">
-          약사로케어(약사로케어 · <code className="text-xs">kr.co.yaksaro.care</code>) 계정과 저장된 정보를 삭제하는 방법입니다.
+          약사로케어(<code className="text-xs">kr.co.yaksaro.care</code>) 계정과 저장된 정보를 삭제하는 방법입니다.
         </p>
 
         <div className="space-y-8">
