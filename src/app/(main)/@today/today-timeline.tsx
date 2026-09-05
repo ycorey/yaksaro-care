@@ -352,11 +352,20 @@ export default function TodayTimeline({
         </div>
       )}
 
-      {/* ── 오늘의 건강 한 줄 (톤 다운 — 아이콘·큰 이모지 제거) ── */}
+      {/* ── 오늘의 건강 한 줄 — 공공기관 원문 발췌 + 출처 (health-tips.ts 규칙 참조) ──
+          원문 그대로라 따옴표로 감싸 인용임을 드러내고, 공공누리 표기 요건(기관명·저작물명·링크)을
+          문장 바로 아래에 둔다. 링크는 TWA 에서 Custom Tab 으로 열린다. */}
       {tip && (
         <div className="rounded-yc-lg border border-yc-green100 bg-yc-green50 px-5 py-4">
           <p className="text-xs font-bold tracking-wide text-yc-green600 mb-2">오늘의 건강 한 줄</p>
-          <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed">{tip.text}</p>
+          <p className="text-[1.0625rem] font-medium text-yc-neutral800 leading-relaxed break-keep">“{tip.text}”</p>
+          <p className="mt-2 text-xs text-yc-neutral500 leading-relaxed break-keep">
+            출처: {tip.source.org}{' '}
+            <a href={tip.source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-yc-neutral300 hover:text-yc-neutral700">
+              「{tip.source.title}」
+            </a>
+            {' · '}{tip.source.license}
+          </p>
         </div>
       )}
 
