@@ -47,7 +47,7 @@ export default async function MedicationHistoryPage() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-yc-neutral500 px-1">복용을 마친 약 {items.length}개</p>
+          <p className="text-sm text-yc-neutral500 px-1">복용을 마친 약 {items.length}종</p>
           <div className="space-y-3">
             {items.map(m => {
               const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'

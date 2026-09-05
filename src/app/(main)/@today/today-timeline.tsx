@@ -328,7 +328,7 @@ export default function TodayTimeline({
                     >
                       {/* checkedAt 이 없으면 fmtCheckedTime 이 '' 를 준다. 예전엔 그 자리를 '복용' 으로 메워
                           **"복용 복용"** 이 찍혔다(2026-09-05 실측). 시각은 있으면 붙이고 없으면 빼야 한다. */}
-                      <span className="flex items-center gap-1"><Check weight="bold" size={13} /> {[fmtCheckedTime(s.checkedAt), '복용'].filter(Boolean).join(' ')}</span>
+                      <span className="inline-flex items-center gap-1"><Check weight="bold" size={13} /> {[fmtCheckedTime(s.checkedAt), '복용'].filter(Boolean).join(' ')}</span>
                       <span className="text-yc-neutral500 font-normal ml-1">· 되돌리기</span>
                     </button>
                   ) : (

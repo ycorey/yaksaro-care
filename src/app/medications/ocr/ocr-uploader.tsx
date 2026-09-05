@@ -602,7 +602,7 @@ export default function OcrUploader({ regularPharmacy }: { regularPharmacy?: Reg
           <div className="bg-yc-neutral50 border border-yc-neutral100 rounded-yc-md px-4 py-3 text-center">
             <p className="text-xs text-yc-neutral500 leading-relaxed flex items-start justify-center gap-1">
               <Lock weight="fill" size={13} className="flex-shrink-0 mt-0.5" />
-              <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 완벽히 비식별화(X 처리) 후 파기됩니다.</span>
+              <span>주민등록번호 등 민감한 개인정보는<br />읽어오는 즉시 비식별화(X 처리)하고 원본은 바로 파기합니다.</span>
             </p>
           </div>
         </div>

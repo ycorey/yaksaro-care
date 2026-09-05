@@ -188,7 +188,8 @@ export default async function WalletPage() {
   const otcCards: MedCard[] = otcRaws.map(toCard)
 
   // 의사·약사 보여주기(제시 모드)용 데이터 — 약지갑 데이터 재사용
-  const doctorDosage = (m: MedCard) => buildDoctorDosage(m.doseAmount, m.dosesPerDay)
+  // 방식을 같이 넘긴다 — @share 는 doseSummary 로 이미 PRN 을 '필요시' 로 내보내는데 이 경로만 '하루 1회' 였다
+  const doctorDosage = (m: MedCard) => buildDoctorDosage(m.doseAmount, m.dosesPerDay, { scheduleType: m.scheduleType, scheduleLabel: m.scheduleLabel })
   const doctorData: DoctorData = {
     prescriptionGroups: prescriptionGroups.length > 0
       ? prescriptionGroups.map(g => ({ hospitalName: g.hospitalName, meds: g.meds.map(m => ({ name: m.name, dosage: doctorDosage(m) })) }))

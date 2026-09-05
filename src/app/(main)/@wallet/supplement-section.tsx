@@ -65,7 +65,7 @@ export default function SupplementSection({ meds, serverChecks }: { meds: MedCar
           <div className="ml-1">
             <p className="font-semibold text-base text-yc-green700">내가 챙기는 영양제</p>
             <p className="text-xs text-yc-green600 mt-0.5">
-              {meds.length > 0 ? `약 ${meds.length}종` : '등록된 영양제가 없어요'}
+              {meds.length > 0 ? `영양제 ${meds.length}종` : '등록된 영양제가 없어요'}
             </p>
           </div>
         </div>

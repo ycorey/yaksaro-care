@@ -14,26 +14,40 @@
 //    제형 컬럼이 생기면 여기부터 고칠 것.
 //    0.5 단위 입력(스테퍼 step 0.5)이 있으므로 "0.5정" 도 성립해야 한다.
 
-/** 약 지갑·약사 대시보드 카드용 — "1회 1정 · 1일 2회 · 30일분" */
+import type { ScheduleType } from './med-schedule'
+
+// ⚠️ 복용 방식(schedule_type)을 반드시 넘겨라. 필요시(PRN) 약에도 doses_per_day 가 남아 있는
+//    경우가 흔한데(OCR·빈도 프리셋 잔여값) 그걸 "1일 1회" 로 찍으면 **필요시 약이 정기 복용약으로
+//    읽힌다.** 2026-09-05 문구 QA 에서 약 지갑·약사 환자 상세·의사 제시 화면 세 곳이 그렇게 나갔다.
+//    med-schedule.doseSummary 가 같은 이유로 PRN 에 doses_per_day 를 쓰지 않는다 — 여기도 같은 규칙.
+export type DosageSchedule = { scheduleType?: ScheduleType | null; scheduleLabel?: string | null }
+
+/** 약 지갑·약사 대시보드 카드용 — "1회 1정 · 1일 2회 · 30일분". 방식 배지(필요시·매주)는 호출부가 따로 그린다 */
 export function buildDosage(
   amount: number | null,
   perDay: number | null,
   days: number | null,
+  schedule?: DosageSchedule,
 ): string {
+  const prn = (schedule?.scheduleType ?? 'daily') === 'prn'
   return [
-    amount ? `1회 ${amount}정` : null,
-    perDay ? `1일 ${perDay}회` : null,
-    days   ? `${days}일분` : null,
+    amount           ? `1회 ${amount}정` : null,
+    perDay && !prn   ? `1일 ${perDay}회` : null,
+    days             ? `${days}일분` : null,
   ].filter(Boolean).join(' · ')
 }
 
-/** 의사·약사 제시 모드용 — 일수를 빼고 "하루" 어법을 쓴다(제시 화면 관례) */
+/** 의사·약사 제시 모드용 — 일수를 빼고 "하루" 어법, 방식은 배지가 없으므로 문장 안에 넣는다(doseSummary 와 같은 순서) */
 export function buildDoctorDosage(
   amount: number | null,
   perDay: number | null,
+  schedule?: DosageSchedule,
 ): string {
+  const type = schedule?.scheduleType ?? 'daily'
   return [
-    amount  ? `1회 ${amount}정` : null,
-    perDay  ? `하루 ${perDay}회` : null,
+    amount                                       ? `1회 ${amount}정` : null,
+    type === 'prn'                               ? '필요시' : null,
+    type === 'weekly' && schedule?.scheduleLabel ? schedule.scheduleLabel : null,
+    perDay && type !== 'prn'                     ? `하루 ${perDay}회` : null,
   ].filter(Boolean).join(' · ')
 }

@@ -9,6 +9,7 @@ import { summarizeAdherence } from '@/lib/adherence'
 import PharmacyAdherenceSection from './pharmacy-adherence-section'
 import { ownedPharmacyId } from '@/lib/pharmacy-auth'
 import { buildDosage } from '@/lib/dosage'
+import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
 
 type MedRow = {
   id: string
@@ -19,6 +20,8 @@ type MedRow = {
   custom_name: string | null
   prescription_id: string | null
   has_interaction_warning: boolean | null
+  schedule_type: string | null
+  dow: number[] | null
   drug: { item_name: string; entp_name: string | null; image_url: string | null } | null
   supplement: { product_name: string } | null
 }
@@ -26,7 +29,10 @@ type MedRow = {
 function Card({ m }: { m: MedRow }) {
   const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
   const sub  = m.drug?.entp_name ?? (m.supplement ? '건강기능식품' : '')
-  const dosage = buildDosage(m.dose_amount, m.doses_per_day, m.total_days)
+  // 약사가 보는 문구다 — 필요시·매주를 빠뜨리면 정기 복용약으로 읽힌다(2026-09-05 문구 QA)
+  const scheduleType = (m.schedule_type as ScheduleType | null) ?? 'daily'
+  const scheduleLabel = scheduleLabelOf(m.schedule_type, m.dow)
+  const dosage = buildDosage(m.dose_amount, m.doses_per_day, m.total_days, { scheduleType })
   return (
     <div className="flex items-start gap-3 px-5 py-4">
       <div className="w-11 h-11 rounded-full bg-yc-infoBg overflow-hidden flex items-center justify-center text-xl flex-shrink-0">
@@ -41,7 +47,12 @@ function Card({ m }: { m: MedRow }) {
           {m.ingredient && <span className="text-sm font-normal text-yc-neutral500 ml-1">({m.ingredient})</span>}
         </p>
         {sub && <p className="text-sm text-yc-neutral500 mt-0.5">{sub}</p>}
-        {dosage && <p className="text-sm text-yc-neutral700 mt-0.5 font-semibold">{dosage}</p>}
+        {(dosage || scheduleLabel) && (
+          <p className="text-sm text-yc-neutral700 mt-0.5 font-semibold flex items-center gap-1.5 flex-wrap">
+            {dosage && <span>{dosage}</span>}
+            {scheduleLabel && <span className="text-xs font-semibold text-yc-green700 bg-yc-green50 rounded-full px-2 py-0.5">{scheduleLabel}</span>}
+          </p>
+        )}
         {m.has_interaction_warning && (
           <p className="text-xs text-yc-warningText mt-1.5 flex items-start gap-1">
             <InteractionWarningIcon /> 알려진 상호작용 정보가 있습니다
@@ -124,7 +135,7 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   const { data: meds, error: medsError } = selfMemberId
     ? await supabase
         .from('user_medications')
-        .select('id, dose_amount, doses_per_day, total_days, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
+        .select('id, dose_amount, doses_per_day, total_days, schedule_type, dow, ingredient, custom_name, prescription_id, has_interaction_warning, drug:drugs(item_name, entp_name, image_url), supplement:supplements(product_name)')
         .eq('user_id', id)
         .eq('member_id', selfMemberId)
         .is('deleted_at', null)
