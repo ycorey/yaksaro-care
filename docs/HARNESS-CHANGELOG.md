@@ -173,8 +173,11 @@
   순서는 내부 테스트 업로드 → 지문 → assetlinks 추가 → 재배포 → 프로덕션 제출.
 - 처리방침에 **없던 수집 4종**(단골약국 요청의 전화번호·요청/회신 메시지·약국 계정 정보·Vercel Web Analytics)과 **앱 화면이 없는 고지 1종**
   (Anthropic 문헌 요약 — 호출처가 CLI `scripts/fetch-evidence.mjs` 뿐) → 개정안 작성. 시행일은 사업자가 정한다(제15조 사전 공지).
-- GA `allow_google_signals` 를 끔 — 켜 두면 `www.google.com/g/collect` 광고 신호 히트가 CSP 에 막혀 **모든 화면에 콘솔 에러 2건**이 남았다.
-  건강앱에 광고 개인화 신호는 필요 없고, 처리방침이 GA 를 "서비스 제공자" 로 두는 근거와도 맞다.
+- GA `allow_google_signals:false` + 동의 기본값(`ad_storage/ad_user_data/ad_personalization: denied`) — 건강앱에 광고 개인화 신호는
+  필요 없고, 처리방침이 GA 를 "서비스 제공자" 로 두는 근거와 맞다.
+  **정정(같은 날 실측):** 이것으로 `www.google.com/g/collect` 히트(CSP 에 막혀 모든 화면 콘솔 에러 2건)가 없어질 것이라 적었는데 **틀렸다.**
+  운영 스니펫에 동의 기본값을 선주입한 대조 실험에서 CSP 에러 6건이 그대로였다. 그 히트는 GA4 속성/Google 태그의 광고 연결·신호 설정에서
+  나오므로 클라이언트에서 못 끊는다. CSP 차단이 곧 가드이고, 근본 해결은 속성 설정(TODO — 사람 몫). `www.google.com` 을 CSP 에 넣지 말 것.
 - 약사 열람 동의 토글의 범위 문구를 실제 약사 화면과 같게(이름·약 목록·처방 병원/진료과·복약 체크 기록·요청) — 축소 고지는 Play 의
   "명시적 고지+동의" 예외 근거를 약하게 만든다.
 - 문서 낡은 서술 정정: TODO 의 PR #74/#75 "열린 PR" · "남은 건 설명문" · ephemeral "수집 아님" · unit 80 · 이력 위치 · 아이콘 확정 · CLAUDE.md 이력 건수.

@@ -97,6 +97,7 @@ export const TWA_REFERRER_PREFIX = 'android-app://kr.co.yaksaro.care'
  */
 export function gaInitSnippet(gaId: string): string {
   return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;
+gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted'});
 gtag('js',new Date());
 try{var u=new URL(location.href);var a=${JSON.stringify(ALLOWED_QUERY_KEYS)};var c=new URLSearchParams();u.searchParams.forEach(function(v,k){if(a.indexOf(k)>-1)c.set(k,v)});u.search=c.toString();u.hash='';gtag('set',{page_location:u.toString()});}catch(e){}
 try{var ch='browser';try{if(sessionStorage.getItem('yc_channel')==='twa')ch='twa'}catch(e){}

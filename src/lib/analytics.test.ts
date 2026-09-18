@@ -79,13 +79,27 @@ test('app_channel: sessionStorage 접근이 막힌 환경에서도 죽지 않고
   assert.equal(runSnippet({ storageThrows: true, referrer: TWA_REFERRER_PREFIX }).channel, 'twa')
 })
 
+test('스니펫: 동의 기본값이 config 보다 먼저 — 광고 저장·개인화 거부, 분석만 허용', () => {
+  // 2026-09-18 운영 실측: allow_google_signals:false 도, 이 동의 기본값도 gtag 의 광고 엔드포인트
+  // (www.google.com/g/collect) 이중 히트를 **끊지 못한다** — 그 히트는 GA4 속성/Google 태그 쪽 설정(광고 연결·신호)에서
+  // 나온다. 끊는 것은 CSP connect-src 이고(콘솔 에러는 그 가드의 흔적), 근본 해결은 속성 설정(TODO). 그래도 이 기본값을
+  // 두는 이유: 광고 저장·개인화 거부(npa=1)를 명시해 처리방침의 "서비스 제공자" 근거와 맞추기 위해서다.
+  const { layer } = runSnippet()
+  const cmds = [...layer].map(a => Array.from(a))
+  const consentIdx = cmds.findIndex(a => a[0] === 'consent' && a[1] === 'default')
+  const configIdx = cmds.findIndex(a => a[0] === 'config')
+  assert.ok(consentIdx >= 0 && configIdx > consentIdx, `consent=${consentIdx} config=${configIdx}`)
+  assert.deepEqual(cmds[consentIdx][2], {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted',
+  })
+})
+
 test('스니펫: config 는 send_page_view:false + Google Signals 꺼짐으로 호출된다 (회귀 가드)', () => {
   const { layer } = runSnippet()
   const config = [...layer].map(a => Array.from(a)).find(a => a[0] === 'config')
   assert.ok(config)
-  // signals 를 끄는 이유: 켜 두면 gtag 가 www.google.com/g/collect 로 광고 신호 히트를 추가로 쏘는데
-  // CSP connect-src 가 그 호스트를 허용하지 않아 모든 화면에 콘솔 에러가 2건씩 남았다(2026-09-18 운영 실측).
-  // 광고 개인화 신호는 건강앱에 필요 없고, 처리방침이 GA 를 "서비스 제공자" 로 두는 근거와도 맞다.
+  // signals 를 끄는 이유: 광고 개인화 신호는 건강앱에 필요 없고, 처리방침이 GA 를 "서비스 제공자" 로 두는 근거와 맞다.
+  // ⚠️ 이 플래그가 www.google.com/g/collect 히트(CSP 에 막혀 콘솔 에러)를 없애 주지는 않는다 — 위 테스트 주석 참고.
   assert.deepEqual(config![2], { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false })
 })
 
