@@ -208,7 +208,7 @@ function PrescriptionCard({
         body: JSON.stringify({ ids: g.meds.map(m => m.id) }),
       })
       if (!res.ok) throw new Error()
-      toast.success(`${g.meds.length}개를 삭제했습니다`)
+      toast.success(`${g.meds.length}종을 삭제했습니다`)
       setDeleted(true)
       router.refresh()
     } catch {
@@ -315,7 +315,7 @@ function PrescriptionCard({
             <div className="pt-3">
               {confirmDel ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-yc-neutral500">{g.meds.length}개 모두 삭제?</span>
+                  <span className="text-sm text-yc-neutral500">{g.meds.length}종 모두 삭제?</span>
                   <button onClick={deleteAll} disabled={busyDel}
                     className="text-sm font-semibold text-yc-error px-3 min-h-[44px] rounded-yc-md bg-yc-errorBg active:opacity-90 disabled:opacity-50">
                     {busyDel ? '삭제 중…' : '예, 삭제'}
@@ -326,7 +326,7 @@ function PrescriptionCard({
               ) : (
                 <button onClick={() => setConfirmDel(true)}
                   className="w-full h-11 rounded-yc-md border border-yc-error/20 text-yc-error/70 text-sm font-medium active:bg-yc-errorBg flex items-center justify-center gap-1.5">
-                  <Trash size={15} /> 이 처방전 약 {g.meds.length}개 모두 삭제
+                  <Trash size={15} /> 이 처방전 약 {g.meds.length}종 모두 삭제
                 </button>
               )}
             </div>

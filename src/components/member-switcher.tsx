@@ -140,7 +140,7 @@ export default function MemberSwitcher({ members, activeId }: { members: Member[
                     <button onClick={() => select(m.id)}
                       className="flex-1 min-w-0 flex items-center justify-between gap-2 px-4 py-3 text-left text-sm active:bg-yc-neutral50">
                       <span className="text-yc-neutral900 truncate">
-                        {m.name}{m.is_self && <span className="text-xs text-yc-neutral400 ml-1">본인</span>}
+                        {m.name}{m.is_self && m.name !== '본인' && <span className="text-xs text-yc-neutral400 ml-1">본인</span>}
                       </span>
                       {m.id === activeId && <Check weight="bold" size={15} className="text-yc-green600 flex-shrink-0" />}
                     </button>

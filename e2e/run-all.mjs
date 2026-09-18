@@ -51,6 +51,9 @@ const SERVER_STANDALONE = [
   'qr-flow-sim', 'qr-social-sim', 'ux-tap-qa',
   // 등록 당일 복용 시작 — 저녁 등록 1일 3회가 오늘은 저녁부터인지(/today 실렌더, 자체 시드)
   'first-day-slots-qa',
+  // 복약 체크 → 이력 로그(medication_check_logs)가 **실제로 남는지**. 캘린더가 이 표를 읽는데
+  // 예전엔 insert 가 fire-and-forget 이라 응답 후 잘려도 화면엔 증상이 없었다(자체 시드).
+  'meal-check-log-qa',
   // e약은요 DB 캐시(065) — 미스→적재 / 히트→fetched_at 불변 / 미등재 미캐싱 (자체 시드)
   'drug-info-cache-qa',
   // DUR 단일 약 플래그(066) — 배지는 펼친 카드에 있어 SSR 문자열로는 영원히 안 보인다

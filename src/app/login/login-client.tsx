@@ -133,8 +133,8 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
           <div className="mb-5 flex justify-center">
             <Pill weight="fill" size={64} className="text-yc-green600" />
           </div>
-          <h1 className="font-display text-3xl text-yc-neutral900">약사로 케어</h1>
-          <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 복약 주치의</p>
+          <h1 className="font-display text-3xl text-yc-neutral900">약사로케어</h1>
+          <p className="text-base text-yc-neutral500 mt-2 font-semibold">나의 디지털 약 지갑</p>
         </div>
 
         {/* 탈퇴 완료 — 에러가 아니므로 붉은 배너가 아니라 중립 톤으로 */}
@@ -158,7 +158,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
         {/* QR 진입 — 이미 앱을 쓰는 사용자용 직접 입력 안내 */}
         {storeCode && (
           <div className="mb-6 bg-yc-green50 border border-yc-green100 rounded-2xl px-5 py-4">
-            <p className="text-sm font-semibold text-yc-green700">이미 약사로 케어 앱이 있으신가요?</p>
+            <p className="text-sm font-semibold text-yc-green700">이미 약사로케어 앱이 있으신가요?</p>
             <p className="text-sm text-yc-neutral700 mt-1 leading-relaxed">
               앱을 열어 <b>설정 › 단골약국 › 약국 코드</b>에 아래 코드를 입력하면 바로 연결돼요.
             </p>

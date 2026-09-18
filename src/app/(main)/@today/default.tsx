@@ -20,20 +20,13 @@ export default async function TodayPage() {
 
   const day = today()
 
-  const [{ data: schedules }, { data: logs }, { data: medsData }] = await Promise.all([
+  const [{ data: schedules }, { data: medsData }] = await Promise.all([
     supabase
       .from('medication_schedules')
-      .select('meal_time, is_checked')
+      .select('meal_time, is_checked, updated_at')
       .eq('user_id', user.id)
       .eq('member_id', active.id)
       .eq('check_date', day),
-    supabase
-      .from('medication_check_logs')
-      .select('meal_time, is_checked, logged_at')
-      .eq('user_id', user.id)
-      .eq('member_id', active.id)
-      .eq('check_date', day)
-      .order('logged_at', { ascending: true }),
     supabase
       .from('user_medications')
       .select('meal_times, doses_per_day, schedule_type, dow, custom_name, created_at, drug:drugs(item_name), supplement:supplements(product_name)')
@@ -54,13 +47,23 @@ export default async function TodayPage() {
     if (m in checked) checked[m] = !!row.is_checked
   }
 
-  // 슬롯별 마지막 체크 시각
+  // 슬롯별 마지막 체크 시각 — **체크 여부와 같은 행에서 읽는다.**
+  //
+  // 예전엔 이 값을 `medication_check_logs.logged_at` 에서 읽었다. 그런데 체크 API 는
+  // schedules upsert 만 await 하고 **check_logs insert 는 fire-and-forget** 이다
+  // (api/meal-checks/route.ts:64 — 응답을 막지 않으려는 의도적 설계).
+  // 두 write 의 보장 수준이 다르므로 "schedules 는 체크됨인데 오늘 로그는 없음" 상태가
+  // 구조적으로 성립하고, 그때 시각이 null 이 되어 화면이 **"복용 복용"** 을 찍었다(2026-09-05 실측).
+  //
+  // schedules 는 체크 API 가 매 upsert 마다 updated_at 을 명시로 갱신하므로(같은 write),
+  // is_checked=true 인 행의 updated_at 이 곧 그 체크 시각이다. 어긋날 수가 없다.
+  // check_logs 는 007 이 밝힌 제 역할(순응도 분석·이력 조회)로 두고 이 화면은 읽지 않는다
+  // — 쿼리도 하나 줄었다.
   const checkedAt: Record<Meal, string | null> = { morning: null, afternoon: null, evening: null, bedtime: null }
-  for (const row of logs ?? []) {
+  for (const row of schedules ?? []) {
     const m = row.meal_time as Meal
     if (!(m in checkedAt)) continue
-    if (row.is_checked) checkedAt[m] = row.logged_at as string
-    else checkedAt[m] = null
+    checkedAt[m] = row.is_checked ? (row.updated_at as string) : null
   }
 
   // meal_times 기반 슬롯별 약 수 산출 — 미지정 약은 복용횟수 기반 기본 슬롯에 폴백

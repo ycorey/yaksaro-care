@@ -176,8 +176,8 @@ export default function LandingClient({ pendingPharmacyId }: { pendingPharmacyId
           <div className="bg-white rounded-yc-lg border border-yc-neutral100 px-5 py-4 flex items-start gap-2.5">
             <Lock weight="fill" size={14} className="text-yc-neutral400 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-yc-neutral500 leading-relaxed">
-              주민등록번호 등 민감한 개인정보는 OCR 추출 즉시 완벽히 비식별화(X 처리) 후
-              즉시 파기되므로 안심하고 촬영하세요.
+              주민등록번호 등 민감한 개인정보는 OCR 추출 즉시 비식별화(X 처리)하고,
+              원본 사진은 저장하지 않고 바로 파기합니다.
             </p>
           </div>
           <p className="text-xs text-yc-neutral500 text-center leading-relaxed px-2 pt-2">

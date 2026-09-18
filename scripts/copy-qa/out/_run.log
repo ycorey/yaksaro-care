@@ -1,0 +1,67 @@
+
+[환자]
+  · patient/home                   18줄
+  · patient/wallet                 127줄
+  · patient/wallet-expanded        183줄
+  · patient/today                  23줄
+  · patient/today-expanded         31줄
+  · patient/calendar               52줄
+  · patient/calendar-day           52줄
+  · patient/share                  24줄
+  · patient/share-doctor           249줄
+  · patient/add                    15줄
+  · patient/add-prescription       40줄
+  · patient/add-otc                32줄
+  · patient/add-supplement         31줄
+  · patient/ocr                    15줄
+  · patient/history                11줄
+  · patient/pharmacy-request       23줄
+  · patient/profile                11줄
+  · patient/settings               48줄
+  · patient/permissions            21줄
+  · patient/privacy                95줄
+  · patient/terms                  38줄
+  · patient/account-deletion       26줄
+  · patient/dashboard              249줄
+  · patient/consent                249줄
+  · patient/store                  252줄
+  · patient/store-unknown          6줄
+  · patient/offline                4줄
+  · patient/member-switcher        255줄
+  · patient/mom-home               16줄
+  · patient/mom-wallet             20줄
+  · patient/mom-today              10줄
+
+[약사]
+  · pharmacist/board                  64줄
+  · pharmacist/qr                     17줄
+  · pharmacist/patient                50줄
+  · pharmacist/login                  64줄
+  · pharmacist/board-expanded         76줄
+
+[비로그인]
+  · anon/landing                27줄
+  ⚠ anon/login                  11줄 · 규칙 1건
+  ⚠ anon/signup                 11줄 · 규칙 1건
+  · anon/pharmacy-login         9줄
+  ⚠ anon/store                  15줄 · 규칙 1건
+  · anon/privacy                95줄
+  · anon/terms                  38줄
+  · anon/permissions            21줄
+  · anon/account-deletion       26줄
+  · anon/store-unknown          6줄
+  · anon/offline                4줄
+
+════════════════════════════════════════════════════════════
+캡처 47개 · 규칙 위반 화면 3개
+
+■ anon/login
+  [구분점 연속 또는 끝] ·
+
+■ anon/signup
+  [구분점 연속 또는 끝] ·
+
+■ anon/store
+  [구분점 연속 또는 끝] ·
+
+전문: scripts/copy-qa/out/_all.txt

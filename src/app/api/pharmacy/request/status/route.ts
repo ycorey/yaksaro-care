@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendPushToUser } from '@/lib/push'
 import { ownedPharmacyId } from '@/lib/pharmacy-auth'
@@ -34,13 +34,14 @@ export async function PATCH(request: Request) {
     .single()
   if (error || !data) return dbError('pharmacy', error, '요청을 찾을 수 없어요', 404)
 
-  // 환자에게 상태 푸시 (fire-and-forget — 약국→환자 소식)
+  // 환자에게 상태 푸시 (약국→환자 소식) — 응답은 막지 않되 완료는 보장(after).
+  // `void` 로 띄우면 응답 후 인스턴스 회수 시 조용히 사라진다(api/meal-checks 와 같은 계열).
   const label = TYPE_LABEL[data.type as string] ?? '요청'
-  void sendPushToUser(data.patient_id as string, {
+  after(() => sendPushToUser(data.patient_id as string, {
     title: '단골약국 소식',
     body: status === 'done' ? `${label}이(가) 완료됐어요` : `${label}을(를) 약국이 확인했어요`,
     url: '/medications/pharmacy-request',   // 회신 내용이 있는 화면으로 직행(설정 하단까지 찾아 들어가지 않게)
-  }).catch(() => {})
+  }).catch(() => {}))
 
   return NextResponse.json({ ok: true })
 }
