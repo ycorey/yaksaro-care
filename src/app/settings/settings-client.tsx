@@ -311,8 +311,10 @@ export default function SettingsClient({
                   <Hospital weight="fill" size={22} className="text-yc-neutral400 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-yc-neutral900">단골 약사에게 내 약 목록 공개</p>
-                    <p className="text-xs text-yc-neutral500 mt-0.5 truncate">
-                      {regularPharmacyName} 약사가 읽기 전용으로 볼 수 있어요
+                    {/* 공개 범위를 실제 약사 화면과 같게 적는다(pharmacy/(app)/patients/[id]) — 축소 고지는
+                        Play Data safety 의 "명시적 고지+동의" 예외 근거를 약하게 만든다 */}
+                    <p className="text-xs text-yc-neutral500 mt-0.5">
+                      {regularPharmacyName} 약사가 이름·약 목록·처방 병원과 진료과·복약 체크 기록·내가 보낸 요청을 읽기 전용으로 볼 수 있어요
                     </p>
                   </div>
                 </div>
