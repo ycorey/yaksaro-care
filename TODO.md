@@ -42,7 +42,13 @@
       세 개가 글자 단위로 같아야 한다 — 어긋나면 정정에 다시 리드타임이 든다.
 - [ ] 조직 개발자 계정 개설($25) + 전화번호 검증 + Search Console 사이트 소유권 확인 — **D-U-N-S 이후**.
       개설 화면에서 **Play App Signing 등록 여부**를 함께 확인할 것(아래 서명 키 항목의 미확정 문장을 닫는다)
-- [ ] GA4 속성의 **Google Signals / Ads 연동 상태** — 연동돼 있으면 Apple Tracking=Yes → ATT 필요 + 5.1.3(헬스 데이터 광고 이용 금지) 충돌
+- [ ] GA4 속성의 **Google Signals / Ads 연동 상태** — 연동돼 있으면 Apple Tracking=Yes → ATT 필요 + 5.1.3(헬스 데이터 광고 이용 금지) 충돌.
+      **2026-09-18 실측 — 클라이언트에서는 못 끊는다.** `allow_google_signals:false` 도, 동의 모드 `ad_* : denied` 도 gtag 의
+      광고 엔드포인트(`www.google.com/g/collect`) 이중 히트를 멈추지 못했다(주입 대조 실험, 로그인 후 3화면에서 CSP 에러 6건 동일).
+      그 히트는 **GA4 속성/Google 태그 설정(광고 연결·Google 신호)** 에서 나온다. 지금은 CSP `connect-src` 가 막고 있고 콘솔 에러는
+      그 가드의 흔적이다 — `www.google.com` 을 CSP 에 넣어 "고치지" 말 것(건강앱 데이터가 광고 엔드포인트로 간다).
+      → **사람이 할 일:** GA4 관리 → 데이터 수집 → Google 신호 **끄기** · 관리 → 제품 링크 → Google Ads 연결 **없음** 확인 · Google 태그 설정에서
+        "사용자 제공 데이터 포함" 끄기. 끈 뒤 `e2e` 최종 검수의 CSP 에러 건수가 0 이 되면 확정
 - [ ] 랜딩(`landing-deploy`) 재배포가 필요한 변경이 생기면 수동 — `vercel deploy --prod` (프로젝트 분리돼 있음)
 
 > ~~사업자 정보 확정~~ — **법적 표기의무는 없는 것으로 확인(2026-08-12).**
