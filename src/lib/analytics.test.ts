@@ -79,11 +79,14 @@ test('app_channel: sessionStorage 접근이 막힌 환경에서도 죽지 않고
   assert.equal(runSnippet({ storageThrows: true, referrer: TWA_REFERRER_PREFIX }).channel, 'twa')
 })
 
-test('스니펫: config 는 send_page_view:false 로 호출된다 (자동 페이지뷰 차단 회귀 가드)', () => {
+test('스니펫: config 는 send_page_view:false + Google Signals 꺼짐으로 호출된다 (회귀 가드)', () => {
   const { layer } = runSnippet()
   const config = [...layer].map(a => Array.from(a)).find(a => a[0] === 'config')
   assert.ok(config)
-  assert.deepEqual(config![2], { send_page_view: false })
+  // signals 를 끄는 이유: 켜 두면 gtag 가 www.google.com/g/collect 로 광고 신호 히트를 추가로 쏘는데
+  // CSP connect-src 가 그 호스트를 허용하지 않아 모든 화면에 콘솔 에러가 2건씩 남았다(2026-09-18 운영 실측).
+  // 광고 개인화 신호는 건강앱에 필요 없고, 처리방침이 GA 를 "서비스 제공자" 로 두는 근거와도 맞다.
+  assert.deepEqual(config![2], { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false })
 })
 
 test('스니펫: 초기 page_location 이 정화된다 (화이트리스트 밖 쿼리 제거)', () => {

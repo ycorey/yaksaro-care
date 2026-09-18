@@ -103,7 +103,7 @@ try{var ch='browser';try{if(sessionStorage.getItem('yc_channel')==='twa')ch='twa
 if(document.referrer&&document.referrer.indexOf(${JSON.stringify(TWA_REFERRER_PREFIX)})===0){ch='twa';try{sessionStorage.setItem('yc_channel','twa')}catch(e){}}
 if(ch!=='twa'&&(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true))ch='pwa';
 gtag('set',{app_channel:ch});}catch(e){}
-gtag('config',${JSON.stringify(gaId)},{send_page_view:false});`
+gtag('config',${JSON.stringify(gaId)},{send_page_view:false,allow_google_signals:false,allow_ad_personalization_signals:false});`
 }
 
 export function track(name: EventName, params: EventParams = {}) {

@@ -3,23 +3,18 @@
 > 기준: 11차 종합 평가(2026-08-12) + 앱스토어 적합성 평가(2026-08-12) + **모바일 실렌더 UX 감사(2026-08-21)**
 > 리포트: `_workspace/eval/final-evaluation.md` · `_workspace/eval_appstore/final-appstore-assessment.md` · `_workspace/eval/01b_ux-audit-mobile-2026-08-21.md`
 > **현행화 실측: 2026-09-01** (이전 회차 2026-08-21). 작업 기록: `_workspace/worklog/2026-09-01.md`
-> 이날 상태: **열린 PR 2건(#75 대기 · #74 보류)** · `feat/play-release` 가 main 보다 9커밋 앞 · unit 170/170 · build 통과.
+> 이날 상태: 열린 PR 0건(#74·#75 는 2026-09-01 머지, #81 은 2026-09-18 머지) · unit 170/170 · build 통과.
 > 이날 정정된 서술 4건: db-gate 원인 · `POST_NOTIFICATIONS` 매니페스트 · unit 80 → 170 · `.aab` 미생성.
 > 11차 High 6 중 **2건 해소**(PR #66) · 8/21 감사 High 4건 **전부 해소**(8d35c1c).
-> 이 문서는 **남은 것**만 적는다 — 끝난 일의 이력은 `CLAUDE.md` 변경 이력에 있다.
+> 이 문서는 **남은 것**만 적는다 — 끝난 일의 이력은 `docs/HARNESS-CHANGELOG.md` 에 있다(CLAUDE.md 에는 최근 5건만).
 
 ---
 
 ## 🔴 지금
 
-- **PR #74 는 지금 머지하면 e2e 가 깨진다** (2026-09-01 발견). `feat/ingredient-interactions` 가 추가하는
-  `e2e/interaction-ingredient-qa.mjs:113` 이 *"로그인 사용자는 `ingredient_interactions` 를 읽는다(=1행)"* 를 단언하는데,
-  **070 이 그 표의 정책을 drop 해 service_role 전용으로 좁혔다** → 로그인 사용자는 0행을 받는다.
-  그 PR 이 이 테스트를 `run-all.mjs` 에 등록하므로 `npm run test:e2e` 가 통째로 깨진다.
-  **#74 의 CI 가 초록인 이유는 db-gate 가 skipping 이기 때문**이다(아래 🟠 참조 — 아무도 안 보는 자리였다).
-  → 고칠 곳은 한 줄이다: 그 단언을 **"로그인 사용자도 0행"** 으로 뒤집고 이유(070)를 적을 것.
-  (`ingredient_norms` 는 070 대상이 아니라 112행 단언은 그대로 유효하다.)
-  ※ 그 PR 은 본문에서 **수용 기준 1·2 의 폐기 여부**도 리뷰 결정으로 남겨 두었다 — 제품 판단이라 사람이 정해야 한다.
+- ~~**PR #74 는 지금 머지하면 e2e 가 깨진다**~~ — **2026-09-01 해소·머지.** `interaction-ingredient-qa` 의 단언을
+  "로그인 사용자도 0행" 으로 뒤집고 머지했다(`docs/HARNESS-CHANGELOG.md` 09-01).
+  ※ 그 PR 본문의 **수용 기준 1·2 폐기 여부**는 여전히 제품 판단으로 남아 있다 — 사람이 정해야 한다.
 
 - ~~`/interactions` 규제 노출~~ — **2026-08-31 해소.** 라우트·API 삭제,
   보호경로·robots 정리, 되살리라고 지시하던 하네스 문서 5곳 반전,
@@ -89,7 +84,7 @@
 > 그리고 **스토어가 지금 이 제품의 병목은 아니다** — 아래 "중기" 의 실측 수치를 먼저 볼 것.
 
 ### 공통 앱 코드 — **2026-08-31 완료**
-> 상세·제출 폼 답안: `docs/play-submission.md`
+> 상세·제출 폼 답안: `docs/play-submission.md` · 스토어 등록정보 원고·심사 안내(영문)·출시 노트: `docs/play-store-listing.md`
 
 - [x] 환자용 이메일+비번 로그인 — `/login` 접이식. **Server Action** 으로 구현했다
       (`pharmacy/login` 은 클라이언트 컴포넌트라 복제하면 하이드레이션 전 GET 으로
@@ -117,10 +112,10 @@
 - [ ] ~~manifest scope 축소로 약사 화면 제외~~ — **불가.** `scope` 는 단일 접두사인데
       환자 화면이 루트 전역에 흩어져 있고, 웹=앱이라 앱에서 지우면 웹에서도 지워진다.
       display-mode 로 막으면 PWA 를 설치한 약사가 막힌다 → 심사 메모로 설명하거나 서브도메인 분리
-- [ ] 아이콘 1024 — **iOS 트랙으로 이월.** 그리고 ⚠️ `scripts/gen-pwa-icons.mjs` 가
-      **배포 중인 아이콘을 재현하지 못한다**(픽셀 30~48% 차이, 마크 크기가 다르다).
-      `icon-512` 는 TWA 런처 아이콘이라 무심코 돌리면 설치된 앱 아이콘이 바뀐다.
-      스크립트 상단에 경고를 남겼다 — 확정은 스토어 자산 라운드에서
+- [ ] 아이콘 1024 — **iOS 트랙으로 이월.** 512 는 **2026-09-05 확정**: `public/icons/icon-512.png` 배포본을 그대로 올린다
+      (`play-submission.md` §2). Play 스펙은 "32-bit PNG (with alpha)" 라 업로드 사본만 RGBA 로 변환해 `_workspace/play/` 에 뒀다(2026-09-18).
+      ⚠️ `scripts/gen-pwa-icons.mjs` 는 **배포 중인 아이콘을 재현하지 못한다**(픽셀 30~48% 차이, 마크 크기가 다르다).
+      `icon-512` 는 TWA 런처 아이콘이라 무심코 돌리면 설치된 앱 아이콘이 바뀐다 — 스크립트 상단 경고
 
 ### Google Play — 남은 것
 - [x] **`.aab` — 2026-09-01 서명까지 완료.** `twa/yaksaro-care-release.aab` · **1,219,232 B** · `jarsigner -verify` → **`jar verified.`**
@@ -150,8 +145,13 @@
       금칙(효능 주장·음성 판정·행동 지시)에 걸리지 않는다.
       생성 파이프라인은 저장소에 있다(`scripts/store-assets/{seed,capture,capture-lifestyle,compose,teardown}.mjs`) —
       촬영용 임시 계정을 운영 DB에 만들고 **teardown 으로 지운다.** 산출물은 gitignore(재생성 가능).
-      ⚠️ 남은 건 **설명문**이다(의료기기 표현 금지 표로 자가 검수 — `docs/play-submission.md` §2)
-- [ ] Play 건강앱 선언 · Data safety 폼(복약·처방 텍스트=**Health info**, 처방전 원본 이미지는 즉시 파기라 ephemeral 예외로 "수집" 아님, **단골약국 열람(opt-in)은 "Shared" 로 볼 여지**)
+      ✅ 설명문 원고 — **2026-09-18 완료**(`docs/play-store-listing.md`, `BANNED` 0건). 남은 건 Console 에 붙여 넣는 일뿐이다
+- [x] **심사자 계정(App access) — 2026-09-18 발급** `play-reviewer@yaksaro.co.kr`, `node scripts/play-reviewer-account.mjs`
+      (멱등 · teardown 없음 · 재실행은 비밀번호를 유지하고 지갑을 초기화 · 회전은 `--rotate`). 비밀번호는 `_workspace/play/reviewer-account.txt`(gitignore).
+      운영 실브라우저 로그인 · `/wallet` 약 4종 확인
+- [ ] Play 건강앱 선언 · Data safety 폼 **입력** — 답안은 `docs/play-submission.md` §1 이 확정본이다(복약·처방 텍스트=**Health info**,
+      처방전 원본 이미지는 **수집 + "일시적으로 처리됨" 체크**(CLOVA 로 전송되므로 "수집 아님" 이 아니다 — 2026-09-18 정정),
+      약사가 보는 것(이름·복약·연락처·메시지)은 **전부 Shared 로 신고**). ⚠️ **처리방침 개정 시행 후** 제출 — 전화번호·메시지·Vercel Analytics 가 방침에 없었다
 - [ ] 개발자 계정 $25 + 전화번호 검증(2026-09 전면 의무화). **개인 계정 선택지는 없다**(위 실측) —
       조직 계정이므로 테스터 12~20명×14일 룰은 해당 없다
 
@@ -304,5 +304,5 @@
 > ⚠️ 영수증은 **성공 경로만 실측됐다.** 8/12 이후 `failed` 가 0 이 아닌 적이 한 번도 없으므로
 > **중단 경로(조회 실패·5xx)에 행이 남는지는 아직 눈으로 못 봤다.** 고친 것과 확인한 것은 다르다 — 첫 5xx 때 표를 볼 것.
 
-로컬 전체 검증: `npm run test:unit`(80) · `npm run test:e2e:db`(14 스위트, 서버 불필요) ·
+로컬 전체 검증: `npm run test:unit`(170) · `npm run test:e2e:db`(14 스위트, 서버 불필요) ·
 `npm run test:e2e:ui`(브라우저 5 스위트, dev 서버 필요) · `node e2e/ux-safe-area-qa.mjs`(미등록, 수동) · `npm run build`
