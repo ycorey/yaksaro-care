@@ -124,6 +124,11 @@
       `icon-512` 는 TWA 런처 아이콘이라 무심코 돌리면 설치된 앱 아이콘이 바뀐다 — 스크립트 상단 경고
 
 ### Google Play — 남은 것
+
+> **2026-09-19 — 제출까지 끝났다.** 조직 계정("약사로") 개설 → 앱 생성 → 등록정보(원고·자산 17종)·앱 콘텐츠 선언 10종·
+> Data safety 12유형 입력 → 내부 테스트 1(1.0.0) 게시 → 앱 서명 키 지문을 `assetlinks.json` 에 추가(PR #84·운영 반영) →
+> **변경사항 8개 검토 제출(상태 "검토 중")**. 상세는 `docs/play-submission.md` §4.
+> 심사 통과 후 남은 것: ① 내부 테스트 실기기 설치(주소창 없음 + 알림 1건) ② 프로덕션 릴리스(국가: 대한민국) 생성·제출
 - [x] **`.aab` — 2026-09-01 서명까지 완료.** `twa/yaksaro-care-release.aab` · **1,219,232 B** · `jarsigner -verify` → **`jar verified.`**
       경로: `./gradlew bundleRelease`(미서명 1,176,138 B) → `jarsigner -signedjar`(사용자가 비밀번호 입력).
       `twa/local.properties`(SDK 경로)를 그때 만들었고 gitignore 에 넣었다.
