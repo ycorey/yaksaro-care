@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "kr.co.yaksaro.care",
       "sha256_cert_fingerprints": [
-        "7D:88:ED:DE:69:EE:8F:EB:C6:D2:9F:1A:24:7A:1E:9E:56:AA:61:AE:A5:9F:A8:72:FF:45:0E:DB:35:F2:AB:01"
+        "7D:88:ED:DE:69:EE:8F:EB:C6:D2:9F:1A:24:7A:1E:9E:56:AA:61:AE:A5:9F:A8:72:FF:45:0E:DB:35:F2:AB:01",
+        "0E:8E:9D:95:18:E4:F4:8A:E7:4C:BB:AD:FC:3A:F0:0A:A5:F2:27:A5:5C:88:8E:4C:DE:E7:00:65:F6:D8:9E:13"
       ]
     }
   }
