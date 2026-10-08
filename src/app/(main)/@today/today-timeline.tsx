@@ -4,6 +4,7 @@ import { useState, useMemo, type ReactNode } from 'react'
 import { useNowMinute } from '@/lib/use-now'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/app-header'
+import BodyPortal from '@/components/body-portal'
 import { getDailyTip } from './health-tips'
 import { celebrateAllDone } from '@/lib/confetti'
 import { Pill, HandsClapping, Check, CaretDown } from '@phosphor-icons/react'
@@ -375,18 +376,20 @@ export default function TodayTimeline({
 
       {/* ── 전체 복약 완료 축하 오버레이 (색종이는 canvas-confetti가 별도 렌더) ── */}
       {celebrate && (
-        <div
-          onClick={() => setCelebrate(false)}
-          className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-white/70 backdrop-blur-sm px-8 text-center"
-        >
-          <div className="rounded-full bg-yc-green600 flex items-center justify-center anim-pop" style={{ width: 104, height: 104 }}>
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+        <BodyPortal>
+          <div
+            onClick={() => setCelebrate(false)}
+            className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-white/70 backdrop-blur-sm px-8 text-center"
+          >
+            <div className="rounded-full bg-yc-green600 flex items-center justify-center anim-pop" style={{ width: 104, height: 104 }}>
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <p className="font-display text-2xl text-yc-neutral900">오늘 복약 끝!</p>
+            <p className="text-base text-yc-neutral600 flex items-center justify-center gap-1.5">오늘 {slots.length}번 모두 잘 챙기셨어요 <HandsClapping weight="fill" size={20} /></p>
           </div>
-          <p className="font-display text-2xl text-yc-neutral900">오늘 복약 끝!</p>
-          <p className="text-base text-yc-neutral600 flex items-center justify-center gap-1.5">오늘 {slots.length}번 모두 잘 챙기셨어요 <HandsClapping weight="fill" size={20} /></p>
-        </div>
+        </BodyPortal>
       )}
     </div>
   )
