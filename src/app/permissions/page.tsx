@@ -20,13 +20,12 @@ export const metadata = {
 // 실측 근거(2026-08-31):
 //   카메라  — add/box-ocr-scanner.tsx:327 · ocr/ocr-uploader.tsx:492
 //             (<input type="file" capture="environment"> — OS 카메라 앱에 위임한다)
-//             ⚠️ 2026-09-01 정정: 여기엔 원래 barcode-scanner.tsx(getUserMedia) 가 적혀
-//               있었는데, **그 파일은 아무 데서도 import 되지 않는다**(의도된 미연결 —
-//               파일 머리말 참조). 즉 살아 있는 getUserMedia 호출은 **0건**이고,
-//               앱 매니페스트에도 CAMERA 선언이 없다(POST_NOTIFICATIONS 하나뿐 —
-//               merged manifest 실측). 도달 불가 파일을 근거로 적으면 근거가 아니다.
-//             ※ 그래도 이 항목을 지우지 않는다 — 사용자가 [촬영] 을 누르면 OS 카메라가
-//               실제로 열린다. 과소 고지가 과다 고지보다 나쁘다.
+//             + add/barcode-scanner.tsx (getUserMedia — 2026-10-12 진입점 복원,
+//               `/medications/add?method=barcode`). 이것이 살아 있는 getUserMedia **1건**이다.
+//               영상은 기기 안에서만 해석하고 13자리 숫자만 서버로 보낸다.
+//             ※ 앱 매니페스트에는 여전히 CAMERA 선언이 없다(POST_NOTIFICATIONS 하나뿐).
+//               TWA 에서 getUserMedia 권한은 호스트 Chrome 이 묻는다.
+//             (2026-09-01~10-12 사이엔 barcode-scanner 가 미연결이라 이 근거에서 빠져 있었다.)
 //   사진    — medications/ocr/ocr-uploader.tsx, add/box-ocr-scanner.tsx (input accept/capture)
 //   알림    — lib/notifications.ts, twa/app/src/main/AndroidManifest.xml:26(POST_NOTIFICATIONS)
 //   그 외(위치·연락처·저장소·마이크)는 **코드에 없다** — 없는 권한을 적으면 그것도 거짓 고지다.
@@ -36,11 +35,10 @@ type Perm = { name: string; why: string; without: string }
 const OPTIONAL: Perm[] = [
   {
     name: '카메라',
-    // 2026-09-01: "바코드를 스캔합니다" 를 뺐다. 앱에 바코드 스캔 진입점이 없다
-    // (barcode-scanner.tsx 는 어디서도 import 되지 않는다). 못 하는 일을 권한 사유로
-    // 적는 것은 위 머리말이 경계한 "거짓 고지" 와 같은 부류다 — 방향만 반대다.
-    why: '처방전이나 의약품 상자를 촬영해 약 이름을 읽어 들입니다.',
-    without: '촬영 기능을 쓸 수 없습니다. 이미 찍어 둔 사진을 고르거나 약을 직접 검색해 등록할 수 있습니다.',
+    // 2026-09-01 에 바코드 문구를 뺐다가(진입점이 없었다) 2026-10-12 진입점 복원과 함께 되돌렸다.
+    // 권한 사유는 "실제로 하는 일" 과 맞아야 한다 — 빼는 쪽도 넣는 쪽도 같은 기준이다.
+    why: '처방전이나 의약품 상자를 촬영해 약 이름을 읽어 들이고, 일반의약품 상자의 바코드를 비춰 약을 찾습니다.',
+    without: '촬영과 바코드 스캔을 쓸 수 없습니다. 이미 찍어 둔 사진을 고르거나 약을 직접 검색해 등록할 수 있습니다.',
   },
   {
     name: '사진',

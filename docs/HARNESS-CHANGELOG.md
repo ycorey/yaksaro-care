@@ -213,3 +213,24 @@ D-U-N-S 통과로 조직 계정("약사로")이 열려 **하루 만에 제출까
   사용자가 자리에 없어도 **UI Automation(TabItem.Select)** 으로 크롬 탭을 포커스 없이 전환하면 visible 이 되살아난다
   (SetForegroundWindow 는 포그라운드 잠금에 막혔고, topmost 승격은 권한 분류기가 차단 — 탭 전환만으로 충분했다).
   프리즈 중에 보낸 신뢰 클릭은 **실제로는 먹혀 있었다**(렌더만 멈춤) — 대한민국 체크가 이미 켜져 있던 이유.
+
+### 2026-10-12 — 일반약 "바코드로 찾기" 부활 (`feat/otc-barcode`)
+
+TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 틀렸다.** 원인은 데이터가 아니라 연결 키였다.
+
+- **연결 키 교체** — `scripts/etl-drug-barcode.mjs` 가 약가마스터(공공데이터 15067462)를 EDI 보험코드로 잇던 것을
+  **품목기준코드(item_seq)** 로. 비급여 일반약은 EDI 가 없어 빠졌었다. 약사로 상비약의 방식을 옮겨 왔다.
+  실측(2026-08-31판 CSV): drugs 일반약 정상 8,678 중 **8,231 (94.8%)** · 바코드 58,163개 · 품목 간 충돌 0.
+- **`drug_barcodes`(072) 1:N 승급** — barcode PK → item_seq, drugs FK 없음(CSV 에만 있는 5,687품목은
+  스캔 시 `resolveDrugIdByItemSeq` 가 허가정보로 생성). 운영 적용 + 58,163행 적재.
+  적용 실측: 기본 권한이 아직 살아 있어 authenticated 에 **쓰기 권한까지 자동으로 붙었다** → revoke 후 SELECT 만.
+  Supabase MCP `apply_migration` 은 `Invalid or expired requestState` 로 2회 실패, `execute_sql` 로 적용.
+- **API** — `/api/drugs/search?barcode=` 가 drug_barcodes → item_seq → `resolveDrugIdByItemSeq` 로만 약 정보를 얻는다.
+  drugs 미적재 품목은 외부 API 를 부르므로 `publicApi` 쿼터.
+- **스캐너** — BarcodeDetector 우선 / ZXing 폴백(기존 파일 재사용), 일반약 전용, EAN-13 체크섬 검증(`src/lib/barcode.ts`,
+  CSV 일반약 87,692행 전부 통과). 미스는 토스트 대신 폼 위에 남는 안내(실버).
+- **진입점** — 처방약·일반약 방법 선택 카드 + 일반약 추가 화면 배너(바코드 주, 박스 사진 보조).
+- **고지** — permissions 카메라 사유에 바코드 문구 복원. 처리방침은 변경 불필요(바코드 영상은 기기 밖으로 안 나가고
+  13자리 숫자는 개인정보가 아니다). 매니페스트 CAMERA 선언 없음 유지(TWA 의 getUserMedia 는 호스트 Chrome 이 묻는다).
+- **가드** — `e2e/barcode-add-qa.mjs` 7/7(실 API). `RESOLVE=1` 은 운영 drugs 에 행을 만드는 확인이라 기본 꺼짐.
+- 남은 것: 실기기(안드로이드 Chrome · TWA) 실제 상자 스캔. 건기식은 범위 밖(0%).

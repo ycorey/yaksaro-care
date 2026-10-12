@@ -36,7 +36,9 @@ drop policy if exists "drug_barcodes_read" on public.drug_barcodes;
 create policy "drug_barcodes_read" on public.drug_barcodes
   for select to authenticated using (true);
 
-revoke all on public.drug_barcodes from anon;
+-- 기본 권한(default privileges)이 살아 있는 동안엔 authenticated 에 쓰기 권한까지 자동으로 붙는다
+-- (2026-10-12 적용 시 실측). RLS 가 막더라도 권한은 SELECT 만 남긴다 — 자동부여가 끊긴 뒤에도 결과가 같다.
+revoke all on public.drug_barcodes from anon, authenticated;
 grant select on public.drug_barcodes to authenticated;
 grant all    on public.drug_barcodes to service_role;
 

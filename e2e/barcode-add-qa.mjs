@@ -142,6 +142,24 @@ try {
   const search = page.getByPlaceholder(/타이레놀|약 이름|검색/).first()
   check('★이름 검색 폼으로 넘어간다', await search.isVisible().catch(() => false))
   await shot(page, '5-miss')
+
+  // ── [D] (선택) drugs 에 없는 품목 → resolveDrugIdByItemSeq 가 허가정보로 만든다 ──
+  // 운영 drugs 에 행이 하나 생기고 허가정보 API 를 한 번 부르므로 RESOLVE=1 일 때만.
+  if (process.env.RESOLVE === '1' && !MOCK_API) {
+    console.log('\n[D] drugs 미적재 품목')
+    const { data: cands } = await admin.from('drug_barcodes').select('barcode, item_seq').order('item_seq', { ascending: false }).limit(200)
+    const { data: known } = await admin.from('drugs').select('item_seq').in('item_seq', cands.map(c => c.item_seq))
+    const seen = new Set((known ?? []).map(k => k.item_seq))
+    const target = cands.find(c => !seen.has(c.item_seq))
+    if (!target) { check('drugs 미적재 후보를 못 골랐다', false) }
+    else {
+      const res = await page.evaluate(async c => (await fetch(`/api/drugs/search?barcode=${c}`)).json(), target.barcode)
+      const d = res?.drugs?.[0]
+      check('★drugs 에 없던 품목도 바코드로 찾는다', d?.item_seq === target.item_seq, `${target.item_seq} → ${d?.item_name ?? '없음'}`)
+      const { data: made } = await admin.from('drugs').select('id').eq('item_seq', target.item_seq).maybeSingle()
+      check('그 품목이 drugs 마스터에 생성됐다', !!made)
+    }
+  }
 } catch (e) {
   check('예외 없이 완주: ' + (e?.message ?? e), false)
 } finally {
