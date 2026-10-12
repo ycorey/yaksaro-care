@@ -177,6 +177,27 @@ export type Database = {
         }
         Relationships: []
       }
+      drug_barcodes: {
+        Row: {
+          barcode: string
+          item_seq: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          barcode: string
+          item_seq: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string
+          item_seq?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drugs: {
         Row: {
           barcode: string | null

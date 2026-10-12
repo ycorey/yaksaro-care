@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { consumeQuota, QUOTAS } from '@/lib/rate-limit'
+import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 
 type DrugResult = {
   id:        string        // UUID (local) 또는 item_seq (api)
@@ -44,29 +45,37 @@ export async function GET(request: Request) {
   const otcOnly = searchParams.get('otcOnly') === 'true'
   const barcode = searchParams.get('barcode')?.replace(/\D/g, '') || null
 
-  // 바코드 단건 조회: drugs → supplements 순. 둘 다 없으면 빈 결과(프론트가 검색 폴백)
+  // 바코드 단건 조회(일반약): drug_barcodes 로 item_seq 만 얻고, 약 정보는 resolveDrugIdByItemSeq 로.
+  // 바코드는 조회 키일 뿐이다 — 저장·로그하지 않는다. 못 찾으면 빈 결과(프론트가 이름 검색으로 넘김).
+  // 건기식은 약가마스터에 없어 대상 밖(supplements.barcode 0건, 2026-08-31 실측).
   if (barcode) {
+    const empty = NextResponse.json({ drugs: [], supplements: [] })
+    if (!/^\d{13}$/.test(barcode)) return empty
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
+    const { data: row } = await supabase
+      .from('drug_barcodes').select('item_seq').eq('barcode', barcode).maybeSingle()
+    if (!row) return empty
+
+    // drugs 에 아직 없는 품목(약가마스터에만 있는 일반약)은 허가정보로 마스터를 만든다 — 외부 API 호출이라 쿼터를 건다
+    const { data: known } = await supabase.from('drugs').select('id').eq('item_seq', row.item_seq).maybeSingle()
+    if (!known && !(await consumeQuota(user.id, QUOTAS.publicApi))) return empty
+    const drugId = known?.id ?? await resolveDrugIdByItemSeq(supabase, row.item_seq)
+    if (!drugId) return empty
+
     const { data: drug } = await supabase
-      .from('drugs').select('id, item_seq, item_name, entp_name, image_url')
-      .eq('barcode', barcode).eq('is_canceled', false).limit(1).maybeSingle()
-    if (drug) {
-      const hit: DrugResult = {
-        id: drug.id, item_seq: drug.item_seq ?? null, item_name: drug.item_name,
-        entp_name: drug.entp_name ?? null, image_url: drug.image_url ?? null, source: 'db',
-      }
-      return NextResponse.json({ drugs: [hit], supplements: [] })
+      .from('drugs').select('id, item_seq, item_name, entp_name, image_url, is_canceled')
+      .eq('id', drugId).maybeSingle()
+    if (!drug || drug.is_canceled) return empty
+
+    const hit: DrugResult = {
+      id: drug.id, item_seq: drug.item_seq ?? null, item_name: drug.item_name,
+      entp_name: drug.entp_name ?? null, image_url: drug.image_url ?? null, source: 'db',
     }
-
-    const { data: supp } = await supabase
-      .from('supplements').select('id, product_name, company_name')
-      .eq('barcode', barcode).limit(1).maybeSingle()
-    if (supp) return NextResponse.json({ drugs: [], supplements: [supp] })
-
-    return NextResponse.json({ drugs: [], supplements: [] })
+    return NextResponse.json({ drugs: [hit], supplements: [] })
   }
 
   if (!q || q.length < 1) return NextResponse.json({ drugs: [], supplements: [] })
