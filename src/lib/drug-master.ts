@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
+import { licenseToDrugRow, type LicenseDetail } from '@/lib/drug-license'
 
 // 전역 `drugs` 마스터에 행을 만드는 유일한 경로.
 //
@@ -18,28 +19,38 @@ const ITEM_SEQ_RE = /^\d{9}$/
 // 허가정보가 내려주는 이미지 호스트. 운영 데이터의 image_url 이 전부 이 호스트다.
 const ALLOWED_IMAGE_HOST = /^https:\/\/nedrug\.mfds\.go\.kr\//
 
-type LicenseItem = {
-  ITEM_NAME?: string
-  ENTP_NAME?: string
-  BIG_PRDT_IMG_URL?: string
+const LICENSE_BASE = 'https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07'
+
+// ⚠️ 2026-10-12 실측: 목록 API(getDrugPrdtPrmsnInq07)는 item_seq 파라미터를 **무시하고**
+//    전체 42,713건의 첫 행("중외5%포도당생리식염액", 195500005)을 돌려준다(ITEM_SEQ·itemSeq 도 같다).
+//    그래서 예전 코드는 drugs 에 없는 품목을 담을 때마다 **엉뚱한 이름**으로 마스터를 만들었다.
+//    item_seq 를 지키는 것은 상세 API(getDrugPrdtPrmsnDtlInq06)다 — 없는 코드는 0건을 준다.
+//    상세 API 에는 이미지 URL 이 없어서, 이미지는 목록 API 를 이름으로 찾고 ITEM_SEQ 가 같을 때만 쓴다.
+async function licenseItems<T>(op: string, query: string): Promise<T[]> {
+  const key = process.env.MFDS_DRUG_LICENSE_KEY
+  if (!key) return []
+  try {
+    const res = await fetch(`${LICENSE_BASE}/${op}?serviceKey=${encodeURIComponent(key)}${query}&pageNo=1&type=json`,
+      { signal: AbortSignal.timeout(8000) })
+    if (!res.ok) return []
+    const items = (await res.json())?.body?.items
+    return Array.isArray(items) ? items : items ? [items] : []
+  } catch {
+    return []
+  }
 }
 
-async function fetchLicenseByItemSeq(itemSeq: string): Promise<LicenseItem | null> {
-  const key = process.env.MFDS_DRUG_LICENSE_KEY
-  if (!key) return null
-  const url = 'https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnInq07'
-    + `?serviceKey=${encodeURIComponent(key)}`
-    + `&item_seq=${encodeURIComponent(itemSeq)}`
-    + '&numOfRows=1&pageNo=1&type=json'
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return null
-    const json = await res.json()
-    const items = json?.body?.items
-    return (Array.isArray(items) ? items[0] : items) ?? null
-  } catch {
-    return null
-  }
+async function fetchLicenseByItemSeq(itemSeq: string): Promise<LicenseDetail | null> {
+  const items = await licenseItems<LicenseDetail>('getDrugPrdtPrmsnDtlInq06',
+    `&item_seq=${encodeURIComponent(itemSeq)}&numOfRows=1`)
+  // 응답이 요청한 품목인지 다시 확인한다 — 위 목록 API 사고가 되풀이되지 않게
+  return items.find(i => String(i.ITEM_SEQ) === itemSeq) ?? null
+}
+
+async function fetchImageUrl(itemSeq: string, itemName: string): Promise<string | null> {
+  const items = await licenseItems<{ ITEM_SEQ?: string; BIG_PRDT_IMG_URL?: string }>('getDrugPrdtPrmsnInq07',
+    `&item_name=${encodeURIComponent(itemName)}&numOfRows=10`)
+  return safeImageUrl(items.find(i => String(i.ITEM_SEQ) === itemSeq)?.BIG_PRDT_IMG_URL)
 }
 
 function safeImageUrl(raw: unknown): string | null {
@@ -61,7 +72,8 @@ export async function resolveDrugIdByItemSeq(
   if (existing?.id) return existing.id
 
   const lic = await fetchLicenseByItemSeq(itemSeq)
-  if (!lic?.ITEM_NAME) {
+  const name = lic ? licenseToDrugRow(lic, itemSeq, null).item_name : ''
+  if (!lic || !name) {
     logger.warn('drugs', '허가정보 미확인 item_seq — 마스터 생성 생략', itemSeq)
     return null
   }
@@ -69,15 +81,7 @@ export async function resolveDrugIdByItemSeq(
   const admin = createAdminClient()
   const { data: created, error } = await admin
     .from('drugs')
-    .upsert(
-      {
-        item_seq:  itemSeq,
-        item_name: lic.ITEM_NAME,                 // 사용자 입력이 아니라 허가정보 값
-        entp_name: lic.ENTP_NAME ?? null,
-        image_url: safeImageUrl(lic.BIG_PRDT_IMG_URL),
-      },
-      { onConflict: 'item_seq' },
-    )
+    .upsert(licenseToDrugRow(lic, itemSeq, await fetchImageUrl(itemSeq, name)), { onConflict: 'item_seq' })
     .select('id')
     .single()
 

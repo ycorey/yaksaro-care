@@ -1,3 +1,4 @@
+import { displayDrugName } from '@/lib/drug-name-match'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
@@ -77,7 +78,8 @@ export default async function TodayPage() {
   for (const med of medsData ?? []) {
     // prn(필요시)·요일 미해당 weekly는 오늘 일정에서 제외 (약지갑에는 그대로 노출)
     if (!isScheduledOnWeekday(med, wd)) continue
-    const name = one(med.drug)?.item_name ?? one(med.supplement)?.product_name ?? med.custom_name ?? '약'
+    const drugName = one(med.drug)?.item_name
+    const name = (drugName ? displayDrugName(drugName) : null) ?? one(med.supplement)?.product_name ?? med.custom_name ?? '약'
     const raw = med.meal_times && med.meal_times.length > 0
       ? med.meal_times.filter(isMeal)
       : defaultMealKeys(med.doses_per_day ?? 0)

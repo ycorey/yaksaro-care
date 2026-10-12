@@ -1,3 +1,4 @@
+import { displayDrugName } from '@/lib/drug-name-match'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Flask, Pill, Hospital } from '@phosphor-icons/react/dist/ssr'
@@ -50,7 +51,7 @@ export default async function MedicationHistoryPage() {
           <p className="text-sm text-yc-neutral500 px-1">복용을 마친 약 {items.length}종</p>
           <div className="space-y-3">
             {items.map(m => {
-              const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
+              const name = (m.drug?.item_name ? displayDrugName(m.drug.item_name) : null) ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
               const sub  = m.drug?.entp_name ?? (m.supplement ? '건강기능식품' : '')
               const hospital = m.prescription?.hospital_name ?? m.prescription?.pharmacy_name ?? null
               const period = [fmt(m.started_at), fmt(m.ended_at)].filter(Boolean).join(' ~ ')

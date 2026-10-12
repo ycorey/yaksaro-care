@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { displayDrugName } from '@/lib/drug-name-match'
 import { buildDosage } from '@/lib/dosage'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -264,7 +265,7 @@ export default function MedCardItem(p: MedCardItemProps) {
                       >
                         <Pill weight="fill" size={16} className="text-yc-neutral400 flex-shrink-0" />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
+                          <span className="block text-sm font-medium text-yc-neutral900 truncate">{displayDrugName(d.item_name)}</span>
                           {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                         </span>
                         {d.source === 'api' && (

@@ -1,3 +1,4 @@
+import { displayDrugName } from '@/lib/drug-name-match'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ShareClient from './share-client'
@@ -28,7 +29,7 @@ export default async function SharePage() {
   const activeMeds = meds ?? []
 
   function getName(m: typeof activeMeds[number]) {
-    return m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
+    return (m.drug?.item_name ? displayDrugName(m.drug.item_name) : null) ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
   }
   // 복용법 문구는 lib/med-schedule 의 단일 구현을 쓴다 — 여기서만 따로 만들었더니
   // schedule_type 을 빠뜨려 필요시(PRN) 약이 "하루 1회"로 의사에게 나갔다.

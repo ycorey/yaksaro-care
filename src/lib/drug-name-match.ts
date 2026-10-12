@@ -104,6 +104,28 @@ export function isExportOnly(itemName: string | null | undefined): boolean {
   return /\(?수출용\)?|수출명/.test(String(itemName ?? ''))
 }
 
+/**
+ * 화면 표시용 약 이름 — `(수출명: …)` 꼬리만 뗀다. **저장값·매칭에는 쓰지 말 것.**
+ * drugs.item_name 은 허가정보 원문 그대로 두어야 한다(운영 1,384건이 이 꼬리를 갖고,
+ * 위 isExportOnly 가 이 표기로 OCR 후보를 거른다). 사용자에게 보일 때만 다듬는다.
+ * 괄호 모양이 제각각이고(`(수출명:…)`·`[수출명:…]`·`{…}`·`(싱가폴수출명 : …)`) 괄호 없이 붙기도 한다
+ * (`…(캅토프릴)수출명:…`). 그래서 '수출명' 을 감싼 **닫히지 않은** 괄호부터 자르고, 감싼 괄호가 없으면
+ * '수출명' 자리부터 자른다. (상비약 cleanName 은 마지막 '(' 를 써서 `(케토프로펜) 수출명:` 의 성분 괄호까지
+ * 지웠다 — 그 경우를 피한다.)
+ * `(수출용)` 품목은 건드리지 않는다(검색에서 이미 빠지고, 남아 있다면 그 사실이 보여야 한다).
+ */
+export function displayDrugName(name: string): string {
+  const at = name.indexOf('수출명')
+  if (at <= 0 || name.includes('수출용')) return name
+  const open: number[] = []
+  for (let i = 0; i < at; i++) {
+    if ('([{<'.includes(name[i])) open.push(i)
+    else if (')]}>'.includes(name[i])) open.pop()
+  }
+  const cut = name.slice(0, open.length ? open[0] : at).replace(/[\s,;:]+$/, '')
+  return cut || name
+}
+
 /** 함량 표기가 이름에 들어 있는가 (`리바로정2mg` → true, `리바로정` → false) */
 export function hasStrength(raw: string | null | undefined): boolean {
   return /\d/.test(drugBaseName(raw))

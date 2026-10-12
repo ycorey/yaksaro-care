@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PharmacyRequest, { type PharmacyRequestRow } from '../../settings/pharmacy-request'
 import { getActiveMember } from '@/lib/active-member'
+import { displayDrugName } from '@/lib/drug-name-match'
 
 // 홈 단골약국 카드 → 요청 보내기 전용 화면. 설정의 요청 채널과 동일 데이터·컴포넌트 재사용.
 // B2B(QR 연결) 단골약국이 있을 때만 의미 있음 — 없으면 설정으로 보냄.
@@ -41,12 +42,15 @@ export default async function PharmacyRequestPage() {
   // 그동안 약사 화면에는 "회신함" 으로 계속 보인다 — 양쪽이 서로 다른 사실을 믿는 상태다.
   // 연결도 없고 이력도 없을 때만 설정으로 보낸다.
   if (!linked && pharmacyRequests.length === 0) redirect('/settings')
-  const walletMeds = (meds ?? []).map(m => ({
-    id: m.id,
-    name: (m.drug as { item_name?: string } | null)?.item_name
-      ?? (m.supplement as { product_name?: string } | null)?.product_name
-      ?? m.custom_name ?? '약',
-  }))
+  const walletMeds = (meds ?? []).map(m => {
+    const drugName = (m.drug as { item_name?: string } | null)?.item_name
+    return {
+      id: m.id,
+      name: (drugName ? displayDrugName(drugName) : null)
+        ?? (m.supplement as { product_name?: string } | null)?.product_name
+        ?? m.custom_name ?? '약',
+    }
+  })
 
   return (
     <div className="space-y-6">

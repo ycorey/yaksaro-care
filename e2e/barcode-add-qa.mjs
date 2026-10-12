@@ -156,8 +156,12 @@ try {
       const res = await page.evaluate(async c => (await fetch(`/api/drugs/search?barcode=${c}`)).json(), target.barcode)
       const d = res?.drugs?.[0]
       check('★drugs 에 없던 품목도 바코드로 찾는다', d?.item_seq === target.item_seq, `${target.item_seq} → ${d?.item_name ?? '없음'}`)
-      const { data: made } = await admin.from('drugs').select('id').eq('item_seq', target.item_seq).maybeSingle()
+      const { data: made } = await admin.from('drugs').select('id, item_name, etc_otc_name').eq('item_seq', target.item_seq).maybeSingle()
       check('그 품목이 drugs 마스터에 생성됐다', !!made)
+      // item_seq 일치만 보면 안 된다 — 2026-10-12 목록 API 가 item_seq 를 무시해 **다른 약 이름**으로
+      // 행을 만들었는데도 위 두 검사는 통과했다. drug_barcodes 는 일반약만 담으므로 구분이 일반약이어야 한다.
+      check('★생성된 행이 요청한 품목의 허가정보다(일반의약품)', made?.etc_otc_name === '일반의약품',
+        `${made?.item_name} / ${made?.etc_otc_name}`)
     }
   }
 } catch (e) {
