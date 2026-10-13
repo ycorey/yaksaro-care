@@ -1,6 +1,7 @@
 'use client'
 
 import type React from 'react'
+import { displayDrugName } from '@/lib/drug-name-match'
 import { useState, useEffect, useRef } from 'react'
 import { Hospital, Pill, Flask, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -168,7 +169,7 @@ function DrugSearch({
           ? <Flask weight="fill" size={20} className="text-yc-green700 flex-shrink-0" />
           : <Pill  weight="fill" size={20} className="text-yc-blue500 flex-shrink-0" />}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-yc-neutral900 text-base truncate">{selected.name}</p>
+          <p className="font-bold text-yc-neutral900 text-base truncate">{displayDrugName(selected.name)}</p>
           {'sub' in selected && selected.sub && <p className="text-xs text-yc-neutral500 truncate mt-0.5">{selected.sub}</p>}
           {selected.type === 'custom' && <p className="text-xs text-yc-warningText mt-0.5">직접 입력</p>}
         </div>
@@ -225,7 +226,7 @@ function DrugSearch({
                 >
                   <Pill weight="fill" size={16} className="text-yc-neutral400 flex-shrink-0" />
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
+                    <span className="block text-sm font-medium text-yc-neutral900 truncate">{displayDrugName(d.item_name)}</span>
                     {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
                   </span>
                   {d.source === 'api' && (

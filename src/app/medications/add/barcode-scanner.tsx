@@ -1,22 +1,14 @@
 'use client'
 
-// ⚠️ 이 컴포넌트는 **의도적으로 아무 데서도 import 되지 않는다.** 미연결은 버그가 아니다.
+// 일반의약품 "바코드로 찾기" — 박스 바코드 → drug_barcodes → item_seq → 기존 등록 폼(AddForm).
 //
-// 2026-07-02 `57e8cd7` 이 일반약·영양제 추가를 바코드에서 OCR(박스 사진)로 통일하며
-// 진입점을 걷어냈고, 파일만 v2(코리안넷 유료 API) 대비용으로 남겼다.
+// 2026-07-02 `57e8cd7` 이 진입점을 걷어냈고, 2026-08-31 재실측(일반약 13.3%)으로 미연결을 유지했다.
+// 2026-10-12 되살렸다: 13.3% 는 데이터가 모자라서가 아니라 **연결 키**(EDI 보험코드) 탓이었다.
+// 품목기준코드로 이으면 일반약 정상 8,678 중 8,231 (94.8%) — scripts/etl-drug-barcode.mjs · 072.
 //
-// 2026-08-31 재실측 — 그 판단은 지금도 유효하다. 사용자가 **실제로 스캔할 모집단**의 커버리지:
-//     건강기능식품 46,002건 중 바코드 보유 **0건 (0.0%)**
-//     일반의약품(정상) 8,678건 중 **1,151건 (13.3%)**
-//   (전문의약품은 67.6% 로 높지만 처방으로 들어오지 스캔 대상이 아니다 —
-//    전체 44.6% 라는 숫자는 이 모집단이 끌어올린 것이라 의사결정에 쓰면 안 된다.)
-//
-// 즉 연결하면 영양제는 **항상** 실패하고 일반약도 7번 중 6번 실패한다. OCR 이 더 실용적이다.
-//
-// 되살리려면: 유료 바코드 데이터 확보가 **선행**이다. 그 전에 진입점을 붙이지 말 것.
-// (2026-08-31 감사가 이 파일을 "완성품인데 미연결" 로 보고 결함으로 분류했다 —
-//  그래서 이 주석을 남긴다. 이유가 코드 옆에 없으면 같은 오독이 반복된다.)
-
+// 카메라: BarcodeDetector(안드로이드 Chrome·TWA) 우선, 없으면 ZXing(getUserMedia). TWA 라 ML Kit 는 못 쓴다.
+// 영상은 기기 안에서만 해석되고 서버에는 13자리 숫자만 간다(저장·로그 안 함).
+// 건기식은 대상 밖 — 약가마스터에 없다(supplements.barcode 0건).
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
@@ -28,13 +20,16 @@ import AddForm, { type Selected } from './add-form'
 import { BackButton } from '../back-button'
 import MemberContextBadge from '@/components/member-context-badge'
 import type { Member } from '@/lib/member'
+import { normalizeBarcode } from '@/lib/barcode'
 
-type TabType = 'otc' | 'supplement'
 type Phase = 'scanning' | 'looking-up' | 'form'
 
 // 네이티브 BarcodeDetector (안드로이드 Chrome 등) — 지원 시 ZXing보다 빠르고 정확
 type BarcodeDetectorLike = { detect: (src: CanvasImageSource) => Promise<Array<{ rawValue: string }>> }
-type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetectorLike
+type BarcodeDetectorCtor = (new (opts?: { formats?: string[] }) => BarcodeDetectorLike) & {
+  getSupportedFormats?: () => Promise<string[]>
+}
+const BD_FORMATS = ['ean_13', 'upc_a', 'data_matrix']
 
 // 1D 소매 코드(EAN/UPC) + 의약품 박스 GS1 DataMatrix(2D). DataMatrix 안의 AI(01)에
 // GTIN이 들어있어 1D와 동일하게 식별됨. (처방전 2D=EMR 비공개 포맷은 여전히 대상 아님)
@@ -45,20 +40,6 @@ const FORMAT_HINTS = new Map<DecodeHintType, unknown>([
   ]],
   [DecodeHintType.TRY_HARDER, true],   // 라이브 영상에서 흐릿한 1D도 더 끈질기게 시도
 ])
-
-// 스캔 결과 → 13자리 표준코드(우리 drugs/supplements.barcode 키)로 정규화.
-// - GS1 DataMatrix(2D): AI(01) + GTIN-14 → 선행 포장표시자(보통 0) 제거해 13자리
-// - 1D(EAN/UPC): 숫자만 추출
-function normalizeBarcode(raw: string): string {
-  // ZXing 심볼로지 식별자(]d2, ]C1, ]Q3 …) 제거 후 GS1 AI(01) 14자리 GTIN 탐지
-  const s = raw.replace(/^\][A-Za-z]\d/, '')
-  const m = s.match(/^01(\d{14})/)
-  if (m) {
-    const gtin14 = m[1]
-    return gtin14.startsWith('0') ? gtin14.slice(1) : gtin14  // GTIN-14 → 표준코드 13
-  }
-  return raw.replace(/\D/g, '')
-}
 
 function StepHeader({ title, member }: { title: string; member?: Member }) {
   return (
@@ -72,12 +53,13 @@ function StepHeader({ title, member }: { title: string; member?: Member }) {
   )
 }
 
-export default function BarcodeAddFlow({ initialTab, member }: { initialTab: TabType; member?: Member }) {
+export default function BarcodeAddFlow({ member }: { member?: Member }) {
   const [phase, setPhase]       = useState<Phase>('scanning')
   const [camError, setCamError] = useState<string | null>(null)
   // 폼에 넘길 결과: 히트면 preset(prefill), 미스/직접검색이면 null(검색 모드)
-  const [formTab, setFormTab]   = useState<TabType>(initialTab)
   const [preset, setPreset]     = useState<Selected | null>(null)
+  // 스캔했는데 못 찾았을 때만 true — 토스트는 금방 사라지므로 폼 위에 남겨 둔다(실버 사용자)
+  const [missed, setMissed]     = useState(false)
 
   const [torchOn, setTorchOn]       = useState(false)
   const [torchAvail, setTorchAvail] = useState(false)
@@ -98,19 +80,17 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
     trackRef.current = null
   }, [])
 
-  // 바코드 → 제품 조회 → 히트 prefill / 미스 검색 폴백
-  const onDetected = useCallback(async (raw: string) => {
+  // 13자리 표준코드 → 제품 조회 → 히트 prefill / 미스 이름 검색으로
+  const onDetected = useCallback(async (code: string) => {
     if (handledRef.current) return
     handledRef.current = true
     stopCamera()
     setPhase('looking-up')
 
     try {
-      const code = normalizeBarcode(raw)
       const res  = await fetch(`/api/drugs/search?barcode=${encodeURIComponent(code)}`)
       const data = await res.json()
       const drug = data?.drugs?.[0]
-      const supp = data?.supplements?.[0]
 
       if (drug) {
         setPreset({
@@ -118,35 +98,29 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           name: drug.item_name, sub: drug.entp_name ?? '',
           source: drug.source ?? 'db', imageUrl: drug.image_url ?? null,
         })
-        setFormTab('otc')
-      } else if (supp) {
-        setPreset({ type: 'supplement', id: supp.id, name: supp.product_name, sub: supp.company_name ?? '' })
-        setFormTab('supplement')
       } else {
-        toast.error('바코드를 못 찾았어요. 이름으로 검색해 주세요.')
         setPreset(null)
-        setFormTab(initialTab)
+        setMissed(true)
       }
     } catch {
-      toast.error('조회에 실패했어요. 이름으로 검색해 주세요.')
+      toast.error('조회에 실패했어요. 이름으로 찾아 주세요.')
       setPreset(null)
-      setFormTab(initialTab)
+      setMissed(true)
     } finally {
       setPhase('form')
     }
-  }, [initialTab, stopCamera])
+  }, [stopCamera])
 
   // 직접 검색으로 빠지기(스캔 포기)
   const skipToSearch = useCallback(() => {
     handledRef.current = true
     stopCamera()
     setPreset(null)
-    setFormTab(initialTab)
     setPhase('form')
-  }, [initialTab, stopCamera])
+  }, [stopCamera])
 
   // 카메라 시작 — 스캐닝 단계에서만. 네이티브 BarcodeDetector 지원 시 그것을(빠름+손전등),
-  // 아니면(iOS Safari 등) ZXing 폴백.
+  // 아니면(iOS Safari 등) ZXing 폴백. 체크섬이 틀린 프레임은 버리고 계속 읽는다.
   useEffect(() => {
     if (phase !== 'scanning') return
     let cancelled = false
@@ -170,7 +144,13 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet] }).catch(() => {})
         }
 
-        if (BD) {
+        // 일부 안드로이드(Play 서비스 없음 등)는 BarcodeDetector 가 있어도 지원 형식이 비어 있다.
+        // 그대로 쓰면 아무것도 못 읽고 화면만 돌므로, EAN-13 을 못 읽으면 ZXing 으로 간다.
+        const supported = BD?.getSupportedFormats ? await BD.getSupportedFormats().catch(() => [] as string[]) : null
+        const formats = supported ? BD_FORMATS.filter(f => supported.includes(f)) : BD_FORMATS
+        if (cancelled) return
+
+        if (BD && formats.includes('ean_13')) {
           const stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO })
           if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
           streamRef.current = stream
@@ -179,12 +159,13 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           const track = stream.getVideoTracks()[0]
           trackRef.current = track
           setupTrackCaps(track)
-          const detector = new BD({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'data_matrix'] })
+          const detector = new BD({ formats })
           const tick = async () => {
             if (cancelled) return
             try {
               const codes = await detector.detect(video)
-              if (codes && codes.length) { onDetected(codes[0].rawValue); return }
+              const code = codes.map(c => normalizeBarcode(c.rawValue)).find(Boolean)
+              if (code) { onDetected(code); return }
             } catch { /* 프레임 디코드 실패는 무시하고 계속 */ }
             rafRef.current = requestAnimationFrame(tick)
           }
@@ -194,7 +175,10 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           const reader = new BrowserMultiFormatReader(FORMAT_HINTS, { delayBetweenScanAttempts: 100 })
           const controls = await reader.decodeFromConstraints(
             { video: VIDEO }, video,
-            (result) => { if (result) onDetected(result.getText()) },
+            (result) => {
+              const code = result ? normalizeBarcode(result.getText()) : null
+              if (code) onDetected(code)
+            },
           )
           if (cancelled) { controls.stop(); return }
           controlsRef.current = controls
@@ -203,7 +187,9 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           if (ztrack) { trackRef.current = ztrack; setupTrackCaps(ztrack) }
         }
       } catch {
-        if (!cancelled) setCamError('카메라를 열 수 없어요. 권한을 확인하거나 이름으로 검색해 주세요.')
+        // 스트림을 연 뒤에 실패했을 수 있다(디텍터 생성 등) — 안내 화면 뒤에서 카메라가 켜져 있지 않게 끈다
+        stopCamera()
+        if (!cancelled) setCamError('카메라를 열 수 없어요. 권한을 확인하거나 이름으로 찾아 주세요.')
       }
     })()
 
@@ -214,7 +200,7 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
       streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
       trackRef.current = null
     }
-  }, [phase, onDetected])
+  }, [phase, onDetected, stopCamera])
 
   // 손전등 토글 (BarcodeDetector 경로 + 지원 기기)
   async function toggleTorch() {
@@ -227,7 +213,7 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
     } catch { /* 미지원 — 무시 */ }
   }
 
-  // 줌 — 작은 약/건기식 바코드를 당겨서 또렷하게 잡기
+  // 줌 — 작은 약 바코드를 당겨서 또렷하게 잡기
   async function applyZoom(v: number) {
     const track = trackRef.current
     if (!track) return
@@ -243,17 +229,22 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
     void applyZoom(next)
   }
 
-  // ── 폼 단계: 기존 AddForm 재사용(히트면 prefill, 미스면 검색 모드) ──
+  // ── 폼 단계: 기존 AddForm 재사용(히트면 prefill, 미스면 일반약 검색 모드) ──
   if (phase === 'form') {
     return (
       <div className="space-y-5 anim-scale-in">
-        <StepHeader title={formTab === 'supplement' ? '영양제 · 보조제' : '일반의약품'} member={member} />
+        <StepHeader title="일반의약품" member={member} />
         {preset && (
           <p className="text-sm text-yc-green700 bg-yc-green100 rounded-yc-md px-4 py-3">
             바코드로 제품을 찾았어요. 확인하고 추가해 주세요.
           </p>
         )}
-        <AddForm initialTab={formTab} initialSelected={preset} />
+        {missed && (
+          <p className="text-base text-yc-neutral700 bg-yc-neutral100 rounded-yc-md px-4 py-3">
+            이 바코드로는 약을 찾지 못했어요. 아래에 약 이름을 입력해 찾아 주세요.
+          </p>
+        )}
+        <AddForm initialTab="otc" initialSelected={preset} />
       </div>
     )
   }
@@ -261,21 +252,21 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
   // ── 스캐닝 / 조회 단계 ──
   return (
     <div className="space-y-5 anim-scale-in">
-      <StepHeader title="바코드 스캔" member={member} />
+      <StepHeader title="바코드로 찾기" member={member} />
 
       {camError ? (
         <div className="space-y-4">
           <p className="text-sm text-yc-neutral600 bg-yc-warningBg rounded-yc-md px-4 py-3">{camError}</p>
           <button type="button" onClick={skipToSearch}
-            className="w-full h-12 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors">
-            이름으로 검색하기
+            className="w-full h-14 rounded-yc-lg bg-yc-green600 text-white text-base font-semibold active:bg-yc-green700 transition-colors">
+            이름으로 찾기
           </button>
         </div>
       ) : (
         <>
-          <p className="text-sm text-yc-neutral600 flex items-center gap-1.5">
-            <Barcode weight="fill" size={16} className="text-yc-green700" />
-            상품 박스의 바코드를 사각형 안에 맞춰 주세요.
+          <p className="text-base text-yc-neutral600 flex items-center gap-1.5">
+            <Barcode weight="fill" size={18} className="text-yc-green700" />
+            일반약 상자의 바코드를 사각형 안에 맞춰 주세요.
           </p>
 
           <div className="relative aspect-square w-full overflow-hidden rounded-yc-lg bg-black">
@@ -295,7 +286,7 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
           {zoomCaps && zoom != null && (
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => zoomBy(-1)} aria-label="축소"
-                className="w-12 h-12 flex items-center justify-center rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200 flex-shrink-0">
+                className="w-14 h-14 flex items-center justify-center rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200 flex-shrink-0">
                 <MagnifyingGlassMinus size={20} weight="bold" />
               </button>
               <input type="range" min={zoomCaps.min} max={zoomCaps.max} step={zoomCaps.step} value={zoom}
@@ -303,7 +294,7 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
                 aria-label="카메라 줌"
                 className="flex-1 h-2 accent-yc-green600" />
               <button type="button" onClick={() => zoomBy(1)} aria-label="확대"
-                className="w-12 h-12 flex items-center justify-center rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200 flex-shrink-0">
+                className="w-14 h-14 flex items-center justify-center rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200 flex-shrink-0">
                 <MagnifyingGlassPlus size={20} weight="bold" />
               </button>
             </div>
@@ -311,16 +302,16 @@ export default function BarcodeAddFlow({ initialTab, member }: { initialTab: Tab
 
           {torchAvail && (
             <button type="button" onClick={toggleTorch}
-              className={`w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg text-base font-semibold transition-colors ${torchOn ? 'bg-yc-green600 text-white active:bg-yc-green700' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
+              className={`w-full h-14 flex items-center justify-center gap-2 rounded-yc-lg text-base font-semibold transition-colors ${torchOn ? 'bg-yc-green600 text-white active:bg-yc-green700' : 'bg-yc-neutral100 text-yc-neutral700 active:bg-yc-neutral200'}`}>
               <Flashlight size={18} weight={torchOn ? 'fill' : 'bold'} />
               {torchOn ? '손전등 끄기' : '손전등 켜기'}
             </button>
           )}
 
           <button type="button" onClick={skipToSearch}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 text-base font-semibold active:bg-yc-neutral200 transition-colors">
+            className="w-full h-14 flex items-center justify-center gap-2 rounded-yc-lg bg-yc-neutral100 text-yc-neutral700 text-base font-semibold active:bg-yc-neutral200 transition-colors">
             <MagnifyingGlass size={18} weight="bold" />
-            바코드 없이 이름으로 검색
+            바코드 없이 이름으로 찾기
           </button>
         </>
       )}

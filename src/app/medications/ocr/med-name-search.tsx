@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { displayDrugName } from '@/lib/drug-name-match'
 import { Pill, MagnifyingGlass } from '@phosphor-icons/react'
 
 // 검수 화면에서 잘못 인식된 약품명을 정확한 허가 품목으로 교체하기 위한 경량 검색.
@@ -79,7 +80,7 @@ export default function MedNameSearch({ initial = '', onPick, onCancel }: {
             >
               <Pill weight="fill" size={15} className="text-yc-blue500 flex-shrink-0" />
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-yc-neutral900 truncate">{d.item_name}</span>
+                <span className="block text-sm font-medium text-yc-neutral900 truncate">{displayDrugName(d.item_name)}</span>
                 {d.entp_name && <span className="block text-xs text-yc-neutral500 truncate">{d.entp_name}</span>}
               </span>
               {d.source === 'api' && <span className="text-[10px] bg-yc-infoBg text-yc-blue500 px-1.5 py-0.5 rounded flex-shrink-0">허가정보</span>}

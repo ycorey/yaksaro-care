@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddForm from './add-form'
 import BoxOcrAddFlow from './box-ocr-scanner'
+import BarcodeAddFlow from './barcode-scanner'
 import PillSearchFlow from './pill-search'
 import ComingSoonCard from './coming-soon-card'
 import { AddIcon } from './add-icons'
@@ -77,6 +78,9 @@ function PrescriptionMethodScreen({ member }: { member: Member }) {
         <MethodCard href="/medications/ocr" iconBg="bg-yc-green600"
           icon={<AddIcon name="camera" className="text-white" />}
           title="처방전 스캔" desc="처방전을 사진으로 찍어 읽어요" badge="추천" />
+        <MethodCard href="/medications/add?method=barcode" iconBg="bg-yc-green50"
+          icon={<AddIcon name="barcode" className="text-yc-green700" />}
+          title="바코드로 찾기" desc="일반약 상자의 바코드를 비춰요" />
         <MethodCard href="/medications/add?method=photo&tab=otc" iconBg="bg-yc-green50"
           icon={<AddIcon name="camera" className="text-yc-green700" />}
           title="박스 사진으로 찾기" desc="일반약 박스를 찍어 이름으로 찾아요" />
@@ -130,16 +134,23 @@ function FormScreen({ initialTab, member, manualEntry = false }: { initialTab: '
   return (
     <div className="space-y-5 anim-scale-in">
       <StepHeader title={title} member={member} />
-      {/* 일반의약품 추가칸: 박스 사진 OCR로 빠르게 담기 (바코드→OCR 전환) */}
+      {/* 일반의약품 추가칸: 바코드(주) → 박스 사진 OCR(보조) → 아래 이름 검색 */}
       {initialTab === 'otc' && (
-        <Link href="/medications/add?method=photo&tab=otc"
-          className="flex items-center gap-3 bg-yc-green600 rounded-yc-xl px-5 py-4 active:bg-yc-green700 transition-colors">
-          <AddIcon name="camera" className="text-white" />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-base text-white">박스 사진으로 찾기</p>
-            <p className="text-sm text-white/80 mt-0.5">일반약 박스를 찍으면 이름을 읽어 담아요</p>
-          </div>
-        </Link>
+        <div className="space-y-2">
+          <Link href="/medications/add?method=barcode"
+            className="flex items-center gap-3 bg-yc-green600 rounded-yc-xl px-5 py-4 active:bg-yc-green700 transition-colors">
+            <AddIcon name="barcode" className="text-white" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-base text-white">바코드로 찾기</p>
+              <p className="text-sm text-white/80 mt-0.5">일반약 상자의 바코드를 비추면 바로 찾아요</p>
+            </div>
+          </Link>
+          <Link href="/medications/add?method=photo&tab=otc"
+            className="flex items-center gap-3 bg-yc-green50 rounded-yc-xl px-5 py-4 min-h-[52px] active:bg-yc-green100 transition-colors">
+            <AddIcon name="camera" className="text-yc-green700" />
+            <p className="flex-1 min-w-0 font-semibold text-base text-yc-green700">바코드가 안 보이면 박스 사진으로</p>
+          </Link>
+        </div>
       )}
       <AddForm initialTab={initialTab} manualEntry={manualEntry} />
     </div>
@@ -162,6 +173,11 @@ export default async function AddMedicationPage({
   // Screen 2d: 박스 사진 OCR → 제품명 추출 → 이름 검색 (일반약·건기식 모두 OCR로 통일)
   if (method === 'photo') {
     return <BoxOcrAddFlow initialTab={tab === 'supplement' ? 'supplement' : 'otc'} member={active} />
+  }
+
+  // Screen 2f: 바코드로 찾기(일반약) — drug_barcodes → item_seq → 기존 등록 폼 합류. 미스면 이름 검색
+  if (method === 'barcode') {
+    return <BarcodeAddFlow member={active} />
   }
 
   // Screen 2e: 낱알로 찾기 — 모양·색·각인 검색 → 기존 등록 폼 합류

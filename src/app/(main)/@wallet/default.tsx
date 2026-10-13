@@ -1,3 +1,4 @@
+import { displayDrugName } from '@/lib/drug-name-match'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -92,7 +93,7 @@ export default async function WalletPage() {
     const supp = med.supplement
     return {
       id:                    med.id,
-      name:                  drug?.item_name ?? supp?.product_name ?? med.custom_name ?? '알 수 없음',
+      name:                  (drug?.item_name ? displayDrugName(drug.item_name) : null) ?? supp?.product_name ?? med.custom_name ?? '알 수 없음',
       sub:                   drug?.entp_name ?? (supp ? '건강기능식품' : ''),
       ingredient:            med.ingredient ?? null,
       isSupplement:          !!supp,

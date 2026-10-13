@@ -1,11 +1,12 @@
 'use client'
 
 import {
-  Camera, QrCode, PencilSimple, Pill, Flask,
+  Barcode, Camera, QrCode, PencilSimple, Pill, Flask,
   MagnifyingGlass, ClipboardText, Lock,
 } from '@phosphor-icons/react'
 
 const ICON_MAP = {
+  barcode:   Barcode,
   camera:    Camera,
   qr:        QrCode,
   pencil:    PencilSimple,

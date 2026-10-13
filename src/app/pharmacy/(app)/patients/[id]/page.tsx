@@ -1,3 +1,4 @@
+import { displayDrugName } from '@/lib/drug-name-match'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -27,7 +28,7 @@ type MedRow = {
 }
 
 function Card({ m }: { m: MedRow }) {
-  const name = m.drug?.item_name ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
+  const name = (m.drug?.item_name ? displayDrugName(m.drug.item_name) : null) ?? m.supplement?.product_name ?? m.custom_name ?? '알 수 없음'
   const sub  = m.drug?.entp_name ?? (m.supplement ? '건강기능식품' : '')
   // 약사가 보는 문구다 — 필요시·매주를 빠뜨리면 정기 복용약으로 읽힌다(2026-09-05 문구 QA)
   const scheduleType = (m.schedule_type as ScheduleType | null) ?? 'daily'

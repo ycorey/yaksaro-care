@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  normalizeDrugName, drugBaseName, drugSearchPrefix, isExportOnly, hasStrength, matchDrugName,
+  normalizeDrugName, drugBaseName, drugSearchPrefix, isExportOnly, hasStrength, matchDrugName, displayDrugName,
 } from './drug-name-match.ts'
 
 // 후보는 전부 2026-08-31 운영 `drugs.item_name` 실측값이다(가공하지 않음).
@@ -63,6 +63,28 @@ test('수출용/수출명 품목을 식별한다', () => {
   assert.equal(isExportOnly('놀텍정10밀리그램(일라프라졸)(수출용)'), true)
   assert.equal(isExportOnly('고든구강용해필름5mg(타다라필)(수출명: CALIBERI orodispersible film 5mg)'), true)
   assert.equal(isExportOnly('놀텍정10밀리그램(일라프라졸)'), false)
+})
+
+test('표시용 이름은 수출명 꼬리만 뗀다 (운영 실측 표기)', () => {
+  const cases: [string, string][] = [
+    ['중외5%포도당생리식염액(수출명:5%DextroseinnormalsalineInj.)', '중외5%포도당생리식염액'],
+    ['오라메디연고{수출명:오라메디파스타(ORAMEDYPASTE)}', '오라메디연고'],
+    ['동구염산클린다마이신캅셀150㎎[수출명:DongkooClindamycin150㎎Capsule]', '동구염산클린다마이신캅셀150㎎'],
+    ['케토톱플라스타(케토프로펜)(싱가폴수출명 : Ketotop Pain Relief Plaster 30mg)', '케토톱플라스타(케토프로펜)'],
+    ['케논에스플라스타(케토프로펜) 수출명: 케논에스플라스타(Kenon-S Plaster), 케토밴드(Ketoband)', '케논에스플라스타(케토프로펜)'],
+    ['카프릴정12.5밀리그람(캅토프릴)수출명;Captolongtablet12.5mg(captopril)', '카프릴정12.5밀리그람(캅토프릴)'],
+    ['한림바소프레신주사액(수출명1:페트레신주사액,수출명2:헤모프레신주사액)', '한림바소프레신주사액'],
+    ['휴온스리도카인염산염수화물-에피네프린주(1:100,000)[수출명:메디카인주(1:100,000)]', '휴온스리도카인염산염수화물-에피네프린주(1:100,000)'],
+  ]
+  for (const [raw, want] of cases) assert.equal(displayDrugName(raw), want, raw)
+})
+
+test('표시용 이름: 수출용·일반 이름은 그대로', () => {
+  for (const raw of [
+    '투수필정(아세피필린){수출명:아시아필린정(아세피필린)}(수출용)',
+    '헬시칼연질캡슐(수출용)(수출명① Healthycal Softcap.)',
+    '타이레놀정500밀리그람(아세트아미노펜)',
+  ]) assert.equal(displayDrugName(raw), raw)
 })
 
 test('함량 유무를 판정한다', () => {
