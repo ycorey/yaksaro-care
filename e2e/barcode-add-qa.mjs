@@ -82,10 +82,11 @@ try {
     viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, permissions: ['camera'],
   })
   const nowSec = Math.floor(Date.now() / 1000)
-  await ctx.addCookies(captured.map(c => ({
+  const cookies = captured.map(c => ({
     name: c.name, value: c.value, domain: 'localhost', path: c.options?.path || '/',
     expires: nowSec + 3600, httpOnly: false, secure: false, sameSite: 'Lax',
-  })))
+  }))
+  await ctx.addCookies(cookies)
   // BarcodeDetector 대역: window.__scanCode 를 넣는 순간부터 그 값을 "읽는다"
   await ctx.addInitScript(() => {
     window.BarcodeDetector = class {
@@ -142,6 +143,29 @@ try {
   const search = page.getByPlaceholder(/타이레놀|약 이름|검색/).first()
   check('★이름 검색 폼으로 넘어간다', await search.isVisible().catch(() => false))
   await shot(page, '5-miss')
+
+  // ── [E] BarcodeDetector 는 있는데 지원 형식이 비어 있는 기기 → ZXing 으로 넘어간다 ──
+  // 예전엔 이 경우에도 BarcodeDetector 만 써서 아무것도 못 읽고 화면만 돌았다.
+  console.log('\n[E] 지원 형식 없는 BarcodeDetector')
+  const ctx2 = await browser.newContext({
+    viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, permissions: ['camera'],
+  })
+  await ctx2.addCookies(cookies)
+  await ctx2.addInitScript(() => {
+    window.__detectCalls = 0
+    window.BarcodeDetector = class {
+      static async getSupportedFormats() { return [] }
+      async detect() { window.__detectCalls++; return [] }
+    }
+  })
+  const page2 = await ctx2.newPage()
+  await page2.goto(`${BASE}/medications/add?method=barcode`, { waitUntil: 'domcontentloaded' })
+  check('카메라가 열린다', await page2.locator('video').waitFor({ timeout: 30000 }).then(() => true, () => false))
+  await page2.waitForTimeout(2000)
+  const usedBD = await page2.evaluate(() => window.__detectCalls)
+  const camErr = await page2.getByText('카메라를 열 수 없어요').isVisible().catch(() => false)
+  check('★형식이 비면 BarcodeDetector 대신 ZXing 으로 읽는다', usedBD === 0 && !camErr, `detect 호출 ${usedBD}회`)
+  await ctx2.close()
 
   // ── [D] (선택) drugs 에 없는 품목 → resolveDrugIdByItemSeq 가 허가정보로 만든다 ──
   // 운영 drugs 에 행이 하나 생기고 허가정보 API 를 한 번 부르므로 RESOLVE=1 일 때만.

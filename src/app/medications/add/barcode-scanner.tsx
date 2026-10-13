@@ -26,7 +26,10 @@ type Phase = 'scanning' | 'looking-up' | 'form'
 
 // 네이티브 BarcodeDetector (안드로이드 Chrome 등) — 지원 시 ZXing보다 빠르고 정확
 type BarcodeDetectorLike = { detect: (src: CanvasImageSource) => Promise<Array<{ rawValue: string }>> }
-type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetectorLike
+type BarcodeDetectorCtor = (new (opts?: { formats?: string[] }) => BarcodeDetectorLike) & {
+  getSupportedFormats?: () => Promise<string[]>
+}
+const BD_FORMATS = ['ean_13', 'upc_a', 'data_matrix']
 
 // 1D 소매 코드(EAN/UPC) + 의약품 박스 GS1 DataMatrix(2D). DataMatrix 안의 AI(01)에
 // GTIN이 들어있어 1D와 동일하게 식별됨. (처방전 2D=EMR 비공개 포맷은 여전히 대상 아님)
@@ -141,7 +144,13 @@ export default function BarcodeAddFlow({ member }: { member?: Member }) {
           track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet] }).catch(() => {})
         }
 
-        if (BD) {
+        // 일부 안드로이드(Play 서비스 없음 등)는 BarcodeDetector 가 있어도 지원 형식이 비어 있다.
+        // 그대로 쓰면 아무것도 못 읽고 화면만 돌므로, EAN-13 을 못 읽으면 ZXing 으로 간다.
+        const supported = BD?.getSupportedFormats ? await BD.getSupportedFormats().catch(() => [] as string[]) : null
+        const formats = supported ? BD_FORMATS.filter(f => supported.includes(f)) : BD_FORMATS
+        if (cancelled) return
+
+        if (BD && formats.includes('ean_13')) {
           const stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO })
           if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
           streamRef.current = stream
@@ -150,7 +159,7 @@ export default function BarcodeAddFlow({ member }: { member?: Member }) {
           const track = stream.getVideoTracks()[0]
           trackRef.current = track
           setupTrackCaps(track)
-          const detector = new BD({ formats: ['ean_13', 'upc_a', 'data_matrix'] })
+          const detector = new BD({ formats })
           const tick = async () => {
             if (cancelled) return
             try {
@@ -178,6 +187,8 @@ export default function BarcodeAddFlow({ member }: { member?: Member }) {
           if (ztrack) { trackRef.current = ztrack; setupTrackCaps(ztrack) }
         }
       } catch {
+        // 스트림을 연 뒤에 실패했을 수 있다(디텍터 생성 등) — 안내 화면 뒤에서 카메라가 켜져 있지 않게 끈다
+        stopCamera()
         if (!cancelled) setCamError('카메라를 열 수 없어요. 권한을 확인하거나 이름으로 찾아 주세요.')
       }
     })()
@@ -189,7 +200,7 @@ export default function BarcodeAddFlow({ member }: { member?: Member }) {
       streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
       trackRef.current = null
     }
-  }, [phase, onDetected])
+  }, [phase, onDetected, stopCamera])
 
   // 손전등 토글 (BarcodeDetector 경로 + 지원 기기)
   async function toggleTorch() {
