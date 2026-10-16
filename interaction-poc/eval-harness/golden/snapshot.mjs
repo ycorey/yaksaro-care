@@ -11,9 +11,9 @@
 //
 // 실행: node --env-file=../../.env eval-harness/golden/snapshot.mjs   (interaction-poc/ 기준)
 //       또는 cd eval-harness/golden && node --env-file=../../.env snapshot.mjs
-// 콜 비용: 케이스당 1콜 × 10 = 10콜 (MedData 무료 250/월 내).
+// 콜 비용: 새 케이스당 1콜 (MedData 무료 250/월 내). 이미 박제된 케이스는 skip(증분).
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -35,6 +35,18 @@ const CASES = [
   { n: 8,  supp_ko: "자몽",           supp_en: "Grapefruit",      drug: "simvastatin",       fact: "CYP3A4 억제, 농도 증가 (식품 — DB 미수록)" },
   { n: 9,  supp_ko: "코엔자임Q10",    supp_en: "Coenzyme Q10",    drug: "warfarin",          fact: "항응고 효과 변동" },
   { n: 10, supp_ko: "프로바이오틱스", supp_en: "Probiotics",      drug: "amoxicillin",       fact: "효과 상쇄(복용 간격)" },
+  // ── 확장(2026-10-16): DRUG_HINTS 미등록 약물 — 약물명이 응답에 직접 없고 클래스 라벨로만 존재할 가능성이 큰 조합.
+  //    rule 매처가 깨져야 평가의 변별력이 생긴다(README "정답셋 확장하는 법").
+  { n: 11, supp_ko: "세인트존스워트", supp_en: "St. John's Wort", drug: "escitalopram",        fact: "세로토닌 증후군(SSRI 클래스)" },
+  { n: 12, supp_ko: "세인트존스워트", supp_en: "St. John's Wort", drug: "tacrolimus",          fact: "면역억제제 농도 감소(CYP3A4 유도)" },
+  { n: 13, supp_ko: "세인트존스워트", supp_en: "St. John's Wort", drug: "atorvastatin",        fact: "스타틴 농도 감소" },
+  { n: 14, supp_ko: "세인트존스워트", supp_en: "St. John's Wort", drug: "carbamazepine",       fact: "항경련제 농도 감소" },
+  { n: 15, supp_ko: "칼슘",           supp_en: "Calcium",         drug: "doxycycline",         fact: "흡수 저해(테트라사이클린 클래스)" },
+  { n: 16, supp_ko: "칼슘",           supp_en: "Calcium",         drug: "alendronate",         fact: "흡수 저해(비스포스포네이트)" },
+  { n: 17, supp_ko: "칼슘",           supp_en: "Calcium",         drug: "hydrochlorothiazide", fact: "고칼슘혈증(티아지드)" },
+  { n: 18, supp_ko: "오메가3",        supp_en: "Fish Oil",        drug: "clopidogrel",         fact: "출혈 위험(항혈소판제 클래스)" },
+  { n: 19, supp_ko: "비타민K",        supp_en: "Vitamin K",       drug: "rivaroxaban",         fact: "NOAC — 비타민K 영향 적음(c6_p2 거울 케이스)" },
+  { n: 20, supp_ko: "철분",           supp_en: "Iron",            drug: "lisinopril",          fact: "ACE억제제 — 철분과의 상호작용(클래스 라벨)" },
 ];
 
 function url(qs) {
@@ -55,8 +67,14 @@ if (!KEY) {
   process.exit(1);
 }
 
-const out = [];
+// 증분 모드: 이미 박제된 케이스(n 일치)는 재호출하지 않는다 — "재호출 금지"(회귀 기준 고정).
+// 기존 케이스를 다시 뜨고 싶으면 _snapshot_raw.json 에서 해당 케이스를 지우고 실행한다.
+const path = join(__dir, "_snapshot_raw.json");
+const existing = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")).cases : [];
+const done = new Set(existing.map((c) => c.n));
+const out = [...existing];
 for (const c of CASES) {
+  if (done.has(c.n)) { console.log(`case ${c.n} ${c.supp_en}×${c.drug}: 박제됨 (skip)`); continue; }
   const r = await getJson(url({ drugs: c.drug, supplements: c.supp_en }));
   const pairs = (r.status === 200 && r.json) ? (r.json.interactions || []) : [];
   // pair_id 주입: c{n}_p{1-based}. 원본 필드는 그대로 보존.
@@ -73,6 +91,6 @@ for (const c of CASES) {
   await sleep(300);
 }
 
-const path = join(__dir, "_snapshot_raw.json");
+out.sort((a, b) => a.n - b.n);
 writeFileSync(path, JSON.stringify({ generated_note: "MedData 실응답 박제 (재호출 금지 — 회귀 기준)", cases: out }, null, 2));
 console.log(`\n박제 완료 → ${path}`);

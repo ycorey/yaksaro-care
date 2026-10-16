@@ -587,6 +587,702 @@
           "source": "Supplements DB"
         }
       ]
+    },
+    {
+      "n": 11,
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "escitalopram",
+      "clinical_fact": "세로토닌 증후군(SSRI 클래스)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 7,
+      "snapshot": [
+        {
+          "pair_id": "c11_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "Taking St. John's wort with certain antidepressants or other drugs that affect serotonin may lead to increased serotonin-related side effects, which can be serious.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p3",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p4",
+          "item_1_name": "HIV drugs (indinavir, nevirapine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's wort can interact in dangerous, sometimes life-threatening ways with some HIV drugs, including indinavir and nevirapine.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p5",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p6",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c11_p7",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 12,
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "tacrolimus",
+      "clinical_fact": "면역억제제 농도 감소(CYP3A4 유도)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 8,
+      "snapshot": [
+        {
+          "pair_id": "c12_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "Taking St. John's wort with certain antidepressants or other drugs that affect serotonin may lead to increased serotonin-related side effects, which can be serious.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p3",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p4",
+          "item_1_name": "HIV drugs (indinavir, nevirapine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's wort can interact in dangerous, sometimes life-threatening ways with some HIV drugs, including indinavir and nevirapine.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p5",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p6",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p7",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c12_p8",
+          "item_1_name": "tacrolimus",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "https://www.nccih.nih.gov/health/st-johns-wort"
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "atorvastatin",
+      "clinical_fact": "스타틴 농도 감소",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 8,
+      "snapshot": [
+        {
+          "pair_id": "c13_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "Taking St. John's wort with certain antidepressants or other drugs that affect serotonin may lead to increased serotonin-related side effects, which can be serious.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p3",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p4",
+          "item_1_name": "HIV drugs (indinavir, nevirapine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's wort can interact in dangerous, sometimes life-threatening ways with some HIV drugs, including indinavir and nevirapine.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p5",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p6",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p7",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c13_p8",
+          "item_1_name": "atorvastatin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "https://www.nccih.nih.gov/health/st-johns-wort"
+        }
+      ]
+    },
+    {
+      "n": 14,
+      "supplement_ko": "세인트존스워트",
+      "supplement_en": "St. John's Wort",
+      "drug_query": "carbamazepine",
+      "clinical_fact": "항경련제 농도 감소",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 8,
+      "snapshot": [
+        {
+          "pair_id": "c14_p1",
+          "item_1_name": "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "Taking St. John's wort with certain antidepressants or other drugs that affect serotonin may lead to increased serotonin-related side effects, which can be serious.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p2",
+          "item_1_name": "Blood thinners (warfarin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces CYP enzymes that metabolize warfarin, significantly reducing its effectiveness and increasing the risk of blood clots. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p3",
+          "item_1_name": "Immunosuppressants (cyclosporine, tacrolimus)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort dramatically reduces blood levels of immunosuppressive drugs through CYP3A4 and P-glycoprotein induction, risking organ transplant rejection. Combination is contraindicated.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p4",
+          "item_1_name": "HIV drugs (indinavir, nevirapine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's wort can interact in dangerous, sometimes life-threatening ways with some HIV drugs, including indinavir and nevirapine.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p5",
+          "item_1_name": "Digoxin",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "St. John's Wort induces P-glycoprotein, significantly reducing digoxin blood levels and potentially leading to loss of therapeutic effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p6",
+          "item_1_name": "Anti-seizure medications (phenytoin, carbamazepine)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p7",
+          "item_1_name": "Statins (simvastatin, atorvastatin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may reduce statin blood levels through CYP3A4 induction, decreasing their cholesterol-lowering effectiveness.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c14_p8",
+          "item_1_name": "carbamazepine",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "St. John's Wort",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "St. John's Wort may alter levels of anti-seizure medications through enzyme induction, potentially leading to breakthrough seizures.",
+          "source": "https://www.nccih.nih.gov/health/st-johns-wort"
+        }
+      ]
+    },
+    {
+      "n": 15,
+      "supplement_ko": "칼슘",
+      "supplement_en": "Calcium",
+      "drug_query": "doxycycline",
+      "clinical_fact": "흡수 저해(테트라사이클린 클래스)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 4,
+      "snapshot": [
+        {
+          "pair_id": "c15_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium carbonate supplements can interfere with the absorption of levothyroxine. The FDA-approved levothyroxine label instructs patients taking calcium carbonate supplements to avoid taking levothyroxine within 4 hours of the supplement.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c15_p2",
+          "item_1_name": "Quinolone antibiotics (ciprofloxacin, gemifloxacin, moxifloxacin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Simultaneous use of calcium supplements and quinolone antibiotics such as ciprofloxacin, gemifloxacin and moxifloxacin can reduce the absorption of the antibiotic. Taking the antibiotic 2 hours before or 2 hours after calcium supplements prevents this effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c15_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The tetracycline label states that absorption of tetracyclines is impaired by antacids containing aluminum, calcium or magnesium. It names calcium as an ingredient of antacids; whether the statement applies to calcium supplements that are not antacids is not addressed by the label. The label gives no separation interval.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c15_p4",
+          "item_1_name": "Alendronate",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The alendronate label states that calcium supplements, antacids and oral medications containing multivalent cations interfere with the absorption of alendronate, and instructs patients to wait at least one-half hour after taking it before taking any other oral medication.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 16,
+      "supplement_ko": "칼슘",
+      "supplement_en": "Calcium",
+      "drug_query": "alendronate",
+      "clinical_fact": "흡수 저해(비스포스포네이트)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 4,
+      "snapshot": [
+        {
+          "pair_id": "c16_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium carbonate supplements can interfere with the absorption of levothyroxine. The FDA-approved levothyroxine label instructs patients taking calcium carbonate supplements to avoid taking levothyroxine within 4 hours of the supplement.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c16_p2",
+          "item_1_name": "Quinolone antibiotics (ciprofloxacin, gemifloxacin, moxifloxacin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Simultaneous use of calcium supplements and quinolone antibiotics such as ciprofloxacin, gemifloxacin and moxifloxacin can reduce the absorption of the antibiotic. Taking the antibiotic 2 hours before or 2 hours after calcium supplements prevents this effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c16_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The tetracycline label states that absorption of tetracyclines is impaired by antacids containing aluminum, calcium or magnesium. It names calcium as an ingredient of antacids; whether the statement applies to calcium supplements that are not antacids is not addressed by the label. The label gives no separation interval.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c16_p4",
+          "item_1_name": "Alendronate",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The alendronate label states that calcium supplements, antacids and oral medications containing multivalent cations interfere with the absorption of alendronate, and instructs patients to wait at least one-half hour after taking it before taking any other oral medication.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 17,
+      "supplement_ko": "칼슘",
+      "supplement_en": "Calcium",
+      "drug_query": "hydrochlorothiazide",
+      "clinical_fact": "고칼슘혈증(티아지드)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 4,
+      "snapshot": [
+        {
+          "pair_id": "c17_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Calcium carbonate supplements can interfere with the absorption of levothyroxine. The FDA-approved levothyroxine label instructs patients taking calcium carbonate supplements to avoid taking levothyroxine within 4 hours of the supplement.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c17_p2",
+          "item_1_name": "Quinolone antibiotics (ciprofloxacin, gemifloxacin, moxifloxacin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Simultaneous use of calcium supplements and quinolone antibiotics such as ciprofloxacin, gemifloxacin and moxifloxacin can reduce the absorption of the antibiotic. Taking the antibiotic 2 hours before or 2 hours after calcium supplements prevents this effect.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c17_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The tetracycline label states that absorption of tetracyclines is impaired by antacids containing aluminum, calcium or magnesium. It names calcium as an ingredient of antacids; whether the statement applies to calcium supplements that are not antacids is not addressed by the label. The label gives no separation interval.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c17_p4",
+          "item_1_name": "Alendronate",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Calcium",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The alendronate label states that calcium supplements, antacids and oral medications containing multivalent cations interfere with the absorption of alendronate, and instructs patients to wait at least one-half hour after taking it before taking any other oral medication.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 18,
+      "supplement_ko": "오메가3",
+      "supplement_en": "Fish Oil",
+      "drug_query": "clopidogrel",
+      "clinical_fact": "출혈 위험(항혈소판제 클래스)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 1,
+      "snapshot": [
+        {
+          "pair_id": "c18_p1",
+          "item_1_name": "Warfarin and other blood thinners",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Fish Oil",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Fish oil can have antiplatelet effects at high doses and might prolong clotting times (raise the INR) when taken with warfarin, but most research indicates that 3-6 g/day does not significantly affect the anticoagulant status of patients taking warfarin. Labels for prescription omega-3 products advise periodic INR monitoring in patients taking anticoagulants.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 19,
+      "supplement_ko": "비타민K",
+      "supplement_en": "Vitamin K",
+      "drug_query": "rivaroxaban",
+      "clinical_fact": "NOAC — 비타민K 영향 적음(c6_p2 거울 케이스)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 1,
+      "snapshot": [
+        {
+          "pair_id": "c19_p1",
+          "item_1_name": "Warfarin (Coumadin)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Vitamin K",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "major",
+          "description": "Vitamin K directly antagonizes the anticoagulant effect of warfarin. Increased vitamin K intake reduces INR, decreasing warfarin's effectiveness and increasing clotting risk. Patients on warfarin should maintain consistent vitamin K intake and avoid supplementation without medical supervision.",
+          "source": "Supplements DB"
+        }
+      ]
+    },
+    {
+      "n": 20,
+      "supplement_ko": "철분",
+      "supplement_en": "Iron",
+      "drug_query": "lisinopril",
+      "clinical_fact": "ACE억제제 — 철분과의 상호작용(클래스 라벨)",
+      "http_status": 200,
+      "status": "has_pairs",
+      "returned_pairs": 3,
+      "snapshot": [
+        {
+          "pair_id": "c20_p1",
+          "item_1_name": "Levothyroxine (thyroid medication)",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Taking iron and levothyroxine at the same time can result in clinically significant reductions in levothyroxine efficacy in some patients. Levothyroxine labels warn that iron supplements can reduce its absorption and advise against administering levothyroxine within 4 hours of iron supplements.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c20_p2",
+          "item_1_name": "Levodopa/Carbidopa",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "Iron supplements reduce the absorption of levodopa (found in Sinemet and Stalevo), possibly through chelation, and levodopa labels warn that iron-containing supplements might reduce the amount of levodopa available to the body and diminish its effectiveness. The cited page gives no separation interval.",
+          "source": "Supplements DB"
+        },
+        {
+          "pair_id": "c20_p3",
+          "item_1_name": "Tetracycline antibiotics",
+          "item_1_rxcui": null,
+          "item_1_type": "drug",
+          "item_2_name": "Iron",
+          "item_2_rxcui": null,
+          "item_2_type": "supplement",
+          "severity": "moderate",
+          "description": "The tetracycline label states that absorption of tetracyclines is impaired by preparations containing iron. The label gives no separation interval.",
+          "source": "Supplements DB"
+        }
+      ]
     }
   ]
 }
