@@ -4,3 +4,4 @@
 node_modules/
 .omc/
 nul
+eval-harness/.cache/

@@ -76,6 +76,75 @@ const LABELS = {
   // c10 프로바이오틱스 × amoxicillin
   c10_p1: { label: "noise", review: "proposed", why: "면역억제제(균혈증 위험) — 질의약물(amoxicillin) 아님" },
   c10_p2: { label: "true_interaction", review: "proposed", why: "amoxicillin ∈ 'Antibiotics'. 항생제가 유산균 사멸 → 2시간 간격" },
+
+  // ── 확장(2026-10-16): DRUG_HINTS 미등록 약물 10케이스. ★ = 약물명이 응답에 없고 클래스로만 존재(rule 실패 후보)
+  // c11 세인트존스워트 × escitalopram  ★
+  c11_p1: { label: "true_interaction", review: "proposed", why: "★escitalopram ∈ SSRI. 라벨 괄호엔 sertraline·fluoxetine·paroxetine·citalopram만 있고 escitalopram 미표기 → 클래스 추론 필요" },
+  c11_p2: { label: "noise", review: "proposed", why: "warfarin — escitalopram 아님" },
+  c11_p3: { label: "noise", review: "proposed", why: "면역억제제 — escitalopram 아님" },
+  c11_p4: { label: "noise", review: "proposed", why: "HIV약 — escitalopram 아님" },
+  c11_p5: { label: "noise", review: "proposed", why: "digoxin — escitalopram 아님" },
+  c11_p6: { label: "noise", review: "proposed", why: "항경련제 — escitalopram 아님" },
+  c11_p7: { label: "noise", review: "proposed", why: "statin — escitalopram 아님" },
+
+  // c12 세인트존스워트 × tacrolimus
+  c12_p1: { label: "noise", review: "proposed", why: "SSRI — tacrolimus 아님" },
+  c12_p2: { label: "noise", review: "proposed", why: "warfarin — tacrolimus 아님" },
+  c12_p3: { label: "true_interaction", review: "proposed", why: "'Immunosuppressants (cyclosporine, tacrolimus)' 괄호에 질의약물 직접 표기" },
+  c12_p4: { label: "noise", review: "proposed", why: "HIV약 — tacrolimus 아님" },
+  c12_p5: { label: "noise", review: "proposed", why: "digoxin — tacrolimus 아님" },
+  c12_p6: { label: "noise", review: "proposed", why: "항경련제 — tacrolimus 아님" },
+  c12_p7: { label: "noise", review: "proposed", why: "statin — tacrolimus 아님" },
+  c12_p8: { label: "true_interaction", review: "proposed", why: "tacrolimus 페어(ODS 출처). p3과 설명 동일 → dedup 대상" },
+
+  // c13 세인트존스워트 × atorvastatin
+  c13_p1: { label: "noise", review: "proposed", why: "SSRI — atorvastatin 아님" },
+  c13_p2: { label: "noise", review: "proposed", why: "warfarin — atorvastatin 아님" },
+  c13_p3: { label: "noise", review: "proposed", why: "면역억제제 — atorvastatin 아님" },
+  c13_p4: { label: "noise", review: "proposed", why: "HIV약 — atorvastatin 아님" },
+  c13_p5: { label: "noise", review: "proposed", why: "digoxin — atorvastatin 아님" },
+  c13_p6: { label: "noise", review: "proposed", why: "항경련제 — atorvastatin 아님" },
+  c13_p7: { label: "true_interaction", review: "proposed", why: "'Statins (simvastatin, atorvastatin)' 괄호에 질의약물 직접 표기" },
+  c13_p8: { label: "true_interaction", review: "proposed", why: "atorvastatin 페어(ODS 출처). p7과 설명 동일 → dedup 대상" },
+
+  // c14 세인트존스워트 × carbamazepine
+  c14_p1: { label: "noise", review: "proposed", why: "SSRI — carbamazepine 아님" },
+  c14_p2: { label: "noise", review: "proposed", why: "warfarin — carbamazepine 아님" },
+  c14_p3: { label: "noise", review: "proposed", why: "면역억제제 — carbamazepine 아님" },
+  c14_p4: { label: "noise", review: "proposed", why: "HIV약 — carbamazepine 아님" },
+  c14_p5: { label: "noise", review: "proposed", why: "digoxin — carbamazepine 아님" },
+  c14_p6: { label: "true_interaction", review: "proposed", why: "'Anti-seizure medications (phenytoin, carbamazepine)' 괄호에 질의약물 직접 표기" },
+  c14_p7: { label: "noise", review: "proposed", why: "statin — carbamazepine 아님" },
+  c14_p8: { label: "true_interaction", review: "proposed", why: "carbamazepine 페어(ODS 출처). p6과 설명 동일 → dedup 대상" },
+
+  // c15 칼슘 × doxycycline  ★
+  c15_p1: { label: "noise", review: "proposed", why: "levothyroxine — doxycycline 아님" },
+  c15_p2: { label: "noise", review: "proposed", why: "quinolone — doxycycline은 tetracycline 계열, 다른 항생제 클래스" },
+  c15_p3: { label: "true_interaction", review: "proposed", why: "★doxycycline ∈ 'Tetracycline antibiotics'. 약물명 미표기 → 클래스 추론 필요. 칼슘 킬레이션 흡수저해" },
+  c15_p4: { label: "noise", review: "proposed", why: "alendronate — doxycycline 아님" },
+
+  // c16 칼슘 × alendronate
+  c16_p1: { label: "noise", review: "proposed", why: "levothyroxine — alendronate 아님" },
+  c16_p2: { label: "noise", review: "proposed", why: "quinolone — alendronate 아님" },
+  c16_p3: { label: "noise", review: "proposed", why: "tetracycline — alendronate 아님" },
+  c16_p4: { label: "true_interaction", review: "proposed", why: "질의약물 alendronate 직접 표기. 다가 양이온 흡수저해" },
+
+  // c17 칼슘 × hydrochlorothiazide  (전부 noise — MedData가 thiazide 페어를 안 돌려줌. 거짓경고(FP)만 재는 케이스)
+  c17_p1: { label: "noise", review: "proposed", why: "levothyroxine — HCTZ 아님" },
+  c17_p2: { label: "noise", review: "proposed", why: "quinolone — HCTZ 아님" },
+  c17_p3: { label: "noise", review: "proposed", why: "tetracycline — HCTZ 아님" },
+  c17_p4: { label: "noise", review: "proposed", why: "alendronate — HCTZ 아님. (c5에선 thiazide 페어가 있었으나 이 질의엔 미반환 — MedData 쪽 필터 거동)" },
+
+  // c18 오메가3 × clopidogrel  (TODO — c1_p2 의 거울: 'blood thinners' 가 항혈소판제를 포함하는가)
+  c18_p1: { label: "TODO", review: "proposed", why: "약사검수: 라벨 'Warfarin and other blood thinners', 설명은 warfarin·INR 중심. clopidogrel(항혈소판제)을 'other blood thinners'로 볼지. c1_p2(warfarin 질의에서 항혈소판제=noise)와 대칭 판단 필요" },
+
+  // c19 비타민K × rivaroxaban  (전부 noise — NOAC 페어(c6_p2)는 이 질의에 미반환)
+  c19_p1: { label: "noise", review: "proposed", why: "'Warfarin (Coumadin)' 페어, 설명도 warfarin 전용. rivaroxaban(NOAC)은 다른 약" },
+
+  // c20 철분 × lisinopril  (전부 noise — ACE억제제 페어(c7_p5)는 이 질의에 미반환)
+  c20_p1: { label: "noise", review: "proposed", why: "levothyroxine — lisinopril 아님" },
+  c20_p2: { label: "noise", review: "proposed", why: "levodopa — lisinopril 아님" },
+  c20_p3: { label: "noise", review: "proposed", why: "tetracycline — lisinopril 아님" },
 };
 
 // 병합 + 무결성 검사
@@ -121,7 +190,8 @@ const out = {
       "라벨은 '매칭 게이트'용(이 페어가 질의약물에 해당하는가)이다. 임상 위험도/근거충분성은 별개 축.",
       "ODS 출처 중복 페어(c1_p4·c3_p9·c6_p3·c7_p6)는 relevance.mjs가 dedup → 채점에 한 쪽만 나타남.",
       "no_pairs(c8 자몽=식품 404)는 매칭 채점 대상 아님 — 시스템 커버리지 공백으로 별도 집계.",
-      "현재 모든 라벨 review=proposed. 약사 검수 후 confirmed로 승격 / TODO(c6_p2) 확정 필요.",
+      "현재 모든 라벨 review=proposed. 약사 검수 후 confirmed로 승격 / TODO(c6_p2·c18_p1) 확정 필요.",
+      "2026-10-16 확장 c11~c20: DRUG_HINTS 미등록 약물. ★c11_p1(escitalopram∈SSRI)·c15_p3(doxycycline∈tetracycline)은 약물명 미표기 클래스 페어. c17·c19·c20은 정답 페어 0(FP만 측정).",
     ],
   },
   cases,

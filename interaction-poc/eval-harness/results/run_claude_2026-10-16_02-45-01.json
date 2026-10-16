@@ -1,0 +1,630 @@
+{
+  "run": {
+    "matcher": "claude",
+    "date": "2026-10-16T02:45:01.732Z",
+    "cases_file": "E:/Projects/yaksaro-care/interaction-poc/eval-harness/golden/cases.json",
+    "n_cases": 10
+  },
+  "metrics": {
+    "precision": 1,
+    "recall": 1,
+    "f1": 1,
+    "f2": 1
+  },
+  "totals": {
+    "tp": 9,
+    "fp": 0,
+    "fn": 0,
+    "tn": 25,
+    "todo_matched": 0,
+    "todo_dropped": 1,
+    "deduped": 4,
+    "unlabeled": 0
+  },
+  "n_cases": 10,
+  "n_scored_cases": 9,
+  "n_no_pairs": 1,
+  "cases": [
+    {
+      "case_id": "c1",
+      "supplement_ko": "오메가3",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 2,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c1_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c1_p2",
+          "c1_p3"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c1_p1": {
+          "score": 10,
+          "reason": "페어의 약물 대상이 와파린 및 기타 항응고제로 명시되어 있어 질의약물에 직접 해당합니다."
+        },
+        "c1_p2": {
+          "score": 1,
+          "reason": "아스피린·클로피도그렐 등 항혈소판제에 대한 페어이며, 와파린은 항응고제로 이 클래스에 속하지 않습니다."
+        },
+        "c1_p3": {
+          "score": 0,
+          "reason": "혈압약에 대한 페어로, 와파린과는 무관합니다."
+        }
+      },
+      "matched_ids": [
+        "c1_p1"
+      ],
+      "dropped_ids": [
+        "c1_p2",
+        "c1_p3"
+      ]
+    },
+    {
+      "case_id": "c2",
+      "supplement_ko": "은행잎추출물",
+      "drug_query": "aspirin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c2_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c2_p1": {
+          "score": 10,
+          "reason": "item_1_name이 aspirin으로 질의약물과 정확히 일치하며, 은행잎과의 병용 시 항혈소판 작용 증강으로 출혈 위험이 증가한다는 내용이므로 해당합니다."
+        }
+      },
+      "matched_ids": [
+        "c2_p1"
+      ],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c3",
+      "supplement_ko": "세인트존스워트",
+      "drug_query": "sertraline",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 7,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c3_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c3_p2",
+          "c3_p3",
+          "c3_p4",
+          "c3_p5",
+          "c3_p6",
+          "c3_p7",
+          "c3_p8"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c3_p1": {
+          "score": 10,
+          "reason": "서트랄린은 SSRI로 항목명에 명시되어 있어 세로토닌 증후군 위험 페어에 직접 해당합니다."
+        },
+        "c3_p2": {
+          "score": 0,
+          "reason": "와파린 등 항응고제에 관한 페어로 서트랄린과 무관합니다."
+        },
+        "c3_p3": {
+          "score": 0,
+          "reason": "경구피임약에 관한 페어로 서트랄린은 해당 클래스가 아닙니다."
+        },
+        "c3_p4": {
+          "score": 0,
+          "reason": "면역억제제에 관한 페어로 서트랄린과 무관합니다."
+        },
+        "c3_p5": {
+          "score": 0,
+          "reason": "HIV 단백분해효소 억제제에 관한 페어로 서트랄린과 무관합니다."
+        },
+        "c3_p6": {
+          "score": 0,
+          "reason": "디곡신에 관한 페어로 서트랄린과 무관합니다."
+        },
+        "c3_p7": {
+          "score": 0,
+          "reason": "항경련제에 관한 페어로 서트랄린은 해당 클래스가 아닙니다."
+        },
+        "c3_p8": {
+          "score": 0,
+          "reason": "스타틴에 관한 페어로 서트랄린과 무관합니다."
+        }
+      },
+      "matched_ids": [
+        "c3_p1"
+      ],
+      "dropped_ids": [
+        "c3_p2",
+        "c3_p3",
+        "c3_p4",
+        "c3_p5",
+        "c3_p6",
+        "c3_p7",
+        "c3_p8"
+      ]
+    },
+    {
+      "case_id": "c4",
+      "supplement_ko": "세인트존스워트",
+      "drug_query": "ethinyl estradiol",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 7,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c4_p3"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c4_p1",
+          "c4_p2",
+          "c4_p4",
+          "c4_p5",
+          "c4_p6",
+          "c4_p7",
+          "c4_p8"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c4_p1": {
+          "score": 0,
+          "reason": "SSRI 계열에 관한 페어로 에티닐에스트라디올과 무관합니다."
+        },
+        "c4_p2": {
+          "score": 0,
+          "reason": "와파린 등 항응고제에 관한 페어로 에티닐에스트라디올은 해당하지 않습니다."
+        },
+        "c4_p3": {
+          "score": 10,
+          "reason": "에티닐에스트라디올은 경구피임약의 핵심 에스트로겐 성분이므로 이 페어의 대상에 해당합니다."
+        },
+        "c4_p4": {
+          "score": 0,
+          "reason": "면역억제제에 관한 페어로 에티닐에스트라디올과 무관합니다."
+        },
+        "c4_p5": {
+          "score": 0,
+          "reason": "HIV 단백분해효소 억제제에 관한 페어로 에티닐에스트라디올은 해당하지 않습니다."
+        },
+        "c4_p6": {
+          "score": 0,
+          "reason": "디곡신에 관한 페어로 에티닐에스트라디올과 무관합니다."
+        },
+        "c4_p7": {
+          "score": 0,
+          "reason": "항경련제에 관한 페어로 에티닐에스트라디올은 해당하지 않습니다."
+        },
+        "c4_p8": {
+          "score": 0,
+          "reason": "스타틴에 관한 페어로 에티닐에스트라디올과 무관합니다."
+        }
+      },
+      "matched_ids": [
+        "c4_p3"
+      ],
+      "dropped_ids": [
+        "c4_p1",
+        "c4_p2",
+        "c4_p4",
+        "c4_p5",
+        "c4_p6",
+        "c4_p7",
+        "c4_p8"
+      ]
+    },
+    {
+      "case_id": "c5",
+      "supplement_ko": "칼슘",
+      "drug_query": "ciprofloxacin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 4,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c5_p2"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c5_p1",
+          "c5_p3",
+          "c5_p4",
+          "c5_p5"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c5_p1": {
+          "score": 0,
+          "reason": "레보티록신에 관한 페어로 시프로플록사신과 무관합니다."
+        },
+        "c5_p2": {
+          "score": 10,
+          "reason": "시프로플록사신은 플루오로퀴놀론계 항생제로 칼슘과의 킬레이트 형성 대상에 해당합니다."
+        },
+        "c5_p3": {
+          "score": 1,
+          "reason": "테트라사이클린계 항생제 페어이며 시프로플록사신은 이 계열에 속하지 않습니다."
+        },
+        "c5_p4": {
+          "score": 0,
+          "reason": "비스포스포네이트에 관한 페어로 시프로플록사신과 무관합니다."
+        },
+        "c5_p5": {
+          "score": 0,
+          "reason": "티아지드 이뇨제에 관한 페어로 시프로플록사신과 무관합니다."
+        }
+      },
+      "matched_ids": [
+        "c5_p2"
+      ],
+      "dropped_ids": [
+        "c5_p1",
+        "c5_p3",
+        "c5_p4",
+        "c5_p5"
+      ]
+    },
+    {
+      "case_id": "c6",
+      "supplement_ko": "비타민K",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 1,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c6_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [
+          "c6_p2"
+        ],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c6_p1": {
+          "score": 10,
+          "reason": "페어의 약물 대상이 와파린 자체이며 비타민 K가 와파린의 항응고 효과를 직접 길항한다고 기술되어 있습니다."
+        },
+        "c6_p2": {
+          "score": 1,
+          "reason": "대상은 NOAC(리바록사반, 아픽사반, 다비가트란)이며, 와파린은 작용기전이 다르다는 대조 목적으로만 언급되었습니다."
+        }
+      },
+      "matched_ids": [
+        "c6_p1"
+      ],
+      "dropped_ids": [
+        "c6_p2"
+      ]
+    },
+    {
+      "case_id": "c7",
+      "supplement_ko": "철분",
+      "drug_query": "levothyroxine",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 4,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 1,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c7_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c7_p2",
+          "c7_p3",
+          "c7_p4",
+          "c7_p5"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c7_p1": {
+          "score": 10,
+          "reason": "항목명이 레보티록신으로 질의약물과 직접 일치합니다."
+        },
+        "c7_p2": {
+          "score": 0,
+          "reason": "플루오로퀴놀론계 항생제에 관한 페어로 레보티록신과 무관합니다."
+        },
+        "c7_p3": {
+          "score": 0,
+          "reason": "테트라사이클린계 항생제에 관한 페어로 레보티록신과 무관합니다."
+        },
+        "c7_p4": {
+          "score": 0,
+          "reason": "레보도파/카르비도파에 관한 페어로 레보티록신과 무관합니다."
+        },
+        "c7_p5": {
+          "score": 0,
+          "reason": "ACE 억제제에 관한 페어로 레보티록신은 이 계열에 속하지 않습니다."
+        }
+      },
+      "matched_ids": [
+        "c7_p1"
+      ],
+      "dropped_ids": [
+        "c7_p2",
+        "c7_p3",
+        "c7_p4",
+        "c7_p5"
+      ]
+    },
+    {
+      "case_id": "c8",
+      "supplement_ko": "자몽",
+      "drug_query": "simvastatin",
+      "status": "no_pairs",
+      "scored": false,
+      "reason": "no_pairs (MedData 미수록 — 매칭할 페어 없음)",
+      "counts": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0
+      },
+      "metrics": {
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "f2": null
+      },
+      "buckets": {
+        "tp": [],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {},
+      "matched_ids": [],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c9",
+      "supplement_ko": "코엔자임Q10",
+      "drug_query": "warfarin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c9_p1"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c9_p1": {
+          "score": 10,
+          "reason": "item_1_name이 warfarin 자체이며, CoQ10이 와파린의 효과를 감소시켜 INR을 낮출 수 있다는 직접적인 상호작용 페어입니다."
+        }
+      },
+      "matched_ids": [
+        "c9_p1"
+      ],
+      "dropped_ids": []
+    },
+    {
+      "case_id": "c10",
+      "supplement_ko": "프로바이오틱스",
+      "drug_query": "amoxicillin",
+      "status": "has_pairs",
+      "scored": true,
+      "counts": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1,
+        "todo_matched": 0,
+        "todo_dropped": 0,
+        "deduped": 0,
+        "unlabeled": 0
+      },
+      "metrics": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "f2": 1
+      },
+      "buckets": {
+        "tp": [
+          "c10_p2"
+        ],
+        "fp": [],
+        "fn": [],
+        "tn": [
+          "c10_p1"
+        ],
+        "todo_matched": [],
+        "todo_dropped": [],
+        "unlabeled": []
+      },
+      "scored_detail": {
+        "c10_p1": {
+          "score": 0,
+          "reason": "아목시실린은 면역억제제가 아니므로 이 페어의 약물 대상에 해당하지 않습니다."
+        },
+        "c10_p2": {
+          "score": 10,
+          "reason": "아목시실린은 페니실린계 항생제로 Antibiotics 클래스의 구성원입니다."
+        }
+      },
+      "matched_ids": [
+        "c10_p2"
+      ],
+      "dropped_ids": [
+        "c10_p1"
+      ]
+    }
+  ]
+}
