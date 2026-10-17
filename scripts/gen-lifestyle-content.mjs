@@ -21,7 +21,7 @@ readFileSync(resolve(process.cwd(), '.env.local'), 'utf-8').split('\n').forEach(
 const DRY = process.argv.includes('--dry')
 const supabase = createClient(env['NEXT_PUBLIC_SUPABASE_URL'], env['SUPABASE_SERVICE_ROLE_KEY'], { auth: { persistSession: false } })
 const anthropic = new Anthropic({ apiKey: env['ANTHROPIC_API_KEY'] })
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-sonnet-5-5'
 
 // canonical: src/lib/lifestyle-info/safety-frame.ts (LIFESTYLE_SAFETY_SYSTEM)
 const SAFETY_SYSTEM = [

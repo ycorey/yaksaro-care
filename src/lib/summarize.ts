@@ -1,6 +1,6 @@
 // PubMed 초록 → 한국어 요약 (Claude). 약사로케어 상호작용 체커 + 블로그 공용.
 //
-// 모델은 claude-sonnet-4-6(사용자 지정). 단일 호출로 논문별 요약 + 전체 핵심 1줄을
+// 모델은 claude-sonnet-5-5(2026-10-17 4-6 에서 올림). 단일 호출로 논문별 요약 + 전체 핵심 1줄을
 // 구조화 출력(output_config.format)으로 받아 JSON 파싱 실패 위험을 없앤다.
 // 요약은 비싸므로 호출부(API route)에서 캐싱한다. 여기서는 순수 변환만 담당.
 //
@@ -12,7 +12,7 @@ import type { PubmedResult } from '@/lib/pubmed'
 import { logger } from '@/lib/logger'
 import { LIFESTYLE_SAFETY_SYSTEM } from '@/lib/lifestyle-info/safety-frame'
 
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-sonnet-5-5'
 
 export type EvidenceContext = 'interaction' | 'blog' | 'lifestyle'
 
@@ -85,7 +85,7 @@ export async function summarizeForKorean(
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 2000,
-    thinking: { type: 'disabled' }, // 요약은 단순 작업 → 비용·지연 절감
+    // thinking 옵션은 넣지 않는다 — 5.5 에서 { type: 'disabled' } 는 400. 비용·지연은 effort low 로 잡는다.
     output_config: {
       effort: 'low',
       format: { type: 'json_schema', schema: SUMMARY_SCHEMA },
