@@ -12,7 +12,8 @@ export default function RefillCard({ items, hasB2BPharmacy = false, isSelfMember
         {items.map(it => (
           <div key={it.id} className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white bg-yc-warning rounded-full px-2.5 py-0.5 flex-shrink-0">
+              {/* 앰버 위 흰 글씨 2.09:1 → 다크 잉크 7.6:1 (today-timeline 의 '지금 먹기' 와 같은 결정) */}
+              <span className="text-sm font-bold text-yc-neutral900 bg-yc-warning rounded-full px-2.5 py-0.5 flex-shrink-0">
                 {it.dDay === 0 ? '오늘' : `D-${it.dDay}`}
               </span>
               <span className="text-base font-bold text-yc-neutral900 truncate">{it.label}</span>

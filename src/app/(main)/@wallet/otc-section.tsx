@@ -17,8 +17,13 @@ export default function OtcSection({
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
+  // 원탭 즉시 삭제였다(12차 평가) — X 를 누르면 칩 안에서 [삭제][취소] 로 한 번 더 묻는다.
+  // "되돌리기" 토스트 대신 확인 단계인 이유: DELETE 는 deleted_at 소프트 삭제인데 PATCH 가 그 복원을
+  // 지원하지 않고(ended_at 만), 실버 사용자에게는 사라진 뒤 되돌리기보다 지우기 전 확인이 분명하다.
+  const [confirmId, setConfirmId] = useState<string | null>(null)
 
   async function deleteMed(id: string) {
+    setConfirmId(null)
     setDeletingId(id)
     try {
       const res = await fetch(`/api/medications/${id}`, { method: 'DELETE' })
@@ -67,14 +72,32 @@ export default function OtcSection({
               {med.scheduleLabel && (
                 <span className="text-xs font-semibold text-yc-green700 bg-yc-green50 rounded-full px-1.5 py-0.5 flex-shrink-0">{med.scheduleLabel}</span>
               )}
-              <button
-                onClick={() => deleteMed(med.id)}
-                disabled={deletingId === med.id}
-                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-yc-neutral500 active:text-yc-error disabled:opacity-50"
-                aria-label={`${med.name} 삭제`}
-              >
-                <X size={16} />
-              </button>
+              {confirmId === med.id ? (
+                <span className="flex items-center gap-1 -my-2.5 -mr-3" role="group" aria-label={`${med.name} 삭제 확인`}>
+                  <button
+                    onClick={() => deleteMed(med.id)}
+                    disabled={deletingId === med.id}
+                    className="min-h-[44px] px-3 rounded-full text-sm font-bold text-white bg-yc-error active:opacity-90 disabled:opacity-50"
+                  >
+                    {deletingId === med.id ? '삭제 중…' : '삭제'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmId(null)}
+                    className="min-h-[44px] px-3 rounded-full text-sm font-semibold text-yc-neutral600 active:bg-yc-neutral100"
+                  >
+                    취소
+                  </button>
+                </span>
+              ) : (
+                <button
+                  onClick={() => setConfirmId(med.id)}
+                  disabled={deletingId === med.id}
+                  className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-yc-neutral500 active:text-yc-error disabled:opacity-50"
+                  aria-label={`${med.name} 삭제`}
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           ))}
         </div>

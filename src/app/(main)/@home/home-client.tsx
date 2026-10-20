@@ -70,7 +70,9 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
   // 약은 있는데 오늘 배정 끼니가 0인 상태 — 등록 당일 늦은 시각 등록(slotsApplicableToday),
   // PRN 전용, weekly 비해당 요일. 이때 0>=0 을 "모두 완료"로 읽으면 한 알도 안 먹은
   // 사용자를 축하하게 된다(리뷰 실측) → 완료 카드가 아니라 별도 안내 카드로 분기.
-  // medCount===0(약 없음) 경로는 기존 동작 그대로 둔다.
+  // medCount===0(약 없음)도 같은 함정이었다 — 신규 사용자가 "오늘의 0번 복약을 모두 완료" 를
+  // 보고 끝났다(12차 평가). 이때는 상태 카드가 아니라 **첫 약 등록 CTA** 를 보이고 /medications/add 로 보낸다.
+  const noMeds       = medCount === 0
   const nothingToday = totalSlots === 0 && medCount > 0
   const allDone   = doneCount >= totalSlots
 
@@ -100,7 +102,7 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
         <Link href="/wallet"
           className="block bg-yc-warningBg border border-yc-warning/30 rounded-yc-xl px-5 py-4 active:scale-[0.99] transition-transform">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-white bg-yc-warning rounded-full px-2 py-0.5">{refillHook.dDay === 0 ? '오늘' : `D-${refillHook.dDay}`}</span>
+            <span className="text-xs font-bold text-yc-neutral900 bg-yc-warning rounded-full px-2 py-0.5">{refillHook.dDay === 0 ? '오늘' : `D-${refillHook.dDay}`}</span>
             <span className="text-sm font-bold text-yc-warningText">곧 떨어지는 약</span>
           </div>
           <p className="text-sm text-yc-neutral800 break-keep">
@@ -113,8 +115,18 @@ export default function HomeClient({ medCount, doneMeals, totalSlots, activeSlot
       <NotificationPrompt />
 
       {/* 상태 알림 카드 → 오늘복약으로 이동 */}
-      <Link href="/today" className="block active:scale-[0.99] transition-transform">
-        {nothingToday ? (
+      <Link href={noMeds ? '/medications/add' : '/today'} className="block active:scale-[0.99] transition-transform">
+        {noMeds ? (
+          /* 약 0개 — 축하 카드 대신 시작 안내. 카드 전체가 약 추가로 가는 링크다 */
+          <div className="rounded-yc-lg p-5 text-white bg-yc-status-next">
+            <p className="text-white/80 text-sm font-medium">시작하기</p>
+            <p className="font-display text-[1.375rem] mt-1">아직 등록된 약이 없어요</p>
+            <p className="text-white/80 text-sm mt-3">처방전 사진이나 약 이름으로 첫 약을 등록하면 복약을 챙겨드려요</p>
+            <span className="mt-4 inline-flex items-center justify-center gap-1.5 bg-white text-yc-green700 font-bold text-base rounded-yc-md px-5 min-h-[52px]">
+              + 약 추가하기
+            </span>
+          </div>
+        ) : nothingToday ? (
           /* 오늘 배정 끼니 0 (등록 당일 늦은 등록·필요시 전용·요일 비해당) — 완료 아님 */
           <div className="rounded-yc-lg p-5 text-white bg-yc-status-next">
             <p className="text-white/80 text-sm font-medium">오늘 복약</p>
