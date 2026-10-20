@@ -246,3 +246,20 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
     화면에 그릴 때만 `displayDrugName()` 으로 뗀다(지갑·오늘·전달·이력·약사 환자·요청·추가 폼·검색 드롭다운 9곳).
     상비약 cleanName 은 마지막 '(' 를 써서 `(케토프로펜) 수출명:` 의 성분 괄호까지 지웠다 → 닫히지 않은 괄호 기준으로 보완.
     운영 1,384건 전수: 683건 정리, 701건(전부 `(수출용)`) 의도대로 유지, 이상 0.
+
+- **2026-10-20 — 12차 평가 후속: §23 동의 게이트 보강 · 073 GRANT 전면 명시 · 처리방침 이메일 로그인 명시** (브랜치 `fix/consent-gate`, 3커밋)
+  - 평가(10-19, UX 76·기술 78·제품 80·Critical 0)가 지목한 **동의 누락**: cron 2종(복약·리필)이 `alarm_enabled` 만 보고 미동의 사용자에게도 발송 ·
+    `addMedication`·`saveOcrMedications`·`/api/ocr/product`·`/api/pharmacy/request` 가 동의를 보지 않음 → `src/lib/push-eligibility.ts`
+    (`consent_health === true` 만 인정, null·누락은 미동의) · `assertHealthConsentForAction`(액션용: 미동의 redirect `/consent?next=`, 판독 불가 throw) ·
+    `requireHealthConsent` 2곳 추가. 단위 5+5, 전체 206/206.
+  - `next` 경로 판정 4곳(auth/callback · consent 2 · login)이 `startsWith('/') && !startsWith('//')` 를 복사해 쓰고 있었다 → `src/lib/safe-next.ts`
+    (WHATWG URL 파서로 origin 비교)로 통일. 역슬래시(`/\evil.com`)·탭·개행 우회를 테스트로 고정.
+  - **073_explicit_table_grants** — public 34개 표 GRANT 전부 명시(Supabase 10-30 변경: 새 표 자동 GRANT 중단 → 재생성 환경에서 옛 표도 빠짐).
+    운영 변경은 **anon 회수**뿐 — 남는 anon 은 `ter_requests`·`waitlist` INSERT. 근거: `src/` 세션 없는 읽기 0건 · 이 ref 를 쓰는 외부 코드는
+    `yaksaro-map/site/ter.html` 의 POST ter_requests 1건(로컬 전 프로젝트 grep) · 정책 없는 표·마스터 쓰기 전부 admin. 참조 마스터 anon SELECT 도 소비자 0 이라 회수.
+    ⚠️ `profiles`·`pharmacies` 는 046 의 **컬럼 단위 UPDATE** 를 지키기 위해 SELECT 만 선언(테이블 REVOKE 는 컬럼 권한까지 지운다).
+  - `e2e/rls-readonly-qa.mjs` 에 **G 단언**(anon 토큰이 환자 표 5종에서 42501) — 카나리 계정 없이 돌도록 로그인 앞으로 이동. 로컬 실측 0/5 "073 미적용" 정확히 검출.
+    **073 을 SQL Editor 에서 적용하기 전까지 CI `rls-gate` 는 빨간불(의도된 신호).**
+  - 처리방침 §2 계정 정보에 이메일·비밀번호 로그인 명시, §15 이력 추가, 시행일 **2026-11-01 제안**(사업자 확정 대기). 네이버는 `login-client.tsx` 주석이라 제외 —
+    인계 파일의 "네이버·이메일 추가" 중 네이버는 오류였다.
+  - 미착수(평가 High): 로그인 레이트리밋(`login/actions.ts:36-41`) · 앰버 대비 2.09:1 · 약 0개 홈 문구+CTA(`home-client.tsx:74-75`) · OTC 삭제 확인(`otc-section.tsx:70-77`) · KST 유틸 통일(UTC 10곳).
