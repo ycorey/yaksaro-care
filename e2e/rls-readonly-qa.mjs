@@ -31,11 +31,6 @@ import { loadPublicEnv } from './_env.mjs'
 const EMAIL = process.env.SMOKE_PHARMACIST_EMAIL
 const PASSWORD = process.env.SMOKE_PHARMACIST_PASSWORD
 
-if (!EMAIL || !PASSWORD) {
-  console.log('⚠️  SMOKE_PHARMACIST_EMAIL/PASSWORD 미설정 — 읽기 전용 RLS 게이트를 건너뜁니다.')
-  process.exit(0)
-}
-
 const { URL_, ANON } = loadPublicEnv()
 
 const results = []
@@ -43,6 +38,11 @@ const check = (name, cond, extra = '') => {
   results.push({ name, pass: !!cond })
   console.log(`  ${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  — ' + extra : ''}`)
   return !!cond
+}
+const report = (failedHard) => {
+  const pass = results.filter(r => r.pass).length
+  console.log(`\n${'─'.repeat(56)}\n읽기 전용 RLS 게이트: ${pass}/${results.length} PASS`)
+  process.exit(failedHard || pass !== results.length ? 1 : 0)
 }
 
 // 닫힌 표를 읽는 방법은 두 가지 결과를 낸다:
@@ -61,6 +61,25 @@ async function closedTable(sb, table) {
 const sb = createClient(URL_, ANON, { auth: { autoRefreshToken: false, persistSession: false } })
 
 let failedHard = false
+
+// ── 로그인 전: anon 토큰 GRANT 단언 (073) ─────────────────────────
+// 카나리 계정이 필요 없는 유일한 단언이라 로그인 **앞**에 둔다 — 시크릿 없는 로컬에서도 돈다.
+// 정책이 0행을 주는 것과 GRANT 가 없는 것은 다르다. 전자는 정책 한 줄(`using (true)`)이
+// 잘못 들어오면 그 순간 열리고, 후자는 그래도 닫혀 있다. 073 이 환자 표에서 anon 을 회수했으므로
+// 여기서는 "0행" 을 통과로 보지 않는다 — 42501 만 통과다. 073 적용 전에는 이 단언이 빨간불이고,
+// 그게 SQL Editor 에서 073 을 돌리라는 신호다(2026-10-30 전).
+for (const table of ['profiles', 'user_medications', 'user_prescriptions', 'medication_check_logs', 'push_subscriptions']) {
+  const r = await sb.from(table).select('*', { count: 'exact', head: true })
+  const denied = !!r.error && (r.error.code === '42501' || /permission denied/i.test(r.error.message))
+  if (!check(`G anon 토큰에 ${table} GRANT 가 없다 (073)`, denied,
+        r.error ? r.error.message : `${r.count ?? 0}행 — 정책만 막고 있다, 073 미적용`)) failedHard = true
+}
+
+if (!EMAIL || !PASSWORD) {
+  console.log('⚠️  SMOKE_PHARMACIST_EMAIL/PASSWORD 미설정 — 약사 토큰 단언은 건너뛰고 anon 단언만 보고합니다.')
+  report(failedHard)
+}
+
 try {
   // ── 로그인 ──────────────────────────────────────────────────────
   const { data: auth, error: authErr } = await sb.auth.signInWithPassword({ email: EMAIL, password: PASSWORD })
@@ -130,6 +149,4 @@ try {
   await sb.auth.signOut().catch(() => {})
 }
 
-const pass = results.filter(r => r.pass).length
-console.log(`\n${'─'.repeat(56)}\n읽기 전용 RLS 게이트: ${pass}/${results.length} PASS`)
-process.exit(failedHard || pass !== results.length ? 1 : 0)
+report(failedHard)
