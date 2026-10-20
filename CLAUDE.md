@@ -152,7 +152,7 @@ DB 마이그레이션은 CLI/psql 없이 Supabase SQL Editor에서 직접 실행
 아래 "최근" 목록만 5건으로 유지한다.
 
 **최근:**
-- **2026-10-20** — 12차 평가 후속(`fix/consent-gate`) — **§23 동의 게이트** 를 cron 2종·약 추가 액션 2곳·API 2곳에 (`push-eligibility.ts`·`assertHealthConsentForAction`) · `next` 판정 4곳 → `safe-next.ts`(URL 파서) · **073** 34표 GRANT 명시 + anon 회수(남는 anon = ter·waitlist INSERT) → `rls-gate` 에 anon 42501 단언, **073 적용 전엔 빨간불** · 처리방침 이메일 로그인 명시(시행일 11-01 제안)
+- **2026-10-20** — 12차 평가 후속(`fix/consent-gate`) — **§23 동의 게이트** 를 cron 2종·약 추가 액션 2곳·API 2곳에 (`push-eligibility.ts`·`assertHealthConsentForAction`) · `next` 판정 4곳 → `safe-next.ts`(URL 파서) · **073** 34표 GRANT 명시 + anon 회수(남는 anon = ter·waitlist INSERT) → `rls-gate` 에 anon 42501 단언, **073 적용 전엔 빨간불** · 처리방침 이메일 로그인 명시(시행일 11-01 제안) · **평가 High 5건** — 앰버 대비·약 0개 홈 CTA·OTC 삭제 확인·**"오늘" 날짜 키를 KST 로 통일(`src/lib/kst-date.ts`, 화면은 UTC·cron 은 KST 였다)**·이메일 로그인 레이트리밋(**074**)
 - **2026-10-12** — 일반약 **"바코드로 찾기" 부활** — 13.3% 는 데이터가 아니라 연결 키(EDI) 탓이었다 → 품목기준코드로 **94.8%** · `drug_barcodes`(072) 58,163행 운영 적재 · 건기식은 범위 밖
 - **2026-09-19** — **Play 프로덕션 제출** — 조직 계정 → 앱 생성 → 등록정보·선언 10종·Data safety → 내부 테스트 1(1.0.0) → `assetlinks` 병기(PR #84) → 1차 8건 **당일 승인** → 알림 실기기 수신 확인 → **프로덕션(대한민국) "검토 중"**. 통지: ycorey@gmail.com
 - **2026-09-04~05** — 건강 앱 = **조직 계정 + D-U-N-S 필수** 확정 · 스토어 스크린샷 5컷·특성그래픽 생성 파이프라인(`scripts/store-assets/`)

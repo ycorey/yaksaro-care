@@ -262,4 +262,11 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
     **073 을 SQL Editor 에서 적용하기 전까지 CI `rls-gate` 는 빨간불(의도된 신호).**
   - 처리방침 §2 계정 정보에 이메일·비밀번호 로그인 명시, §15 이력 추가, 시행일 **2026-11-01 제안**(사업자 확정 대기). 네이버는 `login-client.tsx` 주석이라 제외 —
     인계 파일의 "네이버·이메일 추가" 중 네이버는 오류였다.
-  - 미착수(평가 High): 로그인 레이트리밋(`login/actions.ts:36-41`) · 앰버 대비 2.09:1 · 약 0개 홈 문구+CTA(`home-client.tsx:74-75`) · OTC 삭제 확인(`otc-section.tsx:70-77`) · KST 유틸 통일(UTC 10곳).
+  - **같은 날 후속 — 평가 High 5건 전부 처리(6번), 3커밋:** 앰버(#E8A817) 위 흰 글씨 3곳 → `text-yc-neutral900`(7.6:1, 토큰 무변경) · 약 0개 홈은 축하 카드 대신
+    "아직 등록된 약이 없어요 + 약 추가하기" CTA(`/medications/add`) · OTC 칩 X → 칩 안 [삭제][취소] 2단계(PATCH 가 `deleted_at` 복원을 지원하지 않아 되돌리기 토스트 대신).
+    **KST 날짜 규약 통일** — `src/lib/kst-date.ts`(kstDateOf·todayKST·addDays·daysBetween) 신설, UTC 날짜 키 13곳 교체(화면 3·API 4·액션 1·클라 1·순응도 2·약지갑 D-day·cron 복제본),
+    `slotsApplicableToday` 등록일 판정도 KST 로. 화면/API 는 UTC(하루가 KST 09:00 에 바뀜)·cron 은 KST 였다 — 아침 8시 체크가 전날 행에 남던 원인. 운영 `medication_schedules` 25행·
+    `medication_check_logs` 53행 모두 두 규약이 일치(사용이 09시 이후만)해 **데이터 이전 없음**.
+    **로그인 레이트리밋** — `074_login_attempts.sql`(텍스트 키 카운터 RPC, 047 꼴; `api_quota` 는 user_id FK 라 로그인 전엔 못 씀) + `src/lib/login-rate-limit.ts`((IP,이메일) 10회·IP 30회/15분,
+    sha256 키라 원문 미저장, 계측 장애·074 미적용 시 fail-open) → `signInWithEmail`. 단위 214/214 · tsc 0 · lint 0.
+    범위 밖: `pharmacy/login` 은 클라이언트가 직접 signIn 하므로 서버 액션 전환이 선행돼야 레이트리밋이 붙는다.
