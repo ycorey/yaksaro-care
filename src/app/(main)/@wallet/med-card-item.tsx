@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { displayDrugName } from '@/lib/drug-name-match'
 import { buildDosage } from '@/lib/dosage'
+import { todayKST } from '@/lib/kst-date'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Flask, Pill, Check } from '@phosphor-icons/react'
@@ -199,7 +200,7 @@ export default function MedCardItem(p: MedCardItemProps) {
   async function endMed() {
     setBusy(true)
     try {
-      const today = new Date().toISOString().slice(0, 10)
+      const today = todayKST()   // 종료일도 한국 날짜 규약(kst-date.ts) — 밤 9시~자정 사이 종료가 내일로 적히지 않게
       const res = await fetch(`/api/medications/${p.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

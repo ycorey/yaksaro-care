@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HomeClient from './home-client'
 import { ALL_MEALS, defaultMealKeys, slotsApplicableToday, isMeal } from '@/lib/meal-slots'
+import { todayKST } from '@/lib/kst-date'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
@@ -17,7 +18,7 @@ export default async function HomePage() {
 
   const { active, members } = await getActiveMember(supabase, user.id)
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = todayKST()   // 날짜 키 규약: kst-date.ts
 
   const [{ data: meds }, { data: checks }, { data: profile }] = await Promise.all([
     supabase

@@ -4,6 +4,7 @@ import { type Meal, ALL_MEALS, isMeal } from '@/lib/meal-slots'
 import { getActiveMember } from '@/lib/active-member'
 import { applyMemberScope } from '@/lib/member'
 import { dbError } from '@/lib/api-error'
+import { todayKST } from '@/lib/kst-date'
 
 const TOTAL = ALL_MEALS.length // 4 (아침/점심/저녁/자기 전)
 
@@ -26,9 +27,8 @@ function lastDayOfMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate()
 }
 
-function todayStr() {
-  return new Date().toISOString().split('T')[0]
-}
+// 날짜 키 규약: kst-date.ts — check_date 와 같은 한국 날짜
+const todayStr = todayKST
 
 // GET /api/calendar?year=2026&month=6
 export async function GET(request: Request) {

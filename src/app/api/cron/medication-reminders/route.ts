@@ -6,16 +6,13 @@ import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
 import { cronDbFailure, settledFailures, type CronFailure } from '@/lib/cron-guard'
 import { canReceiveHealthPush } from '@/lib/push-eligibility'
+import { todayKST } from '@/lib/kst-date'
 import { recordNotificationRun } from '@/lib/notification-run'
 import { logger } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// KST(UTC+9) 기준 오늘 날짜
-function todayKST(): string {
-  return new Date(Date.now() + 9 * 3600_000).toISOString().split('T')[0]
-}
 
 /**
  * 복약 리마인더 cron — 끼니별로 호출(?meal=morning|afternoon|evening|bedtime).

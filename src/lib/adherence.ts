@@ -1,3 +1,5 @@
+import { kstDateOf } from './kst-date.ts'
+
 // 유효 끼니 키 (meal-slots.ts의 Meal과 동일 — 무의존 로딩 위해 로컬 정의)
 export const VALID_MEALS = new Set(['morning', 'afternoon', 'evening', 'bedtime'])
 
@@ -9,10 +11,9 @@ export type AdherenceSummary = {
 }
 
 const DAY = 86_400_000
-const utcDate = (ms: number) => new Date(ms).toISOString().split('T')[0]
 
 // append-only 로그 → (날짜,끼니)별 최신 상태 압축 → 일별 done 집계.
-// logs는 logged_at 오름차순 전제(나중 행이 최신). check_date는 UTC 규약.
+// logs는 logged_at 오름차순 전제(나중 행이 최신). check_date 는 한국 날짜 규약(kst-date.ts).
 export function summarizeAdherence(
   logs: { check_date: string; meal_time: string; is_checked: boolean }[],
   periodDays: number,
@@ -32,7 +33,7 @@ export function summarizeAdherence(
   let recordedDays = 0
   let checkedSlots = 0
   for (let i = 0; i < periodDays; i++) {
-    const d = utcDate(startMs + i * DAY)
+    const d = kstDateOf(startMs + i * DAY)
     const mm = latestByDayMeal.get(d)
     let done = 0
     if (mm) for (const v of mm.values()) if (v) done++

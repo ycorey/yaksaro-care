@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger'
 import { getActiveMember } from '@/lib/active-member'
 import { dbError } from '@/lib/api-error'
 import { requireHealthConsent } from '@/lib/require-consent'
+import { todayKST } from '@/lib/kst-date'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '약품명 없음' }, { status: 400 })
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayKST()
 
   // drugs 매칭: EDI 보험코드 → edi_code 컬럼 ilike(콤마 다중코드 대응) → 이름 ilike 폴백
   const rows = await Promise.all(

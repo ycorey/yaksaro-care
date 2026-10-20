@@ -1,9 +1,7 @@
 export type DueBucket = 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'later'
 
-// KST 오늘 날짜 (YYYY-MM-DD)
-export function todayKST(): string {
-  return new Date(Date.now() + 9 * 3600_000).toISOString().split('T')[0]
-}
+// KST 오늘 날짜 (YYYY-MM-DD) — 구현은 kst-date.ts 로 옮겼다. 기존 import 경로 유지용 재수출.
+export { todayKST } from './kst-date.ts'
 
 // 마감일(YYYY-MM-DD)과 기준일(YYYY-MM-DD)의 일수 차로 버킷 분류.
 // 둘 다 UTC 자정으로 파싱해 순수 일수차를 낸다(타임존 영향 제거).
