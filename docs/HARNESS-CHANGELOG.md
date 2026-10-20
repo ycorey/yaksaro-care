@@ -270,3 +270,6 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
     **로그인 레이트리밋** — `074_login_attempts.sql`(텍스트 키 카운터 RPC, 047 꼴; `api_quota` 는 user_id FK 라 로그인 전엔 못 씀) + `src/lib/login-rate-limit.ts`((IP,이메일) 10회·IP 30회/15분,
     sha256 키라 원문 미저장, 계측 장애·074 미적용 시 fail-open) → `signInWithEmail`. 단위 214/214 · tsc 0 · lint 0.
     범위 밖: `pharmacy/login` 은 클라이언트가 직접 signIn 하므로 서버 액션 전환이 선행돼야 레이트리밋이 붙는다.
+  - **073·074 운영 적용(사용자 승인, MCP apply_migration)** — 적용 후 anon 잔여 권한 = `ter_requests`·`waitlist` INSERT 두 줄 · 046 컬럼 UPDATE 보존(profiles 14·pharmacies 4) ·
+    `consume_login_attempt` 1→2 확인. 가드가 5건 거짓 FAIL → **HEAD 응답은 본문이 없어 supabase-js 오류가 `{message:''}`** 라 42501 을 못 읽는다. anon G 단언·약사 `closedTable`
+    둘을 GET 1행으로 교체(후자는 073 이 interactions 의 authenticated GRANT 를 회수해 CI 에서 같은 거짓 FAIL 이 날 자리) → 로컬 **5/5**.
