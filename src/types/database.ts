@@ -1304,6 +1304,10 @@ export type Database = {
       }
     }
     Functions: {
+      consume_login_attempt: {
+        Args: { p_key: string; p_window_sec: number }
+        Returns: number
+      }
       consume_quota: {
         Args: { p_bucket: string; p_user: string; p_window_sec: number }
         Returns: number
