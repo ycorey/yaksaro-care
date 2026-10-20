@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ConsentClient from './consent-client'
+import { safeNextPath } from '@/lib/safe-next'
 
 export const metadata = { title: '동의 · 약사로케어' }
 
@@ -40,8 +41,7 @@ export default async function ConsentPage({
     .is('deleted_at', null)
 
   // 오픈 리다이렉트 방지 — auth/callback 과 같은 규칙(내부 경로만).
-  const raw = (await searchParams).next
-  const next = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
+  const next = safeNextPath((await searchParams).next)
 
   return (
     <ConsentClient

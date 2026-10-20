@@ -5,6 +5,7 @@ import { sendPushToUser } from '@/lib/push'
 import { getActiveMember } from '@/lib/active-member'
 import { todayKST } from '@/lib/request-schedule'
 import { dbError } from '@/lib/api-error'
+import { requireHealthConsent } from '@/lib/require-consent'
 
 // 단골약국(B2B) 비임상 요청. 사용자 토큰+RLS. pharmacy_id는 서버에서 본인 단골약국으로 강제.
 const TYPES = ['callback', 'dispense_prep', 'pickup', 'consult_booking', 'stock_inquiry'] as const
@@ -28,6 +29,10 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // §23 — 요청 메모(note)는 복약 내용을 담아 약국으로 넘어간다. 동의 없이 만들지 않는다.
+  const consent = await requireHealthConsent(supabase, user.id)
+  if (!consent.ok) return consent.response
 
   const body = await request.json().catch(() => ({})) as { type?: string; note?: string; contact_phone?: string }
   if (!body.type || !TYPES.includes(body.type as typeof TYPES[number])) {

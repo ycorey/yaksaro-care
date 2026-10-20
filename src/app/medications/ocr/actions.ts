@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getActiveMember } from '@/lib/active-member'
+import { assertHealthConsentForAction } from '@/lib/require-consent'
 
 export type ConfirmItem = {
   drug_id:       string | null
@@ -16,6 +17,7 @@ export async function saveOcrMedications(items: ConfirmItem[]) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await assertHealthConsentForAction(supabase, user.id, '/medications/ocr')
 
   const { active } = await getActiveMember(supabase, user.id)
 
