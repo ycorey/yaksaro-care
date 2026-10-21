@@ -247,6 +247,16 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
     상비약 cleanName 은 마지막 '(' 를 써서 `(케토프로펜) 수출명:` 의 성분 괄호까지 지웠다 → 닫히지 않은 괄호 기준으로 보완.
     운영 1,384건 전수: 683건 정리, 701건(전부 `(수출용)`) 의도대로 유지, 이상 0.
 
+- **2026-10-16 — 매칭 게이트 평가: claude 매처 실구현 + 정답셋 20케이스 확장 (Max 플랜 API 크레딧 첫 사용)**
+  - `eval-harness/matchers/claude.mjs` 스켈레톤 → 실구현. 케이스당 1콜 배치 판정, 구조화 출력(json_schema), 응답 캐시(`.cache/claude/`, gitignore)로
+    결정성 보장. pair_id 누락·중복·날조 시 throw(조용한 0점 금지). refusal 자동 폴백 없음(채점 중 판정자 교체 금지).
+    모델 `claude-opus-5-5` effort low. `04_pipeline_poc` 무수정.
+  - `golden/snapshot.mjs` **증분 모드** — 이미 박제된 케이스는 skip(재호출 금지 준수). c11~c20 추가: DRUG_HINTS 미등록 약물 10종
+    (escitalopram·tacrolimus·atorvastatin·carbamazepine·doxycycline·alendronate·HCTZ·clopidogrel·rivaroxaban·lisinopril), 48페어 라벨 초안(proposed).
+  - **결과(20케이스):** rule P1.000/R**0.867**/F1 0.929 vs claude P1.000/R**1.000**/F1 1.000. 🟢2(c11_p1 escitalopram∈SSRI, c15_p3 doxycycline∈tetracycline —
+    약물명 없이 클래스로만 존재하는 페어를 rule이 놓침) 🔴0. TODO 2건(c6_p2·c18_p1)은 두 매처가 정반대 → 약사 검수 대기.
+  - 비용 19콜 ≈ $0.22. MedData 신규 10콜.
+
 - **2026-10-20 — 12차 평가 후속: §23 동의 게이트 보강 · 073 GRANT 전면 명시 · 처리방침 이메일 로그인 명시** (브랜치 `fix/consent-gate`, 3커밋)
   - 평가(10-19, UX 76·기술 78·제품 80·Critical 0)가 지목한 **동의 누락**: cron 2종(복약·리필)이 `alarm_enabled` 만 보고 미동의 사용자에게도 발송 ·
     `addMedication`·`saveOcrMedications`·`/api/ocr/product`·`/api/pharmacy/request` 가 동의를 보지 않음 → `src/lib/push-eligibility.ts`

@@ -18,7 +18,7 @@ eval-harness/
     interface.md            # 공통 계약 — match()→{matched,dropped,scored,meta}, pair_id 불변식
     rule.mjs                # ✅ 기존 filterPairsForDrug() 어댑터(import만, 04_pipeline_poc 무수정)
     rxclass.mjs             # 🟡 스켈레톤 — RxClass(무료)로 DRUG_HINTS 자동화
-    claude.mjs              # 🟡 스켈레톤 — LLM 관련성 판정(표현다양성·한글·대조문 함정)
+    claude.mjs              # ✅ LLM 관련성 판정(케이스당 1콜 배치, 구조화 출력, 응답 캐시로 결정성)
     hybrid.mjs              # 🟡 스켈레톤 — rxclass 1차 → 경계만 claude 승급
   golden/                   # 정답셋(코드와 분리된 데이터)
     cases.schema.md         # 스키마 + 라벨 의미 + 약사가 채우는 법
@@ -50,15 +50,27 @@ node eval-harness/src/report.mjs --compare results/run_rule_A.json results/run_r
 매처는 `--matcher <id>` 로 주입(`matchers/<id>.mjs` 동적 import). 미구현 매처는 **조용히 0점을 내지 않고**
 exit 2로 명확히 중단한다.
 
-## 현재 baseline (rule)
+## 현재 baseline (2026-10-16, 정답셋 20케이스)
 
-`results/run_rule_2026-06-21_14-00-00.json` — 시드 정답셋(10케이스, 채점 9 / no_pairs 1):
+정답셋 확장 후(c11~c20 = DRUG_HINTS 미등록 약물 10종, 채점 19 / no_pairs 1 / 라벨 true 22·noise 63·TODO 2):
 
-| matcher | precision | recall | F1 | F2 | TP | FP | FN |
-|---|---|---|---|---|---|---|---|
-| **rule** | **1.000** | **1.000** | **1.000** | **1.000** | 9 | 0 | 0 |
+| matcher | precision | recall | F1 | F2 | TP | FP | FN | run |
+|---|---|---|---|---|---|---|---|---|
+| rule | 1.000 | **0.867** | 0.929 | 0.890 | 13 | 0 | **2** | `run_rule_2026-10-16_03-17-18.json` |
+| **claude** (opus-5-5, effort low) | **1.000** | **1.000** | **1.000** | **1.000** | 15 | 0 | 0 | `run_claude_2026-10-16_03-17-18.json` |
 
-dedup=4(ODS 출처 중복), **TODO매칭=1**(c6_p2 — 약사검수 대기), unlabeled=0.
+**rule → claude 회귀 비교:** 🔴0 🟢**2** — 예측대로 rule이 **약물명이 없고 클래스로만 존재하는 페어**를 놓쳤고 claude가 잡았다.
+- `c11_p1` escitalopram × "SSRIs (sertraline, fluoxetine, paroxetine, citalopram)" — rule FN(키워드 0) → claude TP(score 9, *"괄호 예시에 없더라도 클래스 구성원"*)
+- `c15_p3` doxycycline × "Tetracycline antibiotics" — rule FN → claude TP(score 9)
+
+TODO 2건(채점 제외, 약사 검수 대기)에서 두 매처가 **정반대**로 갈린다:
+- `c6_p2` 비타민K×warfarin, "Other anticoagulants(NOAC)" 대조 페어 — rule 매칭 / claude 드롭(score 1, *"대상은 NOAC, 와파린은 대조로만 언급"*). noise 확정 시 rule=FP.
+- `c18_p1` 오메가3×clopidogrel, "Warfarin and other blood thinners" — rule 드롭 / claude 매칭(score 7, *"항혈소판제는 넓은 의미의 blood thinners"*). c1_p2(warfarin 질의에서 항혈소판제=noise)와 대칭 판단 필요.
+
+비용: 19콜 누적 / 입력 24,604·출력 5,944 토큰 ≈ **$0.22**(케이스당 약 1센트). 결정성: 같은 입력 2회 동일(응답 캐시 `.cache/claude/`, gitignore).
+실행: `node --env-file=../.env.local eval-harness/src/runner.mjs --matcher claude`
+
+이전 시드 10케이스 baseline: rule 1.000 (`run_rule_2026-06-21_14-00-00.json`) = claude 1.000 (`run_claude_2026-10-16_02-45-01.json`).
 
 > ⚠️ **이 만점을 오해하지 말 것.** rule이 완벽한 게 아니라, `DRUG_HINTS`가 *이 시드셋의 8개 약물에 손으로
 > 맞춰져* 있어서다. 평가의 **변별력은 정답셋을 확장할 때** 나온다:
@@ -101,5 +113,5 @@ dedup=4(ODS 출처 중복), **TODO매칭=1**(c6_p2 — 약사검수 대기), unl
 - [ ] **c6_p2 TODO 확정** — 비타민K×warfarin의 "Other anticoagulants(NOAC)" 대조 페어.
       rule이 'warfarin' 문자열로 매칭함 → 약사가 noise로 판정하면 즉시 FP로 드러남(rule의 첫 실패 후보).
 - [ ] 정답셋 라벨 전반 `proposed`→`confirmed` 약사 검수.
-- [ ] rxclass/claude/hybrid 실구현 + 재측정(무자본 단계라 호출부 TODO).
-- [ ] 정답셋을 DRUG_HINTS 미등록 약물로 확장(변별력 확보).
+- [x] claude 실구현 + 재측정(2026-10-16, 위 비교 참조). rxclass/hybrid는 아직 스켈레톤.
+- [x] 정답셋을 DRUG_HINTS 미등록 약물로 확장(2026-10-16, c11~c20). rule recall 1.000→0.867로 변별 확인. — [ ] c18_p1 TODO 확정(약사).

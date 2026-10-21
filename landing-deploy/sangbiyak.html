@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약사로 상비약 | 상비약 사용기한 알림과 다 쓴 약 버리는 법</title>
+<meta name="description" content="집에 있는 상비약의 사용기한을 챙기고, 다 쓴 약을 버리는 방법과 가까운 폐의약품 수거함을 알려 드려요. 회원 가입과 광고가 없는 무료 앱이에요.">
+<meta name="theme-color" content="#FAFAF5">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<link rel="canonical" href="https://yaksaro.co.kr/sangbiyak">
+<!-- 공유 미리보기: Play 스토어 링크는 OG 를 고칠 수 없어서, 공유는 이 주소로 한다. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="약사로">
+<meta property="og:title" content="약사로 상비약 | 상비약 사용기한을 챙겨 드려요">
+<meta property="og:description" content="사용기한 알림, 다 쓴 약 버리는 법, 가까운 폐의약품 수거함까지. 회원 가입과 광고가 없는 무료 앱이에요.">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://yaksaro.co.kr/sangbiyak">
+<meta property="og:image" content="https://yaksaro.co.kr/og/og-sangbiyak.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="약사로 상비약. 상비약 사용기한을 챙기고 다 쓴 약 버리는 법을 알려 드려요">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="약사로 상비약 | 상비약 사용기한을 챙겨 드려요">
+<meta name="twitter:description" content="사용기한 알림, 다 쓴 약 버리는 법, 가까운 폐의약품 수거함까지. 회원 가입과 광고가 없는 무료 앱이에요.">
+<meta name="twitter:image" content="https://yaksaro.co.kr/og/og-sangbiyak.png">
+<!-- 설치 수·평점은 넣지 않는다: Play 실측치가 쌓이기 전에 적으면 허위가 된다(patient.html 과 같은 규칙). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "약사로 상비약",
+  "alternateName": ["약사로상비약", "Yaksaro Sangbiyak"],
+  "operatingSystem": "Android",
+  "applicationCategory": "MedicalApplication",
+  "description": "집에 있는 상비약의 사용기한을 알림으로 챙기고, 다 쓴 약을 버리는 방법과 가까운 폐의약품 수거함을 알려 주는 앱입니다. 약 목록은 폰에만 저장합니다.",
+  "url": "https://yaksaro.co.kr/sangbiyak",
+  "installUrl": "https://play.google.com/store/apps/details?id=kr.co.yaksaro.sangbiyak",
+  "downloadUrl": "https://play.google.com/store/apps/details?id=kr.co.yaksaro.sangbiyak",
+  "inLanguage": "ko",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "publisher": { "@type": "Organization", "name": "약사로", "url": "https://yaksaro.co.kr" }
+}
+</script>
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/w2/Paperlogy-8ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/w2/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/brand.generated.css">
+<style>
+@font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-5Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-7Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Paperlogy';src:url('/fonts/w2/Paperlogy-8ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:'Pretendard';src:url('/fonts/w2/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+
+/* 앱 화면과 같은 따뜻한 베이지 바탕 — 스토어 그림과 페이지가 이어져 보이게 한다. */
+:root{--paper:#F1ECE4;--paper-2:#E9E3D8}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Paperlogy','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--off);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden;word-break:keep-all;text-wrap:pretty}
+p,li,dd,.body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%;height:auto}
+.wrap{width:100%;max-width:var(--max);margin:0 auto;padding:0 32px}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(250,250,245,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-color:var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em;white-space:nowrap}
+.brand img{width:32px;height:32px;border-radius:8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:'Paperlogy',sans-serif;font-weight:700;
+  border-radius:14px;transition:transform .15s,background .2s,box-shadow .2s;white-space:nowrap}
+.btn-play{background:var(--green);color:#fff;font-size:18px;padding:17px 28px;box-shadow:var(--shadow-lg)}
+.btn-play:hover{background:var(--green-dark);transform:translateY(-1px)}
+.btn-play svg{width:22px;height:22px}
+.btn-sm{font-size:15px;padding:10px 16px;border-radius:11px;box-shadow:none}
+
+/* HERO */
+.hero{background:linear-gradient(180deg,var(--paper) 0%,var(--off) 100%);padding:128px 0 72px;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.eyebrow{display:inline-block;font-weight:700;font-size:14px;color:var(--green);background:var(--green-50);padding:6px 14px;border-radius:999px;margin-bottom:20px}
+.hero h1{font-weight:800;font-size:clamp(34px,5.2vw,58px);line-height:1.22;letter-spacing:-.035em;color:var(--green-deep)}
+.hero .lead{font-size:clamp(17px,1.6vw,19px);color:var(--muted);margin:22px 0 32px;max-width:30em}
+.chips{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px}
+.chips span{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:15px;color:var(--muted)}
+.chips svg{width:18px;height:18px;flex:none}
+.hero-shot{justify-self:center;width:min(360px,100%)}
+.shot{border-radius:28px;overflow:hidden;box-shadow:var(--shadow-xl);background:var(--paper)}
+
+/* FEATURES */
+section{padding:88px 0}
+.sec-head{text-align:center;max-width:640px;margin:0 auto 56px}
+.sec-head h2{font-weight:800;font-size:clamp(28px,3.4vw,40px);line-height:1.3;letter-spacing:-.03em}
+.sec-head p{color:var(--muted);font-size:17px;margin-top:14px}
+.feat{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.feat article{display:flex;flex-direction:column;gap:18px}
+.feat h3{font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1.35}
+.feat p{color:var(--muted);font-size:15.5px;margin-top:6px}
+.feat .shot{border-radius:20px;box-shadow:var(--shadow-lg)}
+
+/* TRUST */
+.trust{background:var(--green-deep);color:#fff}
+.trust .sec-head p{color:rgba(255,255,255,.78)}
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.trust-grid div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px}
+.trust-grid h3{font-weight:700;font-size:19px;margin-bottom:10px;color:var(--lime)}
+.trust-grid p{font-size:15.5px;color:rgba(255,255,255,.86)}
+
+/* NOTE + CTA */
+.note{max-width:760px;margin:0 auto;background:var(--white);border:1px solid var(--line);border-radius:20px;padding:28px 32px}
+.note h2{font-weight:700;font-size:19px;margin-bottom:10px}
+.note p{color:var(--muted);font-size:15.5px}
+.note p+p{margin-top:8px}
+.cta{text-align:center;background:var(--paper);border-radius:28px;padding:56px 24px;margin-top:56px}
+.cta h2{font-weight:800;font-size:clamp(26px,3vw,34px);letter-spacing:-.03em;margin-bottom:12px}
+.cta p{color:var(--muted);margin-bottom:28px}
+.src{max-width:760px;margin:28px auto 0;font-size:13.5px;color:var(--faint);text-align:center}
+
+footer{background:var(--green-900);color:rgba(255,255,255,.7);padding:40px 0;font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center}
+footer a{color:var(--lime)}
+footer nav{position:static;display:flex;gap:20px;flex-wrap:wrap;border:0}
+
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+
+@media (max-width:960px){
+  .hero-grid{grid-template-columns:1fr;text-align:center}
+  .hero .lead{margin-left:auto;margin-right:auto}
+  .chips{justify-content:center}
+  .feat{grid-template-columns:repeat(2,1fr);gap:40px 20px}
+  .trust-grid{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .hero{padding:104px 0 56px}
+  section{padding:64px 0}
+  .feat{grid-template-columns:1fr;max-width:340px;margin:0 auto}
+  .hero .btn-play,.cta .btn-play{width:100%}
+  .nav-in .btn-sm{padding:9px 12px;font-size:14px}
+  .note{padding:24px 20px}
+}
+</style>
+<script defer src="/analytics.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap nav-in">
+    <a href="#top" class="brand"><img src="/sangbiyak/img/icon-192.png" alt="" width="32" height="32">약사로 상비약</a>
+    <a class="btn btn-play btn-sm" data-cta="sbk_nav" href="https://play.google.com/store/apps/details?id=kr.co.yaksaro.sangbiyak&amp;referrer=utm_source%3Dyaksaro.co.kr%26utm_medium%3Dlanding%26utm_campaign%3Dsangbiyak">앱 받기</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">안드로이드 무료 앱</span>
+      <h1>집에 있는 상비약,<br>사용기한을 챙겨 드려요</h1>
+      <p class="lead">바코드를 찍어 구급함에 넣어 두면 기한이 다가올 때 알려 드려요. 다 쓴 약을 버리는 방법과 가까운 폐의약품 수거함도 함께 알려 드려요.</p>
+      <a class="btn btn-play" data-cta="sbk_hero" href="https://play.google.com/store/apps/details?id=kr.co.yaksaro.sangbiyak&amp;referrer=utm_source%3Dyaksaro.co.kr%26utm_medium%3Dlanding%26utm_campaign%3Dsangbiyak">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 2.8v18.4c0 .5.5.8 1 .6l15.6-9.2c.4-.3.4-.9 0-1.2L5 2.2c-.5-.2-1 .1-1 .6z"/></svg>
+        Google Play에서 받기
+      </a>
+      <div class="chips">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="#0E6E54" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>회원 가입 없음</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="#0E6E54" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>광고 없음</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="#0E6E54" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>약 목록은 내 폰에만</span>
+      </div>
+    </div>
+    <div class="hero-shot shot">
+      <img src="/sangbiyak/img/01-kit.webp" width="540" height="960" alt="약사로 상비약 첫 화면. 초록 구급함 안에 열과 통증, 감기와 기침 같은 칸이 있고, 점검 메모에 사용기한이 지난 약과 곧 끝나는 약 개수가 적혀 있어요." fetchpriority="high">
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>넣어 두면, 나머지는 앱이 챙겨요</h2>
+      <p>약상자를 연달아 찍어 옮겨 담고, 기한과 버리는 날까지 한 앱에서 확인해요.</p>
+    </div>
+    <div class="feat">
+      <article class="reveal">
+        <div class="shot"><img src="/sangbiyak/img/02-add.webp" width="540" height="960" loading="lazy" alt="바코드를 찍어 약을 넣는 화면"></div>
+        <div><h3>바코드를 찍으면 바로 담겨요</h3><p>일반의약품 1만 3천여 가지를 앱 안에 담아 두어 인터넷 연결 없이도 찾아요. 바코드가 없으면 이름으로 찾아요.</p></div>
+      </article>
+      <article class="reveal">
+        <div class="shot"><img src="/sangbiyak/img/03-detail.webp" width="540" height="960" loading="lazy" alt="약의 사용기한과 보관법을 보여 주는 화면"></div>
+        <div><h3>사용기한 전에 알려 드려요</h3><p>기한 30일 전과 당일 오전 9시쯤 알림을 보내 드려요. 약마다 효능과 보관법도 볼 수 있어요.</p></div>
+      </article>
+      <article class="reveal">
+        <div class="shot"><img src="/sangbiyak/img/04-dispose.webp" width="540" height="960" loading="lazy" alt="알약, 가루약, 물약, 연고별로 버리는 방법을 알려 주는 화면"></div>
+        <div><h3>다 쓴 약은 이렇게 버려요</h3><p>알약, 가루약, 물약, 연고처럼 약 모양에 따라 모으는 방법을 알려 드려요.</p></div>
+      </article>
+      <article class="reveal">
+        <div class="shot"><img src="/sangbiyak/img/05-bins.webp" width="540" height="960" loading="lazy" alt="지역을 고르면 폐의약품 수거함 목록이 나오는 화면"></div>
+        <div><h3>가까운 수거함을 찾아요</h3><p>시와 구를 고르면 폐의약품 수거함 목록이 나와요. 카카오맵이나 네이버 지도로 바로 열 수 있어요.</p></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="trust" id="safe">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>내 약 목록은 내 폰에만 있어요</h2>
+      <p>가입도 없고, 약 목록을 따로 모아 두는 곳도 없어요. 약사가 만든 앱이라 꼭 필요한 것만 담았어요.</p>
+    </div>
+    <div class="trust-grid">
+      <div class="reveal"><h3>회원 가입이 없어요</h3><p>넣은 약 목록은 이 폰에만 저장하고 어디에도 보내지 않아요.</p></div>
+      <div class="reveal"><h3>위치와 카메라 권한을 묻지 않아요</h3><p>수거함은 지역을 직접 골라 찾아요. 바코드는 구글 코드 스캐너로 찍어요.</p></div>
+      <div class="reveal"><h3>광고가 없어요</h3><p>앱에는 인터넷 권한이 없어요. 바코드를 찍을 때만 구글 코드 스캐너가 기기 정보와 성능 정보를 구글에 보내요.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="note">
+  <div class="wrap">
+    <div class="note reveal">
+      <h2>알려 드려요</h2>
+      <p>이 앱은 약을 골라 주거나 먹는 양을 정해 주지 않아요. 약을 먹어도 되는지, 얼마나 먹어야 하는지는 약사나 의사에게 물어보세요.</p>
+      <p>갑자기 많이 아프거나 숨쉬기 힘들면 119에 전화하세요.</p>
+    </div>
+    <div class="cta reveal">
+      <h2>우리 집 구급함, 오늘 한번 정리해 보세요</h2>
+      <p>무료예요. 회원 가입 없이 바로 쓸 수 있어요.</p>
+      <a class="btn btn-play" data-cta="sbk_bottom" href="https://play.google.com/store/apps/details?id=kr.co.yaksaro.sangbiyak&amp;referrer=utm_source%3Dyaksaro.co.kr%26utm_medium%3Dlanding%26utm_campaign%3Dsangbiyak">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 2.8v18.4c0 .5.5.8 1 .6l15.6-9.2c.4-.3.4-.9 0-1.2L5 2.2c-.5-.2-1 .1-1 .6z"/></svg>
+        Google Play에서 받기
+      </a>
+    </div>
+    <p class="src">자료 출처: 식품의약품안전처 의약품 허가 정보와 의약품개요정보(e약은요), 건강보험심사평가원 약가마스터, 공공데이터포털 전국폐의약품수거함표준데이터, 대한민국 정책브리핑(공공누리 제1유형)</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 약사로</span>
+    <nav aria-label="아래쪽 링크">
+      <a href="/sangbiyak/privacy">개인정보 처리방침</a>
+      <a href="/">약사로 홈</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 12);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive:true });
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.12, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
