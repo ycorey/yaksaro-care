@@ -227,7 +227,8 @@ export default function TodayTimeline({
           <button
             type="button"
             onClick={() => check(overdue.meal)}
-            className="shrink-0 font-semibold text-sm px-4 py-3 rounded-yc-md bg-yc-warning text-white active:opacity-90 min-h-[52px]"
+            /* 앰버(#E8A817) 위 흰 글씨는 2.09:1(12차 평가) — 다크 잉크로 7.6:1. 토큰은 브랜드 동기화 대상이라 사용처만 바꾼다 */
+            className="shrink-0 font-semibold text-sm px-4 py-3 rounded-yc-md bg-yc-warning text-yc-neutral900 active:opacity-90 min-h-[52px]"
           >
             지금 먹기
           </button>

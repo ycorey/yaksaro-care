@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import ShareClient from './share-client'
 import type { DoctorData } from './doctor-view'
 import { summarizeAdherence, type AdherenceSummary } from '@/lib/adherence'
+import { kstDateOf } from '@/lib/kst-date'
 import { getActiveMember } from '@/lib/active-member'
 import { applyMemberScope } from '@/lib/member'
 import MemberSwitcher from '@/components/member-switcher'
@@ -59,13 +60,12 @@ export default async function SharePage() {
   // ── 최근 30일 복약 순응도 (medication_check_logs 기반) ──
   const nowMs = new Date().getTime()  // Date.now()는 react-hooks/purity가 렌더 중 차단
   const DAY = 86_400_000
-  const utcDate = (ms: number) => new Date(ms).toISOString().split('T')[0]
   let logQ = supabase
     .from('medication_check_logs')
     .select('check_date, meal_time, is_checked, logged_at')
     .eq('user_id', user.id)
-    .gte('check_date', utcDate(nowMs - 29 * DAY))
-    .lte('check_date', utcDate(nowMs))
+    .gte('check_date', kstDateOf(nowMs - 29 * DAY))
+    .lte('check_date', kstDateOf(nowMs))
     .order('logged_at', { ascending: true })
   logQ = applyMemberScope(logQ, active)
   const { data: logs } = await logQ

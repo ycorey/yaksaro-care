@@ -31,11 +31,6 @@ import { loadPublicEnv } from './_env.mjs'
 const EMAIL = process.env.SMOKE_PHARMACIST_EMAIL
 const PASSWORD = process.env.SMOKE_PHARMACIST_PASSWORD
 
-if (!EMAIL || !PASSWORD) {
-  console.log('⚠️  SMOKE_PHARMACIST_EMAIL/PASSWORD 미설정 — 읽기 전용 RLS 게이트를 건너뜁니다.')
-  process.exit(0)
-}
-
 const { URL_, ANON } = loadPublicEnv()
 
 const results = []
@@ -44,23 +39,55 @@ const check = (name, cond, extra = '') => {
   console.log(`  ${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  — ' + extra : ''}`)
   return !!cond
 }
+const report = (failedHard) => {
+  const pass = results.filter(r => r.pass).length
+  console.log(`\n${'─'.repeat(56)}\n읽기 전용 RLS 게이트: ${pass}/${results.length} PASS`)
+  process.exit(failedHard || pass !== results.length ? 1 : 0)
+}
 
 // 닫힌 표를 읽는 방법은 두 가지 결과를 낸다:
 //   · 정책만 없앤 경우(070)      → 0행, 에러 없음
-//   · GRANT 까지 회수한 경우      → 42501 permission denied
+//   · GRANT 까지 회수한 경우(073) → 42501 permission denied
 // 둘 다 "닫혔다" 는 같은 뜻이므로 둘 다 통과로 본다. 구분해서 표시만 한다.
+//
+// ⚠️ HEAD(`head: true`)로 읽으면 안 된다 — PostgREST 는 HEAD 응답에 본문이 없어 supabase-js 가
+// `{ message: '' }` 만 돌려주고 코드·메시지가 비어 "GRANT 회수" 를 판독할 수 없다(2026-10-20 실측:
+// 073 적용 직후 이 게이트가 5건 거짓 FAIL). GET 1행으로 읽으면 42501 코드가 온다.
+const isDenied = (err) =>
+  !!err && (err.code === '42501' || err.code === '42P01' || /permission denied|not exist/i.test(err.message ?? ''))
+
 async function closedTable(sb, table) {
-  const r = await sb.from(table).select('*', { count: 'exact', head: true })
+  const r = await sb.from(table).select('*').limit(1)
   if (r.error) {
-    const denied = /permission denied|not exist|42501|42P01/i.test(r.error.message)
-    return { closed: denied, how: denied ? 'GRANT 회수' : 'ERR: ' + r.error.message }
+    const denied = isDenied(r.error)
+    return { closed: denied, how: denied ? 'GRANT 회수' : 'ERR: ' + (r.error.message || `status ${r.status}`) }
   }
-  return { closed: (r.count ?? 0) === 0, how: `${r.count}행` }
+  const n = r.data?.length ?? 0
+  return { closed: n === 0, how: `${n}행` }
 }
 
 const sb = createClient(URL_, ANON, { auth: { autoRefreshToken: false, persistSession: false } })
 
 let failedHard = false
+
+// ── 로그인 전: anon 토큰 GRANT 단언 (073) ─────────────────────────
+// 카나리 계정이 필요 없는 유일한 단언이라 로그인 **앞**에 둔다 — 시크릿 없는 로컬에서도 돈다.
+// 정책이 0행을 주는 것과 GRANT 가 없는 것은 다르다. 전자는 정책 한 줄(`using (true)`)이
+// 잘못 들어오면 그 순간 열리고, 후자는 그래도 닫혀 있다. 073 이 환자 표에서 anon 을 회수했으므로
+// 여기서는 "0행" 을 통과로 보지 않는다 — 42501 만 통과다. 073 적용 전에는 이 단언이 빨간불이고,
+// 그게 SQL Editor 에서 073 을 돌리라는 신호다(2026-10-30 전).
+for (const table of ['profiles', 'user_medications', 'user_prescriptions', 'medication_check_logs', 'push_subscriptions']) {
+  const r = await sb.from(table).select('*').limit(1)   // GET — HEAD 는 오류 본문이 비어 판독 불가(위 ⚠️)
+  const denied = isDenied(r.error)
+  if (!check(`G anon 토큰에 ${table} GRANT 가 없다 (073)`, denied,
+        r.error ? (r.error.message || `status ${r.status}`) : `${r.data?.length ?? 0}행 — 정책만 막고 있다, 073 미적용`)) failedHard = true
+}
+
+if (!EMAIL || !PASSWORD) {
+  console.log('⚠️  SMOKE_PHARMACIST_EMAIL/PASSWORD 미설정 — 약사 토큰 단언은 건너뛰고 anon 단언만 보고합니다.')
+  report(failedHard)
+}
+
 try {
   // ── 로그인 ──────────────────────────────────────────────────────
   const { data: auth, error: authErr } = await sb.auth.signInWithPassword({ email: EMAIL, password: PASSWORD })
@@ -130,6 +157,4 @@ try {
   await sb.auth.signOut().catch(() => {})
 }
 
-const pass = results.filter(r => r.pass).length
-console.log(`\n${'─'.repeat(56)}\n읽기 전용 RLS 게이트: ${pass}/${results.length} PASS`)
-process.exit(failedHard || pass !== results.length ? 1 : 0)
+report(failedHard)

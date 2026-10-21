@@ -7,6 +7,7 @@ import PatientNoteCard from '../../patient-note-card'
 import { YCCard } from '@/components/yc/yc-card'
 import { MedThumbnailIcon, InteractionWarningIcon, LockEmptyIcon } from './pharmacy-patient-icons'
 import { summarizeAdherence } from '@/lib/adherence'
+import { kstDateOf } from '@/lib/kst-date'
 import PharmacyAdherenceSection from './pharmacy-adherence-section'
 import { ownedPharmacyId } from '@/lib/pharmacy-auth'
 import { buildDosage } from '@/lib/dosage'
@@ -118,15 +119,14 @@ export default async function PharmacyPatientDetail({ params }: { params: Promis
   // 최근 14일 복약 기록(약사 토큰+RLS, 044 정책). self 멤버 있을 때만.
   const DAY = 86_400_000
   const nowMs = new Date().getTime()
-  const utcDate = (ms: number) => new Date(ms).toISOString().split('T')[0]
   const { data: checkLogs, error: checkLogsError } = selfMemberId
     ? await supabase
         .from('medication_check_logs')
         .select('check_date, meal_time, is_checked, logged_at')
         .eq('user_id', id)
         .eq('member_id', selfMemberId)
-        .gte('check_date', utcDate(nowMs - 13 * DAY))
-        .lte('check_date', utcDate(nowMs))
+        .gte('check_date', kstDateOf(nowMs - 13 * DAY))
+        .lte('check_date', kstDateOf(nowMs))
         .order('logged_at', { ascending: true })
     : { data: null, error: null }
   if (checkLogsError) throw new Error(`복약 기록 조회 실패: ${checkLogsError.code} ${checkLogsError.message}`)

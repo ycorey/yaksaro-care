@@ -5,6 +5,7 @@ import { getActiveMember } from '@/lib/active-member'
 import { redactPii, hasResidualRrn } from '@/lib/redact-pii'
 import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
 import { requireHealthConsent } from '@/lib/require-consent'
+import { todayKST } from '@/lib/kst-date'
 import { resolveDrugByName } from '@/lib/drug-name-resolve'
 
 // OCR(CLOVA)+GPT 파이프라인은 길어질 수 있어 60초 한도 + Node 런타임 명시
@@ -469,7 +470,7 @@ export async function POST(request: Request) {
         hospital_name:     parsed.hospital_name,
         institution_code:  parsed.institution_code,
         department:        parsed.department,
-        prescribed_at:     new Date().toISOString().split('T')[0],
+        prescribed_at:     todayKST(),
       })
       .select('id')
       .single()

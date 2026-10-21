@@ -10,6 +10,7 @@ import type { Provider } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import InAppBrowserGuard from './inapp-browser-guard'
+import { safeNextPath } from '@/lib/safe-next'
 
 // ── 소셜 로그인 아이콘 ──────────────────────────────────────────────────
 function KakaoIcon() {
@@ -88,8 +89,7 @@ function LoginContent({ pendingPharmacyId }: { pendingPharmacyId: string | null 
     //  · next: /login?redirect=/store/:id 의 redirect 값 → 인앱→외부 브라우저 전환 시
     //    쿠키는 승계 안 되지만 URL은 승계되므로, 콜백이 /store/:id로 재진입해 로그인 상태로 매핑
     const redirectParam = searchParams.get('redirect')
-    const safeNext = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
-      ? redirectParam : null
+    const safeNext = safeNextPath(redirectParam)
 
     // 견고한 안전망: QR 진입(redirect=/store/:id)이면 store_id를 localStorage에도 보관.
     // OAuth 왕복에서 쿠키/쿼리파라미터가 모두 유실돼도, 로그인 후 PharmacyLinkFinalizer가

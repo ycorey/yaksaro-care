@@ -5,10 +5,10 @@ import { getActiveMember } from '@/lib/active-member'
 import { logger } from '@/lib/logger'
 import { dbError } from '@/lib/api-error'
 import { requireHealthConsent } from '@/lib/require-consent'
+import { todayKST } from '@/lib/kst-date'
 
-function today() {
-  return new Date().toISOString().split('T')[0]
-}
+// check_date 키 규약: kst-date.ts — 화면(@home·@today·@wallet)·cron 과 같은 하루
+const today = todayKST
 
 // GET: 오늘 복약 체크 상태 { morning, afternoon, evening, bedtime }
 export async function GET() {

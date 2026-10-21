@@ -92,28 +92,38 @@ test('자기 전은 자정까지 — 23:59 등록도 자기 전 약은 오늘 �
     ['bedtime'])
 })
 
-// ── 날짜 키 규약: "당일" 은 화면·check_date 와 같은 UTC 날짜 문자열로 판정한다.
-// (이 앱의 하루는 UTC 자정 = KST 09:00 에 넘어간다.) 여기만 KST 자정으로 키잉하면
-// KST 00~09시에 필터가 화면-하루보다 먼저 풀려 제외했던 끼니가 부활한다(리뷰 실측).
+// ── 날짜 키 규약: "당일" 은 화면·check_date 와 같은 **한국 날짜**로 판정한다(kst-date.ts).
+// 2026-10-20 전에는 UTC 날짜였다(하루가 KST 09:00 에 넘어감) — 아침 8시 체크가 전날 행에 남던 원인.
+// 교훈은 유지: 여기만 다른 규약이면 하루가 바뀌는 시각에 필터가 화면보다 먼저 풀려 끼니가 부활한다.
 
-test('KST 23:30 등록(UTC 14:30, 같은 UTC 날짜) → 당일 규칙 적용, 자기 전만', () => {
+test('KST 23:30 등록(UTC 14:30) → 아직 8/21 — 당일 규칙 적용, 자기 전만', () => {
   assert.deepEqual(
     slotsApplicableToday(ALL, '2026-08-21T14:30:00Z', TODAY),
     ['bedtime'])
 })
 
-test('화면-하루 연속성: KST 다음날 00:30(UTC 15:30, 같은 UTC 날짜)에도 화면 day 가 같으면 당일로 판정', () => {
-  // 저녁 19:30 등록 → KST 자정이 지나도 화면 day('2026-08-21')가 유지되는 동안은 필터 유지
+test('KST 자정이 하루 경계다: 8/22 00:30(UTC 8/21 15:30) 등록은 8/21 화면에서 "오늘 등록" 이 아니다', () => {
+  // 저녁 19:30 등록 → 8/21 화면에서는 저녁·자기 전만
   assert.deepEqual(
     slotsApplicableToday(ALL, kstIso(TODAY, '19:30'), TODAY),
     ['evening', 'bedtime'])
-  // KST 8/22 00:30 = UTC 8/21 15:30 등록 — 같은 화면-하루. 등록 시각(KST 00:30)이 모든
-  // 마감보다 이르므로 전 슬롯 적용(이제 막 시작하는 하루라는 판정과 일치)
+  // KST 8/22 00:30 = UTC 8/21 15:30 — UTC 규약이던 때는 "같은 하루" 였지만 이제 8/22 다 → 전 슬롯
   assert.deepEqual(
     slotsApplicableToday(ALL, '2026-08-21T15:30:00Z', TODAY), ALL)
+  // 그 등록을 8/22 화면에서 보면 당일 — 00:30 은 모든 마감보다 이르므로 전 슬롯
+  assert.deepEqual(
+    slotsApplicableToday(ALL, '2026-08-21T15:30:00Z', '2026-08-22'), ALL)
 })
 
-test('화면-하루가 넘어가면(UTC 날짜 변경) 전 슬롯 복귀', () => {
+test('아침 8시(UTC 전날 23시) 등록은 한국 오늘의 등록이다 — 평가가 지목한 구간', () => {
+  // 8/21 08:00 KST = 8/20 23:00Z. UTC 규약이면 "어제 등록" 으로 읽혀 전 슬롯이 그대로 적용됐다.
+  // KST 규약에서는 당일 등록이고 08:00 은 아침 마감(≤ 11:00) 전이므로 역시 전 슬롯 — 결과는 같지만
+  // 판정 근거가 다르다. 10:59 → 전 슬롯, 11:00 → 아침 제외로 당일 규칙이 실제로 걸리는지 본다.
+  assert.deepEqual(slotsApplicableToday(ALL, '2026-08-21T01:59:00Z', TODAY), ALL)
+  assert.deepEqual(slotsApplicableToday(ALL, '2026-08-21T02:00:00Z', TODAY), ['afternoon', 'evening', 'bedtime'])
+})
+
+test('화면-하루가 넘어가면(한국 날짜 변경) 전 슬롯 복귀', () => {
   assert.deepEqual(
     slotsApplicableToday(ALL, kstIso(TODAY, '19:30'), '2026-08-22'), ALL)
 })

@@ -1,3 +1,5 @@
+import { kstDateOf } from './kst-date.ts'   // node --test 가 직접 실행하므로 상대 경로 + 확장자(cron-guard 와 같은 관례)
+
 export type Meal = 'morning' | 'afternoon' | 'evening' | 'bedtime'
 
 export const MEAL_SLOTS = [
@@ -53,11 +55,12 @@ export function effectiveMealSlots(
 // 약은 발화 시점에 존재하지 않았고, 그 전에 등록된 약은 슬롯이 미래였으므로 제외
 // 대상이 아니다. 제외되는 슬롯에 알림이 나가는 경우의 수가 구조적으로 없다.
 //
-// ⚠️ "당일" 의 날짜 키는 화면·check_date 와 같은 규약(UTC 날짜 문자열)을 쓴다.
-// 이 앱의 하루는 UTC 자정(=KST 09:00)에 넘어간다 — 화면 3곳과 /api/meal-checks 전부.
-// 여기만 KST 자정으로 키잉하면 KST 00~09시 사이에 필터가 먼저 풀려, 같은 화면-하루
-// 안에서 제외됐던 끼니가 미체크로 부활하고(완료→미완료 후퇴) 그걸 누르면 그날 배정된
-// 적 없는 check_date 로 유령 체크가 남는다(리뷰 실측). 끼니 마감 판정만 KST 벽시계다.
+// ⚠️ "당일" 의 날짜 키는 화면·check_date 와 **같은 규약**을 쓴다 — 지금은 한국 날짜(kst-date.ts).
+// 2026-10-20 까지는 UTC 날짜(하루가 KST 09:00 에 넘어감)였고 cron 만 KST 여서 아침 체크가
+// 전날 행에 남았다(12차 평가). 규약을 바꾸되 교훈은 그대로다: 여기만 다른 키로 판정하면
+// 하루가 바뀌는 시각에 필터가 화면보다 먼저 풀려 제외했던 끼니가 미체크로 부활하고(완료→미완료
+// 후퇴) 그걸 누르면 그날 배정된 적 없는 check_date 로 유령 체크가 남는다(리뷰 실측).
+// 그래서 등록일 판정도 호출자가 넘긴 today 와 같은 함수(kstDateOf)로 만든다.
 
 const REG_GRACE_MIN = 180
 
@@ -84,16 +87,16 @@ function kstMinutesOf(iso: string): number {
  * createdAt 이 없거나(과거 데이터 방어) 등록일이 오늘이 아니면 그대로 돌려준다.
  * 홈/오늘복약/약지갑 끼니버튼 공용. (알림 cron 은 위 주석대로 불필요)
  *
- * @param todayUtc 호출 화면이 쓰는 "오늘"(UTC 날짜 문자열) — check_date 와 같은 값을
- *                 넘겨야 한다. 다른 키(KST 자정)를 쓰면 화면-하루와 어긋난다(위 ⚠️).
+ * @param today 호출 화면이 쓰는 "오늘"(todayKST()) — check_date 와 같은 값을 넘겨야 한다.
+ *              다른 규약의 키를 넘기면 화면-하루와 어긋난다(위 ⚠️).
  */
 export function slotsApplicableToday(
   meals: Meal[],
   createdAt: string | null | undefined,
-  todayUtc: string,
+  today: string,
 ): Meal[] {
   if (!createdAt) return meals
-  if (new Date(createdAt).toISOString().split('T')[0] !== todayUtc) return meals
+  if (kstDateOf(createdAt) !== today) return meals
   const reg = kstMinutesOf(createdAt)
   return meals.filter(m => reg < REG_CUTOFF_MIN[m])
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { consumeQuota, quotaExceededMessage, QUOTAS } from '@/lib/rate-limit'
+import { requireHealthConsent } from '@/lib/require-consent'
 import {
   extractNames, resolveOneProduct, assembleResponse, validateImageUpload,
   parseLicenseDetail, parseLocalDrug, type LicenseDetail, type LocalDrug,
@@ -89,6 +90,10 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
+
+  // §23 — 제품 사진도 복용 중인 약을 드러내는 건강정보다. 쿼터·외부 OCR 호출보다 먼저 막는다.
+  const consent = await requireHealthConsent(supabase, user.id)
+  if (!consent.ok) return consent.response
 
   const formData = await request.formData()
   const file     = formData.get('image') as File | null

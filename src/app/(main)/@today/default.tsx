@@ -3,14 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TodayTimeline, { type SlotState } from './today-timeline'
 import { MEAL_SLOTS, defaultMealKeys, slotsApplicableToday, isMeal, type Meal } from '@/lib/meal-slots'
+import { todayKST } from '@/lib/kst-date'
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { getActiveMember } from '@/lib/active-member'
 import MemberSwitcher from '@/components/member-switcher'
 import MemberContextBar from '@/components/member-context-bar'
 
-function today() {
-  return new Date().toISOString().split('T')[0]
-}
+// 날짜 키 규약: kst-date.ts (한국 자정에 하루가 바뀐다)
+const today = todayKST
 
 export default async function TodayPage() {
   const supabase = await createClient()

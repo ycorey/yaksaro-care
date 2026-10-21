@@ -1,8 +1,10 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { recordHealthConsent } from '@/lib/health-consent'
+import { allowLoginAttempt, clientIpOf, LOGIN_RATE_MESSAGE } from '@/lib/login-rate-limit'
 
 // 이메일+비밀번호 로그인 — 심사자용 입구.
 //
@@ -36,6 +38,13 @@ export async function signInWithEmail(
   if (!email || !password) return { error: '이메일과 비밀번호를 입력해 주세요.' }
   if (!consented) return { error: '먼저 [필수] 민감정보 수집·이용 동의에 체크해 주세요.' }
   if (!age14) return { error: '만 14세 이상만 이용할 수 있어요. [필수] 연령 확인에 체크해 주세요.' }
+
+  // 시도 제한 — (IP, 이메일) 10회 · IP 30회 / 15분. 입력 검증 뒤, Supabase 호출 **앞**에서 센다.
+  // 12차 평가(3회차 이월): 운영팀 발급 이메일 계정은 소수라 추측 대상이 좁다.
+  const h = await headers()
+  if (!(await allowLoginAttempt(clientIpOf(name => h.get(name)), email))) {
+    return { error: LOGIN_RATE_MESSAGE }
+  }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })

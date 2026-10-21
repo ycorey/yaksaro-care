@@ -5,16 +5,14 @@ import { MEAL_LABELS, MEAL_TIMES, isMeal, effectiveMealSlots } from '@/lib/meal-
 import { isScheduledOnWeekday, kstWeekday } from '@/lib/med-schedule'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
 import { cronDbFailure, settledFailures, type CronFailure } from '@/lib/cron-guard'
+import { canReceiveHealthPush } from '@/lib/push-eligibility'
+import { todayKST } from '@/lib/kst-date'
 import { recordNotificationRun } from '@/lib/notification-run'
 import { logger } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// KST(UTC+9) 기준 오늘 날짜
-function todayKST(): string {
-  return new Date(Date.now() + 9 * 3600_000).toISOString().split('T')[0]
-}
 
 /**
  * 복약 리마인더 cron — 끼니별로 호출(?meal=morning|afternoon|evening|bedtime).
@@ -76,14 +74,14 @@ export async function GET(req: NextRequest) {
   // 2) 알림 설정을 켜둔 사용자 (전체 토글 + 이 끼니 토글)
   const { data: prefs, error: prefsError } = await admin
     .from('profiles')
-    .select('id, alarm_enabled, alarm_times')
+    .select('id, alarm_enabled, alarm_times, consent_health')
     .in('id', pushUsers)
   const prefsFail = cronDbFailure('cron:meal', '알림 설정', prefsError)
   if (prefsFail) return abort(prefsFail, '알림 설정')
   const allowedSet = new Set(
     (prefs ?? [])
       .filter((p) =>
-        p.alarm_enabled !== false &&
+        canReceiveHealthPush(p) &&
         (p.alarm_times as Record<string, boolean> | null)?.[meal] !== false)
       .map((p) => p.id as string),
   )

@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { recordHealthConsent } from '@/lib/health-consent'
+import { safeNextPath } from '@/lib/safe-next'
 
 // 동의 게이트의 제출 처리.
 //
@@ -25,8 +26,7 @@ export async function acceptHealthConsent(
   const consented = formData.get('consent') === 'on'
   const age14 = formData.get('age14') === 'on'
   // 원래 가려던 곳. 오픈 리다이렉트 방지 규칙은 auth/callback 과 같다(내부 경로만).
-  const rawNext = String(formData.get('next') ?? '')
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/home'
+  const next = safeNextPath(String(formData.get('next') ?? '')) ?? '/home'
 
   if (!consented) return { error: '[필수] 민감정보 수집·이용 동의에 체크해 주세요.' }
   if (!age14) return { error: '만 14세 이상만 이용할 수 있어요. [필수] 연령 확인에 체크해 주세요.' }

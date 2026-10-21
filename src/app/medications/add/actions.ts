@@ -5,11 +5,14 @@ import { resolveDrugIdByItemSeq } from '@/lib/drug-master'
 import { redirect } from 'next/navigation'
 import { checkOtcInteraction } from '@/lib/dur-otc-check'
 import { getActiveMember } from '@/lib/active-member'
+import { assertHealthConsentForAction } from '@/lib/require-consent'
+import { todayKST } from '@/lib/kst-date'
 
 export async function addMedication(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await assertHealthConsentForAction(supabase, user.id, '/medications/add')
 
   const { active } = await getActiveMember(supabase, user.id)
 
@@ -40,7 +43,7 @@ export async function addMedication(formData: FormData) {
     resolvedDrugId = await resolveDrugIdByItemSeq(supabase, itemSeq)
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayKST()
 
   // ── 처방의약품: prescription 레코드 생성 후 medications 연결 ─────────
   if (type === 'prescription') {

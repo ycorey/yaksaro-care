@@ -246,3 +246,30 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
     화면에 그릴 때만 `displayDrugName()` 으로 뗀다(지갑·오늘·전달·이력·약사 환자·요청·추가 폼·검색 드롭다운 9곳).
     상비약 cleanName 은 마지막 '(' 를 써서 `(케토프로펜) 수출명:` 의 성분 괄호까지 지웠다 → 닫히지 않은 괄호 기준으로 보완.
     운영 1,384건 전수: 683건 정리, 701건(전부 `(수출용)`) 의도대로 유지, 이상 0.
+
+- **2026-10-20 — 12차 평가 후속: §23 동의 게이트 보강 · 073 GRANT 전면 명시 · 처리방침 이메일 로그인 명시** (브랜치 `fix/consent-gate`, 3커밋)
+  - 평가(10-19, UX 76·기술 78·제품 80·Critical 0)가 지목한 **동의 누락**: cron 2종(복약·리필)이 `alarm_enabled` 만 보고 미동의 사용자에게도 발송 ·
+    `addMedication`·`saveOcrMedications`·`/api/ocr/product`·`/api/pharmacy/request` 가 동의를 보지 않음 → `src/lib/push-eligibility.ts`
+    (`consent_health === true` 만 인정, null·누락은 미동의) · `assertHealthConsentForAction`(액션용: 미동의 redirect `/consent?next=`, 판독 불가 throw) ·
+    `requireHealthConsent` 2곳 추가. 단위 5+5, 전체 206/206.
+  - `next` 경로 판정 4곳(auth/callback · consent 2 · login)이 `startsWith('/') && !startsWith('//')` 를 복사해 쓰고 있었다 → `src/lib/safe-next.ts`
+    (WHATWG URL 파서로 origin 비교)로 통일. 역슬래시(`/\evil.com`)·탭·개행 우회를 테스트로 고정.
+  - **073_explicit_table_grants** — public 34개 표 GRANT 전부 명시(Supabase 10-30 변경: 새 표 자동 GRANT 중단 → 재생성 환경에서 옛 표도 빠짐).
+    운영 변경은 **anon 회수**뿐 — 남는 anon 은 `ter_requests`·`waitlist` INSERT. 근거: `src/` 세션 없는 읽기 0건 · 이 ref 를 쓰는 외부 코드는
+    `yaksaro-map/site/ter.html` 의 POST ter_requests 1건(로컬 전 프로젝트 grep) · 정책 없는 표·마스터 쓰기 전부 admin. 참조 마스터 anon SELECT 도 소비자 0 이라 회수.
+    ⚠️ `profiles`·`pharmacies` 는 046 의 **컬럼 단위 UPDATE** 를 지키기 위해 SELECT 만 선언(테이블 REVOKE 는 컬럼 권한까지 지운다).
+  - `e2e/rls-readonly-qa.mjs` 에 **G 단언**(anon 토큰이 환자 표 5종에서 42501) — 카나리 계정 없이 돌도록 로그인 앞으로 이동. 로컬 실측 0/5 "073 미적용" 정확히 검출.
+    **073 을 SQL Editor 에서 적용하기 전까지 CI `rls-gate` 는 빨간불(의도된 신호).**
+  - 처리방침 §2 계정 정보에 이메일·비밀번호 로그인 명시, §15 이력 추가, 시행일 **2026-11-01 제안**(사업자 확정 대기). 네이버는 `login-client.tsx` 주석이라 제외 —
+    인계 파일의 "네이버·이메일 추가" 중 네이버는 오류였다.
+  - **같은 날 후속 — 평가 High 5건 전부 처리(6번), 3커밋:** 앰버(#E8A817) 위 흰 글씨 3곳 → `text-yc-neutral900`(7.6:1, 토큰 무변경) · 약 0개 홈은 축하 카드 대신
+    "아직 등록된 약이 없어요 + 약 추가하기" CTA(`/medications/add`) · OTC 칩 X → 칩 안 [삭제][취소] 2단계(PATCH 가 `deleted_at` 복원을 지원하지 않아 되돌리기 토스트 대신).
+    **KST 날짜 규약 통일** — `src/lib/kst-date.ts`(kstDateOf·todayKST·addDays·daysBetween) 신설, UTC 날짜 키 13곳 교체(화면 3·API 4·액션 1·클라 1·순응도 2·약지갑 D-day·cron 복제본),
+    `slotsApplicableToday` 등록일 판정도 KST 로. 화면/API 는 UTC(하루가 KST 09:00 에 바뀜)·cron 은 KST 였다 — 아침 8시 체크가 전날 행에 남던 원인. 운영 `medication_schedules` 25행·
+    `medication_check_logs` 53행 모두 두 규약이 일치(사용이 09시 이후만)해 **데이터 이전 없음**.
+    **로그인 레이트리밋** — `074_login_attempts.sql`(텍스트 키 카운터 RPC, 047 꼴; `api_quota` 는 user_id FK 라 로그인 전엔 못 씀) + `src/lib/login-rate-limit.ts`((IP,이메일) 10회·IP 30회/15분,
+    sha256 키라 원문 미저장, 계측 장애·074 미적용 시 fail-open) → `signInWithEmail`. 단위 214/214 · tsc 0 · lint 0.
+    범위 밖: `pharmacy/login` 은 클라이언트가 직접 signIn 하므로 서버 액션 전환이 선행돼야 레이트리밋이 붙는다.
+  - **073·074 운영 적용(사용자 승인, MCP apply_migration)** — 적용 후 anon 잔여 권한 = `ter_requests`·`waitlist` INSERT 두 줄 · 046 컬럼 UPDATE 보존(profiles 14·pharmacies 4) ·
+    `consume_login_attempt` 1→2 확인. 가드가 5건 거짓 FAIL → **HEAD 응답은 본문이 없어 supabase-js 오류가 `{message:''}`** 라 42501 을 못 읽는다. anon G 단언·약사 `closedTable`
+    둘을 GET 1행으로 교체(후자는 073 이 interactions 의 authenticated GRANT 를 회수해 CI 에서 같은 거짓 FAIL 이 날 자리) → 로컬 **5/5**.

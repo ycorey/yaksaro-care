@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPushToUser } from '@/lib/push'
 import { isAuthorizedBearer } from '@/lib/bearer-auth'
 import { cronDbFailure, settledFailures, type CronFailure } from '@/lib/cron-guard'
+import { canReceiveHealthPush } from '@/lib/push-eligibility'
 import { recordNotificationRun } from '@/lib/notification-run'
 import { todayKST } from '@/lib/request-schedule'
 import { logger } from '@/lib/logger'
@@ -55,10 +56,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ sent: 0, reason: '구독자 없음' })
   }
 
-  const { data: prefs, error: prefsError } = await admin.from('profiles').select('id, alarm_enabled').in('id', pushUsers)
+  const { data: prefs, error: prefsError } = await admin.from('profiles').select('id, alarm_enabled, consent_health').in('id', pushUsers)
   const prefsFail = cronDbFailure('cron:refill', '알림 설정', prefsError)
   if (prefsFail) return abort(prefsFail, '알림 설정')
-  const eligible = new Set((prefs ?? []).filter(p => p.alarm_enabled !== false).map(p => p.id as string))
+  const eligible = new Set((prefs ?? []).filter(canReceiveHealthPush).map(p => p.id as string))
   const users = pushUsers.filter(u => eligible.has(u))
   if (users.length === 0) {
     await recordNotificationRun(admin, { kind: 'refill', runDate: day, note: '알림 끔' })

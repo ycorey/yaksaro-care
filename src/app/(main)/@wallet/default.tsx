@@ -23,6 +23,7 @@ import { computeRefillSoon } from '@/lib/refill'
 import { scheduleLabelOf, type ScheduleType } from '@/lib/med-schedule'
 import { buildDoctorDosage } from '@/lib/dosage'
 import { effectiveMealSlots, slotsApplicableToday } from '@/lib/meal-slots'
+import { todayKST, addDays, daysBetween } from '@/lib/kst-date'
 import { getDurFlagsByItemSeq, resolveDuplicates, sanitizeElderlyNote } from '@/lib/dur-flags'
 import DoctorView, { type DoctorData } from '../@share/doctor-view'
 
@@ -33,7 +34,7 @@ export default async function WalletPage() {
 
   const { active, members } = await getActiveMember(supabase, user.id)
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = todayKST()   // 날짜 키 규약: kst-date.ts
 
   const [{ data: meds, error: medsError }, { data: profile }, { data: schedules }] = await Promise.all([
     supabase
@@ -156,11 +157,10 @@ export default async function WalletPage() {
       let expiryLabel: string | null = null
       let expired = false
       if (g._date && maxDays > 0) {
-        const d = new Date(g._date + 'T00:00:00')
-        d.setDate(d.getDate() + maxDays)
-        const today = new Date(); today.setHours(0, 0, 0, 0)
-        const diff  = Math.ceil((d.getTime() - today.getTime()) / 86_400_000)
-        const md    = (d.getMonth() + 1) + '월 ' + d.getDate() + '일'
+        // 서버 로컬(Vercel=UTC) 자정이 아니라 한국 오늘 기준 D-day — kst-date.ts 규약
+        const expiry = addDays(g._date, maxDays)
+        const diff   = daysBetween(todayStr, expiry)
+        const md     = Number(expiry.slice(5, 7)) + '월 ' + Number(expiry.slice(8, 10)) + '일'
         const dday  = diff > 0 ? 'D-' + diff : diff === 0 ? '오늘까지' : '복약 종료'
         expired     = diff < 0
         expiryLabel = md + ' · ' + dday
