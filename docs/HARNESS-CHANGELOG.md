@@ -283,3 +283,11 @@ TODO.md 의 "유료 바코드 데이터 선행"(일반약 13.3%)은 **전제가 
   - **073·074 운영 적용(사용자 승인, MCP apply_migration)** — 적용 후 anon 잔여 권한 = `ter_requests`·`waitlist` INSERT 두 줄 · 046 컬럼 UPDATE 보존(profiles 14·pharmacies 4) ·
     `consume_login_attempt` 1→2 확인. 가드가 5건 거짓 FAIL → **HEAD 응답은 본문이 없어 supabase-js 오류가 `{message:''}`** 라 42501 을 못 읽는다. anon G 단언·약사 `closedTable`
     둘을 GET 1행으로 교체(후자는 073 이 interactions 의 authenticated GRANT 를 회수해 CI 에서 같은 거짓 FAIL 이 날 자리) → 로컬 **5/5**.
+
+- **2026-10-22 — PR #90·#91 머지 + 운영 배포 + 브라우저 실측 + 거짓 토스트 수정(PR #92)**
+  - **PR #90**(12차 평가 후속 11커밋) `main` 머지 → Vercel 운영 배포 반영(`/privacy` 시행일 2026-11-01 확인). 브랜치는 랜딩 위에 있었으므로 `--onto origin/main`으로 옮겨 상비약 랜딩 커밋이 섞이지 않게 함.
+  - **PR #91** 상비약 랜딩 3커밋(10/16~17 작업) — 새 `main` 위로 리베이스(변경 이력 충돌 1회, 10-16 항목을 10-20 항목 앞에 연대순 삽입), CI 초록, 머지. 결정 둘(처리방침 시행일 11-01 유지 · PR base main)은 사용자 위임.
+  - **브라우저 실측 3건 완료** — 임시 QA 환자 계정(`…@yaksaro-qa.invalid`, 약 0개·동의 완료)을 admin API 로 만들어 로컬 개발 서버(`localhost:3000`, 운영 Supabase)에서 확인 후 삭제(복약 2행 캐스케이드 → 0, 프로필 0).
+    ① 약 0개 홈 = "아직 등록된 약이 없어요 + 약 추가하기" 카드(스크린샷) ② OTC 칩 X → [삭제][취소] → 취소 복귀·삭제 반영 ③ 지연 끼니 "지금 먹기" 계산값 bg rgb(232,168,23)·text rgb(19,38,31)·**대비 7.58:1**·높이 52px.
+  - **실측 중 발견 → PR #92**: 약 추가 성공 때마다 "저장하지 못했어요" 토스트가 같이 떴다. `addMedication` 의 `redirect()` 가 NEXT_REDIRECT 로 클라이언트 `catch` 까지 전파(Next 16.2.6) — 기존 주석의 가정이 틀렸다. `unstable_rethrow` 로 수정, 재실측 "담았어요" 만.
+  - **환경 교훈:** ⓐ claude-in-chrome 확장은 Chrome 창이 숨김/최소화면 스크린샷·Viewport 0x0 으로 멈춤 → chrome-devtools MCP(자체 인스턴스)로 전환 ⓑ Next dev 를 `127.0.0.1` 로 열면 `allowedDevOrigins` 에 막혀 클라이언트 번들이 안 와 하이드레이션이 안 됨(버튼 무반응·HMR 재접속 루프) → `localhost` 로 ⓒ 스크린샷이 타임아웃돼도 a11y 스냅샷 + `getComputedStyle` 로 구조·색 대비는 검증 가능 ⓓ 운영 도메인 로그인 폼에 테스트 비밀번호 입력은 규칙상 불가 → 같은 코드를 로컬로 띄워 검증.
