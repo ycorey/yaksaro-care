@@ -5,6 +5,7 @@ import { displayDrugName } from '@/lib/drug-name-match'
 import { useState, useEffect, useRef } from 'react'
 import { Hospital, Pill, Flask, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { unstable_rethrow } from 'next/navigation'
 import { addMedication } from './actions'
 import { MEAL_SLOTS } from '@/lib/meal-slots'
 import { MEAL_ICONS } from '@/lib/meal-icons'
@@ -306,9 +307,11 @@ export default function AddForm({ initialTab, initialSelected = null, initialQue
     setSaving(true)
     try {
       await addMedication(formData)
-    } catch {
-      // redirect()는 여기로 throw되지 않는다(프레임워크가 내비게이션으로 처리) —
-      // 이 catch에 오는 것은 실제 저장 실패뿐. 폼을 유지해 재시도할 수 있게 한다.
+    } catch (e) {
+      // 서버 액션의 redirect()는 NEXT_REDIRECT 오류로 **여기까지 온다**(Next 16.2 실측 2026-10-22:
+      // 저장·이동은 성공했는데 "저장하지 못했어요" 토스트가 매번 같이 떴다). 프레임워크 내부 오류는
+      // 돌려보내고, 남는 것만 실제 저장 실패로 본다. 폼은 유지해 재시도할 수 있게 한다.
+      unstable_rethrow(e)
       toast.error('저장하지 못했어요. 잠시 후 다시 시도해 주세요')
     } finally {
       setSaving(false)
